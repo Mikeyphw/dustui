@@ -1,6 +1,7 @@
 import inspect
 from pathlib import Path
 
+from textual.geometry import Size
 from textual.screen import ModalScreen
 
 import dust_tui.screens as screens_module
@@ -60,6 +61,23 @@ async def test_app_regular_layout_keeps_details_and_chart(tmp_path: Path) -> Non
                 assert_region_fits_app(app, selector)
             assert app.query_one("#details-pane").display is True
             assert app.query_one("#usage-chart").display is True
+
+
+async def test_terminal_size_watcher_applies_compact_layout_immediately(tmp_path: Path, monkeypatch) -> None:
+    reported_size = Size(120, 40)
+    app = DustTuiApp(initial_path=tmp_path, auto_scan=False)
+    monkeypatch.setattr(app, "_current_terminal_size", lambda: reported_size)
+    async with app.run_test(size=(120, 40)) as pilot:
+        await pilot.pause()
+        assert app.query_one("#details-pane").display is True
+        assert app.query_one("#usage-chart").display is True
+
+        reported_size = Size(80, 24)
+        app._sync_terminal_size()
+        await pilot.pause()
+
+        assert app.query_one("#details-pane").display is False
+        assert app.query_one("#usage-chart").display is False
 
 
 async def test_native_scan_populates_table(tmp_path: Path, monkeypatch) -> None:

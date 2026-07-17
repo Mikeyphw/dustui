@@ -3,7 +3,9 @@ from __future__ import annotations
 import asyncio
 import csv
 import json
+import os
 import shlex
+import shutil
 import threading
 from contextlib import suppress
 from datetime import datetime
@@ -18,6 +20,7 @@ from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.css.query import NoMatches
 from textual.events import Resize
+from textual.geometry import Size
 from textual.widgets import Button, DataTable, Footer, Header, Input, Label, Static
 from textual.worker import Worker, WorkerState
 
@@ -75,6 +78,7 @@ class DustTuiApp(App[None]):
         self.dust_process: asyncio.subprocess.Process | None = None
         self.sort_key = "size"
         self.sort_reverse = True
+        self._last_terminal_size: Size | None = None
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -119,8 +123,12 @@ class DustTuiApp(App[None]):
         if self.auto_scan:
             self.call_after_refresh(self.action_start_scan)
         self._apply_responsive_layout(self.size.width, self.size.height)
+        self._last_terminal_size = self._current_terminal_size()
+        if self._should_watch_terminal_size():
+            self.set_interval(0.05, self._sync_terminal_size, name="terminal-size-watch")
 
     def on_resize(self, event: Resize) -> None:
+        self._last_terminal_size = event.size
         self._apply_responsive_layout(event.size.width, event.size.height)
 
     def _apply_responsive_layout(self, width: int, height: int) -> None:
@@ -128,6 +136,30 @@ class DustTuiApp(App[None]):
         chart = self.query_one("#usage-chart", Static)
         details.display = width >= 95
         chart.display = height >= 34
+
+    @staticmethod
+    def _should_watch_terminal_size() -> bool:
+        prefix = os.environ.get("PREFIX", "")
+        return bool(
+            os.environ.get("TERMUX_VERSION")
+            or "com.termux" in prefix
+            or (os.environ.get("ANDROID_ROOT") and os.environ.get("ANDROID_DATA"))
+        )
+
+    def _current_terminal_size(self) -> Size | None:
+        terminal_size = shutil.get_terminal_size(fallback=(self.size.width, self.size.height))
+        if terminal_size.columns <= 0 or terminal_size.lines <= 0:
+            return None
+        return Size(terminal_size.columns, terminal_size.lines)
+
+    def _sync_terminal_size(self) -> None:
+        size = self._current_terminal_size()
+        if size is None or size == self._last_terminal_size:
+            return
+        self._last_terminal_size = size
+        self.post_message(Resize(size, size))
+        self._apply_responsive_layout(size.width, size.height)
+        self.refresh(layout=True)
 
     @on(Button.Pressed)
     def on_button_pressed(self, event: Button.Pressed) -> None:
