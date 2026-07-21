@@ -1,0 +1,137 @@
+{
+  "applied_at": "2026-07-21T14:37:20.982480Z",
+  "artifact": "/home/mike/Downloads/dustui_root_phase2_overlay.zip",
+  "artifact_name": "dustui_root_phase2_overlay.zip",
+  "type": "overlay",
+  "sha256": "555e494ca75bc6ad720defd3729735d9602370d8196c6bd9ed9e9e0e21fe88ed",
+  "status": "rolled-back",
+  "validation_status": "failed",
+  "commit_message": "Implement DustUI Android Phase 2 explorer",
+  "commit_hash": "",
+  "file_count": 11,
+  "change_counts": {
+    "add": 6,
+    "modify": 5
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Root Android Phase 2",
+    "description": "Adds the navigable storage explorer, Android ownership intelligence, mount details, filters, and CSV export on top of Phase 1.",
+    "target": "dustui_android",
+    "workspaces": [
+      {
+        "name": "dustui_android",
+        "root": "android",
+        "target": "dustui_android"
+      }
+    ],
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "android/app/build.gradle.kts",
+          "action": "modify",
+          "sha256": "ac3d0168f208799ff1c5d1e63dd7f18a6f352d12af854947c76174d4b6c31e1d",
+          "size": 2620,
+          "source_sha256": "d6ec517b81c5ac6b26e18c632b447b987473f8c8c428a03fc910dcec07cd4548"
+        },
+        {
+          "path": "android/app/src/main/AndroidManifest.xml",
+          "action": "modify",
+          "sha256": "d87df7759dc0323a0f8110cc760a658ab7ad94a70021f0644c4bf804446b2f0f",
+          "size": 2068,
+          "source_sha256": "d8f07c245e5035685dd46e0ad90838a18fddf2810f27097326a2155411ed6d3b"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/EntryIntelligence.kt",
+          "action": "add",
+          "sha256": "3eded844190cfc507e2b507f31f363499649368e54a32a891ea9138e174bebda",
+          "size": 4424
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ExportWriter.kt",
+          "action": "add",
+          "sha256": "f83b7c176fa134781cba8fb40f833ee2b10214f2e31b2513d3b57f37469dfe64",
+          "size": 909
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+          "action": "modify",
+          "sha256": "a0179f96b36f12597bd407118a5fae93084f3a70e3c1b0448b3a2e501b2fdd19",
+          "size": 1480,
+          "source_sha256": "d744aad5a333f64e02aa589841d9b0f1c0e0717380a41e7b7158f221e827793a"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "action": "modify",
+          "sha256": "726bf979abec0eb5abd747b362656ff769ed6bdb6617313a2c3b2a52191be10d",
+          "size": 9528,
+          "source_sha256": "3080d8b87f05e838d4e9d1b295a654912e33ceaae79341b783cf6c955149752f"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/ExplorerModels.kt",
+          "action": "add",
+          "sha256": "c9893c477346088d4054e377b21842fbd39f4dfb3099ef660d0a62520ea1f4d7",
+          "size": 318
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+          "action": "modify",
+          "sha256": "ae2c88abc12f8612e293221da659443a3e26d86ead1d48622e07df651f99473e",
+          "size": 5918,
+          "source_sha256": "7a908b6c9526732cb059dcaa0a2bd2d6cc50443811670b6ab3f72aa471bbc7fc"
+        },
+        {
+          "path": "android/app/src/main/res/xml/file_paths.xml",
+          "action": "add",
+          "sha256": "687bf31edc6dda8ce9c0751119cd5475cac537bb466b646e5cd678f0d4ed934c",
+          "size": 165
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/EntryIntelligenceTest.kt",
+          "action": "add",
+          "sha256": "14a8b9400dea6affc52c13c89409c2f1d6209d669ceabee683ed6ac177fe6818",
+          "size": 1048
+        },
+        {
+          "path": "docs/ANDROID_PHASE2.md",
+          "action": "add",
+          "sha256": "d057eaf3bcd8b5d183cbff75977111ac30b65816f0a844bc29272420265873ca",
+          "size": 904
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Implement DustUI Android Phase 2 explorer"
+      }
+    },
+    "validation": {
+      "required": true,
+      "restore": true,
+      "build": true,
+      "test": true,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "build": "pass",
+        "tests": "pass",
+        "maximum_warnings": 100
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "a21e23d332874da579344e9576224f314137a7ee81fe286704ab94ec7cdcef61",
+        "timeout_seconds": 120
+      }
+    }
+  },
+  "history_id": "3db412aa15774f7fa9ac7f2e6e8a55d4"
+}

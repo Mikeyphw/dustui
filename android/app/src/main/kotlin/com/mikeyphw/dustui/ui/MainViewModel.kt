@@ -3,6 +3,7 @@ package com.mikeyphw.dustui.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.mikeyphw.dustui.data.EntryIntelligence
 import com.mikeyphw.dustui.data.ScanEntryEntity
 import com.mikeyphw.dustui.data.ScanRepository
 import com.mikeyphw.dustui.data.ScanSessionEntity
@@ -12,6 +13,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
@@ -22,55 +24,74 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val presets = ScanPreset.defaults
     val latestSession: StateFlow<ScanSessionEntity?> = repository.observeLatestSession()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-    val entries: StateFlow<List<ScanEntryEntity>> = latestSession
+    private val allEntries: StateFlow<List<ScanEntryEntity>> = latestSession
         .flatMapLatest { session -> session?.let { repository.observeEntries(it.id) } ?: flowOf(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private val _explorerPath = MutableStateFlow<String?>(null)
+    val explorerPath: StateFlow<String?> = _explorerPath
+    private val _filter = MutableStateFlow(ExplorerFilter())
+    val filter: StateFlow<ExplorerFilter> = _filter
+    private val _selectedEntry = MutableStateFlow<ScanEntryEntity?>(null)
+    val selectedEntry: StateFlow<ScanEntryEntity?> = _selectedEntry
+    private val _selectedIntelligence = MutableStateFlow<EntryIntelligence?>(null)
+    val selectedIntelligence: StateFlow<EntryIntelligence?> = _selectedIntelligence
+
+    val entries: StateFlow<List<ScanEntryEntity>> = combine(allEntries, latestSession, _explorerPath, _filter) { entries, session, path, filter ->
+        val current = path ?: session?.rootPath
+        entries.asSequence()
+            .filter { current == null || it.parentPath == current }
+            .filter { filter.query.isBlank() || it.name.contains(filter.query, true) || it.path.contains(filter.query, true) }
+            .filter { when (filter.type) { EntryTypeFilter.ALL -> true; EntryTypeFilter.DIRECTORIES -> it.isDirectory; EntryTypeFilter.FILES -> !it.isDirectory } }
+            .filter { it.sizeBytes >= filter.minimumBytes }
+            .sortedWith(when (filter.sort) {
+                EntrySort.SIZE -> compareByDescending<ScanEntryEntity> { it.sizeBytes }.thenBy { it.name.lowercase() }
+                EntrySort.NAME -> compareBy<ScanEntryEntity> { it.name.lowercase() }
+                EntrySort.MODIFIED -> compareByDescending<ScanEntryEntity> { it.modifiedAt }.thenBy { it.name.lowercase() }
+            }).toList()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _rootState = MutableStateFlow<RootUiState>(RootUiState.Checking)
     val rootState: StateFlow<RootUiState> = _rootState
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message
 
-    init { refreshRoot() }
+    init {
+        refreshRoot()
+        viewModelScope.launch { latestSession.collect { session -> if (_explorerPath.value == null) _explorerPath.value = session?.rootPath } }
+    }
 
     fun refreshRoot() {
         _rootState.value = RootUiState.Checking
-        viewModelScope.launch {
-            _rootState.value = if (repository.rootAvailable()) RootUiState.Available else RootUiState.Unavailable
-        }
+        viewModelScope.launch { _rootState.value = if (repository.rootAvailable()) RootUiState.Available else RootUiState.Unavailable }
     }
-
     fun startPreset(preset: ScanPreset) = startRequest(runCatching(preset::request))
-
-    fun startCustom(path: String) = startRequest(
-        runCatching { ScanRequest(rootPath = path.trim()).validated() },
-    )
-
+    fun startCustom(path: String) = startRequest(runCatching { ScanRequest(rootPath = path.trim()).validated() })
     private fun startRequest(result: Result<ScanRequest>) {
-        if (_rootState.value != RootUiState.Available) {
-            _message.value = "Root access is required for Phase 1 scans"
-            return
-        }
-        result.onSuccess {
-            _message.value = null
-            repository.startScan(it)
-        }.onFailure { _message.value = it.message }
+        if (_rootState.value != RootUiState.Available) { _message.value = "Root access is required"; return }
+        result.onSuccess { _explorerPath.value = it.rootPath; repository.startScan(it) }.onFailure { _message.value = it.message }
     }
-
-    fun cancelActive() {
-        latestSession.value?.id?.let(repository::cancelScan)
+    fun cancelActive() { latestSession.value?.id?.let(repository::cancelScan) }
+    fun open(entry: ScanEntryEntity) {
+        if (entry.isDirectory) _explorerPath.value = entry.path else select(entry)
     }
-
+    fun select(entry: ScanEntryEntity) { _selectedEntry.value = entry; _selectedIntelligence.value = repository.inspect(entry.path) }
+    fun closeDetails() { _selectedEntry.value = null; _selectedIntelligence.value = null }
+    fun navigate(path: String) { _explorerPath.value = path }
+    fun up() {
+        val root = latestSession.value?.rootPath ?: return
+        val current = _explorerPath.value ?: root
+        if (current == root) return
+        _explorerPath.value = current.substringBeforeLast('/').ifBlank { "/" }.let { if (!it.startsWith(root)) root else it }
+    }
+    fun updateQuery(value: String) { _filter.value = _filter.value.copy(query = value) }
+    fun cycleSort() { _filter.value = _filter.value.copy(sort = EntrySort.entries[(filter.value.sort.ordinal + 1) % EntrySort.entries.size]) }
+    fun cycleType() { _filter.value = _filter.value.copy(type = EntryTypeFilter.entries[(filter.value.type.ordinal + 1) % EntryTypeFilter.entries.size]) }
+    fun exportCsv() { latestSession.value?.let { repository.exportCsv(it, allEntries.value) } }
     fun clearMessage() { _message.value = null }
 }
 
-sealed interface RootUiState {
-    data object Checking : RootUiState
-    data object Available : RootUiState
-    data object Unavailable : RootUiState
-}
-
+sealed interface RootUiState { data object Checking : RootUiState; data object Available : RootUiState; data object Unavailable : RootUiState }
 class MainViewModelFactory(private val repository: ScanRepository) : ViewModelProvider.Factory {
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T = MainViewModel(repository) as T
+    @Suppress("UNCHECKED_CAST") override fun <T : ViewModel> create(modelClass: Class<T>): T = MainViewModel(repository) as T
 }

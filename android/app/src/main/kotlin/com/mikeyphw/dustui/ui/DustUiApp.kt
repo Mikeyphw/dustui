@@ -1,37 +1,12 @@
 package com.mikeyphw.dustui.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
@@ -39,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.mikeyphw.dustui.data.EntryIntelligence
 import com.mikeyphw.dustui.data.ScanEntryEntity
 import com.mikeyphw.dustui.data.ScanSessionEntity
 import com.mikeyphw.dustui.scan.ScanStatus
@@ -50,177 +26,100 @@ fun DustUiApp(viewModel: MainViewModel) {
         val rootState by viewModel.rootState.collectAsStateWithLifecycle()
         val session by viewModel.latestSession.collectAsStateWithLifecycle()
         val entries by viewModel.entries.collectAsStateWithLifecycle()
+        val path by viewModel.explorerPath.collectAsStateWithLifecycle()
+        val filter by viewModel.filter.collectAsStateWithLifecycle()
+        val selected by viewModel.selectedEntry.collectAsStateWithLifecycle()
+        val intelligence by viewModel.selectedIntelligence.collectAsStateWithLifecycle()
         val message by viewModel.message.collectAsStateWithLifecycle()
         val snackbar = remember { SnackbarHostState() }
-        var customPath by remember { mutableStateOf("/storage/emulated/0") }
-        val scanRunning = session?.status in setOf(ScanStatus.STARTING.name, ScanStatus.RUNNING.name)
-        val controlsEnabled = rootState == RootUiState.Available && !scanRunning
-
-        LaunchedEffect(message) {
-            message?.let {
-                snackbar.showSnackbar(it)
-                viewModel.clearMessage()
-            }
-        }
+        var showLauncher by remember { mutableStateOf(session == null) }
+        LaunchedEffect(message) { message?.let { snackbar.showSnackbar(it); viewModel.clearMessage() } }
 
         Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("DustUI Root") },
-                    actions = {
-                        RootBadge(rootState)
-                        Spacer(Modifier.width(12.dp))
-                    },
-                )
-            },
+            topBar = { TopAppBar(title = { Text("DustUI Root") }, actions = {
+                TextButton(onClick = { showLauncher = !showLauncher }) { Text(if (showLauncher) "Explorer" else "New scan") }
+                TextButton(onClick = viewModel::exportCsv, enabled = session != null) { Text("Export") }
+            }) },
             snackbarHost = { SnackbarHost(snackbar) },
         ) { padding ->
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-            ) {
-                item { RootAccessCard(rootState, viewModel::refreshRoot) }
-
-                item {
-                    Text("Scan presets", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Spacer(Modifier.height(8.dp))
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        items(viewModel.presets, key = { it.id }) { preset ->
-                            Card(
-                                onClick = { viewModel.startPreset(preset) },
-                                enabled = controlsEnabled,
-                                modifier = Modifier.width(220.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                            ) {
-                                Column(Modifier.padding(14.dp)) {
-                                    Text(preset.title, fontWeight = FontWeight.SemiBold)
-                                    Text(preset.description, style = MaterialTheme.typography.bodySmall)
-                                    Spacer(Modifier.height(8.dp))
-                                    Text(preset.path, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.labelSmall)
-                                }
-                            }
-                        }
-                    }
-                }
-
-                item {
-                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Custom root", fontWeight = FontWeight.SemiBold)
-                            OutlinedTextField(
-                                value = customPath,
-                                onValueChange = { customPath = it },
-                                modifier = Modifier.fillMaxWidth(),
-                                singleLine = true,
-                                label = { Text("Absolute path") },
-                                textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                            )
-                            Button(
-                                onClick = { viewModel.startCustom(customPath) },
-                                enabled = controlsEnabled,
-                            ) { Text("Scan with root") }
-                        }
-                    }
-                }
-
-                session?.let { active ->
-                    item { SessionCard(active, viewModel::cancelActive) }
-                    item {
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            Text("Largest entries", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                            Spacer(Modifier.weight(1f))
-                            Text("${entries.size} shown", style = MaterialTheme.typography.labelMedium)
-                        }
-                    }
-                    items(entries, key = { "${it.scanId}:${it.path}" }) { entry -> EntryRow(entry, active.totalBytes) }
-                } ?: item {
-                    Box(Modifier.fillMaxWidth().padding(vertical = 36.dp), contentAlignment = Alignment.Center) {
-                        Text("Choose a preset to begin the first root scan.")
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun RootAccessCard(state: RootUiState, retry: () -> Unit) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-        Row(
-            Modifier.fillMaxWidth().padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text("Root access", fontWeight = FontWeight.SemiBold)
-                Text(
-                    when (state) {
-                        RootUiState.Checking -> "Waiting for the root provider"
-                        RootUiState.Available -> "Privileged scanner service is ready"
-                        RootUiState.Unavailable -> "Grant root access to run protected storage scans"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
+            val currentSession = session
+            if (showLauncher || currentSession == null) {
+                ScanLauncher(Modifier.padding(padding), rootState, currentSession, viewModel) { showLauncher = false }
+            } else {
+                Explorer(
+                    Modifier.padding(padding),
+                    currentSession,
+                    path ?: currentSession.rootPath,
+                    entries,
+                    filter,
+                    viewModel,
                 )
             }
-            if (state == RootUiState.Unavailable) OutlinedButton(onClick = retry) { Text("Retry") }
+        }
+        if (selected != null) EntryDetails(selected!!, intelligence, viewModel::closeDetails)
+    }
+}
+
+@Composable
+private fun ScanLauncher(modifier: Modifier, root: RootUiState, session: ScanSessionEntity?, vm: MainViewModel, openExplorer: () -> Unit) {
+    var custom by remember { mutableStateOf("/storage/emulated/0") }
+    LazyColumn(modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item { Card { Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) { Text("Root service", fontWeight = FontWeight.SemiBold); Text(when(root){RootUiState.Checking->"Checking";RootUiState.Available->"Ready";RootUiState.Unavailable->"Unavailable"}) }
+            if(root == RootUiState.Unavailable) OutlinedButton(onClick=vm::refreshRoot){Text("Retry")}
+        } } }
+        item { Text("Scan presets", style = MaterialTheme.typography.titleMedium) }
+        item { LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) { items(vm.presets, key={it.id}) { preset ->
+            Card(onClick={vm.startPreset(preset);openExplorer()}, enabled=root==RootUiState.Available, modifier=Modifier.width(220.dp)) { Column(Modifier.padding(14.dp)) { Text(preset.title,fontWeight=FontWeight.SemiBold);Text(preset.description,style=MaterialTheme.typography.bodySmall);Text(preset.path,fontFamily=FontFamily.Monospace,style=MaterialTheme.typography.labelSmall) } }
+        } } }
+        item { Card { Column(Modifier.padding(14.dp), verticalArrangement=Arrangement.spacedBy(8.dp)) { OutlinedTextField(custom,{custom=it},Modifier.fillMaxWidth(),label={Text("Absolute path")},singleLine=true); Button(onClick={vm.startCustom(custom);openExplorer()},enabled=root==RootUiState.Available){Text("Scan")}} } }
+        session?.let { item { SessionCard(it, vm::cancelActive); OutlinedButton(onClick=openExplorer,Modifier.fillMaxWidth()){Text("Open latest scan")}} }
+    }
+}
+
+@Composable
+private fun Explorer(modifier: Modifier, session: ScanSessionEntity, path: String, entries: List<ScanEntryEntity>, filter: ExplorerFilter, vm: MainViewModel) {
+    Column(modifier.fillMaxSize()) {
+        SessionCard(session, vm::cancelActive)
+        Row(Modifier.fillMaxWidth().padding(horizontal=12.dp), verticalAlignment=Alignment.CenterVertically) {
+            TextButton(onClick=vm::up){Text("Up")}; Text(path,Modifier.weight(1f),maxLines=1,overflow=TextOverflow.Ellipsis,fontFamily=FontFamily.Monospace)
+        }
+        Breadcrumbs(session.rootPath,path,vm::navigate)
+        OutlinedTextField(filter.query,vm::updateQuery,Modifier.fillMaxWidth().padding(horizontal=12.dp),label={Text("Search this directory")},singleLine=true)
+        Row(Modifier.fillMaxWidth().padding(12.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+            AssistChip(onClick=vm::cycleSort,label={Text("Sort: ${filter.sort.name.lowercase()}")})
+            AssistChip(onClick=vm::cycleType,label={Text("Type: ${filter.type.name.lowercase()}")})
+            Text("${entries.size} entries",Modifier.align(Alignment.CenterVertically),style=MaterialTheme.typography.labelMedium)
+        }
+        LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(horizontal=12.dp,vertical=4.dp)) {
+            items(entries,key={it.path}) { e -> EntryRow(e,session.totalBytes,{vm.open(e)},{vm.select(e)}) }
+            if(entries.isEmpty()) item { Box(Modifier.fillParentMaxSize(),contentAlignment=Alignment.Center){Text("No matching direct children")}}
         }
     }
 }
 
 @Composable
-private fun RootBadge(state: RootUiState) {
-    val (text, color) = when (state) {
-        RootUiState.Checking -> "Checking root" to MaterialTheme.colorScheme.secondaryContainer
-        RootUiState.Available -> "Root ready" to MaterialTheme.colorScheme.primaryContainer
-        RootUiState.Unavailable -> "No root" to MaterialTheme.colorScheme.errorContainer
-    }
-    Card(colors = CardDefaults.cardColors(containerColor = color)) {
-        Text(text, Modifier.padding(horizontal = 10.dp, vertical = 6.dp), style = MaterialTheme.typography.labelMedium)
+private fun Breadcrumbs(root:String,path:String,navigate:(String)->Unit){
+    val relative=path.removePrefix(root).trim('/'); val parts=if(relative.isBlank()) emptyList() else relative.split('/')
+    LazyRow(Modifier.fillMaxWidth().padding(horizontal=12.dp),horizontalArrangement=Arrangement.spacedBy(4.dp)){
+        item{AssistChip(onClick={navigate(root)},label={Text(root.substringAfterLast('/').ifBlank{"/"})})}
+        parts.forEachIndexed{index,part-> item(key="$index:$part"){Text("/");AssistChip(onClick={navigate(root.trimEnd('/')+"/"+parts.take(index+1).joinToString("/"))},label={Text(part)})}}
     }
 }
 
 @Composable
-private fun SessionCard(session: ScanSessionEntity, cancel: () -> Unit) {
-    val running = session.status in setOf(ScanStatus.STARTING.name, ScanStatus.RUNNING.name)
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(session.rootPath, fontFamily = FontFamily.Monospace, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(session.status.lowercase().replaceFirstChar(Char::uppercase), style = MaterialTheme.typography.labelMedium)
-                }
-                if (running) OutlinedButton(onClick = cancel) { Text("Cancel") }
-            }
-            if (running) LinearProgressIndicator(Modifier.fillMaxWidth())
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("${session.scannedItems} items")
-                Text(formatBytes(session.scannedBytes))
-                if (session.totalBytes > 0) Text("Total ${formatBytes(session.totalBytes)}")
-            }
-            if (session.currentPath.isNotBlank()) {
-                Text(session.currentPath, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall)
-            }
-            session.errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        }
+private fun EntryRow(entry:ScanEntryEntity,total:Long,open:()->Unit,details:()->Unit){
+    val share=if(total>0)(entry.sizeBytes.toFloat()/total).coerceIn(0f,1f) else 0f
+    Column(Modifier.fillMaxWidth().clickable(onClick=open).padding(vertical=9.dp)){
+        Row(verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text((if(entry.isDirectory)"▸ " else "")+entry.name,maxLines=1,overflow=TextOverflow.Ellipsis,fontWeight=FontWeight.Medium);Text(entry.path,maxLines=1,overflow=TextOverflow.Ellipsis,fontFamily=FontFamily.Monospace,style=MaterialTheme.typography.labelSmall)};TextButton(onClick=details){Text("Info")};Text(formatBytes(entry.sizeBytes),fontWeight=FontWeight.SemiBold)}
+        LinearProgressIndicator({share},Modifier.fillMaxWidth());Text("${entry.fileCount} files · ${formatTimestamp(entry.modifiedAt)}",style=MaterialTheme.typography.labelSmall)
     }
 }
 
 @Composable
-private fun EntryRow(entry: ScanEntryEntity, totalBytes: Long) {
-    val share = if (totalBytes > 0) (entry.sizeBytes.toFloat() / totalBytes).coerceIn(0f, 1f) else 0f
-    Column(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(entry.name, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Medium)
-                Text(entry.path, maxLines = 1, overflow = TextOverflow.Ellipsis, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.labelSmall)
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(horizontalAlignment = Alignment.End) {
-                Text(formatBytes(entry.sizeBytes), fontWeight = FontWeight.SemiBold)
-                Text(if (entry.isDirectory) "Directory" else "File", style = MaterialTheme.typography.labelSmall)
-            }
-        }
-        LinearProgressIndicator(progress = { share }, modifier = Modifier.fillMaxWidth())
-        Text("Modified ${formatTimestamp(entry.modifiedAt)} · ${entry.fileCount} files", style = MaterialTheme.typography.labelSmall)
-    }
-}
+private fun SessionCard(s:ScanSessionEntity,cancel:()->Unit){val running=s.status in setOf(ScanStatus.STARTING.name,ScanStatus.RUNNING.name);Card(Modifier.fillMaxWidth().padding(12.dp)){Column(Modifier.padding(12.dp)){Row{Column(Modifier.weight(1f)){Text(s.rootPath,fontFamily=FontFamily.Monospace,maxLines=1,overflow=TextOverflow.Ellipsis);Text("${s.status.lowercase()} · ${s.scannedItems} items · ${formatBytes(s.scannedBytes)}")};if(running)OutlinedButton(onClick=cancel){Text("Cancel")}};if(running)LinearProgressIndicator(Modifier.fillMaxWidth())}}}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EntryDetails(entry:ScanEntryEntity,info:EntryIntelligence?,close:()->Unit){ModalBottomSheet(onDismissRequest=close){LazyColumn(Modifier.fillMaxWidth(),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){item{Text(entry.name,style=MaterialTheme.typography.headlineSmall);Text(entry.path,fontFamily=FontFamily.Monospace)};item{Detail("Size",formatBytes(entry.sizeBytes));Detail("Allocated",formatBytes(entry.allocatedBytes));Detail("Type",if(entry.isDirectory)"Directory" else "File");Detail("Files",entry.fileCount.toString());Detail("Modified",formatTimestamp(entry.modifiedAt))};info?.let{item{HorizontalDivider();Text("Android intelligence",style=MaterialTheme.typography.titleMedium);Detail("Category",it.category.label);Detail("Package",it.packageName?:"Not resolved");it.appLabel?.let{l->Detail("App",l)};Detail("Mount",it.mountPoint?:"Unknown");Detail("Filesystem",it.filesystem?:"Unknown");Detail("Mount mode",if(it.readOnly)"Read-only" else "Writable")}};item{Button(onClick=close,Modifier.fillMaxWidth()){Text("Close")};Spacer(Modifier.height(24.dp))}}}}
+@Composable private fun Detail(label:String,value:String){Row(Modifier.fillMaxWidth()){Text(label,Modifier.width(110.dp),style=MaterialTheme.typography.labelMedium);Text(value,Modifier.weight(1f))}}
