@@ -30,4 +30,19 @@ interface ScanDao {
 
     @Query("DELETE FROM scan_entries WHERE scanId = :scanId")
     suspend fun deleteEntries(scanId: String)
+
+    @Upsert
+    suspend fun upsertCleanupOperation(operation: CleanupOperationEntity)
+
+    @Upsert
+    suspend fun upsertQuarantineEntries(entries: List<QuarantineEntryEntity>)
+
+    @Query("SELECT * FROM cleanup_operations ORDER BY createdAt DESC LIMIT :limit")
+    fun observeCleanupOperations(limit: Int): Flow<List<CleanupOperationEntity>>
+
+    @Query("SELECT * FROM quarantine_entries WHERE operationId = :operationId ORDER BY originalPath")
+    suspend fun quarantineEntries(operationId: String): List<QuarantineEntryEntity>
+
+    @Query("SELECT * FROM cleanup_operations WHERE id = :operationId LIMIT 1")
+    suspend fun cleanupOperation(operationId: String): CleanupOperationEntity?
 }

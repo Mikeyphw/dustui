@@ -13,8 +13,8 @@ android {
         applicationId = "com.mikeyphw.dustui"
         minSdk = 26
         targetSdk = 36
-        versionCode = 300
-        versionName = "0.3.0-phase3"
+        versionCode = 400
+        versionName = "0.4.0-phase4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
@@ -68,6 +68,8 @@ android {
     lint {
         abortOnError = true
         checkReleaseBuilds = true
+        warningsAsErrors = true
+        lintConfig = file("lint.xml")
     }
 }
 

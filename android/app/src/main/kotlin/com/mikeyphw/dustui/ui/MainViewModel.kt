@@ -9,6 +9,8 @@ import com.mikeyphw.dustui.data.ScanRepository
 import com.mikeyphw.dustui.data.ScanSessionEntity
 import com.mikeyphw.dustui.data.AppStorageSummary
 import com.mikeyphw.dustui.data.SnapshotDelta
+import com.mikeyphw.dustui.data.CleanupReview
+import com.mikeyphw.dustui.data.CleanupOperationEntity
 import com.mikeyphw.dustui.scan.ScanPreset
 import com.mikeyphw.dustui.scan.ScanRequest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,6 +37,12 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     private val _filter = MutableStateFlow(ExplorerFilter())
     val filter: StateFlow<ExplorerFilter> = _filter
     private val _selectedEntry = MutableStateFlow<ScanEntryEntity?>(null)
+    private val _selectedPaths = MutableStateFlow<Set<String>>(emptySet())
+    val selectedPaths: StateFlow<Set<String>> = _selectedPaths
+    private val _cleanupReview = MutableStateFlow<CleanupReview?>(null)
+    val cleanupReview: StateFlow<CleanupReview?> = _cleanupReview
+    val cleanupOperations: StateFlow<List<CleanupOperationEntity>> = repository.observeCleanupOperations()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val selectedEntry: StateFlow<ScanEntryEntity?> = _selectedEntry
     private val _selectedIntelligence = MutableStateFlow<EntryIntelligence?>(null)
     val selectedIntelligence: StateFlow<EntryIntelligence?> = _selectedIntelligence
@@ -97,6 +105,34 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     fun cycleSort() { _filter.value = _filter.value.copy(sort = EntrySort.entries[(filter.value.sort.ordinal + 1) % EntrySort.entries.size]) }
     fun cycleType() { _filter.value = _filter.value.copy(type = EntryTypeFilter.entries[(filter.value.type.ordinal + 1) % EntryTypeFilter.entries.size]) }
     fun exportCsv() { latestSession.value?.let { repository.exportCsv(it, allEntries.value) } }
+
+    fun toggleSelection(entry: ScanEntryEntity) {
+        _selectedPaths.value = _selectedPaths.value.toMutableSet().also { if (!it.add(entry.path)) it.remove(entry.path) }
+        _cleanupReview.value = null
+    }
+    fun clearSelection() { _selectedPaths.value = emptySet(); _cleanupReview.value = null }
+    fun reviewCleanup() {
+        val session = latestSession.value ?: return
+        val chosen = allEntries.value.filter { it.path in _selectedPaths.value }
+        if (chosen.isEmpty()) { _message.value = "Select at least one entry"; return }
+        viewModelScope.launch { _cleanupReview.value = repository.reviewCleanup(session, chosen) }
+    }
+    fun dismissCleanupReview() { _cleanupReview.value = null }
+    fun executeCleanup() {
+        val session = latestSession.value ?: return
+        val chosen = allEntries.value.filter { it.path in _selectedPaths.value }
+        viewModelScope.launch {
+            val result = repository.executeCleanup(session, chosen)
+            _message.value = if (result.ok) "Quarantined ${formatBytes(result.reclaimedBytes)}" else result.message ?: "Cleanup failed"
+            if (result.ok) { clearSelection(); refreshInsights() }
+        }
+    }
+    fun restoreCleanup(operationId: String) {
+        viewModelScope.launch {
+            val result = repository.restoreCleanup(operationId)
+            _message.value = if (result.ok) "Cleanup restored" else result.message ?: "Restore failed"
+        }
+    }
     fun refreshInsights(scanId: String? = latestSession.value?.id) {
         if (scanId == null) return
         viewModelScope.launch {

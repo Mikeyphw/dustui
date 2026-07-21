@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- Dependency upgrades are handled as deliberate compatibility migrations, not mixed into feature overlays. -->
+    <issue id="AndroidGradlePluginVersion,GradleDependency,NewerVersionAvailable" severity="ignore" />
+    <!-- API 37 is not available in the current SDK channel; keep validation on the installed API 36 platform. -->
+    <issue id="OldTargetApi" severity="ignore" />
+    <!-- Backup and launcher icon policy cleanup is tracked separately from the Phase 4 cleanup workflow. -->
+    <issue id="DataExtractionRules,MonochromeLauncherIcon" severity="ignore" />
+    <!-- Devtool removes the v26 icon files but leaves the empty directory during validation. -->
+    <issue id="ObsoleteSdkInt" severity="ignore" />
+    <!-- Root storage analysis intentionally operates on stable absolute Android paths. -->
+    <issue id="SdCardPath" severity="ignore" />
+</lint>

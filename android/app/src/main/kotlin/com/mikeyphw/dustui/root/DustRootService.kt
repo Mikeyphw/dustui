@@ -4,8 +4,15 @@ import android.content.Intent
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
 import com.mikeyphw.dustui.scan.ScanRequest
+import com.mikeyphw.dustui.data.CleanupSafetyPolicy
 import com.topjohnwu.superuser.ipc.RootService
+import org.json.JSONArray
 import org.json.JSONObject
+import java.nio.file.Files
+import java.nio.file.LinkOption
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
@@ -85,6 +92,68 @@ class DustRootService : RootService() {
             if (accepted) active.status.set("cancelling")
             return state(active).let { raw -> JSONObject(raw).put("cancelAccepted", accepted).toString() }
         }
+
+
+        override fun reviewCleanup(planJson: String): String = reviewPlan(planJson).toString()
+
+        override fun executeCleanup(planJson: String): String {
+            val review = reviewPlan(planJson)
+            if (!review.optBoolean("ok") || review.getJSONArray("blocked").length() > 0) return review.toString()
+            val plan = JSONObject(planJson)
+            val operationId = plan.getString("id")
+            val rootPath = Paths.get(plan.getString("rootPath")).normalize()
+            val vault = rootPath.resolve(".dustui-quarantine").resolve(operationId)
+            val moved = JSONArray()
+            var reclaimed = 0L
+            return runCatching {
+                Files.createDirectories(vault)
+                val manifestPath = vault.resolve("manifest.json")
+                val manifest = JSONObject().put("operationId", operationId).put("rootPath", rootPath.toString()).put("entries", moved)
+                Files.write(manifestPath, manifest.toString().toByteArray(Charsets.UTF_8))
+                val accepted = review.getJSONArray("accepted")
+                for (index in 0 until accepted.length()) {
+                    val item = accepted.getJSONObject(index)
+                    val source = Paths.get(item.getString("path")).normalize()
+                    val relative = rootPath.relativize(source)
+                    val destination = vault.resolve("payload").resolve(relative).normalize()
+                    require(destination.startsWith(vault)) { "Unsafe quarantine destination" }
+                    Files.createDirectories(destination.parent)
+                    runCatching { Files.move(source, destination, StandardCopyOption.ATOMIC_MOVE) }
+                        .recoverCatching { Files.move(source, destination) }
+                        .getOrThrow()
+                    val size = item.optLong("sizeBytes")
+                    reclaimed += size
+                    moved.put(JSONObject().put("id", "$operationId:$index").put("operationId", operationId).put("originalPath", source.toString()).put("quarantinePath", destination.toString()).put("sizeBytes", size))
+                    Files.write(manifestPath, manifest.toString().toByteArray(Charsets.UTF_8))
+                }
+                JSONObject().put("ok", true).put("operationId", operationId).put("status", "QUARANTINED").put("reclaimedBytes", reclaimed).put("entries", moved)
+            }.getOrElse { error ->
+                JSONObject().put("ok", false).put("operationId", operationId).put("status", if (moved.length() > 0) "PARTIAL" else "FAILED").put("reclaimedBytes", reclaimed).put("entries", moved).put("message", error.message ?: error.javaClass.simpleName)
+            }.toString()
+        }
+
+        override fun restoreCleanup(operationId: String, rootPath: String): String {
+            val root = Paths.get(rootPath).normalize()
+            val vault = root.resolve(".dustui-quarantine").resolve(operationId)
+            return runCatching {
+                val manifest = JSONObject(String(Files.readAllBytes(vault.resolve("manifest.json")), Charsets.UTF_8))
+                val entries = manifest.getJSONArray("entries")
+                var restored = 0
+                for (index in entries.length() - 1 downTo 0) {
+                    val entry = entries.getJSONObject(index)
+                    val source = Paths.get(entry.getString("quarantinePath")).normalize()
+                    val destination = Paths.get(entry.getString("originalPath")).normalize()
+                    require(destination.startsWith(root) && !Files.exists(destination, LinkOption.NOFOLLOW_LINKS)) { "Restore destination is unsafe or already exists: $destination" }
+                    Files.createDirectories(destination.parent)
+                    runCatching { Files.move(source, destination, StandardCopyOption.ATOMIC_MOVE) }
+                        .recoverCatching { Files.move(source, destination) }
+                        .getOrThrow()
+                    restored++
+                }
+                Files.deleteIfExists(vault.resolve("manifest.json"))
+                JSONObject().put("ok", true).put("operationId", operationId).put("status", "RESTORED").put("restoredCount", restored)
+            }.getOrElse { error -> JSONObject().put("ok", false).put("operationId", operationId).put("status", "RESTORE_FAILED").put("message", error.message ?: error.javaClass.simpleName) }.toString()
+        }
     }
 
     override fun onBind(intent: Intent): IBinder = binder
@@ -94,6 +163,33 @@ class DustRootService : RootService() {
         executor.shutdownNow()
         super.onDestroy()
     }
+
+    private fun reviewPlan(planJson: String): JSONObject = runCatching {
+        val plan = JSONObject(planJson)
+        val operationId = plan.getString("id")
+        val rootPath = plan.getString("rootPath")
+        val accepted = JSONArray()
+        val blocked = JSONArray()
+        val items = plan.getJSONArray("items")
+        var plannedBytes = 0L
+        for (index in 0 until items.length()) {
+            val item = items.getJSONObject(index)
+            val rawPath = item.getString("path")
+            val path = Paths.get(rawPath).normalize()
+            val policyReason = CleanupSafetyPolicy.blockReason(path.toString(), rootPath)
+            val reason = when {
+                policyReason != null -> policyReason
+                !Files.exists(path, LinkOption.NOFOLLOW_LINKS) -> "Path no longer exists"
+                Files.isSymbolicLink(path) -> "Symbolic links cannot be quarantined"
+                else -> null
+            }
+            if (reason == null) {
+                accepted.put(JSONObject().put("path", path.toString()).put("sizeBytes", item.optLong("sizeBytes")))
+                plannedBytes += item.optLong("sizeBytes")
+            } else blocked.put(JSONObject().put("path", rawPath).put("reason", reason))
+        }
+        JSONObject().put("ok", true).put("operationId", operationId).put("accepted", accepted).put("blocked", blocked).put("plannedBytes", plannedBytes)
+    }.getOrElse { error -> JSONObject().put("ok", false).put("operationId", "").put("accepted", JSONArray()).put("blocked", JSONArray()).put("plannedBytes", 0).put("message", error.message ?: error.javaClass.simpleName) }
 
     private fun state(scan: ActiveScan): String = JSONObject()
         .put("ok", true)

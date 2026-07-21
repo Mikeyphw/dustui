@@ -8,4 +8,7 @@ interface IDustRootService {
     String startScan(String requestJson, in ParcelFileDescriptor output);
     String scanState(String scanId);
     String cancelScan(String scanId);
+    String reviewCleanup(String planJson);
+    String executeCleanup(String planJson);
+    String restoreCleanup(String operationId, String rootPath);
 }

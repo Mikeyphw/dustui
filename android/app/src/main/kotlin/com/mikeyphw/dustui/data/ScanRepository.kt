@@ -15,6 +15,7 @@ class ScanRepository(
 ) {
     private val intelligence = EntryIntelligenceResolver(context)
     fun observeLatestSession(): Flow<ScanSessionEntity?> = dao.observeLatestSession()
+    fun observeCleanupOperations(): Flow<List<CleanupOperationEntity>> = dao.observeCleanupOperations(50)
     fun observeEntries(scanId: String): Flow<List<ScanEntryEntity>> = dao.observeEntries(scanId, 10_000)
     suspend fun rootAvailable(): Boolean = rootClient.rootAvailable()
     fun inspect(path: String): EntryIntelligence = intelligence.resolve(path)
@@ -29,6 +30,30 @@ class ScanRepository(
     suspend fun appSummaries(scanId: String): List<AppStorageSummary> {
         val installed = context.packageManager.getInstalledPackages(0).mapTo(mutableSetOf()) { it.packageName }
         return SnapshotAnalyzer.appSummaries(dao.entriesOnce(scanId), installed)
+    }
+
+
+    suspend fun reviewCleanup(session: ScanSessionEntity, entries: List<ScanEntryEntity>): CleanupReview {
+        val plan = CleanupPlan(scanId = session.id, rootPath = session.rootPath, items = entries.map { CleanupPlanItem(it.path, it.sizeBytes) }).normalized()
+        return rootClient.reviewCleanup(plan)
+    }
+
+    suspend fun executeCleanup(session: ScanSessionEntity, entries: List<ScanEntryEntity>): CleanupExecutionResult {
+        val plan = CleanupPlan(scanId = session.id, rootPath = session.rootPath, items = entries.map { CleanupPlanItem(it.path, it.sizeBytes) }).normalized()
+        val createdAt = System.currentTimeMillis()
+        val plannedBytes = plan.items.sumOf { it.sizeBytes }
+        dao.upsertCleanupOperation(CleanupOperationEntity(plan.id, session.id, session.rootPath, "EXECUTING", plan.items.size, plannedBytes, createdAt = createdAt))
+        val result = runCatching { rootClient.executeCleanup(plan) }.getOrElse { CleanupExecutionResult(false, plan.id, "FAILED", 0, emptyList(), it.message) }
+        if (result.entries.isNotEmpty()) dao.upsertQuarantineEntries(result.entries)
+        dao.upsertCleanupOperation(CleanupOperationEntity(plan.id, session.id, session.rootPath, result.status, plan.items.size, plannedBytes, result.reclaimedBytes, createdAt = createdAt, completedAt = System.currentTimeMillis(), message = result.message))
+        return result
+    }
+
+    suspend fun restoreCleanup(operationId: String): CleanupExecutionResult {
+        val operation = dao.cleanupOperation(operationId) ?: return CleanupExecutionResult(false, operationId, "RESTORE_FAILED", 0, emptyList(), "Unknown cleanup operation")
+        val result = runCatching { rootClient.restoreCleanup(operationId, operation.rootPath) }.getOrElse { CleanupExecutionResult(false, operationId, "RESTORE_FAILED", 0, emptyList(), it.message) }
+        dao.upsertCleanupOperation(operation.copy(status = result.status, completedAt = System.currentTimeMillis(), message = result.message))
+        return result
     }
 
     fun schedule(request: ScanRequest, hours: Long) = ScheduledScanWorker.set(context, request, hours)

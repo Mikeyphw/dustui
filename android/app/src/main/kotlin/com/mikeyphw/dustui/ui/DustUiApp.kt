@@ -19,6 +19,8 @@ import com.mikeyphw.dustui.data.ScanEntryEntity
 import com.mikeyphw.dustui.data.ScanSessionEntity
 import com.mikeyphw.dustui.data.AppStorageSummary
 import com.mikeyphw.dustui.data.SnapshotDelta
+import com.mikeyphw.dustui.data.CleanupReview
+import com.mikeyphw.dustui.data.CleanupOperationEntity
 import com.mikeyphw.dustui.scan.ScanStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,6 +37,9 @@ fun DustUiApp(viewModel: MainViewModel) {
         val message by viewModel.message.collectAsStateWithLifecycle()
         val apps by viewModel.appSummaries.collectAsStateWithLifecycle()
         val delta by viewModel.snapshotDelta.collectAsStateWithLifecycle()
+        val selectedPaths by viewModel.selectedPaths.collectAsStateWithLifecycle()
+        val cleanupReview by viewModel.cleanupReview.collectAsStateWithLifecycle()
+        val cleanupOperations by viewModel.cleanupOperations.collectAsStateWithLifecycle()
         val snackbar = remember { SnackbarHostState() }
         var showLauncher by remember { mutableStateOf(session == null) }
         var showInsights by remember { mutableStateOf(false) }
@@ -50,7 +55,7 @@ fun DustUiApp(viewModel: MainViewModel) {
         ) { padding ->
             val currentSession = session
             if (showInsights && currentSession != null) {
-                Insights(Modifier.padding(padding), delta, apps, viewModel)
+                Insights(Modifier.padding(padding), delta, apps, cleanupOperations, viewModel)
             } else if (showLauncher || currentSession == null) {
                 ScanLauncher(Modifier.padding(padding), rootState, currentSession, viewModel) { showLauncher = false }
             } else {
@@ -60,11 +65,13 @@ fun DustUiApp(viewModel: MainViewModel) {
                     path ?: currentSession.rootPath,
                     entries,
                     filter,
+                    selectedPaths,
                     viewModel,
                 )
             }
         }
         if (selected != null) EntryDetails(selected!!, intelligence, viewModel::closeDetails)
+        if (cleanupReview != null) CleanupReviewSheet(cleanupReview!!, viewModel::dismissCleanupReview, viewModel::executeCleanup)
     }
 }
 
@@ -86,7 +93,7 @@ private fun ScanLauncher(modifier: Modifier, root: RootUiState, session: ScanSes
 }
 
 @Composable
-private fun Explorer(modifier: Modifier, session: ScanSessionEntity, path: String, entries: List<ScanEntryEntity>, filter: ExplorerFilter, vm: MainViewModel) {
+private fun Explorer(modifier: Modifier, session: ScanSessionEntity, path: String, entries: List<ScanEntryEntity>, filter: ExplorerFilter, selectedPaths: Set<String>, vm: MainViewModel) {
     Column(modifier.fillMaxSize()) {
         SessionCard(session, vm::cancelActive)
         Row(Modifier.fillMaxWidth().padding(horizontal=12.dp), verticalAlignment=Alignment.CenterVertically) {
@@ -94,13 +101,20 @@ private fun Explorer(modifier: Modifier, session: ScanSessionEntity, path: Strin
         }
         Breadcrumbs(session.rootPath,path,vm::navigate)
         OutlinedTextField(filter.query,vm::updateQuery,Modifier.fillMaxWidth().padding(horizontal=12.dp),label={Text("Search this directory")},singleLine=true)
-        Row(Modifier.fillMaxWidth().padding(12.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.fillMaxWidth().padding(12.dp),horizontalArrangement=Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             AssistChip(onClick=vm::cycleSort,label={Text("Sort: ${filter.sort.name.lowercase()}")})
             AssistChip(onClick=vm::cycleType,label={Text("Type: ${filter.type.name.lowercase()}")})
-            Text("${entries.size} entries",Modifier.align(Alignment.CenterVertically),style=MaterialTheme.typography.labelMedium)
+            Text("${entries.size} entries",style=MaterialTheme.typography.labelMedium)
+        }
+        if (selectedPaths.isNotEmpty()) {
+            Surface(tonalElevation = 2.dp) { Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("${selectedPaths.size} selected", Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+                TextButton(onClick = vm::clearSelection) { Text("Clear") }
+                Button(onClick = vm::reviewCleanup) { Text("Review cleanup") }
+            } }
         }
         LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(horizontal=12.dp,vertical=4.dp)) {
-            items(entries,key={it.path}) { e -> EntryRow(e,session.totalBytes,{vm.open(e)},{vm.select(e)}) }
+            items(entries,key={it.path}) { e -> EntryRow(e,session.totalBytes,e.path in selectedPaths,{vm.open(e)},{vm.select(e)},{vm.toggleSelection(e)}) }
             if(entries.isEmpty()) item { Box(Modifier.fillParentMaxSize(),contentAlignment=Alignment.Center){Text("No matching direct children")}}
         }
     }
@@ -116,10 +130,10 @@ private fun Breadcrumbs(root:String,path:String,navigate:(String)->Unit){
 }
 
 @Composable
-private fun EntryRow(entry:ScanEntryEntity,total:Long,open:()->Unit,details:()->Unit){
+private fun EntryRow(entry:ScanEntryEntity,total:Long,selected:Boolean,open:()->Unit,details:()->Unit,toggle:()->Unit){
     val share=if(total>0)(entry.sizeBytes.toFloat()/total).coerceIn(0f,1f) else 0f
     Column(Modifier.fillMaxWidth().clickable(onClick=open).padding(vertical=9.dp)){
-        Row(verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text((if(entry.isDirectory)"▸ " else "")+entry.name,maxLines=1,overflow=TextOverflow.Ellipsis,fontWeight=FontWeight.Medium);Text(entry.path,maxLines=1,overflow=TextOverflow.Ellipsis,fontFamily=FontFamily.Monospace,style=MaterialTheme.typography.labelSmall)};TextButton(onClick=details){Text("Info")};Text(formatBytes(entry.sizeBytes),fontWeight=FontWeight.SemiBold)}
+        Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=selected,onCheckedChange={toggle()});Column(Modifier.weight(1f)){Text((if(entry.isDirectory)"▸ " else "")+entry.name,maxLines=1,overflow=TextOverflow.Ellipsis,fontWeight=FontWeight.Medium);Text(entry.path,maxLines=1,overflow=TextOverflow.Ellipsis,fontFamily=FontFamily.Monospace,style=MaterialTheme.typography.labelSmall)};TextButton(onClick=details){Text("Info")};Text(formatBytes(entry.sizeBytes),fontWeight=FontWeight.SemiBold)}
         LinearProgressIndicator({share},Modifier.fillMaxWidth());Text("${entry.fileCount} files · ${formatTimestamp(entry.modifiedAt)}",style=MaterialTheme.typography.labelSmall)
     }
 }
@@ -134,7 +148,7 @@ private fun EntryDetails(entry:ScanEntryEntity,info:EntryIntelligence?,close:()-
 
 
 @Composable
-private fun Insights(modifier: Modifier, delta: SnapshotDelta?, apps: List<AppStorageSummary>, vm: MainViewModel) {
+private fun Insights(modifier: Modifier, delta: SnapshotDelta?, apps: List<AppStorageSummary>, operations: List<CleanupOperationEntity>, vm: MainViewModel) {
     LazyColumn(modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Text("Storage snapshots", style = MaterialTheme.typography.headlineSmall)
@@ -164,6 +178,29 @@ private fun Insights(modifier: Modifier, delta: SnapshotDelta?, apps: List<AppSt
             }
         }
         if (apps.isEmpty()) item { Text("No package-owned paths were identified in this scan.") }
+        item { Text("Cleanup activity", style = MaterialTheme.typography.titleMedium) }
+        items(operations, key = { it.id }) { operation ->
+            Card(Modifier.fillMaxWidth()) { Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) { Text(operation.status.lowercase().replaceFirstChar { it.uppercase() }, fontWeight = FontWeight.SemiBold); Text("${operation.selectedCount} items · ${formatBytes(operation.reclaimedBytes)}", style = MaterialTheme.typography.bodySmall) }
+                if (operation.status in setOf("QUARANTINED", "PARTIAL")) OutlinedButton(onClick = { vm.restoreCleanup(operation.id) }) { Text("Restore") }
+            } }
+        }
+        if (operations.isEmpty()) item { Text("No cleanup operations yet.") }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CleanupReviewSheet(review: CleanupReview, close: () -> Unit, execute: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = close) {
+        LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            item { Text("Review cleanup", style = MaterialTheme.typography.headlineSmall); Text("Quarantine is reversible. Permanent deletion is not part of Phase 4.") }
+            item { Detail("Accepted", review.accepted.size.toString()); Detail("Blocked", review.blocked.size.toString()); Detail("Planned", formatBytes(review.plannedBytes)) }
+            if (review.blocked.isNotEmpty()) item { Text("Blocked items", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold) }
+            items(review.blocked, key = { it.path }) { blocked -> ListItem(headlineContent = { Text(blocked.path, maxLines = 1, overflow = TextOverflow.Ellipsis) }, supportingContent = { Text(blocked.reason) }) }
+            review.message?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
+            item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedButton(onClick = close, Modifier.weight(1f)) { Text("Cancel") }; Button(onClick = execute, enabled = review.executable, modifier = Modifier.weight(1f)) { Text("Quarantine") } }; Spacer(Modifier.height(24.dp)) }
+        }
     }
 }
 

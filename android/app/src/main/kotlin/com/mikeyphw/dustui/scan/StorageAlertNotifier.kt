@@ -8,6 +8,7 @@ import androidx.core.app.NotificationCompat
 import com.mikeyphw.dustui.R
 import com.mikeyphw.dustui.data.ScanDao
 import kotlin.math.abs
+import java.util.Locale
 
 object StorageAlertNotifier {
     private const val CHANNEL = "dustui_storage_alerts"
@@ -40,6 +41,6 @@ object StorageAlertNotifier {
 
     private fun formatDelta(bytes: Long): String {
         val mib = abs(bytes) / (1024 * 1024)
-        return if (mib >= 1024) String.format("%.1f GiB", mib / 1024.0) else "$mib MiB"
+        return if (mib >= 1024) String.format(Locale.US, "%.1f GiB", mib / 1024.0) else "$mib MiB"
     }
 }

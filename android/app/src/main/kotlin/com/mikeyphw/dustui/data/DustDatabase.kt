@@ -4,8 +4,8 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [ScanSessionEntity::class, ScanEntryEntity::class],
-    version = 1,
+    entities = [ScanSessionEntity::class, ScanEntryEntity::class, CleanupOperationEntity::class, QuarantineEntryEntity::class],
+    version = 2,
     exportSchema = false,
 )
 abstract class DustDatabase : RoomDatabase() {

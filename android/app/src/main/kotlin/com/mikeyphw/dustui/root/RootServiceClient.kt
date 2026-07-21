@@ -7,6 +7,12 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
 import com.mikeyphw.dustui.scan.ScanRequest
+import com.mikeyphw.dustui.data.CleanupBlockedItem
+import com.mikeyphw.dustui.data.CleanupExecutionResult
+import com.mikeyphw.dustui.data.CleanupPlan
+import com.mikeyphw.dustui.data.CleanupPlanItem
+import com.mikeyphw.dustui.data.CleanupReview
+import com.mikeyphw.dustui.data.QuarantineEntryEntity
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ipc.RootService
 import kotlinx.coroutines.Dispatchers
@@ -36,6 +42,41 @@ class RootServiceClient(private val context: Context) {
 
     suspend fun scanState(scanId: String): RootScanState = call { it.scanState(scanId) }
     suspend fun cancelScan(scanId: String): RootScanState = call { it.cancelScan(scanId) }
+
+    suspend fun reviewCleanup(plan: CleanupPlan): CleanupReview = cleanupCall { it.reviewCleanup(plan.normalized().toJson()) }.let(::parseReview)
+    suspend fun executeCleanup(plan: CleanupPlan): CleanupExecutionResult = cleanupCall(60_000L) { it.executeCleanup(plan.normalized().toJson()) }.let(::parseExecution)
+    suspend fun restoreCleanup(operationId: String, rootPath: String): CleanupExecutionResult = cleanupCall(60_000L) { it.restoreCleanup(operationId, rootPath) }.let(::parseExecution)
+
+    private suspend fun cleanupCall(timeoutMs: Long = CALL_TIMEOUT_MS, block: (IDustRootService) -> String): String = withTimeout(timeoutMs) {
+        callMutex.withLock { withContext(Dispatchers.IO) { block(service()) } }
+    }
+
+    private fun parseReview(raw: String): CleanupReview {
+        val json = JSONObject(raw)
+        val accepted = json.optJSONArray("accepted")
+        val blocked = json.optJSONArray("blocked")
+        return CleanupReview(
+            ok = json.optBoolean("ok"),
+            operationId = json.optString("operationId"),
+            accepted = buildList { if (accepted != null) for (index in 0 until accepted.length()) accepted.getJSONObject(index).let { add(CleanupPlanItem(it.getString("path"), it.optLong("sizeBytes"))) } },
+            blocked = buildList { if (blocked != null) for (index in 0 until blocked.length()) blocked.getJSONObject(index).let { add(CleanupBlockedItem(it.getString("path"), it.getString("reason"))) } },
+            plannedBytes = json.optLong("plannedBytes"),
+            message = json.optString("message").takeIf(String::isNotBlank),
+        )
+    }
+
+    private fun parseExecution(raw: String): CleanupExecutionResult {
+        val json = JSONObject(raw)
+        val entries = json.optJSONArray("entries")
+        return CleanupExecutionResult(
+            ok = json.optBoolean("ok"),
+            operationId = json.optString("operationId"),
+            status = json.optString("status"),
+            reclaimedBytes = json.optLong("reclaimedBytes"),
+            entries = buildList { if (entries != null) for (index in 0 until entries.length()) entries.getJSONObject(index).let { add(QuarantineEntryEntity(it.getString("id"), it.getString("operationId"), it.getString("originalPath"), it.getString("quarantinePath"), it.optLong("sizeBytes"))) } },
+            message = json.optString("message").takeIf(String::isNotBlank),
+        )
+    }
 
     private suspend fun call(
         timeoutMs: Long = CALL_TIMEOUT_MS,

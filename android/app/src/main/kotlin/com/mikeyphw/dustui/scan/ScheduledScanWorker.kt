@@ -1,6 +1,7 @@
 package com.mikeyphw.dustui.scan
 
 import android.content.Context
+import androidx.core.content.edit
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
@@ -23,7 +24,7 @@ class ScheduledScanWorker(context: Context, params: WorkerParameters) : Coroutin
         private const val KEY_REQUEST = "request"
         private const val WORK = "dustui_periodic_scan"
         fun set(context: Context, request: ScanRequest, hours: Long) {
-            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_REQUEST, request.toJson()).apply()
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit { putString(KEY_REQUEST, request.toJson()) }
             val work = PeriodicWorkRequestBuilder<ScheduledScanWorker>(hours.coerceAtLeast(15), TimeUnit.HOURS).build()
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORK, ExistingPeriodicWorkPolicy.UPDATE, work)
         }
