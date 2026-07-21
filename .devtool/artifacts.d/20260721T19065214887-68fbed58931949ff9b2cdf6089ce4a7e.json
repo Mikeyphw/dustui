@@ -1,0 +1,124 @@
+{
+  "applied_at": "2026-07-21T19:06:52.148874Z",
+  "artifact": "/home/mike/Downloads/dustui_phase12_13_uiux_overlay.zip",
+  "artifact_name": "dustui_phase12_13_uiux_overlay.zip",
+  "type": "overlay",
+  "sha256": "890bdd26da29bd48da8eda5f0d9e8f52726af78f9e12062a612d9808fab83d68",
+  "status": "rolled-back",
+  "validation_status": "failed",
+  "commit_message": "Implement DustUI Phase 12 and 13 UI UX polish",
+  "commit_hash": "",
+  "file_count": 9,
+  "change_counts": {
+    "add": 5,
+    "modify": 4
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI UI/UX Typography and Explorer Polish",
+    "description": "Implements Phase 12 and Phase 13 with a real destination model, responsive navigation, Android typography components, split workbenches, and explorer/treemap polish.",
+    "target": "dustui_android",
+    "workspaces": [
+      {
+        "name": "dustui_android",
+        "root": "android",
+        "target": "dustui_android"
+      }
+    ],
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "UI_UX_CONTRACT.md",
+          "action": "add",
+          "sha256": "7ac7ffe190fa690b58709934333300a89513a060e04f496cc215f97138add6b8",
+          "size": 2137
+        },
+        {
+          "path": "android/app/build.gradle.kts",
+          "action": "modify",
+          "sha256": "d2de2c5a2b7796f4120e45346550d205859136fda7c36707a85716f1899e9d1c",
+          "size": 2790,
+          "source_sha256": "597ff7d3c68311e03b910844170412ab1bca79fac882b8af4c6803793a7dcde2"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "action": "modify",
+          "sha256": "da29a850373e2f04034c4bcdb3f675f879016b5ad6156123a8ccff6ae16ffbeb",
+          "size": 46461,
+          "source_sha256": "83471af07aee83c25b2cc406a5026ca84db1da57437a923959687b312605270d"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Theme.kt",
+          "action": "modify",
+          "sha256": "f33ca5a49068dcf99a70e2ea9f8c39adcec494e5d10f4bc9f978b2d0c4489bbc",
+          "size": 1478,
+          "source_sha256": "88e6b2974620024854bee0c27a8928f9fc725dc2daaa008462586bd9bd1ade7d"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Treemap.kt",
+          "action": "modify",
+          "sha256": "5cc06e6ac04c6399c5e8ce02e9e5875692c697702222efeaf7a7e8c13f7c89cf",
+          "size": 4996,
+          "source_sha256": "e19fb258ddb261e5b8f83e34c179ad83d190caa1a061eeda1925361cfaec08be"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+          "action": "add",
+          "sha256": "a535c35248ba1606f382fe6691669ddc3abce0c78e031c176782e701aceb6f0a",
+          "size": 5512
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+          "action": "add",
+          "sha256": "93ed3364deb3dd0042a32ad17531f37cc37cdc6e24f1370ea2460e81ffc2159a",
+          "size": 1344
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+          "action": "add",
+          "sha256": "e76b3cce7d4e673d0e2297b6ed95b294331048f5d4baf86a82bff774b5ac4bcf",
+          "size": 1409
+        },
+        {
+          "path": "docs/ANDROID_UI_UX_PHASE12_13.md",
+          "action": "add",
+          "sha256": "7ac7ffe190fa690b58709934333300a89513a060e04f496cc215f97138add6b8",
+          "size": 2137
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Implement DustUI Phase 12 and 13 UI UX polish"
+      }
+    },
+    "validation": {
+      "required": true,
+      "restore": true,
+      "build": true,
+      "test": true,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "build": "pass",
+        "tests": "pass",
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "577c0bca7648f7edd2012bc7bfd2a4b3ae36fb2d81dd2e0d051bbccfceca4fa3",
+        "timeout_seconds": 180
+      }
+    }
+  },
+  "history_id": "68fbed58931949ff9b2cdf6089ce4a7e"
+}
