@@ -22,6 +22,12 @@ interface ScanDao {
     @Query("SELECT * FROM scan_entries WHERE scanId = :scanId ORDER BY sizeBytes DESC, path COLLATE NOCASE LIMIT :limit")
     fun observeEntries(scanId: String, limit: Int): Flow<List<ScanEntryEntity>>
 
+    @Query("SELECT * FROM scan_sessions WHERE status = 'COMPLETED' ORDER BY completedAt DESC LIMIT :limit")
+    suspend fun completedSessions(limit: Int): List<ScanSessionEntity>
+
+    @Query("SELECT * FROM scan_entries WHERE scanId = :scanId ORDER BY sizeBytes DESC")
+    suspend fun entriesOnce(scanId: String): List<ScanEntryEntity>
+
     @Query("DELETE FROM scan_entries WHERE scanId = :scanId")
     suspend fun deleteEntries(scanId: String)
 }

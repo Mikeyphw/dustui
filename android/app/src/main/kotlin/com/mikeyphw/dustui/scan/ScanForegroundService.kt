@@ -217,6 +217,7 @@ class ScanForegroundService : Service() {
             runCatching { dao.upsertSession(session) }
         } finally {
             activeScanId = null
+            if (session.status == ScanStatus.COMPLETED.name) runCatching { StorageAlertNotifier.evaluate(this@ScanForegroundService, dao) }
             if (foregroundStarted) finishNotification(session)
             stopSelf()
         }

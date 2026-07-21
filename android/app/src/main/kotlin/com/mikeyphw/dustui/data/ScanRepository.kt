@@ -2,6 +2,7 @@ package com.mikeyphw.dustui.data
 
 import android.content.Context
 import android.content.Intent
+import com.mikeyphw.dustui.scan.ScheduledScanWorker
 import com.mikeyphw.dustui.root.RootServiceClient
 import com.mikeyphw.dustui.scan.ScanForegroundService
 import com.mikeyphw.dustui.scan.ScanRequest
@@ -17,6 +18,21 @@ class ScanRepository(
     fun observeEntries(scanId: String): Flow<List<ScanEntryEntity>> = dao.observeEntries(scanId, 10_000)
     suspend fun rootAvailable(): Boolean = rootClient.rootAvailable()
     fun inspect(path: String): EntryIntelligence = intelligence.resolve(path)
+
+    suspend fun snapshotDelta(): SnapshotDelta? {
+        val sessions = dao.completedSessions(2)
+        val current = sessions.firstOrNull() ?: return null
+        val previous = sessions.getOrNull(1)
+        return SnapshotAnalyzer.diff(dao.entriesOnce(current.id), previous?.let { dao.entriesOnce(it.id) }.orEmpty(), current.id, previous?.id)
+    }
+
+    suspend fun appSummaries(scanId: String): List<AppStorageSummary> {
+        val installed = context.packageManager.getInstalledPackages(0).mapTo(mutableSetOf()) { it.packageName }
+        return SnapshotAnalyzer.appSummaries(dao.entriesOnce(scanId), installed)
+    }
+
+    fun schedule(request: ScanRequest, hours: Long) = ScheduledScanWorker.set(context, request, hours)
+    fun cancelSchedule() = ScheduledScanWorker.cancel(context)
 
     fun startScan(request: ScanRequest) = ScanForegroundService.start(context, request)
     fun cancelScan(scanId: String) = ScanForegroundService.cancel(context, scanId)

@@ -17,6 +17,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mikeyphw.dustui.data.EntryIntelligence
 import com.mikeyphw.dustui.data.ScanEntryEntity
 import com.mikeyphw.dustui.data.ScanSessionEntity
+import com.mikeyphw.dustui.data.AppStorageSummary
+import com.mikeyphw.dustui.data.SnapshotDelta
 import com.mikeyphw.dustui.scan.ScanStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,19 +33,25 @@ fun DustUiApp(viewModel: MainViewModel) {
         val selected by viewModel.selectedEntry.collectAsStateWithLifecycle()
         val intelligence by viewModel.selectedIntelligence.collectAsStateWithLifecycle()
         val message by viewModel.message.collectAsStateWithLifecycle()
+        val apps by viewModel.appSummaries.collectAsStateWithLifecycle()
+        val delta by viewModel.snapshotDelta.collectAsStateWithLifecycle()
         val snackbar = remember { SnackbarHostState() }
         var showLauncher by remember { mutableStateOf(session == null) }
+        var showInsights by remember { mutableStateOf(false) }
         LaunchedEffect(message) { message?.let { snackbar.showSnackbar(it); viewModel.clearMessage() } }
 
         Scaffold(
             topBar = { TopAppBar(title = { Text("DustUI Root") }, actions = {
-                TextButton(onClick = { showLauncher = !showLauncher }) { Text(if (showLauncher) "Explorer" else "New scan") }
+                TextButton(onClick = { showInsights = !showInsights; if (showInsights) { showLauncher = false; viewModel.refreshInsights() } }) { Text(if (showInsights) "Explorer" else "Insights") }
+                TextButton(onClick = { showLauncher = !showLauncher; showInsights = false }) { Text(if (showLauncher) "Explorer" else "New scan") }
                 TextButton(onClick = viewModel::exportCsv, enabled = session != null) { Text("Export") }
             }) },
             snackbarHost = { SnackbarHost(snackbar) },
         ) { padding ->
             val currentSession = session
-            if (showLauncher || currentSession == null) {
+            if (showInsights && currentSession != null) {
+                Insights(Modifier.padding(padding), delta, apps, viewModel)
+            } else if (showLauncher || currentSession == null) {
                 ScanLauncher(Modifier.padding(padding), rootState, currentSession, viewModel) { showLauncher = false }
             } else {
                 Explorer(
@@ -123,3 +131,40 @@ private fun SessionCard(s:ScanSessionEntity,cancel:()->Unit){val running=s.statu
 @Composable
 private fun EntryDetails(entry:ScanEntryEntity,info:EntryIntelligence?,close:()->Unit){ModalBottomSheet(onDismissRequest=close){LazyColumn(Modifier.fillMaxWidth(),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){item{Text(entry.name,style=MaterialTheme.typography.headlineSmall);Text(entry.path,fontFamily=FontFamily.Monospace)};item{Detail("Size",formatBytes(entry.sizeBytes));Detail("Allocated",formatBytes(entry.allocatedBytes));Detail("Type",if(entry.isDirectory)"Directory" else "File");Detail("Files",entry.fileCount.toString());Detail("Modified",formatTimestamp(entry.modifiedAt))};info?.let{item{HorizontalDivider();Text("Android intelligence",style=MaterialTheme.typography.titleMedium);Detail("Category",it.category.label);Detail("Package",it.packageName?:"Not resolved");it.appLabel?.let{l->Detail("App",l)};Detail("Mount",it.mountPoint?:"Unknown");Detail("Filesystem",it.filesystem?:"Unknown");Detail("Mount mode",if(it.readOnly)"Read-only" else "Writable")}};item{Button(onClick=close,Modifier.fillMaxWidth()){Text("Close")};Spacer(Modifier.height(24.dp))}}}}
 @Composable private fun Detail(label:String,value:String){Row(Modifier.fillMaxWidth()){Text(label,Modifier.width(110.dp),style=MaterialTheme.typography.labelMedium);Text(value,Modifier.weight(1f))}}
+
+
+@Composable
+private fun Insights(modifier: Modifier, delta: SnapshotDelta?, apps: List<AppStorageSummary>, vm: MainViewModel) {
+    LazyColumn(modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item {
+            Text("Storage snapshots", style = MaterialTheme.typography.headlineSmall)
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    if (delta == null) Text("Complete two scans of the same scope to compare growth.") else {
+                        Detail("Net change", signedBytes(delta.totalDeltaBytes))
+                        Detail("Added", formatBytes(delta.addedBytes))
+                        Detail("Removed", formatBytes(delta.removedBytes))
+                        Detail("Changed", delta.changedEntries.toString())
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = { vm.scheduleLatest(24) }) { Text("Daily scans") }
+                        OutlinedButton(onClick = vm::cancelSchedule) { Text("Disable") }
+                    }
+                }
+            }
+        }
+        item { Text("Apps by measured footprint", style = MaterialTheme.typography.titleMedium) }
+        items(apps, key = { it.packageName }) { app ->
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Row { Text(app.packageName, Modifier.weight(1f), fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis); Text(formatBytes(app.totalBytes)) }
+                    Text("Private ${formatBytes(app.privateBytes)} · Cache ${formatBytes(app.cacheBytes)} · External ${formatBytes(app.externalBytes)}", style = MaterialTheme.typography.bodySmall)
+                    if (app.orphaned) Text("Possibly orphaned package data", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelMedium)
+                }
+            }
+        }
+        if (apps.isEmpty()) item { Text("No package-owned paths were identified in this scan.") }
+    }
+}
+
+private fun signedBytes(value: Long): String = (if (value > 0) "+" else "") + formatBytes(value)

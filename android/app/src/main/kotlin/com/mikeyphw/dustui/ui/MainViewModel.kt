@@ -7,6 +7,8 @@ import com.mikeyphw.dustui.data.EntryIntelligence
 import com.mikeyphw.dustui.data.ScanEntryEntity
 import com.mikeyphw.dustui.data.ScanRepository
 import com.mikeyphw.dustui.data.ScanSessionEntity
+import com.mikeyphw.dustui.data.AppStorageSummary
+import com.mikeyphw.dustui.data.SnapshotDelta
 import com.mikeyphw.dustui.scan.ScanPreset
 import com.mikeyphw.dustui.scan.ScanRequest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -54,11 +56,18 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     private val _rootState = MutableStateFlow<RootUiState>(RootUiState.Checking)
     val rootState: StateFlow<RootUiState> = _rootState
     private val _message = MutableStateFlow<String?>(null)
+    private val _appSummaries = MutableStateFlow<List<AppStorageSummary>>(emptyList())
+    val appSummaries: StateFlow<List<AppStorageSummary>> = _appSummaries
+    private val _snapshotDelta = MutableStateFlow<SnapshotDelta?>(null)
+    val snapshotDelta: StateFlow<SnapshotDelta?> = _snapshotDelta
     val message: StateFlow<String?> = _message
 
     init {
         refreshRoot()
-        viewModelScope.launch { latestSession.collect { session -> if (_explorerPath.value == null) _explorerPath.value = session?.rootPath } }
+        viewModelScope.launch { latestSession.collect { session ->
+            if (_explorerPath.value == null) _explorerPath.value = session?.rootPath
+            if (session?.status == "COMPLETED") refreshInsights(session.id)
+        } }
     }
 
     fun refreshRoot() {
@@ -88,6 +97,18 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     fun cycleSort() { _filter.value = _filter.value.copy(sort = EntrySort.entries[(filter.value.sort.ordinal + 1) % EntrySort.entries.size]) }
     fun cycleType() { _filter.value = _filter.value.copy(type = EntryTypeFilter.entries[(filter.value.type.ordinal + 1) % EntryTypeFilter.entries.size]) }
     fun exportCsv() { latestSession.value?.let { repository.exportCsv(it, allEntries.value) } }
+    fun refreshInsights(scanId: String? = latestSession.value?.id) {
+        if (scanId == null) return
+        viewModelScope.launch {
+            _appSummaries.value = repository.appSummaries(scanId)
+            _snapshotDelta.value = repository.snapshotDelta()
+        }
+    }
+    fun scheduleLatest(hours: Long = 24) {
+        val request = latestSession.value?.optionsJson?.let { runCatching { ScanRequest.fromJson(it) }.getOrNull() }
+        if (request == null) _message.value = "Run a scan before scheduling" else { repository.schedule(request, hours); _message.value = "Scheduled every $hours hours" }
+    }
+    fun cancelSchedule() { repository.cancelSchedule(); _message.value = "Scheduled scans disabled" }
     fun clearMessage() { _message.value = null }
 }
 

@@ -13,8 +13,8 @@ android {
         applicationId = "com.mikeyphw.dustui"
         minSdk = 26
         targetSdk = 36
-        versionCode = 200
-        versionName = "0.2.0-phase2"
+        versionCode = 300
+        versionName = "0.3.0-phase3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
@@ -91,6 +91,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.work.runtime)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.libsu.core)
     implementation(libs.libsu.service)
