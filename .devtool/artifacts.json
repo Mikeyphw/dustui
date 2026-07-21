@@ -4784,6 +4784,118 @@
         }
       },
       "history_id": "a267c3ca12c0416082dc177757804cfd"
+    },
+    {
+      "applied_at": "2026-07-21T16:06:07.335379Z",
+      "artifact": "/home/mike/Downloads/dustui_root_phase5_overlay.zip",
+      "artifact_name": "dustui_root_phase5_overlay.zip",
+      "type": "overlay",
+      "sha256": "94ffb23b9c8270763d0c816311dbb7c6f29f18e839c3afb16458647b2767be71",
+      "status": "ok",
+      "validation_status": "ok",
+      "commit_message": "Implement DustUI Android Phase 5 advanced analysis",
+      "commit_hash": "",
+      "file_count": 7,
+      "change_counts": {
+        "add": 3,
+        "modify": 4
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Root Android Phase 5",
+        "description": "Adds advanced read-only storage analysis: duplicate candidates, large old files, root module footprints, mount topology, orphaned data, and file type/age distributions.",
+        "target": "dustui_android",
+        "workspaces": [
+          {
+            "name": "dustui_android",
+            "root": "android",
+            "target": "dustui_android"
+          }
+        ],
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "android/app/build.gradle.kts",
+              "action": "modify",
+              "sha256": "e37564d41a3ce75a634614a20b16999961f1abf3bf551f39a925337791af6766",
+              "size": 2737,
+              "source_sha256": "b41c335b2829006235a99a228f7c023fbab247d03b25d925c4f552ce82f45185"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+              "action": "modify",
+              "sha256": "9f9e90ca66800243c602167884a7d3d72e1592eae5169c535430652d215eb324",
+              "size": 4751,
+              "source_sha256": "f288e48d1b8bc10fc29ee220f8d51481e77eb63a686cf5a04ff9c4d22d89715d"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+              "action": "modify",
+              "sha256": "059f75de444ac061370eec176a883f96f2bd507f7e3e1d8ceb0d285ad13ec6eb",
+              "size": 9441,
+              "source_sha256": "8983b148cd60232658df90ff5776202407050640de83ed5b402241a59cf9d818"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "940f78c46fa10f880284544d690178851a1ba9e0de4aa3cd29370ec8f774c1db",
+              "size": 20390,
+              "source_sha256": "629fd02297f13f4ef5d3bda22ed76e6e4ae35ddcbdb4e381676c80bf15c4d5b0"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/AdvancedAnalysis.kt",
+              "action": "add",
+              "sha256": "4479e16a76dc7cdfe7778f3cbb1d1b3052a042b57f78f0f07dea3e6f16d8de86",
+              "size": 5701
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/AdvancedStorageAnalyzerTest.kt",
+              "action": "add",
+              "sha256": "1daa17c280cd789f0e67e7210d5d50c1284981b8bf20fe06bba0dfa9f202a49a",
+              "size": 1460
+            },
+            {
+              "path": "docs/ANDROID_PHASE5.md",
+              "action": "add",
+              "sha256": "be513d25881f4816cd19e40934211f36fcfb1883d5e8976f57e2de4c45e7b4f5",
+              "size": 586
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Implement DustUI Android Phase 5 advanced analysis"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "76bc4b473e2198f78f1b9e4268ccddfb716cf68855385bf4b41821f2004d4f05",
+            "timeout_seconds": 120
+          }
+        }
+      },
+      "history_id": "c0aeabe819cc46fd9ffb94219781000e"
     }
   ]
 }

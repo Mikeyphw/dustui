@@ -11,6 +11,7 @@ import com.mikeyphw.dustui.data.AppStorageSummary
 import com.mikeyphw.dustui.data.SnapshotDelta
 import com.mikeyphw.dustui.data.CleanupReview
 import com.mikeyphw.dustui.data.CleanupOperationEntity
+import com.mikeyphw.dustui.data.AdvancedStorageReport
 import com.mikeyphw.dustui.scan.ScanPreset
 import com.mikeyphw.dustui.scan.ScanRequest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -68,6 +69,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val appSummaries: StateFlow<List<AppStorageSummary>> = _appSummaries
     private val _snapshotDelta = MutableStateFlow<SnapshotDelta?>(null)
     val snapshotDelta: StateFlow<SnapshotDelta?> = _snapshotDelta
+    private val _advancedReport = MutableStateFlow<AdvancedStorageReport?>(null)
+    val advancedReport: StateFlow<AdvancedStorageReport?> = _advancedReport
     val message: StateFlow<String?> = _message
 
     init {
@@ -138,6 +141,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         viewModelScope.launch {
             _appSummaries.value = repository.appSummaries(scanId)
             _snapshotDelta.value = repository.snapshotDelta()
+            _advancedReport.value = repository.advancedAnalysis(scanId)
         }
     }
     fun scheduleLatest(hours: Long = 24) {

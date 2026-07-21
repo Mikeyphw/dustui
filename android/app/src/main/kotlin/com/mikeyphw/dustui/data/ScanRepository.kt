@@ -32,6 +32,11 @@ class ScanRepository(
         return SnapshotAnalyzer.appSummaries(dao.entriesOnce(scanId), installed)
     }
 
+    suspend fun advancedAnalysis(scanId: String): AdvancedStorageReport {
+        val installed = context.packageManager.getInstalledPackages(0).mapTo(mutableSetOf()) { it.packageName }
+        return AdvancedStorageAnalyzer.analyze(dao.entriesOnce(scanId), installed, readMountTable())
+    }
+
 
     suspend fun reviewCleanup(session: ScanSessionEntity, entries: List<ScanEntryEntity>): CleanupReview {
         val plan = CleanupPlan(scanId = session.id, rootPath = session.rootPath, items = entries.map { CleanupPlanItem(it.path, it.sizeBytes) }).normalized()
