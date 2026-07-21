@@ -13,8 +13,8 @@ android {
         applicationId = "com.mikeyphw.dustui"
         minSdk = 26
         targetSdk = 36
-        versionCode = 600
-        versionName = "0.6.0-phase6"
+        versionCode = 700
+        versionName = "0.7.0-phase7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
@@ -65,6 +65,7 @@ android {
         unitTests.isIncludeAndroidResources = true
     }
 
+
     lint {
         abortOnError = true
         checkReleaseBuilds = true
@@ -79,6 +80,7 @@ kotlin {
 
 ksp {
     arg("room.generateKotlin", "true")
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {

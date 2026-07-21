@@ -43,20 +43,24 @@ int main() {
     fs::create_hard_link(root / "a" / "b" / "payload.bin", root / "a" / "b" / "payload.link");
     std::ofstream(root / ".hidden" / "tiny") << "abc";
     std::ofstream(root / "skip.tmp") << "ignored";
+    fs::create_directories(root / "stress");
+    for (int index = 0; index < 2048; ++index) {
+        std::ofstream(root / "stress" / ("entry-" + std::to_string(index))) << "x";
+    }
 
     FILE* output = tmpfile();
     assert(output != nullptr);
 
     auto shallow = contextFor(output, root, 1, false, {"*.tmp"});
     const Totals shallowTotals = scanPath(shallow, root.string(), 0);
-    assert(shallow.scannedItems == 2);  // root and a; excluded siblings do not muddy the depth contract.
+    assert(shallow.scannedItems == 3);  // root, a, and stress; excluded siblings do not muddy the depth contract.
     assert(shallowTotals.files == 0);
 
     auto complete = contextFor(output, root, -1, true, {"*.tmp"});
     complete.sameFilesystem = false;  // OverlayFS may report distinct devices for files and directories.
     const Totals completeTotals = scanPath(complete, root.string(), 0);
-    assert(completeTotals.files == 2);  // hard link is deduplicated; excluded file is absent.
-    assert(complete.scannedBytes == 13);
+    assert(completeTotals.files == 2050);  // hard link is deduplicated; excluded file is absent.
+    assert(complete.scannedBytes == 2061);
     assert(complete.warningCount == 0);
 
     auto cancelled = contextFor(output, root, -1, true);

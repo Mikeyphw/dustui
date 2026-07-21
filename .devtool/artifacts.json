@@ -5170,6 +5170,124 @@
         }
       },
       "history_id": "07416a00d0d04c39ac295e872c12e633"
+    },
+    {
+      "applied_at": "2026-07-21T16:54:48.722091Z",
+      "artifact": "/home/mike/Downloads/dustui_root_phase7_overlay.zip",
+      "artifact_name": "dustui_root_phase7_overlay.zip",
+      "type": "overlay",
+      "sha256": "abc8f3a8b8d87593f0ffab46f47df1769c296bd3952afa7591afb53205381b88",
+      "status": "ok",
+      "validation_status": "ok",
+      "commit_message": "Implement DustUI Android Phase 7 release gate",
+      "commit_hash": "",
+      "file_count": 8,
+      "change_counts": {
+        "add": 4,
+        "modify": 4
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Root Android Phase 7",
+        "description": "Adds release-gate security tests, native scanner stress coverage, Room schema export, minified release packaging, and reproducible release evidence.",
+        "target": "dustui_android",
+        "workspaces": [
+          {
+            "name": "dustui_android",
+            "root": "android",
+            "target": "dustui_android"
+          }
+        ],
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "android/app/build.gradle.kts",
+              "action": "modify",
+              "sha256": "c77211b087b4f523c35dce788c9741a38c7c0a5c9423992d56e5e641c9a8ed59",
+              "size": 2792,
+              "source_sha256": "175bc2dcc050201235296e5b26bce230c2bd8b5244d44d6b6f785c8142477af1"
+            },
+            {
+              "path": "android/app/proguard-rules.pro",
+              "action": "modify",
+              "sha256": "32476346c1510526ab16caaf2a2e71489ccdab54f4d423a7573d0e30b1823d42",
+              "size": 427,
+              "source_sha256": "e8f54c7fb790a24105531fa2848cc5d8220852c76c4b50ec40cd91d85dfdd497"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DustDatabase.kt",
+              "action": "modify",
+              "sha256": "ee5617ae96f01d48b69c8e4cf163fb8065acbd1c1666b4e6d655f4b94d85effd",
+              "size": 367,
+              "source_sha256": "f373f51f0ade88f5d185033ff2b0a2293840c21fc475a7155e1ad7912cb66422"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ReleaseGatePolicy.kt",
+              "action": "add",
+              "sha256": "58c12490bf2afd94deb7edb0feeb9752574fa959d6335021eeccbea4ebb64732",
+              "size": 1808
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleaseGatePolicyTest.kt",
+              "action": "add",
+              "sha256": "5cb964ddfcb484e9bcbbda6b60eba295e9070cfc7420aa82bc3336713c856772",
+              "size": 1381
+            },
+            {
+              "path": "android/app/src/testNative/scanner_test.cpp",
+              "action": "modify",
+              "sha256": "1b3ad1c160d736dfc0f1dd66b3eca4ff90d9ac59509c0bf8d94e57c9cf50b13d",
+              "size": 2561,
+              "source_sha256": "7af6707955c559271d911ca68ed2149fc78c8101fbe04de2ce492d05ddeeed55"
+            },
+            {
+              "path": "android/scripts/release-gate.sh",
+              "action": "add",
+              "sha256": "0a94de3bd4ee571d32de5c849803490b976260cf33b54737096a178150b0b1f4",
+              "size": 516
+            },
+            {
+              "path": "docs/ANDROID_PHASE7.md",
+              "action": "add",
+              "sha256": "d2b5f68ca2b88c190a654b08a4481201f8f847e4abe08e3d3f39358413bd9b8b",
+              "size": 750
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Implement DustUI Android Phase 7 release gate"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "ea889f45c8ca87f468b27d0a42dcabd18e0982be9c57e9466cbfd8979f0964e6",
+            "timeout_seconds": 180
+          }
+        }
+      },
+      "history_id": "108f947f26154d92a12bd34ad203df5f"
     }
   ]
 }

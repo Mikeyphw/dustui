@@ -6,7 +6,7 @@ import androidx.room.RoomDatabase
 @Database(
     entities = [ScanSessionEntity::class, ScanEntryEntity::class, CleanupOperationEntity::class, QuarantineEntryEntity::class],
     version = 2,
-    exportSchema = false,
+    exportSchema = true,
 )
 abstract class DustDatabase : RoomDatabase() {
     abstract fun scanDao(): ScanDao
