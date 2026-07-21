@@ -27,6 +27,7 @@ import com.mikeyphw.dustui.data.SnapshotPoint
 import com.mikeyphw.dustui.data.VisualAnalytics
 import com.mikeyphw.dustui.data.DeviceCertificationReport
 import com.mikeyphw.dustui.data.CertificationStatus
+import com.mikeyphw.dustui.data.RootPathInspection
 import com.mikeyphw.dustui.scan.ScanStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,6 +41,7 @@ fun DustUiApp(viewModel: MainViewModel) {
         val filter by viewModel.filter.collectAsStateWithLifecycle()
         val selected by viewModel.selectedEntry.collectAsStateWithLifecycle()
         val intelligence by viewModel.selectedIntelligence.collectAsStateWithLifecycle()
+        val rootInspection by viewModel.selectedRootInspection.collectAsStateWithLifecycle()
         val message by viewModel.message.collectAsStateWithLifecycle()
         val apps by viewModel.appSummaries.collectAsStateWithLifecycle()
         val delta by viewModel.snapshotDelta.collectAsStateWithLifecycle()
@@ -84,7 +86,7 @@ fun DustUiApp(viewModel: MainViewModel) {
                 )
             }
         }
-        if (selected != null) EntryDetails(selected!!, intelligence, viewModel::closeDetails)
+        if (selected != null) EntryDetails(selected!!, intelligence, rootInspection, viewModel::closeDetails)
         if (cleanupReview != null) CleanupReviewSheet(cleanupReview!!, viewModel::dismissCleanupReview, viewModel::executeCleanup)
     }
 }
@@ -108,6 +110,7 @@ private fun ScanLauncher(modifier: Modifier, root: RootUiState, session: ScanSes
 
 @Composable
 private fun Explorer(modifier: Modifier, session: ScanSessionEntity, path: String, entries: List<ScanEntryEntity>, filter: ExplorerFilter, selectedPaths: Set<String>, vm: MainViewModel) {
+    var treemapMode by remember(path) { mutableStateOf(false) }
     Column(modifier.fillMaxSize()) {
         SessionCard(session, vm::cancelActive)
         Row(Modifier.fillMaxWidth().padding(horizontal=12.dp), verticalAlignment=Alignment.CenterVertically) {
@@ -129,6 +132,7 @@ private fun Explorer(modifier: Modifier, session: ScanSessionEntity, path: Strin
         Row(Modifier.fillMaxWidth().padding(12.dp),horizontalArrangement=Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             AssistChip(onClick=vm::cycleSort,label={Text("Sort: ${filter.sort.name.lowercase()}")})
             AssistChip(onClick=vm::cycleType,label={Text("Type: ${filter.type.name.lowercase()}")})
+            AssistChip(onClick={ treemapMode = !treemapMode },label={Text(if (treemapMode) "List" else "Treemap")})
             filter.category?.let { category -> AssistChip(onClick = { vm.filterCategory(null) }, label = { Text(category) }, trailingIcon = { Text("×") }) }
             Text("${entries.size} entries",style=MaterialTheme.typography.labelMedium)
         }
@@ -139,9 +143,19 @@ private fun Explorer(modifier: Modifier, session: ScanSessionEntity, path: Strin
                 Button(onClick = vm::reviewCleanup) { Text("Review cleanup") }
             } }
         }
-        LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(horizontal=12.dp,vertical=4.dp)) {
-            items(entries,key={it.path}) { e -> EntryRow(e,session.totalBytes,e.path in selectedPaths,{vm.open(e)},{vm.select(e)},{vm.toggleSelection(e)}) }
-            if(entries.isEmpty()) item { Box(Modifier.fillParentMaxSize(),contentAlignment=Alignment.Center){Text("No matching direct children")}}
+        if (treemapMode && entries.isNotEmpty()) {
+            Card(Modifier.fillMaxWidth().padding(12.dp)) {
+                Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Treemap · tap a block to open", style = MaterialTheme.typography.titleSmall)
+                    StorageTreemap(entries, vm::open)
+                    Text("Showing up to 80 largest entries. Exact sizes remain available in list and details.", style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        } else {
+            LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(horizontal=12.dp,vertical=4.dp)) {
+                items(entries,key={it.path}) { e -> EntryRow(e,session.totalBytes,e.path in selectedPaths,{vm.open(e)},{vm.select(e)},{vm.toggleSelection(e)}) }
+                if(entries.isEmpty()) item { Box(Modifier.fillParentMaxSize(),contentAlignment=Alignment.Center){Text("No matching direct children")}}
+            }
         }
     }
 }
@@ -169,7 +183,25 @@ private fun SessionCard(s:ScanSessionEntity,cancel:()->Unit){val running=s.statu
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EntryDetails(entry:ScanEntryEntity,info:EntryIntelligence?,close:()->Unit){ModalBottomSheet(onDismissRequest=close){LazyColumn(Modifier.fillMaxWidth(),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){item{Text(entry.name,style=MaterialTheme.typography.headlineSmall);Text(entry.path,fontFamily=FontFamily.Monospace)};item{Detail("Size",formatBytes(entry.sizeBytes));Detail("Allocated",formatBytes(entry.allocatedBytes));Detail("Type",if(entry.isDirectory)"Directory" else "File");Detail("Files",entry.fileCount.toString());Detail("Modified",formatTimestamp(entry.modifiedAt))};info?.let{item{HorizontalDivider();Text("Android intelligence",style=MaterialTheme.typography.titleMedium);Detail("Category",it.category.label);Detail("Package",it.packageName?:"Not resolved");it.appLabel?.let{l->Detail("App",l)};Detail("Mount",it.mountPoint?:"Unknown");Detail("Filesystem",it.filesystem?:"Unknown");Detail("Mount mode",if(it.readOnly)"Read-only" else "Writable")}};item{Button(onClick=close,Modifier.fillMaxWidth()){Text("Close")};Spacer(Modifier.height(24.dp))}}}}
+private fun EntryDetails(entry: ScanEntryEntity, info: EntryIntelligence?, root: RootPathInspection?, close: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = close) {
+        LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            item { Text(entry.name, style = MaterialTheme.typography.headlineSmall); Text(entry.path, fontFamily = FontFamily.Monospace) }
+            item { Detail("Size", formatBytes(entry.sizeBytes)); Detail("Allocated", formatBytes(entry.allocatedBytes)); Detail("Type", if (entry.isDirectory) "Directory" else "File"); Detail("Files", entry.fileCount.toString()); Detail("Modified", formatTimestamp(entry.modifiedAt)) }
+            info?.let { item { HorizontalDivider(); Text("Android intelligence", style = MaterialTheme.typography.titleMedium); Detail("Category", it.category.label); Detail("Package", it.packageName ?: "Not resolved"); it.appLabel?.let { label -> Detail("App", label) }; Detail("Mount", it.mountPoint ?: "Unknown"); Detail("Filesystem", it.filesystem ?: "Unknown"); Detail("Mount mode", if (it.readOnly) "Read-only" else "Writable") } }
+            item {
+                HorizontalDivider(); Text("Root metadata", style = MaterialTheme.typography.titleMedium)
+                if (root == null) { LinearProgressIndicator(Modifier.fillMaxWidth()) } else if (!root.ok) { Text(root.message ?: "Unable to inspect path") } else {
+                    Detail("Permissions", root.permissions); Detail("UID / GID", "${root.uid} / ${root.gid}"); Detail("Inode", root.inode.toString()); Detail("SELinux", root.selinuxContext ?: "Unavailable")
+                    root.symlinkTarget?.let { Detail("Symlink", it) }; Detail("Mount source", root.mountSource ?: "Unknown")
+                    if (root.bindMount || root.overlayMount) Detail("Mount flags", listOfNotNull("bind".takeIf { root.bindMount }, "overlay".takeIf { root.overlayMount }).joinToString())
+                }
+            }
+            root?.preview?.let { preview -> item { HorizontalDivider(); Text("Inline preview${if (root.previewTruncated) " · truncated" else ""}", style = MaterialTheme.typography.titleMedium); Surface(tonalElevation = 1.dp) { Text(preview, Modifier.fillMaxWidth().padding(12.dp), fontFamily = FontFamily.Monospace, maxLines = 24, overflow = TextOverflow.Ellipsis) } } }
+            item { Button(onClick = close, Modifier.fillMaxWidth()) { Text("Close") }; Spacer(Modifier.height(24.dp)) }
+        }
+    }
+}
 @Composable private fun Detail(label:String,value:String){Row(Modifier.fillMaxWidth()){Text(label,Modifier.width(110.dp),style=MaterialTheme.typography.labelMedium);Text(value,Modifier.weight(1f))}}
 
 

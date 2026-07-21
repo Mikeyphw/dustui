@@ -16,6 +16,7 @@ import com.mikeyphw.dustui.data.DuplicateVerificationReport
 import com.mikeyphw.dustui.data.AdvancedStorageAnalyzer
 import com.mikeyphw.dustui.data.SnapshotPoint
 import com.mikeyphw.dustui.data.DeviceCertificationReport
+import com.mikeyphw.dustui.data.RootPathInspection
 import com.mikeyphw.dustui.scan.ScanPreset
 import com.mikeyphw.dustui.scan.ScanRequest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -51,6 +52,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val selectedEntry: StateFlow<ScanEntryEntity?> = _selectedEntry
     private val _selectedIntelligence = MutableStateFlow<EntryIntelligence?>(null)
     val selectedIntelligence: StateFlow<EntryIntelligence?> = _selectedIntelligence
+    private val _selectedRootInspection = MutableStateFlow<RootPathInspection?>(null)
+    val selectedRootInspection: StateFlow<RootPathInspection?> = _selectedRootInspection
 
     val entries: StateFlow<List<ScanEntryEntity>> = combine(allEntries, latestSession, _explorerPath, _filter) { entries, session, path, filter ->
         val current = path ?: session?.rootPath
@@ -106,8 +109,13 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     fun open(entry: ScanEntryEntity) {
         if (entry.isDirectory) _explorerPath.value = entry.path else select(entry)
     }
-    fun select(entry: ScanEntryEntity) { _selectedEntry.value = entry; _selectedIntelligence.value = repository.inspect(entry.path) }
-    fun closeDetails() { _selectedEntry.value = null; _selectedIntelligence.value = null }
+    fun select(entry: ScanEntryEntity) {
+        _selectedEntry.value = entry
+        _selectedIntelligence.value = repository.inspect(entry.path)
+        _selectedRootInspection.value = null
+        viewModelScope.launch { _selectedRootInspection.value = repository.inspectRootPath(entry.path) }
+    }
+    fun closeDetails() { _selectedEntry.value = null; _selectedIntelligence.value = null; _selectedRootInspection.value = null }
     fun navigate(path: String) { _explorerPath.value = path }
     fun up() {
         val root = latestSession.value?.rootPath ?: return

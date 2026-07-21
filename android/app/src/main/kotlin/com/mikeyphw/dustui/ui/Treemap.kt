@@ -1,0 +1,73 @@
+package com.mikeyphw.dustui.ui
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.mikeyphw.dustui.data.ScanEntryEntity
+import com.mikeyphw.dustui.data.TreemapInput
+import com.mikeyphw.dustui.data.TreemapLayout
+
+@Composable
+fun StorageTreemap(entries: List<ScanEntryEntity>, onOpen: (ScanEntryEntity) -> Unit, modifier: Modifier = Modifier) {
+    val shown = entries.filter { it.sizeBytes > 0 }.sortedByDescending { it.sizeBytes }.take(80)
+    val border = MaterialTheme.colorScheme.surface
+    val palette = listOf(
+        MaterialTheme.colorScheme.primary,
+        MaterialTheme.colorScheme.secondary,
+        MaterialTheme.colorScheme.tertiary,
+        MaterialTheme.colorScheme.primaryContainer,
+        MaterialTheme.colorScheme.secondaryContainer,
+        MaterialTheme.colorScheme.tertiaryContainer,
+    )
+    val description = shown.take(12).joinToString(prefix = "Storage treemap. ", separator = ". ") { "${it.name}, ${formatBytes(it.sizeBytes)}" }
+    Column(modifier.semantics { contentDescription = description }, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        BoxWithConstraints(Modifier.fillMaxWidth().height(300.dp)) {
+            val density = LocalDensity.current
+            val widthPx = with(density) { maxWidth.toPx() }
+            val heightPx = with(density) { 300.dp.toPx() }
+            val rects = remember(shown, widthPx, heightPx) { TreemapLayout.layout(shown.map { TreemapInput(it.path, it.sizeBytes) }, widthPx, heightPx) }
+            Canvas(Modifier.matchParentSize().pointerInput(rects, shown) {
+                detectTapGestures { point ->
+                    rects.firstOrNull { point.x in it.left..it.right && point.y in it.top..it.bottom }
+                        ?.let { hit -> shown.firstOrNull { it.path == hit.id }?.let(onOpen) }
+                }
+            }) {
+                rects.forEachIndexed { index, item ->
+                    val rect = Rect(item.left, item.top, item.right, item.bottom)
+                    drawRect(palette[index % palette.size], topLeft = rect.topLeft, size = rect.size)
+                    drawRect(border, topLeft = rect.topLeft, size = rect.size, style = Stroke(width = 2f))
+                }
+            }
+        }
+        shown.take(8).forEachIndexed { index, entry ->
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(12.dp).background(palette[index % palette.size]))
+                Text(entry.name, Modifier.weight(1f).padding(horizontal = 8.dp), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(formatBytes(entry.sizeBytes), style = MaterialTheme.typography.labelMedium)
+            }
+        }
+    }
+}

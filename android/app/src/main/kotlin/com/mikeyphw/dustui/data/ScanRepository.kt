@@ -45,6 +45,7 @@ class ScanRepository(
     }
 
     fun inspect(path: String): EntryIntelligence = intelligence.resolve(path)
+    suspend fun inspectRootPath(path: String): RootPathInspection = rootClient.inspectPath(path)
 
     suspend fun snapshotDelta(): SnapshotDelta? {
         val sessions = dao.completedSessions(2)

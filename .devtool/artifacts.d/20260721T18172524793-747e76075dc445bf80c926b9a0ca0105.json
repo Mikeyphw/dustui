@@ -1,0 +1,145 @@
+{
+  "applied_at": "2026-07-21T18:17:25.247930Z",
+  "artifact": "/home/mike/Downloads/dustui_root_explorer_treemap_overlay.zip",
+  "artifact_name": "dustui_root_explorer_treemap_overlay.zip",
+  "type": "overlay",
+  "sha256": "02e9fa221cf245ba4dbb154ea5fd79ecbaea75af8d725acfc604d21618a92e8c",
+  "status": "ok",
+  "validation_status": "ok",
+  "commit_message": "Implement DustUI root explorer and treemap",
+  "commit_hash": "",
+  "file_count": 12,
+  "change_counts": {
+    "add": 5,
+    "modify": 7
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Root Storage Explorer and Treemap",
+    "description": "Adds live privileged path metadata, bounded inline previews, and an interactive zoomable treemap mode to the root storage explorer.",
+    "target": "dustui_android",
+    "workspaces": [
+      {
+        "name": "dustui_android",
+        "root": "android",
+        "target": "dustui_android"
+      }
+    ],
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "android/app/build.gradle.kts",
+          "action": "modify",
+          "sha256": "ad0a2920c59b83f484ec9ba9aa31d1a23719b8c5248947909f55090740e31873",
+          "size": 2790,
+          "source_sha256": "475e59616e11425d9d029cf98f8d13cdc10a7fbcd4b7bb392c31ebbb0159b524"
+        },
+        {
+          "path": "android/app/src/main/aidl/com/mikeyphw/dustui/root/IDustRootService.aidl",
+          "action": "modify",
+          "sha256": "109555fc49dfac7b61a0e970c7beeafccd4ce8ae2bbd22eac8ca5c954799d026",
+          "size": 622,
+          "source_sha256": "add8404a2dd8e02735cc9c1a7f1bda477a5fb696ef268f616f7a691c8fb35bb5"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+          "action": "modify",
+          "sha256": "0de56e1213ee817a259d33ec42246023971edf4c9b0e7cbbd0be2b8f17d1325d",
+          "size": 7157,
+          "source_sha256": "319b94dfb9c4df0a97f4e42664aef75f6791806f3114df92754dcbb1fc97073f"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt",
+          "action": "modify",
+          "sha256": "0bb3ab6946db10e4afe791d0f3b16abb105887e7ae8f6f54220874dcd4acd8e4",
+          "size": 18583,
+          "source_sha256": "fab0f8da91066ccb635e12456d093ea1a7cf75a9f1cc1758a0cace338b6bd2ea"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/RootServiceClient.kt",
+          "action": "modify",
+          "sha256": "d7deca2ef95070672f7754b3ffd7f788fe8f02dd2eb16d82c97b46f186872528",
+          "size": 10196,
+          "source_sha256": "dd078659d07634511164308601cb1f03aed6091b3995a1209ebe12778f34834a"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "action": "modify",
+          "sha256": "0e633744f773662a36476f14bd3e35cdfbbe4283ef63fa5940f73e727f043e36",
+          "size": 27240,
+          "source_sha256": "14d84d96ef9b5e47de3bf3577c12ba57e2726b6b432ad6d3edeb1e8be6588a53"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+          "action": "modify",
+          "sha256": "27cab48376fb24f246a31b42ca4599629bcbb7cb6c8012eb3d91fdb00abf7e0b",
+          "size": 11718,
+          "source_sha256": "2dc1f4ad620b46fcff7944b1a760f3a8fc0d82d9cc2b6018d25858371389be09"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/RootExplorerModels.kt",
+          "action": "add",
+          "sha256": "6d26b143bfd06599ef524dc3c44e5b789809aab7ff523b14fb22c0ed4c680536",
+          "size": 4133
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Treemap.kt",
+          "action": "add",
+          "sha256": "e19fb258ddb261e5b8f83e34c179ad83d190caa1a061eeda1925361cfaec08be",
+          "size": 3892
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootExplorerModelsTest.kt",
+          "action": "add",
+          "sha256": "4b84ae819a335e62d2eb3482865ef291eeea99f93cefec97f3faae4ece199ebc",
+          "size": 699
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/TreemapLayoutTest.kt",
+          "action": "add",
+          "sha256": "ac25785448d860f00b64439f13401b22925cdd769ce06694659c361606b075ef",
+          "size": 831
+        },
+        {
+          "path": "docs/ANDROID_ROOT_EXPLORER_TREEMAP.md",
+          "action": "add",
+          "sha256": "48e31a0a3f442719a0e52af2bf52033a943ac73f82988c42ec56ed4d4017fad2",
+          "size": 1088
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Implement DustUI root explorer and treemap"
+      }
+    },
+    "validation": {
+      "required": true,
+      "restore": true,
+      "build": true,
+      "test": true,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "build": "pass",
+        "tests": "pass",
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "076b3b85347ee71ae19c76682297c8b8669a7eab7622ebfeb319605ee98da86b",
+        "timeout_seconds": 180
+      }
+    }
+  },
+  "history_id": "747e76075dc445bf80c926b9a0ca0105"
+}

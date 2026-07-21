@@ -15,6 +15,7 @@ import com.mikeyphw.dustui.data.CleanupReview
 import com.mikeyphw.dustui.data.QuarantineEntryEntity
 import com.mikeyphw.dustui.data.DuplicateVerificationReport
 import com.mikeyphw.dustui.data.VerifiedDuplicateGroup
+import com.mikeyphw.dustui.data.RootPathInspection
 import org.json.JSONArray
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ipc.RootService
@@ -72,6 +73,8 @@ class RootServiceClient(private val context: Context) {
             message = json.optString("message").takeIf(String::isNotBlank),
         )
     }
+
+    suspend fun inspectPath(path: String, previewBytes: Int = 16 * 1024): RootPathInspection = cleanupCall { it.inspectPath(path, previewBytes) }.let(RootPathInspection::fromJson)
 
     suspend fun reviewCleanup(plan: CleanupPlan): CleanupReview = cleanupCall { it.reviewCleanup(plan.normalized().toJson()) }.let(::parseReview)
     suspend fun executeCleanup(plan: CleanupPlan): CleanupExecutionResult = cleanupCall(60_000L) { it.executeCleanup(plan.normalized().toJson()) }.let(::parseExecution)

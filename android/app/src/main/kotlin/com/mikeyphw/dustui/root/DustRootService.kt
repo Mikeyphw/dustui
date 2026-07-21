@@ -3,6 +3,7 @@ package com.mikeyphw.dustui.root
 import android.content.Intent
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
+import android.system.Os
 import com.mikeyphw.dustui.scan.ScanRequest
 import com.mikeyphw.dustui.data.CleanupSafetyPolicy
 import com.topjohnwu.superuser.ipc.RootService
@@ -169,6 +170,61 @@ class DustRootService : RootService() {
             JSONObject().put("ok", true).put("checkedFiles", checked).put("skippedFiles", skipped).put("groups", verified)
         }.getOrElse { error -> JSONObject().put("ok", false).put("checkedFiles", 0).put("skippedFiles", 0).put("groups", JSONArray()).put("message", error.message ?: error.javaClass.simpleName) }.toString()
 
+        override fun inspectPath(path: String, previewBytes: Int): String = runCatching {
+            val target = Paths.get(path).normalize()
+            require(target.isAbsolute) { "Path must be absolute" }
+            val stat = Os.lstat(target.toString())
+            val symbolic = Files.isSymbolicLink(target)
+            val type = when {
+                symbolic -> "symlink"
+                Files.isDirectory(target, LinkOption.NOFOLLOW_LINKS) -> "directory"
+                Files.isRegularFile(target, LinkOption.NOFOLLOW_LINKS) -> "file"
+                else -> "special"
+            }
+            val mount = mountFor(target.toString())
+            val previewLimit = previewBytes.coerceIn(0, 32 * 1024)
+            var preview: String? = null
+            var truncated = false
+            if (type == "file" && previewLimit > 0) {
+                val size = stat.st_size
+                val bytes = Files.newInputStream(target).use { input ->
+                    val buffer = ByteArray(previewLimit + 1)
+                    var offset = 0
+                    while (offset < buffer.size) {
+                        val read = input.read(buffer, offset, buffer.size - offset)
+                        if (read < 0) break
+                        offset += read
+                    }
+                    buffer.copyOf(offset)
+                }
+                truncated = size > previewLimit || bytes.size > previewLimit
+                val owned = bytes.copyOf(minOf(bytes.size, previewLimit))
+                val binary = owned.take(1024).any { it == 0.toByte() }
+                preview = if (binary) "Binary file. Preview unavailable." else owned.toString(Charsets.UTF_8)
+            }
+            JSONObject()
+                .put("ok", true)
+                .put("path", target.toString())
+                .put("type", type)
+                .put("sizeBytes", stat.st_size)
+                .put("inode", stat.st_ino)
+                .put("uid", stat.st_uid)
+                .put("gid", stat.st_gid)
+                .put("mode", stat.st_mode)
+                .put("permissions", modeString(stat.st_mode))
+                .put("selinuxContext", runCatching { Os.getxattr(target.toString(), "security.selinux").toString(Charsets.UTF_8).trimEnd('\u0000') }.getOrNull())
+                .put("symlinkTarget", if (symbolic) runCatching { Os.readlink(target.toString()) }.getOrNull() else null)
+                .put("mountPoint", mount?.getString("mountPoint"))
+                .put("filesystem", mount?.getString("filesystem"))
+                .put("mountSource", mount?.getString("source"))
+                .put("bindMount", mount?.optBoolean("bind") ?: false)
+                .put("overlayMount", mount?.optBoolean("overlay") ?: false)
+                .put("readOnly", mount?.optBoolean("readOnly") ?: false)
+                .put("preview", preview)
+                .put("previewTruncated", truncated)
+                .toString()
+        }.getOrElse { error -> failure(error.message ?: error.javaClass.simpleName) }
+
         override fun restoreCleanup(operationId: String, rootPath: String): String {
             val root = Paths.get(rootPath).normalize()
             val vault = root.resolve(".dustui-quarantine").resolve(operationId)
@@ -268,6 +324,30 @@ class DustRootService : RootService() {
         val completedAt = AtomicReference<Long?>(null)
         val startedAt = System.currentTimeMillis()
         @Volatile var future: java.util.concurrent.Future<*>? = null
+    }
+
+    private fun mountFor(path: String): JSONObject? = runCatching {
+        File("/proc/mounts").readLines().mapNotNull { line ->
+            val parts = line.split(' ')
+            if (parts.size < 4) null else JSONObject()
+                .put("source", parts[0])
+                .put("mountPoint", parts[1].replace("\\040", " "))
+                .put("filesystem", parts[2])
+                .put("options", parts[3])
+        }.filter { path == it.getString("mountPoint") || path.startsWith(it.getString("mountPoint").trimEnd('/') + "/") }
+            .maxByOrNull { it.getString("mountPoint").length }
+            ?.also { mount ->
+                val options = mount.getString("options").split(',')
+                mount.put("readOnly", "ro" in options)
+                mount.put("bind", "bind" in options || "rbind" in options)
+                mount.put("overlay", mount.getString("filesystem") == "overlay")
+            }
+    }.getOrNull()
+
+    private fun modeString(mode: Int): String {
+        val masks = intArrayOf(256, 128, 64, 32, 16, 8, 4, 2, 1)
+        val chars = charArrayOf('r','w','x','r','w','x','r','w','x')
+        return masks.indices.joinToString("") { if (mode and masks[it] != 0) chars[it].toString() else "-" }
     }
 
     private companion object {
