@@ -40,6 +40,17 @@ class RootServiceClient(private val context: Context) {
         withTimeoutOrNull(ROOT_TIMEOUT_MS) { runCatching { Shell.getShell().isRoot }.getOrDefault(false) } ?: false
     }
 
+    suspend fun serviceInfo(): RootServiceInfo = cleanupCall { it.serviceInfo() }.let { raw ->
+        val json = JSONObject(raw)
+        RootServiceInfo(
+            ok = json.optBoolean("ok"),
+            uid = json.optInt("uid", -1),
+            scanner = json.optString("scanner"),
+            backend = json.optString("backend", "Unknown"),
+            selinuxEnforcing = if (json.has("selinuxEnforcing") && !json.isNull("selinuxEnforcing")) json.getBoolean("selinuxEnforcing") else null,
+        )
+    }
+
     suspend fun startScan(request: ScanRequest, output: ParcelFileDescriptor): RootScanState =
         call(START_TIMEOUT_MS) { it.startScan(request.toJson(), output) }
 
@@ -151,6 +162,14 @@ class RootServiceClient(private val context: Context) {
             }
         }
     }
+
+    data class RootServiceInfo(
+        val ok: Boolean,
+        val uid: Int,
+        val scanner: String,
+        val backend: String,
+        val selinuxEnforcing: Boolean?,
+    )
 
     data class RootScanState(
         val ok: Boolean,

@@ -13,8 +13,8 @@ android {
         applicationId = "com.mikeyphw.dustui"
         minSdk = 26
         targetSdk = 36
-        versionCode = 810
-        versionName = "0.8.1-phase8b"
+        versionCode = 900
+        versionName = "0.9.0-rc1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {

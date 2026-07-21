@@ -1,0 +1,139 @@
+{
+  "applied_at": "2026-07-21T18:04:04.281953Z",
+  "artifact": "/home/mike/Downloads/dustui_root_phase9_overlay.zip",
+  "artifact_name": "dustui_root_phase9_overlay.zip",
+  "type": "overlay",
+  "sha256": "7cb2deca5a5fcbc05f7a1096ea066cef267ad8dadd051c0435212dcd2aa0995e",
+  "status": "ok",
+  "validation_status": "ok",
+  "commit_message": "Implement DustUI Android Phase 9 device certification",
+  "commit_hash": "",
+  "file_count": 11,
+  "change_counts": {
+    "add": 4,
+    "modify": 7
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Root Android Phase 9",
+    "description": "Adds real-device root certification checks, backend evidence, release-candidate diagnostics, and repeatable ADB smoke-test collection.",
+    "target": "dustui_android",
+    "workspaces": [
+      {
+        "name": "dustui_android",
+        "root": "android",
+        "target": "dustui_android"
+      }
+    ],
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "android/app/build.gradle.kts",
+          "action": "modify",
+          "sha256": "475e59616e11425d9d029cf98f8d13cdc10a7fbcd4b7bb392c31ebbb0159b524",
+          "size": 2789,
+          "source_sha256": "15a8bb87c307c1f73ee1c67a55fb7522e8498b5d68059e33c3d1a3f91b1ab911"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DeviceCertification.kt",
+          "action": "add",
+          "sha256": "5f931d17438d4bf6c8fd1f57b7b2829cebbf84df10f83f6038bcca61206e52de",
+          "size": 2888
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+          "action": "modify",
+          "sha256": "319b94dfb9c4df0a97f4e42664aef75f6791806f3114df92754dcbb1fc97073f",
+          "size": 7060,
+          "source_sha256": "ba09684e6486c8c7119e0ba997e378a6571bdfed3ed3791ccbd580e631e7dbe5"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt",
+          "action": "modify",
+          "sha256": "fab0f8da91066ccb635e12456d093ea1a7cf75a9f1cc1758a0cace338b6bd2ea",
+          "size": 14286,
+          "source_sha256": "454b8f1910efc307c7b1bbc912058798dccaf72917c50bb90c48aeb48c361720"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/RootServiceClient.kt",
+          "action": "modify",
+          "sha256": "dd078659d07634511164308601cb1f03aed6091b3995a1209ebe12778f34834a",
+          "size": 9964,
+          "source_sha256": "7896e4928cc47b4b19be031da9772bf09fe2b40e7707bc1029ee1828c48f10e6"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "action": "modify",
+          "sha256": "14d84d96ef9b5e47de3bf3577c12ba57e2726b6b432ad6d3edeb1e8be6588a53",
+          "size": 24889,
+          "source_sha256": "ed01d5a73f21e78e019c4ac83127645fab1baeb0859e3ac8c71ce7f8395403c8"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+          "action": "modify",
+          "sha256": "2dc1f4ad620b46fcff7944b1a760f3a8fc0d82d9cc2b6018d25858371389be09",
+          "size": 11285,
+          "source_sha256": "a2416063c4355e22b4b79ed8c074fcffe915ff188370e19399761ef2707a1acd"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/DeviceCertificationTest.kt",
+          "action": "add",
+          "sha256": "446cab5bcefb46188a59e76ce1ee9a46588f285248dbc501336417e41ae13891",
+          "size": 1107
+        },
+        {
+          "path": "android/scripts/device-certify.sh",
+          "action": "add",
+          "sha256": "8667a8fe4e5ffb27438051981c3cf0ddd22fd67d090ea3ba5ef4e1a73553c0bd",
+          "size": 852
+        },
+        {
+          "path": "android/scripts/release-gate.sh",
+          "action": "modify",
+          "sha256": "324ed68b806b8917095deb81bd7185a7a11ef1ea01a478b7e0a6ef594e09982e",
+          "size": 623,
+          "source_sha256": "0a94de3bd4ee571d32de5c849803490b976260cf33b54737096a178150b0b1f4"
+        },
+        {
+          "path": "docs/ANDROID_PHASE9.md",
+          "action": "add",
+          "sha256": "1e7f8cb9f343537767cb2bbe19294ce858a11026157ff51c255fcde0ad180b84",
+          "size": 972
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Implement DustUI Android Phase 9 device certification"
+      }
+    },
+    "validation": {
+      "required": true,
+      "restore": true,
+      "build": true,
+      "test": true,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "build": "pass",
+        "tests": "pass",
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "dffb09aae092b118368ce854255a9ecb5d5d8a199ee6f9c124b437d2190e1f67",
+        "timeout_seconds": 180
+      }
+    }
+  },
+  "history_id": "bf1b331dbb7f45439651cd7becefcca7"
+}

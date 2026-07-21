@@ -15,6 +15,7 @@ import com.mikeyphw.dustui.data.AdvancedStorageReport
 import com.mikeyphw.dustui.data.DuplicateVerificationReport
 import com.mikeyphw.dustui.data.AdvancedStorageAnalyzer
 import com.mikeyphw.dustui.data.SnapshotPoint
+import com.mikeyphw.dustui.data.DeviceCertificationReport
 import com.mikeyphw.dustui.scan.ScanPreset
 import com.mikeyphw.dustui.scan.ScanRequest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -79,6 +80,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val advancedReport: StateFlow<AdvancedStorageReport?> = _advancedReport
     private val _verifiedDuplicates = MutableStateFlow<DuplicateVerificationReport?>(null)
     val verifiedDuplicates: StateFlow<DuplicateVerificationReport?> = _verifiedDuplicates
+    private val _certification = MutableStateFlow<DeviceCertificationReport?>(null)
+    val certification: StateFlow<DeviceCertificationReport?> = _certification
     val message: StateFlow<String?> = _message
 
     init {
@@ -154,6 +157,14 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             _advancedReport.value = repository.advancedAnalysis(scanId)
         }
     }
+    fun runDeviceCertification() {
+        viewModelScope.launch {
+            _certification.value = repository.deviceCertification()
+            val report = _certification.value ?: return@launch
+            _message.value = if (report.releaseReady) "Device certification passed with ${report.warnings} warning(s)" else "Device certification found ${report.failures} blocker(s)"
+        }
+    }
+
     fun verifyTopDuplicates() {
         val group = _advancedReport.value?.duplicateCandidates?.firstOrNull()
         if (group == null) { _message.value = "No duplicate candidates to verify"; return }

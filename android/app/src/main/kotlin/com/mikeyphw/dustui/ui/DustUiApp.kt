@@ -25,6 +25,8 @@ import com.mikeyphw.dustui.data.AdvancedStorageReport
 import com.mikeyphw.dustui.data.ChartSlice
 import com.mikeyphw.dustui.data.SnapshotPoint
 import com.mikeyphw.dustui.data.VisualAnalytics
+import com.mikeyphw.dustui.data.DeviceCertificationReport
+import com.mikeyphw.dustui.data.CertificationStatus
 import com.mikeyphw.dustui.scan.ScanStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,6 +49,7 @@ fun DustUiApp(viewModel: MainViewModel) {
         val cleanupOperations by viewModel.cleanupOperations.collectAsStateWithLifecycle()
         val advancedReport by viewModel.advancedReport.collectAsStateWithLifecycle()
         val verifiedDuplicates by viewModel.verifiedDuplicates.collectAsStateWithLifecycle()
+        val certification by viewModel.certification.collectAsStateWithLifecycle()
         val snackbar = remember { SnackbarHostState() }
         var showLauncher by remember { mutableStateOf(session == null) }
         var showInsights by remember { mutableStateOf(false) }
@@ -62,7 +65,7 @@ fun DustUiApp(viewModel: MainViewModel) {
         ) { padding ->
             val currentSession = session
             if (showInsights && currentSession != null) {
-                Insights(Modifier.padding(padding), delta, snapshotHistory, apps, cleanupOperations, advancedReport, verifiedDuplicates, viewModel) { category ->
+                Insights(Modifier.padding(padding), delta, snapshotHistory, apps, cleanupOperations, advancedReport, verifiedDuplicates, certification, viewModel) { category ->
                     viewModel.filterCategory(category)
                     showInsights = false
                     showLauncher = false
@@ -179,6 +182,7 @@ private fun Insights(
     operations: List<CleanupOperationEntity>,
     advanced: AdvancedStorageReport?,
     verified: com.mikeyphw.dustui.data.DuplicateVerificationReport?,
+    certification: DeviceCertificationReport?,
     vm: MainViewModel,
     exploreCategory: (String) -> Unit,
 ) {
@@ -242,6 +246,26 @@ private fun Insights(
             items(report.moduleFootprints.take(10), key = { it.moduleId }) { module -> ListItem(headlineContent = { Text(module.moduleId) }, supportingContent = { Text("${module.entryCount} measured entries") }, trailingContent = { Text(formatBytes(module.totalBytes)) }) }
             if (report.mountTopology.isNotEmpty()) item { Text("Bind mounts and overlays", fontWeight = FontWeight.SemiBold) }
             items(report.mountTopology.take(12), key = { it.target }) { mount -> ListItem(headlineContent = { Text(mount.target, maxLines = 1, overflow = TextOverflow.Ellipsis) }, supportingContent = { Text("${mount.filesystem} · ${mount.source}", maxLines = 1, overflow = TextOverflow.Ellipsis) }, trailingContent = { Text(if (mount.overlay) "overlay" else "bind") }) }
+        }
+        item {
+            Text("Device certification", style = MaterialTheme.typography.titleMedium)
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Run these checks on each supported root backend before release.", style = MaterialTheme.typography.bodySmall)
+                    Button(onClick = vm::runDeviceCertification, Modifier.fillMaxWidth()) { Text("Run certification") }
+                    certification?.let { report ->
+                        Text(if (report.releaseReady) "Release gate passed" else "${report.failures} release blocker(s)", fontWeight = FontWeight.SemiBold)
+                        report.checks.forEach { check ->
+                            val marker = when (check.status) { CertificationStatus.PASS -> "Pass"; CertificationStatus.WARNING -> "Warning"; CertificationStatus.FAIL -> "Fail" }
+                            ListItem(
+                                headlineContent = { Text(check.label) },
+                                supportingContent = { Text(check.detail) },
+                                trailingContent = { Text(marker, color = if (check.status == CertificationStatus.FAIL) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant) },
+                            )
+                        }
+                    }
+                }
+            }
         }
         item { Text("Cleanup activity", style = MaterialTheme.typography.titleMedium) }
         items(operations, key = { it.id }) { operation -> Card(Modifier.fillMaxWidth()) { Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text(operation.status.lowercase().replaceFirstChar { it.uppercase() }, fontWeight = FontWeight.SemiBold); Text("${operation.selectedCount} items · ${formatBytes(operation.reclaimedBytes)}", style = MaterialTheme.typography.bodySmall) }; if (operation.status in setOf("QUARANTINED", "PARTIAL")) OutlinedButton(onClick = { vm.restoreCleanup(operation.id) }) { Text("Restore") } } } }

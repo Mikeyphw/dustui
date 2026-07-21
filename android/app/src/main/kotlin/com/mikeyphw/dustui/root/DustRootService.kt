@@ -8,6 +8,7 @@ import com.mikeyphw.dustui.data.CleanupSafetyPolicy
 import com.topjohnwu.superuser.ipc.RootService
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -27,6 +28,8 @@ class DustRootService : RootService() {
             .put("ok", true)
             .put("uid", android.os.Process.myUid())
             .put("scanner", NativeDustScanner.version())
+            .put("backend", detectRootBackend())
+            .put("selinuxEnforcing", readSelinuxEnforcing())
             .toString()
 
         override fun startScan(requestJson: String, output: ParcelFileDescriptor): String {
@@ -189,6 +192,17 @@ class DustRootService : RootService() {
             }.getOrElse { error -> JSONObject().put("ok", false).put("operationId", operationId).put("status", "RESTORE_FAILED").put("message", error.message ?: error.javaClass.simpleName) }.toString()
         }
     }
+
+    private fun detectRootBackend(): String = when {
+        File("/data/adb/ksu").exists() -> "KernelSU"
+        File("/data/adb/ap").exists() -> "APatch"
+        File("/data/adb/magisk").exists() || File("/sbin/.magisk").exists() -> "Magisk"
+        else -> "Generic su"
+    }
+
+    private fun readSelinuxEnforcing(): Boolean? = runCatching {
+        File("/sys/fs/selinux/enforce").readText().trim() == "1"
+    }.getOrNull()
 
     override fun onBind(intent: Intent): IBinder = binder
 

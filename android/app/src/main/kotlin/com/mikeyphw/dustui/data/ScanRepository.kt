@@ -1,7 +1,11 @@
 package com.mikeyphw.dustui.data
 
 import android.content.Context
+import android.app.KeyguardManager
 import android.content.Intent
+import android.os.PowerManager
+import android.os.StatFs
+import androidx.core.app.NotificationManagerCompat
 import com.mikeyphw.dustui.scan.ScheduledScanWorker
 import com.mikeyphw.dustui.root.RootServiceClient
 import com.mikeyphw.dustui.scan.ScanForegroundService
@@ -19,6 +23,27 @@ class ScanRepository(
     fun observeCleanupOperations(): Flow<List<CleanupOperationEntity>> = dao.observeCleanupOperations(50)
     fun observeEntries(scanId: String): Flow<List<ScanEntryEntity>> = dao.observeEntries(scanId, 10_000)
     suspend fun rootAvailable(): Boolean = rootClient.rootAvailable()
+
+    suspend fun deviceCertification(): DeviceCertificationReport {
+        val rootConnected = rootClient.rootAvailable()
+        val info = if (rootConnected) runCatching { rootClient.serviceInfo() }.getOrNull() else null
+        val keyguard = context.getSystemService(KeyguardManager::class.java)
+        val power = context.getSystemService(PowerManager::class.java)
+        val freeBytes = runCatching { StatFs(context.filesDir.path).availableBytes }.getOrDefault(0L)
+        return DeviceCertification.evaluate(
+            rootConnected = rootConnected && info?.ok == true,
+            rootUid = info?.uid ?: -1,
+            backend = info?.backend ?: "Unavailable",
+            scannerVersion = info?.scanner.orEmpty(),
+            selinuxEnforcing = info?.selinuxEnforcing,
+            deviceUnlocked = keyguard?.isDeviceLocked != true,
+            notificationsEnabled = NotificationManagerCompat.from(context).areNotificationsEnabled(),
+            appStorageWritable = context.filesDir.canWrite(),
+            freeBytes = freeBytes,
+            batteryOptimizationIgnored = power?.isIgnoringBatteryOptimizations(context.packageName) == true,
+        )
+    }
+
     fun inspect(path: String): EntryIntelligence = intelligence.resolve(path)
 
     suspend fun snapshotDelta(): SnapshotDelta? {
