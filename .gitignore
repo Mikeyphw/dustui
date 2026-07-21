@@ -243,3 +243,9 @@ android/captures/
 *.aab
 .externalNativeBuild/
 .cxx/
+
+# Devtool runtime state
+.devtool/cache/
+.devtool/reports/
+.devtool/test-history.json
+.devtool/tmp/
