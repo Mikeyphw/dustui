@@ -17,6 +17,10 @@ import com.mikeyphw.dustui.data.AdvancedStorageAnalyzer
 import com.mikeyphw.dustui.data.SnapshotPoint
 import com.mikeyphw.dustui.data.DeviceCertificationReport
 import com.mikeyphw.dustui.data.RootPathInspection
+import com.mikeyphw.dustui.data.RootModuleReport
+import com.mikeyphw.dustui.data.RootFileSearchResult
+import com.mikeyphw.dustui.data.RootFileSearchRequest
+import com.mikeyphw.dustui.data.PackageStorageProfile
 import com.mikeyphw.dustui.scan.ScanPreset
 import com.mikeyphw.dustui.scan.ScanRequest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -85,6 +89,12 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val verifiedDuplicates: StateFlow<DuplicateVerificationReport?> = _verifiedDuplicates
     private val _certification = MutableStateFlow<DeviceCertificationReport?>(null)
     val certification: StateFlow<DeviceCertificationReport?> = _certification
+    private val _packageProfiles = MutableStateFlow<List<PackageStorageProfile>>(emptyList())
+    val packageProfiles: StateFlow<List<PackageStorageProfile>> = _packageProfiles
+    private val _rootSearchResults = MutableStateFlow<List<RootFileSearchResult>>(emptyList())
+    val rootSearchResults: StateFlow<List<RootFileSearchResult>> = _rootSearchResults
+    private val _moduleReport = MutableStateFlow<RootModuleReport?>(null)
+    val moduleReport: StateFlow<RootModuleReport?> = _moduleReport
     val message: StateFlow<String?> = _message
 
     init {
@@ -163,7 +173,25 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             _snapshotDelta.value = repository.snapshotDelta()
             _snapshotHistory.value = repository.snapshotHistory()
             _advancedReport.value = repository.advancedAnalysis(scanId)
+            _packageProfiles.value = repository.packageProfiles(scanId)
+            _moduleReport.value = repository.moduleAnalysis(scanId)
         }
+    }
+
+    fun rootSearch(query: String) {
+        val scanId = latestSession.value?.id
+        if (scanId == null) { _message.value = "Run a scan before searching"; return }
+        viewModelScope.launch {
+            val results = repository.rootSearch(scanId, RootFileSearchRequest(query = query))
+            _rootSearchResults.value = results
+            _message.value = "Found ${results.size} root-indexed result(s)"
+        }
+    }
+
+    fun openSearchResult(result: RootFileSearchResult) {
+        _explorerPath.value = result.parentPath
+        _filter.value = _filter.value.copy(query = result.name)
+        allEntries.value.firstOrNull { it.path == result.path }?.let { select(it) }
     }
     fun runDeviceCertification() {
         viewModelScope.launch {

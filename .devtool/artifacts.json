@@ -6416,6 +6416,278 @@
         }
       },
       "history_id": "747e76075dc445bf80c926b9a0ca0105"
+    },
+    {
+      "applied_at": "2026-07-21T18:28:15.562846Z",
+      "artifact": "/home/mike/Downloads/dustui_package_search_module_overlay.zip",
+      "artifact_name": "dustui_package_search_module_overlay.zip",
+      "type": "overlay",
+      "sha256": "9939318e393bab89a3e884be4677def0a16ff9552da30bf7aab2e98af4877d22",
+      "status": "rolled-back",
+      "validation_status": "failed",
+      "commit_message": "Implement DustUI package intelligence, root search, and module analyzer",
+      "commit_hash": "",
+      "file_count": 11,
+      "change_counts": {
+        "add": 7,
+        "modify": 4
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Package Intelligence, Root Search, and Module Analyzer",
+        "description": "Adds package-level storage profiles, root-indexed file search, and richer root module analysis to DustUI.",
+        "target": "dustui_android",
+        "workspaces": [
+          {
+            "name": "dustui_android",
+            "root": "android",
+            "target": "dustui_android"
+          }
+        ],
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "android/app/build.gradle.kts",
+              "action": "modify",
+              "sha256": "597ff7d3c68311e03b910844170412ab1bca79fac882b8af4c6803793a7dcde2",
+              "size": 2790,
+              "source_sha256": "ad0a2920c59b83f484ec9ba9aa31d1a23719b8c5248947909f55090740e31873"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+              "action": "modify",
+              "sha256": "d3083adf6b2707bccbddfa9a83c0d0ba2f7cf84b22b56273c275d1dc8eac80ef",
+              "size": 8231,
+              "source_sha256": "0de56e1213ee817a259d33ec42246023971edf4c9b0e7cbbd0be2b8f17d1325d"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+              "action": "modify",
+              "sha256": "f5d1b4aa12a09a2b823359d85f94f6804de9af51ee0a3bd9dba2dfe92179c1d7",
+              "size": 13261,
+              "source_sha256": "27cab48376fb24f246a31b42ca4599629bcbb7cb6c8012eb3d91fdb00abf7e0b"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "83471af07aee83c25b2cc406a5026ca84db1da57437a923959687b312605270d",
+              "size": 34097,
+              "source_sha256": "0e633744f773662a36476f14bd3e35cdfbbe4283ef63fa5940f73e727f043e36"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/PackageIntelligence.kt",
+              "action": "add",
+              "sha256": "5c54aee7e4d06b6a31d5b93b9116d9bbc4aeeeb29ed1763ca89ebd7bbd4deb1e",
+              "size": 4976
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/RootFileSearch.kt",
+              "action": "add",
+              "sha256": "9d9db0447a1a700364eafb335cfa98c93f99b7cd60a8c13662de33e513962417",
+              "size": 4417
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ModuleAnalyzer.kt",
+              "action": "add",
+              "sha256": "6961bbd798cba7e8a2e752b793619f1469a0a64cf6fde9c4f7dbfb12695330a8",
+              "size": 4002
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/PackageIntelligenceTest.kt",
+              "action": "add",
+              "sha256": "39dc5f9c5dd6fc8a0ced571ebb3d0e10dd0b31a8c54ec96ae366b887eed8222a",
+              "size": 1517
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootFileSearchTest.kt",
+              "action": "add",
+              "sha256": "1e783a50a1292b883a9024dcc2747b31f393229c5d9b4a34e3862aff9bc5e318",
+              "size": 1221
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootModuleAnalyzerTest.kt",
+              "action": "add",
+              "sha256": "6a1b71ddbefa9ae43c9dfdd282058dfd5bb946ed622cb9e14415b19937b8b6b8",
+              "size": 1436
+            },
+            {
+              "path": "docs/ANDROID_PACKAGE_SEARCH_MODULE.md",
+              "action": "add",
+              "sha256": "142829de2127026a58ff7fd8fbfe9c2f816e605de04bbcd542ca1fbc96b3cf63",
+              "size": 1294
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Implement DustUI package intelligence, root search, and module analyzer"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "100e0286162d774d0a0051850a075948c51a3483cf0efa1937268dd013771053",
+            "timeout_seconds": 180
+          }
+        }
+      },
+      "history_id": "015ac1ca73d8470abba368856978f139"
+    },
+    {
+      "applied_at": "2026-07-21T18:33:57.552580Z",
+      "artifact": "/home/mike/Downloads/dustui_package_search_module_overlay.zip",
+      "artifact_name": "dustui_package_search_module_overlay.zip",
+      "type": "overlay",
+      "sha256": "aa1f21b13cdb6898f43f913f139324f5540947a9965264c0e7210d0035b91c90",
+      "status": "ok",
+      "validation_status": "ok",
+      "commit_message": "Implement DustUI package intelligence, root search, and module analyzer",
+      "commit_hash": "",
+      "file_count": 11,
+      "change_counts": {
+        "add": 7,
+        "modify": 4
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Package Intelligence, Root Search, and Module Analyzer",
+        "description": "Adds package-level storage profiles, root-indexed file search, and richer root module analysis to DustUI.",
+        "target": "dustui_android",
+        "workspaces": [
+          {
+            "name": "dustui_android",
+            "root": "android",
+            "target": "dustui_android"
+          }
+        ],
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "android/app/build.gradle.kts",
+              "action": "modify",
+              "sha256": "597ff7d3c68311e03b910844170412ab1bca79fac882b8af4c6803793a7dcde2",
+              "size": 2790,
+              "source_sha256": "ad0a2920c59b83f484ec9ba9aa31d1a23719b8c5248947909f55090740e31873"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+              "action": "modify",
+              "sha256": "d3083adf6b2707bccbddfa9a83c0d0ba2f7cf84b22b56273c275d1dc8eac80ef",
+              "size": 8231,
+              "source_sha256": "0de56e1213ee817a259d33ec42246023971edf4c9b0e7cbbd0be2b8f17d1325d"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+              "action": "modify",
+              "sha256": "f5d1b4aa12a09a2b823359d85f94f6804de9af51ee0a3bd9dba2dfe92179c1d7",
+              "size": 13261,
+              "source_sha256": "27cab48376fb24f246a31b42ca4599629bcbb7cb6c8012eb3d91fdb00abf7e0b"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "83471af07aee83c25b2cc406a5026ca84db1da57437a923959687b312605270d",
+              "size": 34097,
+              "source_sha256": "0e633744f773662a36476f14bd3e35cdfbbe4283ef63fa5940f73e727f043e36"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/PackageIntelligence.kt",
+              "action": "add",
+              "sha256": "5c54aee7e4d06b6a31d5b93b9116d9bbc4aeeeb29ed1763ca89ebd7bbd4deb1e",
+              "size": 4976
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/RootFileSearch.kt",
+              "action": "add",
+              "sha256": "9d9db0447a1a700364eafb335cfa98c93f99b7cd60a8c13662de33e513962417",
+              "size": 4417
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ModuleAnalyzer.kt",
+              "action": "add",
+              "sha256": "6961bbd798cba7e8a2e752b793619f1469a0a64cf6fde9c4f7dbfb12695330a8",
+              "size": 4002
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/PackageIntelligenceTest.kt",
+              "action": "add",
+              "sha256": "e5f805578c2f70f653a1cd05193c64c3e455730d3da2dabde1485750353fca31",
+              "size": 1521
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootFileSearchTest.kt",
+              "action": "add",
+              "sha256": "0d7883f7923293007ea7609132cbeef3de3e8ba18424e16e36fa6ef6cd93055f",
+              "size": 1225
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootModuleAnalyzerTest.kt",
+              "action": "add",
+              "sha256": "e41f14aa75c794ee56a27e5fcae767506d2d3cb6f0cd5a5e917362ba55dc354e",
+              "size": 1440
+            },
+            {
+              "path": "docs/ANDROID_PACKAGE_SEARCH_MODULE.md",
+              "action": "add",
+              "sha256": "142829de2127026a58ff7fd8fbfe9c2f816e605de04bbcd542ca1fbc96b3cf63",
+              "size": 1294
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Implement DustUI package intelligence, root search, and module analyzer"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "b94a2072dfa793caf96fbdd325a9246f445a700549ef5b79fce0d8edcad95bf7",
+            "timeout_seconds": 180
+          }
+        }
+      },
+      "history_id": "35fa0a7e154f4c439976b532943d0807"
     }
   ]
 }

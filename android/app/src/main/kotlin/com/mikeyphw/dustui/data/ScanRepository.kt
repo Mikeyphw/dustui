@@ -69,6 +69,24 @@ class ScanRepository(
         return AdvancedStorageAnalyzer.analyze(dao.entriesOnce(scanId), installed, readMountTable())
     }
 
+    suspend fun packageProfiles(scanId: String): List<PackageStorageProfile> {
+        val entries = dao.entriesOnce(scanId)
+        val installed = context.packageManager.getInstalledPackages(0).mapTo(mutableSetOf()) { it.packageName }
+        val labels = entries.asSequence()
+            .mapNotNull { EntryIntelligenceResolver.packageFromPath(it.path) }
+            .distinct()
+            .associateWith { packageName -> intelligence.resolve("/data/data/$packageName").appLabel }
+            .filterValues { it != null }
+            .mapValues { it.value.orEmpty() }
+        val duplicates = AdvancedStorageAnalyzer.duplicateCandidates(entries.filterNot { it.isDirectory })
+        return PackageIntelligenceAnalyzer.profiles(entries, installed, labels, duplicates)
+    }
+
+    suspend fun rootSearch(scanId: String, request: RootFileSearchRequest): List<RootFileSearchResult> =
+        RootFileSearchEngine.search(dao.entriesOnce(scanId), request)
+
+    suspend fun moduleAnalysis(scanId: String): RootModuleReport = RootModuleAnalyzer.analyze(dao.entriesOnce(scanId))
+
 
     suspend fun verifyDuplicates(group: DuplicateCandidateGroup): DuplicateVerificationReport = rootClient.verifyDuplicates(group.paths, group.sizeBytes)
 

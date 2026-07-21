@@ -28,6 +28,9 @@ import com.mikeyphw.dustui.data.VisualAnalytics
 import com.mikeyphw.dustui.data.DeviceCertificationReport
 import com.mikeyphw.dustui.data.CertificationStatus
 import com.mikeyphw.dustui.data.RootPathInspection
+import com.mikeyphw.dustui.data.RootModuleReport
+import com.mikeyphw.dustui.data.RootFileSearchResult
+import com.mikeyphw.dustui.data.PackageStorageProfile
 import com.mikeyphw.dustui.scan.ScanStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,6 +55,9 @@ fun DustUiApp(viewModel: MainViewModel) {
         val advancedReport by viewModel.advancedReport.collectAsStateWithLifecycle()
         val verifiedDuplicates by viewModel.verifiedDuplicates.collectAsStateWithLifecycle()
         val certification by viewModel.certification.collectAsStateWithLifecycle()
+        val packageProfiles by viewModel.packageProfiles.collectAsStateWithLifecycle()
+        val rootSearchResults by viewModel.rootSearchResults.collectAsStateWithLifecycle()
+        val moduleReport by viewModel.moduleReport.collectAsStateWithLifecycle()
         val snackbar = remember { SnackbarHostState() }
         var showLauncher by remember { mutableStateOf(session == null) }
         var showInsights by remember { mutableStateOf(false) }
@@ -67,7 +73,7 @@ fun DustUiApp(viewModel: MainViewModel) {
         ) { padding ->
             val currentSession = session
             if (showInsights && currentSession != null) {
-                Insights(Modifier.padding(padding), delta, snapshotHistory, apps, cleanupOperations, advancedReport, verifiedDuplicates, certification, viewModel) { category ->
+                Insights(Modifier.padding(padding), delta, snapshotHistory, apps, packageProfiles, rootSearchResults, moduleReport, cleanupOperations, advancedReport, verifiedDuplicates, certification, viewModel) { category ->
                     viewModel.filterCategory(category)
                     showInsights = false
                     showLauncher = false
@@ -211,6 +217,9 @@ private fun Insights(
     delta: SnapshotDelta?,
     history: List<SnapshotPoint>,
     apps: List<AppStorageSummary>,
+    packageProfiles: List<PackageStorageProfile>,
+    rootSearchResults: List<RootFileSearchResult>,
+    moduleReport: RootModuleReport?,
     operations: List<CleanupOperationEntity>,
     advanced: AdvancedStorageReport?,
     verified: com.mikeyphw.dustui.data.DuplicateVerificationReport?,
@@ -219,7 +228,8 @@ private fun Insights(
     exploreCategory: (String) -> Unit,
 ) {
     var selectedType by remember { mutableStateOf<String?>(null) }
-    var selectedApp by remember(apps) { mutableStateOf(apps.firstOrNull()?.packageName) }
+    var selectedApp by remember(packageProfiles, apps) { mutableStateOf(packageProfiles.firstOrNull()?.packageName ?: apps.firstOrNull()?.packageName) }
+    var searchQuery by remember { mutableStateOf("*.apk >10m") }
     LazyColumn(modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Text("Storage snapshots", style = MaterialTheme.typography.headlineSmall)
@@ -251,6 +261,45 @@ private fun Insights(
                 Card(Modifier.fillMaxWidth()) { StorageBars(advanced.ageBuckets.map { ChartSlice(it.label, it.bytes, it.count) }, Modifier.padding(16.dp)) }
             }
         }
+        item {
+            Text("Root file search", style = MaterialTheme.typography.titleMedium)
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(searchQuery, { searchQuery = it }, Modifier.fillMaxWidth(), label = { Text("Search scanned root index") }, singleLine = true)
+                    Text("Supports names, paths, *.ext, ext:apk, package:com.app and >100m filters.", style = MaterialTheme.typography.bodySmall)
+                    Button(onClick = { vm.rootSearch(searchQuery) }, Modifier.fillMaxWidth()) { Text("Search") }
+                }
+            }
+        }
+        if (rootSearchResults.isNotEmpty()) {
+            item { Text("Search results", fontWeight = FontWeight.SemiBold) }
+            items(rootSearchResults.take(12), key = { it.path }) { result ->
+                ListItem(
+                    modifier = Modifier.clickable { vm.openSearchResult(result) },
+                    headlineContent = { Text(result.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    supportingContent = { Text("${result.category.label} · ${result.path}", maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                    trailingContent = { Text(formatBytes(result.sizeBytes)) },
+                )
+            }
+        }
+        item { Text("Package intelligence", style = MaterialTheme.typography.titleMedium) }
+        if (packageProfiles.isNotEmpty()) {
+            item {
+                val profile = packageProfiles.firstOrNull { it.packageName == selectedApp } ?: packageProfiles.first()
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(profile.appLabel ?: profile.packageName, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(profile.packageName, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Detail("Total", formatBytes(profile.totalBytes)); Detail("Private", formatBytes(profile.privateBytes)); Detail("Cache", formatBytes(profile.cacheBytes)); Detail("External", formatBytes(profile.externalBytes)); Detail("OBB", formatBytes(profile.obbBytes)); Detail("Databases", formatBytes(profile.databaseBytes)); Detail("Preferences", formatBytes(profile.preferencesBytes)); Detail("Duplicate candidates", formatBytes(profile.duplicateCandidateBytes))
+                        if (!profile.installed) Text("Possibly orphaned package data", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelMedium)
+                        if (profile.hasLargeCache) Text("Large cache footprint detected", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium)
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(packageProfiles.take(16), key = { it.packageName }) { candidate -> FilterChip(selected = candidate.packageName == profile.packageName, onClick = { selectedApp = candidate.packageName }, label = { Text(candidate.packageName.substringAfterLast('.'), maxLines = 1) }) } }
+                        Text("Largest package-owned paths", fontWeight = FontWeight.SemiBold)
+                        profile.largestPaths.take(4).forEach { path -> Text("${formatBytes(path.sizeBytes)} · ${path.category} · ${path.path}", maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall) }
+                    }
+                }
+            }
+        } else item { Text("No package-owned paths were identified in this scan.") }
         item { Text("Apps by measured footprint", style = MaterialTheme.typography.titleMedium) }
         if (apps.isNotEmpty()) {
             item {
@@ -278,6 +327,40 @@ private fun Insights(
             items(report.moduleFootprints.take(10), key = { it.moduleId }) { module -> ListItem(headlineContent = { Text(module.moduleId) }, supportingContent = { Text("${module.entryCount} measured entries") }, trailingContent = { Text(formatBytes(module.totalBytes)) }) }
             if (report.mountTopology.isNotEmpty()) item { Text("Bind mounts and overlays", fontWeight = FontWeight.SemiBold) }
             items(report.mountTopology.take(12), key = { it.target }) { mount -> ListItem(headlineContent = { Text(mount.target, maxLines = 1, overflow = TextOverflow.Ellipsis) }, supportingContent = { Text("${mount.filesystem} · ${mount.source}", maxLines = 1, overflow = TextOverflow.Ellipsis) }, trailingContent = { Text(if (mount.overlay) "overlay" else "bind") }) }
+        }
+        item {
+            Text("Root module analyzer", style = MaterialTheme.typography.titleMedium)
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    val report = moduleReport
+                    if (report == null) {
+                        Text("Module analysis is preparing…")
+                    } else {
+                        Detail("Modules", report.modules.size.toString()); Detail("Total footprint", formatBytes(report.totalBytes)); Detail("Disabled", report.disabledCount.toString()); Detail("WebUI", report.webUiCount.toString()); Detail("Overlay conflicts", report.conflictCount.toString())
+                        if (report.conflictCount > 0) Text("Multiple modules target the same overlay path. Review before cleanup or uninstall.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+        }
+        moduleReport?.modules?.take(10)?.let { modules ->
+            if (modules.isNotEmpty()) item { Text("Modules by footprint", fontWeight = FontWeight.SemiBold) }
+            items(modules, key = { it.moduleId }) { module ->
+                ListItem(
+                    headlineContent = { Text(module.moduleId, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    supportingContent = { Text("${module.entryCount} entries · ${module.overlayTargets.size} overlay target(s)${if (module.disabled) " · disabled" else ""}") },
+                    trailingContent = { Text(formatBytes(module.totalBytes)) },
+                )
+            }
+        }
+        moduleReport?.overlayConflicts?.take(8)?.let { conflicts ->
+            if (conflicts.isNotEmpty()) item { Text("Module overlay conflicts", fontWeight = FontWeight.SemiBold) }
+            items(conflicts, key = { it.targetPath }) { conflict ->
+                ListItem(
+                    headlineContent = { Text(conflict.targetPath, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    supportingContent = { Text(conflict.moduleIds.joinToString(), maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                    trailingContent = { Text("conflict") },
+                )
+            }
         }
         item {
             Text("Device certification", style = MaterialTheme.typography.titleMedium)
