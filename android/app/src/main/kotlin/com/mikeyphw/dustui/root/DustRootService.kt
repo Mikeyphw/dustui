@@ -13,6 +13,7 @@ import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
@@ -131,6 +132,39 @@ class DustRootService : RootService() {
                 JSONObject().put("ok", false).put("operationId", operationId).put("status", if (moved.length() > 0) "PARTIAL" else "FAILED").put("reclaimedBytes", reclaimed).put("entries", moved).put("message", error.message ?: error.javaClass.simpleName)
             }.toString()
         }
+
+        override fun verifyDuplicates(requestJson: String): String = runCatching {
+            val request = JSONObject(requestJson)
+            val paths = request.getJSONArray("paths")
+            require(paths.length() in 2..200) { "Duplicate verification accepts 2 to 200 files" }
+            val expectedSize = request.optLong("sizeBytes", -1L)
+            val groups = linkedMapOf<String, MutableList<String>>()
+            var checked = 0
+            var skipped = 0
+            for (index in 0 until paths.length()) {
+                val path = Paths.get(paths.getString(index)).normalize()
+                if (!path.isAbsolute || Files.isSymbolicLink(path) || !Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)) { skipped++; continue }
+                val size = Files.size(path)
+                if (expectedSize >= 0 && size != expectedSize) { skipped++; continue }
+                val digest = MessageDigest.getInstance("SHA-256")
+                Files.newInputStream(path).use { input ->
+                    val buffer = ByteArray(1024 * 1024)
+                    while (true) {
+                        val read = input.read(buffer)
+                        if (read < 0) break
+                        digest.update(buffer, 0, read)
+                    }
+                }
+                val hash = digest.digest().joinToString("") { (it.toInt() and 0xff).toString(16).padStart(2, '0') }
+                groups.getOrPut(hash) { mutableListOf() }.add(path.toString())
+                checked++
+            }
+            val verified = JSONArray()
+            groups.filterValues { it.size > 1 }.forEach { (hash, owned) ->
+                verified.put(JSONObject().put("sha256", hash).put("sizeBytes", expectedSize).put("paths", JSONArray(owned)).put("reclaimableBytes", expectedSize.coerceAtLeast(0) * (owned.size - 1L)))
+            }
+            JSONObject().put("ok", true).put("checkedFiles", checked).put("skippedFiles", skipped).put("groups", verified)
+        }.getOrElse { error -> JSONObject().put("ok", false).put("checkedFiles", 0).put("skippedFiles", 0).put("groups", JSONArray()).put("message", error.message ?: error.javaClass.simpleName) }.toString()
 
         override fun restoreCleanup(operationId: String, rootPath: String): String {
             val root = Paths.get(rootPath).normalize()

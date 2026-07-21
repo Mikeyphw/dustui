@@ -13,6 +13,9 @@ import com.mikeyphw.dustui.data.CleanupPlan
 import com.mikeyphw.dustui.data.CleanupPlanItem
 import com.mikeyphw.dustui.data.CleanupReview
 import com.mikeyphw.dustui.data.QuarantineEntryEntity
+import com.mikeyphw.dustui.data.DuplicateVerificationReport
+import com.mikeyphw.dustui.data.VerifiedDuplicateGroup
+import org.json.JSONArray
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ipc.RootService
 import kotlinx.coroutines.Dispatchers
@@ -42,6 +45,22 @@ class RootServiceClient(private val context: Context) {
 
     suspend fun scanState(scanId: String): RootScanState = call { it.scanState(scanId) }
     suspend fun cancelScan(scanId: String): RootScanState = call { it.cancelScan(scanId) }
+
+    suspend fun verifyDuplicates(paths: List<String>, sizeBytes: Long): DuplicateVerificationReport = cleanupCall(120_000L) { service ->
+        service.verifyDuplicates(JSONObject().put("sizeBytes", sizeBytes).put("paths", JSONArray(paths)).toString())
+    }.let { raw ->
+        val json = JSONObject(raw)
+        val groups = json.optJSONArray("groups")
+        DuplicateVerificationReport(
+            groups = buildList { if (groups != null) for (index in 0 until groups.length()) groups.getJSONObject(index).let { group ->
+                val pathsJson = group.getJSONArray("paths")
+                add(VerifiedDuplicateGroup(group.getString("sha256"), group.optLong("sizeBytes"), buildList { for (pathIndex in 0 until pathsJson.length()) add(pathsJson.getString(pathIndex)) }, group.optLong("reclaimableBytes")))
+            } },
+            checkedFiles = json.optInt("checkedFiles"),
+            skippedFiles = json.optInt("skippedFiles"),
+            message = json.optString("message").takeIf(String::isNotBlank),
+        )
+    }
 
     suspend fun reviewCleanup(plan: CleanupPlan): CleanupReview = cleanupCall { it.reviewCleanup(plan.normalized().toJson()) }.let(::parseReview)
     suspend fun executeCleanup(plan: CleanupPlan): CleanupExecutionResult = cleanupCall(60_000L) { it.executeCleanup(plan.normalized().toJson()) }.let(::parseExecution)

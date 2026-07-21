@@ -1,0 +1,140 @@
+{
+  "applied_at": "2026-07-21T17:08:53.180928Z",
+  "artifact": "/home/mike/Downloads/dustui_root_phase8_overlay.zip",
+  "artifact_name": "dustui_root_phase8_overlay.zip",
+  "type": "overlay",
+  "sha256": "4a327fd89dc1bed2c8c25503b1ca5195f35aef3d980f9591ee285f5e06429320",
+  "status": "rolled-back",
+  "validation_status": "failed",
+  "commit_message": "Implement DustUI Android Phase 8 verified duplicates",
+  "commit_hash": "",
+  "file_count": 11,
+  "change_counts": {
+    "add": 3,
+    "modify": 8
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Root Android Phase 8",
+    "description": "Adds root-verified SHA-256 duplicate groups, structured Tasker result extras, and verified savings polish.",
+    "target": "dustui_android",
+    "workspaces": [
+      {
+        "name": "dustui_android",
+        "root": "android",
+        "target": "dustui_android"
+      }
+    ],
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "android/app/build.gradle.kts",
+          "action": "modify",
+          "sha256": "47adc3df1fc45154a040cd6cd7dc4deb99d55a747ca9f0d823012599718200a9",
+          "size": 2792,
+          "source_sha256": "c77211b087b4f523c35dce788c9741a38c7c0a5c9423992d56e5e641c9a8ed59"
+        },
+        {
+          "path": "android/app/src/main/aidl/com/mikeyphw/dustui/root/IDustRootService.aidl",
+          "action": "modify",
+          "sha256": "add8404a2dd8e02735cc9c1a7f1bda477a5fb696ef268f616f7a691c8fb35bb5",
+          "size": 567,
+          "source_sha256": "38a052b6ec23f00d824901f930f9132907037b57bc78ac99eba166b7e03ddffb"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DuplicateVerification.kt",
+          "action": "add",
+          "sha256": "64999e5c008c11e4d96c905c0fdbf1cf6a9a7b453f911bcfb08c655080473bdf",
+          "size": 437
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+          "action": "modify",
+          "sha256": "7ab1da2b22bad27a1713b96da193a1a643dd065324e0b22945a478a0a9f3f892",
+          "size": 5543,
+          "source_sha256": "2df38e4b0e5cb60a953e3432dac81188649dfc5eb853fcb517b5e820a8290bd1"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt",
+          "action": "modify",
+          "sha256": "454b8f1910efc307c7b1bbc912058798dccaf72917c50bb90c48aeb48c361720",
+          "size": 13727,
+          "source_sha256": "53fea3dacb037d1b5129ed2434d9bbadc6fd478cf76b7bd65044bbfb7094521e"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/RootServiceClient.kt",
+          "action": "modify",
+          "sha256": "7896e4928cc47b4b19be031da9772bf09fe2b40e7707bc1029ee1828c48f10e6",
+          "size": 9269,
+          "source_sha256": "9a550260959367a81b8d8d6b17edd255fff788040963dcb4a4d18fd282ed42f0"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/tasker/DustTaskerReceiver.kt",
+          "action": "modify",
+          "sha256": "c1b0a5df23da30306aec652025fccadf697a39168d9a50a1cf6517376551e42b",
+          "size": 2595,
+          "source_sha256": "c1f86f4b035061712821df01d23d91311934540b3e6418c3f72844a1b8efbd45"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "action": "modify",
+          "sha256": "186096354845da5d2711acc054745821ad72de004f46a009e99a99a115449d4e",
+          "size": 20969,
+          "source_sha256": "940f78c46fa10f880284544d690178851a1ba9e0de4aa3cd29370ec8f774c1db"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+          "action": "modify",
+          "sha256": "e3dbbd7a48c764c67337a7d00626811f27db86442f9c5250049ecb83d65f91b8",
+          "size": 10126,
+          "source_sha256": "059f75de444ac061370eec176a883f96f2bd507f7e3e1d8ceb0d285ad13ec6eb"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/DuplicateVerificationTest.kt",
+          "action": "add",
+          "sha256": "fbcf43124eb1d8212f6261bccaed453c69507b8980b0c06493448e9c58b5fde3",
+          "size": 621
+        },
+        {
+          "path": "docs/ANDROID_PHASE8.md",
+          "action": "add",
+          "sha256": "502afdcd071b9665ed84996556f516b6c40f9b88d382a9c0eed49151a78cfdb3",
+          "size": 573
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Implement DustUI Android Phase 8 verified duplicates"
+      }
+    },
+    "validation": {
+      "required": true,
+      "restore": true,
+      "build": true,
+      "test": true,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "build": "pass",
+        "tests": "pass",
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "a81731944ccbb490a9169d67f7dc152f69efa0509fe071aa6536f660235f6915",
+        "timeout_seconds": 180
+      }
+    }
+  },
+  "history_id": "00c9ea51101741e5b3c06ed53d91f894"
+}

@@ -1,0 +1,15 @@
+{
+  "applied_at": "2026-07-21T17:08:11.777041Z",
+  "artifact": "/home/mike/Downloads/dustui_root_phase8_overlay.zip",
+  "artifact_name": "dustui_root_phase8_overlay.zip",
+  "type": "overlay",
+  "sha256": "",
+  "status": "failed",
+  "validation_status": "ok",
+  "commit_message": "",
+  "commit_hash": "",
+  "file_count": 0,
+  "change_counts": {},
+  "manifest": {},
+  "history_id": "b79cb8bd431d4f908f8a948df17736ab"
+}

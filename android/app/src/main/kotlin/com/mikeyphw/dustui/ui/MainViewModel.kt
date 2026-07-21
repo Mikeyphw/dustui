@@ -12,6 +12,7 @@ import com.mikeyphw.dustui.data.SnapshotDelta
 import com.mikeyphw.dustui.data.CleanupReview
 import com.mikeyphw.dustui.data.CleanupOperationEntity
 import com.mikeyphw.dustui.data.AdvancedStorageReport
+import com.mikeyphw.dustui.data.DuplicateVerificationReport
 import com.mikeyphw.dustui.scan.ScanPreset
 import com.mikeyphw.dustui.scan.ScanRequest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -71,6 +72,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val snapshotDelta: StateFlow<SnapshotDelta?> = _snapshotDelta
     private val _advancedReport = MutableStateFlow<AdvancedStorageReport?>(null)
     val advancedReport: StateFlow<AdvancedStorageReport?> = _advancedReport
+    private val _verifiedDuplicates = MutableStateFlow<DuplicateVerificationReport?>(null)
+    val verifiedDuplicates: StateFlow<DuplicateVerificationReport?> = _verifiedDuplicates
     val message: StateFlow<String?> = _message
 
     init {
@@ -142,6 +145,15 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             _appSummaries.value = repository.appSummaries(scanId)
             _snapshotDelta.value = repository.snapshotDelta()
             _advancedReport.value = repository.advancedAnalysis(scanId)
+        }
+    }
+    fun verifyTopDuplicates() {
+        val group = _advancedReport.value?.duplicateCandidates?.firstOrNull()
+        if (group == null) { _message.value = "No duplicate candidates to verify"; return }
+        viewModelScope.launch {
+            val report = repository.verifyDuplicates(group)
+            _verifiedDuplicates.value = report
+            _message.value = report.message ?: "Verified ${report.checkedFiles} files"
         }
     }
     fun scheduleLatest(hours: Long = 24) {

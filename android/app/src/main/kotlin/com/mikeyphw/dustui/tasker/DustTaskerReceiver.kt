@@ -22,9 +22,17 @@ class DustTaskerReceiver : BroadcastReceiver() {
                     ).validated()
                 }.getOrNull() ?: return
                 ScanForegroundService.start(context, request)
+                if (isOrderedBroadcast) {
+                    setResultCode(android.app.Activity.RESULT_OK)
+                    setResultExtras(Bundle().apply { putString(RESULT_STATUS, "accepted"); putString(RESULT_SCAN_ID, request.scanId); putString(RESULT_PATH, request.rootPath) })
+                }
             }
             ACTION_CANCEL -> plugin.getString(KEY_SCAN_ID)?.takeIf(String::isNotBlank)?.let {
                 ScanForegroundService.cancel(context, it)
+                if (isOrderedBroadcast) {
+                    setResultCode(android.app.Activity.RESULT_OK)
+                    setResultExtras(Bundle().apply { putString(RESULT_STATUS, "cancel_requested"); putString(RESULT_SCAN_ID, it) })
+                }
             }
         }
     }
@@ -38,6 +46,9 @@ class DustTaskerReceiver : BroadcastReceiver() {
         const val KEY_SCAN_ID = "dustui_scan_id"
         const val ACTION_SCAN = "scan"
         const val ACTION_CANCEL = "cancel"
+        const val RESULT_STATUS = "dustui_result_status"
+        const val RESULT_SCAN_ID = "dustui_result_scan_id"
+        const val RESULT_PATH = "dustui_result_path"
         const val DEFAULT_PATH = "/storage/emulated/0"
         const val DEFAULT_DEPTH = 5
     }

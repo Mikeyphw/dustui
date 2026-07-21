@@ -42,6 +42,7 @@ fun DustUiApp(viewModel: MainViewModel) {
         val cleanupReview by viewModel.cleanupReview.collectAsStateWithLifecycle()
         val cleanupOperations by viewModel.cleanupOperations.collectAsStateWithLifecycle()
         val advancedReport by viewModel.advancedReport.collectAsStateWithLifecycle()
+        val verifiedDuplicates by viewModel.verifiedDuplicates.collectAsStateWithLifecycle()
         val snackbar = remember { SnackbarHostState() }
         var showLauncher by remember { mutableStateOf(session == null) }
         var showInsights by remember { mutableStateOf(false) }
@@ -57,7 +58,7 @@ fun DustUiApp(viewModel: MainViewModel) {
         ) { padding ->
             val currentSession = session
             if (showInsights && currentSession != null) {
-                Insights(Modifier.padding(padding), delta, apps, cleanupOperations, advancedReport, viewModel)
+                Insights(Modifier.padding(padding), delta, apps, cleanupOperations, advancedReport, verifiedDuplicates, viewModel)
             } else if (showLauncher || currentSession == null) {
                 ScanLauncher(Modifier.padding(padding), rootState, currentSession, viewModel) { showLauncher = false }
             } else {
@@ -150,7 +151,7 @@ private fun EntryDetails(entry:ScanEntryEntity,info:EntryIntelligence?,close:()-
 
 
 @Composable
-private fun Insights(modifier: Modifier, delta: SnapshotDelta?, apps: List<AppStorageSummary>, operations: List<CleanupOperationEntity>, advanced: AdvancedStorageReport?, vm: MainViewModel) {
+private fun Insights(modifier: Modifier, delta: SnapshotDelta?, apps: List<AppStorageSummary>, operations: List<CleanupOperationEntity>, advanced: AdvancedStorageReport?, verified: com.mikeyphw.dustui.data.DuplicateVerificationReport?, vm: MainViewModel) {
     LazyColumn(modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Text("Storage snapshots", style = MaterialTheme.typography.headlineSmall)
@@ -191,7 +192,9 @@ private fun Insights(modifier: Modifier, delta: SnapshotDelta?, apps: List<AppSt
                 Detail("Root modules", advanced.moduleFootprints.size.toString())
                 Detail("Bind/overlays", advanced.mountTopology.size.toString())
                 Detail("Orphan packages", advanced.orphanedPackages.size.toString())
-                Text("Duplicate matches are candidates grouped by size and extension. Verify contents before cleanup.", style = MaterialTheme.typography.bodySmall)
+                Text("Candidate groups use size and extension. SHA-256 verification reads files through the root service.", style = MaterialTheme.typography.bodySmall)
+                Button(onClick = vm::verifyTopDuplicates, enabled = advanced.duplicateCandidates.isNotEmpty()) { Text("Verify top group") }
+                verified?.let { Detail("Verified groups", it.groups.size.toString()); Detail("Verified savings", formatBytes(it.reclaimableBytes)); Text("Checked ${it.checkedFiles}; skipped ${it.skippedFiles}", style = MaterialTheme.typography.bodySmall) }
             } } }
             if (advanced.duplicateCandidates.isNotEmpty()) item { Text("Duplicate candidates", fontWeight = FontWeight.SemiBold) }
             items(advanced.duplicateCandidates.take(8), key = { it.paths.joinToString("|") }) { group ->
