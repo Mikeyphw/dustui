@@ -125,3 +125,8 @@ The app never permanently deletes files. The Trash action uses the operating sys
 ## License
 
 MIT. `dust` is a separate Apache-2.0-licensed project and is not bundled.
+
+
+## Android root app
+
+The repository also contains the Phase 1 Android implementation under `android/`. It uses a fixed libsu root service, a bundled native read-only scanner, foreground progress, Room persistence, cancellation, presets, and a Compose results screen. See [`docs/ANDROID_PHASE1.md`](docs/ANDROID_PHASE1.md).

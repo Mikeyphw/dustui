@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">DustUI Root</string>
+    <string name="scan_channel">Storage scans</string>
+    <string name="scanning_title">DustUI is scanning</string>
+    <string name="scan_finished_title">DustUI scan finished</string>
+    <string name="cancel">Cancel</string>
+</resources>

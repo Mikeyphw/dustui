@@ -231,3 +231,15 @@ exports/
 # OS files
 .DS_Store
 Thumbs.db
+
+
+# Android app
+android/.gradle/
+android/local.properties
+android/**/build/
+android/.idea/
+android/captures/
+*.apk
+*.aab
+.externalNativeBuild/
+.cxx/

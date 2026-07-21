@@ -1,0 +1,27 @@
+package com.mikeyphw.dustui.data
+
+import androidx.room.Dao
+import androidx.room.Query
+import androidx.room.Upsert
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface ScanDao {
+    @Upsert
+    suspend fun upsertSession(session: ScanSessionEntity)
+
+    @Upsert
+    suspend fun upsertEntries(entries: List<ScanEntryEntity>)
+
+    @Query("SELECT * FROM scan_sessions ORDER BY startedAt DESC LIMIT 1")
+    fun observeLatestSession(): Flow<ScanSessionEntity?>
+
+    @Query("SELECT * FROM scan_sessions WHERE id = :scanId LIMIT 1")
+    suspend fun session(scanId: String): ScanSessionEntity?
+
+    @Query("SELECT * FROM scan_entries WHERE scanId = :scanId ORDER BY sizeBytes DESC, path COLLATE NOCASE LIMIT :limit")
+    fun observeEntries(scanId: String, limit: Int): Flow<List<ScanEntryEntity>>
+
+    @Query("DELETE FROM scan_entries WHERE scanId = :scanId")
+    suspend fun deleteEntries(scanId: String)
+}
