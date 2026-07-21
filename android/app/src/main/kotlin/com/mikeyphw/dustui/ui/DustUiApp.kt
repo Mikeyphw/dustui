@@ -22,6 +22,9 @@ import com.mikeyphw.dustui.data.SnapshotDelta
 import com.mikeyphw.dustui.data.CleanupReview
 import com.mikeyphw.dustui.data.CleanupOperationEntity
 import com.mikeyphw.dustui.data.AdvancedStorageReport
+import com.mikeyphw.dustui.data.ChartSlice
+import com.mikeyphw.dustui.data.SnapshotPoint
+import com.mikeyphw.dustui.data.VisualAnalytics
 import com.mikeyphw.dustui.scan.ScanStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,6 +41,7 @@ fun DustUiApp(viewModel: MainViewModel) {
         val message by viewModel.message.collectAsStateWithLifecycle()
         val apps by viewModel.appSummaries.collectAsStateWithLifecycle()
         val delta by viewModel.snapshotDelta.collectAsStateWithLifecycle()
+        val snapshotHistory by viewModel.snapshotHistory.collectAsStateWithLifecycle()
         val selectedPaths by viewModel.selectedPaths.collectAsStateWithLifecycle()
         val cleanupReview by viewModel.cleanupReview.collectAsStateWithLifecycle()
         val cleanupOperations by viewModel.cleanupOperations.collectAsStateWithLifecycle()
@@ -58,7 +62,11 @@ fun DustUiApp(viewModel: MainViewModel) {
         ) { padding ->
             val currentSession = session
             if (showInsights && currentSession != null) {
-                Insights(Modifier.padding(padding), delta, apps, cleanupOperations, advancedReport, verifiedDuplicates, viewModel)
+                Insights(Modifier.padding(padding), delta, snapshotHistory, apps, cleanupOperations, advancedReport, verifiedDuplicates, viewModel) { category ->
+                    viewModel.filterCategory(category)
+                    showInsights = false
+                    showLauncher = false
+                }
             } else if (showLauncher || currentSession == null) {
                 ScanLauncher(Modifier.padding(padding), rootState, currentSession, viewModel) { showLauncher = false }
             } else {
@@ -103,10 +111,22 @@ private fun Explorer(modifier: Modifier, session: ScanSessionEntity, path: Strin
             TextButton(onClick=vm::up){Text("Up")}; Text(path,Modifier.weight(1f),maxLines=1,overflow=TextOverflow.Ellipsis,fontFamily=FontFamily.Monospace)
         }
         Breadcrumbs(session.rootPath,path,vm::navigate)
+        val chartEntries = entries.filter { it.isDirectory }.ifEmpty { entries }.take(6)
+        if (chartEntries.isNotEmpty()) {
+            Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Largest children", style = MaterialTheme.typography.titleSmall)
+                    StorageBars(chartEntries.map { ChartSlice(it.name, it.sizeBytes, it.fileCount.toInt()) }) { label ->
+                        chartEntries.firstOrNull { it.name == label }?.let(vm::open)
+                    }
+                }
+            }
+        }
         OutlinedTextField(filter.query,vm::updateQuery,Modifier.fillMaxWidth().padding(horizontal=12.dp),label={Text("Search this directory")},singleLine=true)
         Row(Modifier.fillMaxWidth().padding(12.dp),horizontalArrangement=Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             AssistChip(onClick=vm::cycleSort,label={Text("Sort: ${filter.sort.name.lowercase()}")})
             AssistChip(onClick=vm::cycleType,label={Text("Type: ${filter.type.name.lowercase()}")})
+            filter.category?.let { category -> AssistChip(onClick = { vm.filterCategory(null) }, label = { Text(category) }, trailingIcon = { Text("×") }) }
             Text("${entries.size} entries",style=MaterialTheme.typography.labelMedium)
         }
         if (selectedPaths.isNotEmpty()) {
@@ -151,83 +171,80 @@ private fun EntryDetails(entry:ScanEntryEntity,info:EntryIntelligence?,close:()-
 
 
 @Composable
-private fun Insights(modifier: Modifier, delta: SnapshotDelta?, apps: List<AppStorageSummary>, operations: List<CleanupOperationEntity>, advanced: AdvancedStorageReport?, verified: com.mikeyphw.dustui.data.DuplicateVerificationReport?, vm: MainViewModel) {
+private fun Insights(
+    modifier: Modifier,
+    delta: SnapshotDelta?,
+    history: List<SnapshotPoint>,
+    apps: List<AppStorageSummary>,
+    operations: List<CleanupOperationEntity>,
+    advanced: AdvancedStorageReport?,
+    verified: com.mikeyphw.dustui.data.DuplicateVerificationReport?,
+    vm: MainViewModel,
+    exploreCategory: (String) -> Unit,
+) {
+    var selectedType by remember { mutableStateOf<String?>(null) }
+    var selectedApp by remember(apps) { mutableStateOf(apps.firstOrNull()?.packageName) }
     LazyColumn(modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Text("Storage snapshots", style = MaterialTheme.typography.headlineSmall)
             Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    SnapshotLineChart(history, Modifier.fillMaxWidth())
                     if (delta == null) Text("Complete two scans of the same scope to compare growth.") else {
-                        Detail("Net change", signedBytes(delta.totalDeltaBytes))
-                        Detail("Added", formatBytes(delta.addedBytes))
-                        Detail("Removed", formatBytes(delta.removedBytes))
-                        Detail("Changed", delta.changedEntries.toString())
+                        Detail("Net change", signedBytes(delta.totalDeltaBytes)); Detail("Added", formatBytes(delta.addedBytes)); Detail("Removed", formatBytes(delta.removedBytes)); Detail("Changed", delta.changedEntries.toString())
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = { vm.scheduleLatest(24) }) { Text("Daily scans") }
-                        OutlinedButton(onClick = vm::cancelSchedule) { Text("Disable") }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Button(onClick = { vm.scheduleLatest(24) }) { Text("Daily scans") }; OutlinedButton(onClick = vm::cancelSchedule) { Text("Disable") } }
+                }
+            }
+        }
+        if (advanced == null) {
+            item { Text("Visual analysis is preparing…") }
+        } else {
+            item {
+                Text("Storage composition", style = MaterialTheme.typography.titleMedium)
+                Card(Modifier.fillMaxWidth()) {
+                    val slices = VisualAnalytics.compactSlices(advanced.typeBuckets)
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        StorageDonut(slices, Modifier.fillMaxWidth(), selectedType) { selectedType = it }
+                        selectedType?.takeUnless { it == "Other" }?.let { category -> Button(onClick = { exploreCategory(category) }, Modifier.fillMaxWidth()) { Text("Explore $category") } }
                     }
                 }
+            }
+            item {
+                Text("File age", style = MaterialTheme.typography.titleMedium)
+                Card(Modifier.fillMaxWidth()) { StorageBars(advanced.ageBuckets.map { ChartSlice(it.label, it.bytes, it.count) }, Modifier.padding(16.dp)) }
             }
         }
         item { Text("Apps by measured footprint", style = MaterialTheme.typography.titleMedium) }
-        items(apps, key = { it.packageName }) { app ->
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Row { Text(app.packageName, Modifier.weight(1f), fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis); Text(formatBytes(app.totalBytes)) }
-                    Text("Private ${formatBytes(app.privateBytes)} · Cache ${formatBytes(app.cacheBytes)} · External ${formatBytes(app.externalBytes)}", style = MaterialTheme.typography.bodySmall)
-                    if (app.orphaned) Text("Possibly orphaned package data", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelMedium)
+        if (apps.isNotEmpty()) {
+            item {
+                val app = apps.firstOrNull { it.packageName == selectedApp } ?: apps.first()
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(app.packageName, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        StorageDonut(VisualAnalytics.appSlices(app), Modifier.fillMaxWidth())
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(apps.take(12), key = { it.packageName }) { candidate -> FilterChip(selected = candidate.packageName == app.packageName, onClick = { selectedApp = candidate.packageName }, label = { Text(candidate.packageName.substringAfterLast('.'), maxLines = 1) }) } }
+                    }
                 }
             }
+        } else item { Text("No package-owned paths were identified in this scan.") }
+        items(apps.take(20), key = { it.packageName }) { app ->
+            Card(Modifier.fillMaxWidth().clickable { selectedApp = app.packageName }) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) { Row { Text(app.packageName, Modifier.weight(1f), fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis); Text(formatBytes(app.totalBytes)) }; Text("Private ${formatBytes(app.privateBytes)} · Cache ${formatBytes(app.cacheBytes)} · External ${formatBytes(app.externalBytes)}", style = MaterialTheme.typography.bodySmall); if (app.orphaned) Text("Possibly orphaned package data", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelMedium) } }
         }
-        if (apps.isEmpty()) item { Text("No package-owned paths were identified in this scan.") }
         item { Text("Advanced analysis", style = MaterialTheme.typography.titleMedium) }
-        if (advanced == null) {
-            item { Text("Analysis is preparing…") }
-        } else {
-            item { Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                Detail("Duplicate groups", advanced.duplicateCandidates.size.toString())
-                Detail("Potential savings", formatBytes(advanced.duplicateCandidates.sumOf { it.estimatedSavingsBytes }))
-                Detail("Large old files", advanced.largeOldFiles.size.toString())
-                Detail("Root modules", advanced.moduleFootprints.size.toString())
-                Detail("Bind/overlays", advanced.mountTopology.size.toString())
-                Detail("Orphan packages", advanced.orphanedPackages.size.toString())
-                Text("Candidate groups use size and extension. SHA-256 verification reads files through the root service.", style = MaterialTheme.typography.bodySmall)
-                Button(onClick = vm::verifyTopDuplicates, enabled = advanced.duplicateCandidates.isNotEmpty()) { Text("Verify top group") }
-                verified?.let { Detail("Verified groups", it.groups.size.toString()); Detail("Verified savings", formatBytes(it.reclaimableBytes)); Text("Checked ${it.checkedFiles}; skipped ${it.skippedFiles}", style = MaterialTheme.typography.bodySmall) }
-            } } }
-            if (advanced.duplicateCandidates.isNotEmpty()) item { Text("Duplicate candidates", fontWeight = FontWeight.SemiBold) }
-            items(advanced.duplicateCandidates.take(8), key = { it.paths.joinToString("|") }) { group ->
-                ListItem(headlineContent = { Text("${group.paths.size} files · ${formatBytes(group.sizeBytes)} each") }, supportingContent = { Text(group.paths.first(), maxLines = 2, overflow = TextOverflow.Ellipsis) }, trailingContent = { Text(formatBytes(group.estimatedSavingsBytes)) })
-            }
-            if (advanced.largeOldFiles.isNotEmpty()) item { Text("Large old files", fontWeight = FontWeight.SemiBold) }
-            items(advanced.largeOldFiles.take(8), key = { it.path }) { old ->
-                ListItem(headlineContent = { Text(old.path.substringAfterLast('/'), maxLines = 1, overflow = TextOverflow.Ellipsis) }, supportingContent = { Text("${old.ageDays} days old · ${old.path}", maxLines = 2, overflow = TextOverflow.Ellipsis) }, trailingContent = { Text(formatBytes(old.sizeBytes)) })
-            }
-            if (advanced.moduleFootprints.isNotEmpty()) item { Text("Root module footprint", fontWeight = FontWeight.SemiBold) }
-            items(advanced.moduleFootprints.take(10), key = { it.moduleId }) { module ->
-                ListItem(headlineContent = { Text(module.moduleId) }, supportingContent = { Text("${module.entryCount} measured entries") }, trailingContent = { Text(formatBytes(module.totalBytes)) })
-            }
-            if (advanced.typeBuckets.isNotEmpty()) item { Text("File types", fontWeight = FontWeight.SemiBold) }
-            items(advanced.typeBuckets.take(8), key = { it.label }) { bucket ->
-                ListItem(headlineContent = { Text(bucket.label) }, supportingContent = { Text("${bucket.count} files") }, trailingContent = { Text(formatBytes(bucket.bytes)) })
-            }
-            if (advanced.ageBuckets.isNotEmpty()) item { Text("File age", fontWeight = FontWeight.SemiBold) }
-            items(advanced.ageBuckets, key = { it.label }) { bucket ->
-                ListItem(headlineContent = { Text(bucket.label) }, supportingContent = { Text("${bucket.count} files") }, trailingContent = { Text(formatBytes(bucket.bytes)) })
-            }
-            if (advanced.mountTopology.isNotEmpty()) item { Text("Bind mounts and overlays", fontWeight = FontWeight.SemiBold) }
-            items(advanced.mountTopology.take(12), key = { it.target }) { mount ->
-                ListItem(headlineContent = { Text(mount.target, maxLines = 1, overflow = TextOverflow.Ellipsis) }, supportingContent = { Text("${mount.filesystem} · ${mount.source}", maxLines = 1, overflow = TextOverflow.Ellipsis) }, trailingContent = { Text(if (mount.overlay) "overlay" else "bind") })
-            }
+        advanced?.let { report ->
+            item { Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) { Detail("Duplicate groups", report.duplicateCandidates.size.toString()); Detail("Potential savings", formatBytes(report.duplicateCandidates.sumOf { it.estimatedSavingsBytes })); Detail("Large old files", report.largeOldFiles.size.toString()); Detail("Root modules", report.moduleFootprints.size.toString()); Detail("Bind/overlays", report.mountTopology.size.toString()); Detail("Orphan packages", report.orphanedPackages.size.toString()); Text("Candidate groups use size and extension. SHA-256 verification reads files through the root service.", style = MaterialTheme.typography.bodySmall); Button(onClick = vm::verifyTopDuplicates, enabled = report.duplicateCandidates.isNotEmpty()) { Text("Verify top group") }; verified?.let { Detail("Verified groups", it.groups.size.toString()); Detail("Verified savings", formatBytes(it.reclaimableBytes)); Text("Checked ${it.checkedFiles}; skipped ${it.skippedFiles}", style = MaterialTheme.typography.bodySmall) } } } }
+            if (report.duplicateCandidates.isNotEmpty()) item { Text("Duplicate candidates", fontWeight = FontWeight.SemiBold) }
+            items(report.duplicateCandidates.take(8), key = { it.paths.joinToString("|") }) { group -> ListItem(headlineContent = { Text("${group.paths.size} files · ${formatBytes(group.sizeBytes)} each") }, supportingContent = { Text(group.paths.first(), maxLines = 2, overflow = TextOverflow.Ellipsis) }, trailingContent = { Text(formatBytes(group.estimatedSavingsBytes)) }) }
+            if (report.largeOldFiles.isNotEmpty()) item { Text("Large old files", fontWeight = FontWeight.SemiBold) }
+            items(report.largeOldFiles.take(8), key = { it.path }) { old -> ListItem(headlineContent = { Text(old.path.substringAfterLast('/'), maxLines = 1, overflow = TextOverflow.Ellipsis) }, supportingContent = { Text("${old.ageDays} days old · ${old.path}", maxLines = 2, overflow = TextOverflow.Ellipsis) }, trailingContent = { Text(formatBytes(old.sizeBytes)) }) }
+            if (report.moduleFootprints.isNotEmpty()) item { Text("Root module footprint", fontWeight = FontWeight.SemiBold) }
+            items(report.moduleFootprints.take(10), key = { it.moduleId }) { module -> ListItem(headlineContent = { Text(module.moduleId) }, supportingContent = { Text("${module.entryCount} measured entries") }, trailingContent = { Text(formatBytes(module.totalBytes)) }) }
+            if (report.mountTopology.isNotEmpty()) item { Text("Bind mounts and overlays", fontWeight = FontWeight.SemiBold) }
+            items(report.mountTopology.take(12), key = { it.target }) { mount -> ListItem(headlineContent = { Text(mount.target, maxLines = 1, overflow = TextOverflow.Ellipsis) }, supportingContent = { Text("${mount.filesystem} · ${mount.source}", maxLines = 1, overflow = TextOverflow.Ellipsis) }, trailingContent = { Text(if (mount.overlay) "overlay" else "bind") }) }
         }
         item { Text("Cleanup activity", style = MaterialTheme.typography.titleMedium) }
-        items(operations, key = { it.id }) { operation ->
-            Card(Modifier.fillMaxWidth()) { Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) { Text(operation.status.lowercase().replaceFirstChar { it.uppercase() }, fontWeight = FontWeight.SemiBold); Text("${operation.selectedCount} items · ${formatBytes(operation.reclaimedBytes)}", style = MaterialTheme.typography.bodySmall) }
-                if (operation.status in setOf("QUARANTINED", "PARTIAL")) OutlinedButton(onClick = { vm.restoreCleanup(operation.id) }) { Text("Restore") }
-            } }
-        }
+        items(operations, key = { it.id }) { operation -> Card(Modifier.fillMaxWidth()) { Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text(operation.status.lowercase().replaceFirstChar { it.uppercase() }, fontWeight = FontWeight.SemiBold); Text("${operation.selectedCount} items · ${formatBytes(operation.reclaimedBytes)}", style = MaterialTheme.typography.bodySmall) }; if (operation.status in setOf("QUARANTINED", "PARTIAL")) OutlinedButton(onClick = { vm.restoreCleanup(operation.id) }) { Text("Restore") } } } }
         if (operations.isEmpty()) item { Text("No cleanup operations yet.") }
     }
 }

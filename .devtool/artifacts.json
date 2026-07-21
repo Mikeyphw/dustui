@@ -5583,6 +5583,138 @@
         }
       },
       "history_id": "fdeaa4b99fc34694ac20d3f92e8b992e"
+    },
+    {
+      "applied_at": "2026-07-21T17:41:56.377559Z",
+      "artifact": "/home/mike/Downloads/dustui_root_phase8b_overlay.zip",
+      "artifact_name": "dustui_root_phase8b_overlay.zip",
+      "type": "overlay",
+      "sha256": "072e6e2cf4de4e8b9a1786f972739ca01a8b8f95569a48818b8398b27ccc9dcc",
+      "status": "ok",
+      "validation_status": "ok",
+      "commit_message": "Implement DustUI Android Phase 8B visual analytics",
+      "commit_hash": "",
+      "file_count": 10,
+      "change_counts": {
+        "add": 4,
+        "modify": 6
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Root Android Phase 8B",
+        "description": "Adds accessible Compose storage donuts, directory bars, snapshot trends, app footprint charts, and chart-driven explorer filters.",
+        "target": "dustui_android",
+        "workspaces": [
+          {
+            "name": "dustui_android",
+            "root": "android",
+            "target": "dustui_android"
+          }
+        ],
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "android/app/build.gradle.kts",
+              "action": "modify",
+              "sha256": "15a8bb87c307c1f73ee1c67a55fb7522e8498b5d68059e33c3d1a3f91b1ab911",
+              "size": 2793,
+              "source_sha256": "47adc3df1fc45154a040cd6cd7dc4deb99d55a747ca9f0d823012599718200a9"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/AdvancedAnalysis.kt",
+              "action": "modify",
+              "sha256": "a00ace6dad5d40f9423de2fc5db9924bf92230814c9f9e1b1c48eba15d9eb171",
+              "size": 5695,
+              "source_sha256": "4479e16a76dc7cdfe7778f3cbb1d1b3052a042b57f78f0f07dea3e6f16d8de86"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+              "action": "modify",
+              "sha256": "ba09684e6486c8c7119e0ba997e378a6571bdfed3ed3791ccbd580e631e7dbe5",
+              "size": 5746,
+              "source_sha256": "7ab1da2b22bad27a1713b96da193a1a643dd065324e0b22945a478a0a9f3f892"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/VisualAnalytics.kt",
+              "action": "add",
+              "sha256": "2718e74bccbf8c3e921465d2ef81ce19a1adca1451fbf800429dba68430de6a8",
+              "size": 1480
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "ed01d5a73f21e78e019c4ac83127645fab1baeb0859e3ac8c71ce7f8395403c8",
+              "size": 23180,
+              "source_sha256": "186096354845da5d2711acc054745821ad72de004f46a009e99a99a115449d4e"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/ExplorerModels.kt",
+              "action": "modify",
+              "sha256": "31cc8099fa01dbe1f075692a107f366d8ba036d3ce129d3c50242674eefb429f",
+              "size": 352,
+              "source_sha256": "c9893c477346088d4054e377b21842fbd39f4dfb3099ef660d0a62520ea1f4d7"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+              "action": "modify",
+              "sha256": "a2416063c4355e22b4b79ed8c074fcffe915ff188370e19399761ef2707a1acd",
+              "size": 10667,
+              "source_sha256": "e3dbbd7a48c764c67337a7d00626811f27db86442f9c5250049ecb83d65f91b8"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/StorageCharts.kt",
+              "action": "add",
+              "sha256": "5bc4a12ff4fb13a279f8e87adab7c71800cd804f068d5bde359e1d937c3a59a5",
+              "size": 6110
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/VisualAnalyticsTest.kt",
+              "action": "add",
+              "sha256": "3c9474f0417fecdcf24239b8e7d276b590493eeffca1a54e61ee78d2654d1f63",
+              "size": 679
+            },
+            {
+              "path": "docs/ANDROID_PHASE8B.md",
+              "action": "add",
+              "sha256": "1c6e547e88b5b69db239cb3b411f9ac3d4585b1b2c62381c8836288daa9b4f7c",
+              "size": 635
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Implement DustUI Android Phase 8B visual analytics"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "8aa8e4633fed85d47bb0676675cd9282ef6698820c44d24591ca07ce06263e59",
+            "timeout_seconds": 180
+          }
+        }
+      },
+      "history_id": "0131c93973ce420286fcc383a3d48de0"
     }
   ]
 }

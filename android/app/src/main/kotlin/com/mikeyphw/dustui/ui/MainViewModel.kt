@@ -13,6 +13,8 @@ import com.mikeyphw.dustui.data.CleanupReview
 import com.mikeyphw.dustui.data.CleanupOperationEntity
 import com.mikeyphw.dustui.data.AdvancedStorageReport
 import com.mikeyphw.dustui.data.DuplicateVerificationReport
+import com.mikeyphw.dustui.data.AdvancedStorageAnalyzer
+import com.mikeyphw.dustui.data.SnapshotPoint
 import com.mikeyphw.dustui.scan.ScanPreset
 import com.mikeyphw.dustui.scan.ScanRequest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -56,6 +58,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             .filter { filter.query.isBlank() || it.name.contains(filter.query, true) || it.path.contains(filter.query, true) }
             .filter { when (filter.type) { EntryTypeFilter.ALL -> true; EntryTypeFilter.DIRECTORIES -> it.isDirectory; EntryTypeFilter.FILES -> !it.isDirectory } }
             .filter { it.sizeBytes >= filter.minimumBytes }
+            .filter { filter.category == null || AdvancedStorageAnalyzer.fileCategory(it.name) == filter.category }
             .sortedWith(when (filter.sort) {
                 EntrySort.SIZE -> compareByDescending<ScanEntryEntity> { it.sizeBytes }.thenBy { it.name.lowercase() }
                 EntrySort.NAME -> compareBy<ScanEntryEntity> { it.name.lowercase() }
@@ -70,6 +73,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val appSummaries: StateFlow<List<AppStorageSummary>> = _appSummaries
     private val _snapshotDelta = MutableStateFlow<SnapshotDelta?>(null)
     val snapshotDelta: StateFlow<SnapshotDelta?> = _snapshotDelta
+    private val _snapshotHistory = MutableStateFlow<List<SnapshotPoint>>(emptyList())
+    val snapshotHistory: StateFlow<List<SnapshotPoint>> = _snapshotHistory
     private val _advancedReport = MutableStateFlow<AdvancedStorageReport?>(null)
     val advancedReport: StateFlow<AdvancedStorageReport?> = _advancedReport
     private val _verifiedDuplicates = MutableStateFlow<DuplicateVerificationReport?>(null)
@@ -108,6 +113,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         _explorerPath.value = current.substringBeforeLast('/').ifBlank { "/" }.let { if (!it.startsWith(root)) root else it }
     }
     fun updateQuery(value: String) { _filter.value = _filter.value.copy(query = value) }
+    fun filterCategory(value: String?) { _filter.value = _filter.value.copy(category = value) }
     fun cycleSort() { _filter.value = _filter.value.copy(sort = EntrySort.entries[(filter.value.sort.ordinal + 1) % EntrySort.entries.size]) }
     fun cycleType() { _filter.value = _filter.value.copy(type = EntryTypeFilter.entries[(filter.value.type.ordinal + 1) % EntryTypeFilter.entries.size]) }
     fun exportCsv() { latestSession.value?.let { repository.exportCsv(it, allEntries.value) } }
@@ -144,6 +150,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         viewModelScope.launch {
             _appSummaries.value = repository.appSummaries(scanId)
             _snapshotDelta.value = repository.snapshotDelta()
+            _snapshotHistory.value = repository.snapshotHistory()
             _advancedReport.value = repository.advancedAnalysis(scanId)
         }
     }

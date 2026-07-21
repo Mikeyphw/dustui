@@ -28,6 +28,11 @@ class ScanRepository(
         return SnapshotAnalyzer.diff(dao.entriesOnce(current.id), previous?.let { dao.entriesOnce(it.id) }.orEmpty(), current.id, previous?.id)
     }
 
+
+    suspend fun snapshotHistory(limit: Int = 12): List<SnapshotPoint> = dao.completedSessions(limit)
+        .asReversed()
+        .map { SnapshotPoint(it.completedAt ?: it.startedAt, it.totalBytes) }
+
     suspend fun appSummaries(scanId: String): List<AppStorageSummary> {
         val installed = context.packageManager.getInstalledPackages(0).mapTo(mutableSetOf()) { it.packageName }
         return SnapshotAnalyzer.appSummaries(dao.entriesOnce(scanId), installed)

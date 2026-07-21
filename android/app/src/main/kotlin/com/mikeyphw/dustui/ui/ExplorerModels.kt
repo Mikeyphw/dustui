@@ -8,4 +8,5 @@ data class ExplorerFilter(
     val sort: EntrySort = EntrySort.SIZE,
     val type: EntryTypeFilter = EntryTypeFilter.ALL,
     val minimumBytes: Long = 0,
+    val category: String? = null,
 )

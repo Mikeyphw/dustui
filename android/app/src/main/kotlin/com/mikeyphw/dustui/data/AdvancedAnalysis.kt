@@ -95,7 +95,7 @@ object AdvancedStorageAnalyzer {
         .map { (module, owned) -> ModuleFootprint(module, owned.sumOf { it.sizeBytes }, owned.size) }
         .sortedByDescending { it.totalBytes }
 
-    fun typeBuckets(files: List<ScanEntryEntity>): List<StorageBucket> = files.groupBy { categoryFor(it.name) }
+    fun typeBuckets(files: List<ScanEntryEntity>): List<StorageBucket> = files.groupBy { fileCategory(it.name) }
         .map { (label, owned) -> StorageBucket(label, owned.sumOf { it.sizeBytes }, owned.size) }
         .sortedByDescending { it.bytes }
 
@@ -121,7 +121,7 @@ object AdvancedStorageAnalyzer {
     }.filter { it.bind || it.overlay }.distinctBy { it.target }.sortedBy { it.target }.toList()
 
     private fun extensionOf(name: String): String = name.substringAfterLast('.', "").lowercase(Locale.ROOT)
-    private fun categoryFor(name: String): String = when (extensionOf(name)) {
+    fun fileCategory(name: String): String = when (extensionOf(name)) {
         "apk", "apex" -> "Android packages"
         "jpg", "jpeg", "png", "gif", "webp", "heic" -> "Images"
         "mp4", "mkv", "webm", "avi", "mov" -> "Video"
