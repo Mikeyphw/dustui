@@ -13,6 +13,7 @@ class ScanRepository(
     private val dao: ScanDao,
     private val rootClient: RootServiceClient,
 ) {
+    private val authorization = CleanupAuthorization(context)
     private val intelligence = EntryIntelligenceResolver(context)
     fun observeLatestSession(): Flow<ScanSessionEntity?> = dao.observeLatestSession()
     fun observeCleanupOperations(): Flow<List<CleanupOperationEntity>> = dao.observeCleanupOperations(50)
@@ -44,6 +45,7 @@ class ScanRepository(
     }
 
     suspend fun executeCleanup(session: ScanSessionEntity, entries: List<ScanEntryEntity>): CleanupExecutionResult {
+        authorization.authorize().getOrElse { return CleanupExecutionResult(false, "authorization", "BLOCKED", 0, emptyList(), it.message) }
         val plan = CleanupPlan(scanId = session.id, rootPath = session.rootPath, items = entries.map { CleanupPlanItem(it.path, it.sizeBytes) }).normalized()
         val createdAt = System.currentTimeMillis()
         val plannedBytes = plan.items.sumOf { it.sizeBytes }
@@ -55,10 +57,18 @@ class ScanRepository(
     }
 
     suspend fun restoreCleanup(operationId: String): CleanupExecutionResult {
+        authorization.authorize().getOrElse { return CleanupExecutionResult(false, operationId, "RESTORE_BLOCKED", 0, emptyList(), it.message) }
         val operation = dao.cleanupOperation(operationId) ?: return CleanupExecutionResult(false, operationId, "RESTORE_FAILED", 0, emptyList(), "Unknown cleanup operation")
         val result = runCatching { rootClient.restoreCleanup(operationId, operation.rootPath) }.getOrElse { CleanupExecutionResult(false, operationId, "RESTORE_FAILED", 0, emptyList(), it.message) }
         dao.upsertCleanupOperation(operation.copy(status = result.status, completedAt = System.currentTimeMillis(), message = result.message))
         return result
+    }
+
+    suspend fun recoverInterruptedOperations(): Int {
+        val now = System.currentTimeMillis()
+        val operations = dao.executingCleanupOperations()
+        operations.forEach { dao.upsertCleanupOperation(OperationRecovery.recover(it, now)) }
+        return operations.size
     }
 
     fun schedule(request: ScanRequest, hours: Long) = ScheduledScanWorker.set(context, request, hours)

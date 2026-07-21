@@ -1,0 +1,137 @@
+{
+  "applied_at": "2026-07-21T16:23:00.528939Z",
+  "artifact": "/home/mike/Downloads/dustui_root_phase6_overlay.zip",
+  "artifact_name": "dustui_root_phase6_overlay.zip",
+  "type": "overlay",
+  "sha256": "cd5660f20a7152679bb7641ad567e144cf4e036f2d17de1e4ae77083c090ad7c",
+  "status": "rolled-back",
+  "validation_status": "failed",
+  "commit_message": "Implement DustUI Android Phase 6 automation hardening",
+  "commit_hash": "",
+  "file_count": 11,
+  "change_counts": {
+    "add": 6,
+    "modify": 5
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Root Android Phase 6",
+    "description": "Adds read-only Tasker automation, device-lock cleanup authorization, interrupted-operation recovery, and release hardening.",
+    "target": "dustui_android",
+    "workspaces": [
+      {
+        "name": "dustui_android",
+        "root": "android",
+        "target": "dustui_android"
+      }
+    ],
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "android/app/build.gradle.kts",
+          "action": "modify",
+          "sha256": "175bc2dcc050201235296e5b26bce230c2bd8b5244d44d6b6f785c8142477af1",
+          "size": 2737,
+          "source_sha256": "e37564d41a3ce75a634614a20b16999961f1abf3bf551f39a925337791af6766"
+        },
+        {
+          "path": "android/app/src/main/AndroidManifest.xml",
+          "action": "modify",
+          "sha256": "48f62fa7e5483e35abdbdf2685f8df0385dc08a0008b4f1afec8a14457fe1a04",
+          "size": 2618,
+          "source_sha256": "f0eb57161a6996302a171c69a0253533054929791b80438a8ea0350f3665ed8e"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/DustUiApplication.kt",
+          "action": "modify",
+          "sha256": "262f10c00a7be4ec99ebf3aa51d0e3451cab2307d49c6614c39c6ea4b6663eca",
+          "size": 697,
+          "source_sha256": "2f99a784ee90a89c639a3ddb8cf50eeb866a857328cb3ede283bf0b15f5abf41"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanDao.kt",
+          "action": "modify",
+          "sha256": "a191074725a2c9dabdac853eef49582ac1a9784cf6dacb8305f37854eb230b30",
+          "size": 2073,
+          "source_sha256": "cdaf01720dcf683b80895a0019146a65080309cdcc9f43b844b50f74a28ab7dd"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+          "action": "modify",
+          "sha256": "2df38e4b0e5cb60a953e3432dac81188649dfc5eb853fcb517b5e820a8290bd1",
+          "size": 5388,
+          "source_sha256": "9f9e90ca66800243c602167884a7d3d72e1592eae5169c535430652d215eb324"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/OperationRecovery.kt",
+          "action": "add",
+          "sha256": "b8b1b1e5d308275331809e995f013eeafd2686ee30c8f7d07f7a8fed35511a96",
+          "size": 592
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupAuthorization.kt",
+          "action": "add",
+          "sha256": "8844e5d6ba19a41d58e516aecf091435fe73c6bd7f8cf14f6f31b9f944a1ed87",
+          "size": 520
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/tasker/DustTaskerReceiver.kt",
+          "action": "add",
+          "sha256": "c1f86f4b035061712821df01d23d91311934540b3e6418c3f72844a1b8efbd45",
+          "size": 1864
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/OperationRecoveryTest.kt",
+          "action": "add",
+          "sha256": "6bf5c3be4e65c32c56310154681af2c067dce53c0c1fdfeec5c1d52c3e232792",
+          "size": 832
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/tasker/TaskerContractTest.kt",
+          "action": "add",
+          "sha256": "116687b46c5259cbbb27dec5212a42f062f529cc7b1882387e630821d65cb1b0",
+          "size": 397
+        },
+        {
+          "path": "docs/ANDROID_PHASE6.md",
+          "action": "add",
+          "sha256": "ee43291a9e4092f88533b5705bb254f44e81536207a965433a37a8eae6153a93",
+          "size": 467
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Implement DustUI Android Phase 6 automation hardening"
+      }
+    },
+    "validation": {
+      "required": true,
+      "restore": true,
+      "build": true,
+      "test": true,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "build": "pass",
+        "tests": "pass",
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "ba8aa6be9728c4f54b81e51ec1a2ccb89b4e1cbdbaff0380c1bddaa8694ff6af",
+        "timeout_seconds": 120
+      }
+    }
+  },
+  "history_id": "090e361f69f743aabf9875cd3707cde0"
+}

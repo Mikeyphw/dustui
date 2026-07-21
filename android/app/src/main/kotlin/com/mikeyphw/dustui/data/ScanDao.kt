@@ -45,4 +45,7 @@ interface ScanDao {
 
     @Query("SELECT * FROM cleanup_operations WHERE id = :operationId LIMIT 1")
     suspend fun cleanupOperation(operationId: String): CleanupOperationEntity?
+
+    @Query("SELECT * FROM cleanup_operations WHERE status = 'EXECUTING'")
+    suspend fun executingCleanupOperations(): List<CleanupOperationEntity>
 }
