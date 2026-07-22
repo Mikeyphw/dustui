@@ -14,9 +14,11 @@ fi
 test -d app/schemas || { echo "Room schemas were not exported" >&2; exit 1; }
 test -s scripts/device-certify.sh || { echo "device certification script is missing" >&2; exit 1; }
 test -s scripts/install-smoke.sh || { echo "install smoke script is missing" >&2; exit 1; }
+test -s scripts/final-rc-gate.sh || { echo "final RC gate script is missing" >&2; exit 1; }
 bash -n scripts/device-certify.sh
 bash -n scripts/install-smoke.sh
 bash -n scripts/package-rc.sh
+bash -n scripts/final-rc-gate.sh
 DUSTUI_SKIP_BUILD=1 bash scripts/package-rc.sh
 printf 'DustUI release gate passed
 '

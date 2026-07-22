@@ -7575,6 +7575,262 @@
         }
       },
       "history_id": "c75a3c999c7549a8854be4091cce78a2"
+    },
+    {
+      "applied_at": "2026-07-22T15:32:42.379228Z",
+      "artifact": "/home/mike/Downloads/dustui_phase15_final_rc_overlay.zip",
+      "artifact_name": "dustui_phase15_final_rc_overlay.zip",
+      "type": "overlay",
+      "sha256": "362fabe45c4dd491a0b6d82e25bc9ca47330bacfe7fca586a11262749afb424a",
+      "status": "rolled-back",
+      "validation_status": "failed",
+      "commit_message": "Implement DustUI Phase 15 final RC hardening",
+      "commit_hash": "",
+      "file_count": 10,
+      "change_counts": {
+        "add": 8,
+        "modify": 2
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Phase 15 Final RC Hardening",
+        "description": "Adds final release-candidate readiness model, final RC gate script, changelog, known-issues ledger, release checklist, and ship-status evidence validation for DustUI Android.",
+        "target": "dustui_android",
+        "workspaces": [
+          {
+            "name": "dustui_android",
+            "root": "android",
+            "target": "dustui_android"
+          }
+        ],
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "CHANGELOG.md",
+              "action": "add",
+              "sha256": "9b840bd3f91f69ce3e7a4af85d1c66c505b23716d78ff4ccbe5e62926f38cd39",
+              "size": 1126
+            },
+            {
+              "path": "KNOWN_ISSUES.md",
+              "action": "add",
+              "sha256": "2e9f831931cf9e4a419f6406bc46d11c82b2233b4bb5731303d2bac7cd55ee63",
+              "size": 588
+            },
+            {
+              "path": "RELEASE_CHECKLIST.md",
+              "action": "add",
+              "sha256": "e4c0094165e92f93852a3b2b1bcc16bb02765aec271274386712d47409cd2e87",
+              "size": 1241
+            },
+            {
+              "path": "docs/ANDROID_PHASE15_FINAL_RC.md",
+              "action": "add",
+              "sha256": "196a06226fd01fdd8c4b55b954ea0e0371a7ca52840760903a5d13eaa8fd8a5a",
+              "size": 1402
+            },
+            {
+              "path": "android/app/build.gradle.kts",
+              "action": "modify",
+              "sha256": "ffd6d91be878ccd9474b2d99f65c7b0a2919dbba7d981960d83904a69f2a5226",
+              "size": 2790,
+              "source_sha256": "85d7296254776d1ce4e9d06133e512ec5477775ea3fe8016af9943ca710be8ee"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ReleaseReadiness.kt",
+              "action": "add",
+              "sha256": "15659470a033c3825c482076e331ad1ee77b259732b5f0969eab7effa58b265d",
+              "size": 4518
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleaseReadinessTest.kt",
+              "action": "add",
+              "sha256": "03fc04841b77c012fa87cdb019afea40dee43587713a7a2e9c122f9f7e2916b5",
+              "size": 3318
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/FinalRcScriptContractTest.kt",
+              "action": "add",
+              "sha256": "f230d19b3cdc01e5889bfdbb9537747e5d2236237e8cc260e1364e6f01eab761",
+              "size": 1182
+            },
+            {
+              "path": "android/scripts/final-rc-gate.sh",
+              "action": "add",
+              "sha256": "69f66bcfdb2e64939b74c8330b14a64414b6f5f62f85ade61ce0a607870d9aa5",
+              "size": 3321
+            },
+            {
+              "path": "android/scripts/release-gate.sh",
+              "action": "modify",
+              "sha256": "efed99285313659db8a34beb04ac70657c0b34a06ee8b99617493d1c02bb76f7",
+              "size": 1139,
+              "source_sha256": "18079c057cb17f5f8da2dc38a96851849d6d1517e13a4599ed2aa3a6eb863416"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Implement DustUI Phase 15 final RC hardening"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "85eae6ac246b5e7c1f33f6f4cf94426baf55f11deaa61c3891127a998b9f64aa",
+            "timeout_seconds": 180
+          }
+        }
+      },
+      "history_id": "f5ec45a1eb464c5388a4dd47724bbcbf"
+    },
+    {
+      "applied_at": "2026-07-22T15:40:03.106955Z",
+      "artifact": "/home/mike/Downloads/dustui_phase15_final_rc_overlay.zip",
+      "artifact_name": "dustui_phase15_final_rc_overlay.zip",
+      "type": "overlay",
+      "sha256": "e2e05b1c76745c644c80d6056f59f59bc3c06aece868bf3bfaf8955b84b5d0ae",
+      "status": "ok",
+      "validation_status": "ok",
+      "commit_message": "Implement DustUI Phase 15 final RC hardening",
+      "commit_hash": "",
+      "file_count": 10,
+      "change_counts": {
+        "add": 8,
+        "modify": 2
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Phase 15 Final RC Hardening",
+        "description": "Adds final release-candidate readiness model, final RC gate script, changelog, known-issues ledger, release checklist, and ship-status evidence validation for DustUI Android.",
+        "target": "dustui_android",
+        "workspaces": [
+          {
+            "name": "dustui_android",
+            "root": "android",
+            "target": "dustui_android"
+          }
+        ],
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "CHANGELOG.md",
+              "action": "add",
+              "sha256": "9b840bd3f91f69ce3e7a4af85d1c66c505b23716d78ff4ccbe5e62926f38cd39",
+              "size": 1126
+            },
+            {
+              "path": "KNOWN_ISSUES.md",
+              "action": "add",
+              "sha256": "2e9f831931cf9e4a419f6406bc46d11c82b2233b4bb5731303d2bac7cd55ee63",
+              "size": 588
+            },
+            {
+              "path": "RELEASE_CHECKLIST.md",
+              "action": "add",
+              "sha256": "e4c0094165e92f93852a3b2b1bcc16bb02765aec271274386712d47409cd2e87",
+              "size": 1241
+            },
+            {
+              "path": "docs/ANDROID_PHASE15_FINAL_RC.md",
+              "action": "add",
+              "sha256": "196a06226fd01fdd8c4b55b954ea0e0371a7ca52840760903a5d13eaa8fd8a5a",
+              "size": 1402
+            },
+            {
+              "path": "android/app/build.gradle.kts",
+              "action": "modify",
+              "sha256": "ffd6d91be878ccd9474b2d99f65c7b0a2919dbba7d981960d83904a69f2a5226",
+              "size": 2790,
+              "source_sha256": "85d7296254776d1ce4e9d06133e512ec5477775ea3fe8016af9943ca710be8ee"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ReleaseReadiness.kt",
+              "action": "add",
+              "sha256": "15659470a033c3825c482076e331ad1ee77b259732b5f0969eab7effa58b265d",
+              "size": 4518
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleaseReadinessTest.kt",
+              "action": "add",
+              "sha256": "03fc04841b77c012fa87cdb019afea40dee43587713a7a2e9c122f9f7e2916b5",
+              "size": 3318
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/FinalRcScriptContractTest.kt",
+              "action": "add",
+              "sha256": "50d0e1841d163db58b2b19d27f8e99414528d581c60af91f69c4f2a3cd245bf4",
+              "size": 1247
+            },
+            {
+              "path": "android/scripts/final-rc-gate.sh",
+              "action": "add",
+              "sha256": "69f66bcfdb2e64939b74c8330b14a64414b6f5f62f85ade61ce0a607870d9aa5",
+              "size": 3321
+            },
+            {
+              "path": "android/scripts/release-gate.sh",
+              "action": "modify",
+              "sha256": "efed99285313659db8a34beb04ac70657c0b34a06ee8b99617493d1c02bb76f7",
+              "size": 1139,
+              "source_sha256": "18079c057cb17f5f8da2dc38a96851849d6d1517e13a4599ed2aa3a6eb863416"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Implement DustUI Phase 15 final RC hardening"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "85eae6ac246b5e7c1f33f6f4cf94426baf55f11deaa61c3891127a998b9f64aa",
+            "timeout_seconds": 180
+          }
+        }
+      },
+      "history_id": "5bb741adbb2c4015b27b978502a8d0bd"
     }
   ]
 }

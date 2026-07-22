@@ -1,0 +1,82 @@
+package com.mikeyphw.dustui.data
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class ReleaseReadinessTest {
+    @Test fun `green evidence can ship final rc`() {
+        val report = FinalRcReadiness.evaluate("1.4.0-rc1", evidence())
+        assertEquals(RcDecision.SHIP, report.decision)
+        assertTrue(report.shipReady)
+        assertEquals(0, report.blockers)
+    }
+
+    @Test fun `test failure blocks final rc`() {
+        val report = FinalRcReadiness.evaluate("1.4.0-rc1", evidence(testsFailed = 1))
+        assertEquals(RcDecision.DO_NOT_SHIP, report.decision)
+        assertFalse(report.shipReady)
+        assertTrue(report.issues.any { it.id == "tests" })
+    }
+
+    @Test fun `unsigned release remains warning when packaging is otherwise ready`() {
+        val packaging = ReleasePackaging.evaluate(
+            versionName = "1.4.0-rc1",
+            artifacts = listOf(
+                ReleaseApkArtifact("app-debug.apk", 10, "a", ApkKind.DEBUG),
+                ReleaseApkArtifact("app-release-unsigned.apk", 20, "b", ApkKind.RELEASE_UNSIGNED),
+            ),
+            certificationReady = true,
+        )
+        val report = FinalRcReadiness.evaluate("1.4.0-rc1", evidence(packagingReport = packaging))
+        assertEquals(RcDecision.SHIP_WITH_WARNINGS, report.decision)
+        assertEquals(1, report.warnings)
+    }
+
+    @Test fun `known blocker prevents release`() {
+        val report = FinalRcReadiness.evaluate(
+            "1.4.0-rc1",
+            evidence(knownIssues = listOf(RcKnownIssue("crash", "Launch crash on smoke device", RcIssueSeverity.BLOCKER))),
+        )
+        assertEquals(RcDecision.DO_NOT_SHIP, report.decision)
+        assertTrue(report.issues.any { it.id == "known-issue-crash" })
+    }
+
+    @Test fun `status line summarizes decision`() {
+        val report = FinalRcReadiness.evaluate("1.4.0-rc1", evidence(deviceCertificationPassed = false))
+        assertEquals(RcDecision.SHIP_WITH_WARNINGS, report.decision)
+        assertTrue(report.statusLine().contains("1.4.0-rc1"))
+        assertTrue(report.statusLine().contains("ship-with-warnings"))
+    }
+
+    private fun evidence(
+        testsFailed: Int = 0,
+        diagnosticsWarnings: Int = 0,
+        packagingReport: ReleasePackagingReport = signedPackagingReport(),
+        installSmokePassed: Boolean = true,
+        deviceCertificationPassed: Boolean = true,
+        knownIssues: List<RcKnownIssue> = emptyList(),
+    ) = FinalRcEvidence(
+        releaseGatePassed = true,
+        testsPassed = 59,
+        testsFailed = testsFailed,
+        diagnosticsWarnings = diagnosticsWarnings,
+        packagingReport = packagingReport,
+        installSmokePassed = installSmokePassed,
+        deviceCertificationPassed = deviceCertificationPassed,
+        changelogReady = true,
+        checklistReady = true,
+        knownIssuesReviewed = true,
+        knownIssues = knownIssues,
+    )
+
+    private fun signedPackagingReport() = ReleasePackaging.evaluate(
+        versionName = "1.4.0-rc1",
+        artifacts = listOf(
+            ReleaseApkArtifact("app-debug.apk", 10, "a", ApkKind.DEBUG),
+            ReleaseApkArtifact("app-release.apk", 20, "b", ApkKind.RELEASE_SIGNED),
+        ),
+        certificationReady = true,
+    )
+}
