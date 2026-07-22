@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -123,7 +122,7 @@ fun DustUiApp(viewModel: MainViewModel) {
                     TopAppBar(
                         title = { Text(destination.label) },
                         actions = {
-                            TextButton(onClick = { menuOpen = true }) { Text("Menu") }
+                            TextButton(onClick = { menuOpen = true }) { Text(destination.actionLabel) }
                             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                                 DropdownMenuItem(
                                     text = { Text("Export CSV") },
@@ -150,7 +149,7 @@ fun DustUiApp(viewModel: MainViewModel) {
                                 NavigationBarItem(
                                     selected = DustNavigationModel.compactSelection(destination) == item,
                                     onClick = { selectDestination(item) },
-                                    icon = { Text(item.symbol) },
+                                    icon = { Text(item.symbol, style = MaterialTheme.typography.titleMedium) },
                                     label = { Text(item.shortLabel) },
                                 )
                             }
@@ -166,7 +165,7 @@ fun DustUiApp(viewModel: MainViewModel) {
                                 NavigationRailItem(
                                     selected = destination == item,
                                     onClick = { selectDestination(item) },
-                                    icon = { Text(item.symbol) },
+                                    icon = { Text(item.symbol, style = MaterialTheme.typography.titleMedium) },
                                     label = { Text(item.shortLabel) },
                                 )
                             }
@@ -231,6 +230,21 @@ fun DustUiApp(viewModel: MainViewModel) {
     }
 }
 
+
+private fun dustScreenPadding(horizontal: Int = 16): PaddingValues = PaddingValues(
+    start = horizontal.dp,
+    top = 16.dp,
+    end = horizontal.dp,
+    bottom = 128.dp,
+)
+
+private fun dustSheetPadding(): PaddingValues = PaddingValues(
+    start = 20.dp,
+    top = 20.dp,
+    end = 20.dp,
+    bottom = 96.dp,
+)
+
 @Composable
 private fun ScanLauncher(
     modifier: Modifier,
@@ -240,7 +254,7 @@ private fun ScanLauncher(
     openExplorer: () -> Unit,
 ) {
     var custom by rememberSaveable { mutableStateOf("/storage/emulated/0") }
-    LazyColumn(modifier, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Card {
                 Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -254,12 +268,16 @@ private fun ScanLauncher(
         }
         item { DustSectionHeader("Scan presets", subtitle = "Common storage scopes for root-aware Android analysis.") }
         item {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(vm.presets, key = { it.id }) { preset ->
-                    Card(onClick = { vm.startPreset(preset); openExplorer() }, enabled = root == RootUiState.Available, modifier = Modifier.widthIn(min = 196.dp, max = 280.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                vm.presets.forEach { preset ->
+                    Card(
+                        onClick = { vm.startPreset(preset); openExplorer() },
+                        enabled = root == RootUiState.Available,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
                         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(preset.title, fontWeight = FontWeight.SemiBold)
-                            Text(preset.description, style = MaterialTheme.typography.bodySmall)
+                            Text(preset.description, style = MaterialTheme.typography.bodySmall, maxLines = 3, overflow = TextOverflow.Ellipsis)
                             PathText(preset.path)
                         }
                     }
@@ -324,13 +342,14 @@ private fun Explorer(
         )
         LazyRow(
             Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            contentPadding = PaddingValues(end = 24.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             item { AssistChip(onClick = vm::cycleSort, label = { Text("Sort: ${filter.sort.name.lowercase()}") }) }
             item { AssistChip(onClick = vm::cycleType, label = { Text("Type: ${filter.type.name.lowercase()}") }) }
-            item { AssistChip(onClick = { treemapMode = !treemapMode }, label = { Text(if (treemapMode) "List" else "Treemap") }) }
-            item { AssistChip(onClick = openRootSearch, label = { Text("Whole scan search") }) }
+            item { SegmentedChoice("List", "Treemap", treemapMode, onFirst = { treemapMode = false }, onSecond = { treemapMode = true }) }
+            item { AssistChip(onClick = openRootSearch, label = { Text("Whole scan") }) }
             filter.category?.let { category -> item { AssistChip(onClick = { vm.filterCategory(null) }, label = { Text(category) }, trailingIcon = { Text("×") }) } }
             item { Text("${entries.size} entries", style = MaterialTheme.typography.labelMedium) }
         }
@@ -352,7 +371,7 @@ private fun Explorer(
                 }
             }
         } else {
-            LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyColumn(Modifier.fillMaxSize(), contentPadding = dustScreenPadding(horizontal = 12), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(entries, key = { it.path }) { entry ->
                     EntryRow(
                         entry = entry,
@@ -375,7 +394,7 @@ private fun Breadcrumbs(root: String, path: String, navigate: (String) -> Unit) 
     val relative = path.removePrefix(root).trim('/')
     val parts = if (relative.isBlank()) emptyList() else relative.split('/')
     LazyRow(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        item { AssistChip(onClick = { navigate(root) }, label = { Text(root.substringAfterLast('/').ifBlank { "/" }) }) }
+        item { AssistChip(onClick = { navigate(root) }, label = { Text(if (relative.isBlank()) "Scan root" else root.substringAfterLast('/').ifBlank { "/" }) }) }
         parts.forEachIndexed { index, part ->
             item(key = "$index:$part") {
                 Text("/")
@@ -422,12 +441,15 @@ private fun EntryRow(
 @Composable
 private fun SessionCard(session: ScanSessionEntity, cancel: () -> Unit) {
     val running = session.status in setOf(ScanStatus.STARTING.name, ScanStatus.RUNNING.name)
-    Card(Modifier.fillMaxWidth().padding(12.dp)) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
+    Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     PathText(session.rootPath)
-                    Text("${session.status.lowercase()} · ${session.scannedItems} items · ${formatBytes(session.scannedBytes)}")
+                    Text(
+                        "${session.status.lowercase()} · ${session.scannedItems} items · ${formatBytes(session.scannedBytes)}",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                 }
                 if (running) OutlinedButton(onClick = cancel) { Text("Cancel") }
             }
@@ -441,7 +463,7 @@ private fun SessionCard(session: ScanSessionEntity, cancel: () -> Unit) {
 private fun EntryDetails(entry: ScanEntryEntity?, info: EntryIntelligence?, root: RootPathInspection?, close: () -> Unit) {
     if (entry == null) return
     ModalBottomSheet(onDismissRequest = close) {
-        LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        LazyColumn(Modifier.fillMaxWidth(), contentPadding = dustSheetPadding(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             item {
                 Text(entry.name, style = MaterialTheme.typography.headlineSmall)
                 PathText(entry.path, maxLines = 3)
@@ -520,9 +542,9 @@ private fun InsightsOverview(
     exploreCategory: (String) -> Unit,
 ) {
     var selectedType by rememberSaveable { mutableStateOf<String?>(null) }
-    LazyColumn(modifier, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            DustSectionHeader("Overview", subtitle = "Snapshots, composition, growth, and risk signals without the old all-in-one scroll maze.")
+            DustSectionHeader("Overview", subtitle = "Storage trends, composition, and cleanup signals.")
         }
         item {
             Card(Modifier.fillMaxWidth()) {
@@ -571,29 +593,54 @@ private fun InsightsOverview(
                 Card(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         DustSectionHeader("Analysis summary")
-                        Detail("Duplicate groups", advanced.duplicateCandidates.size.toString())
-                        Detail("Potential savings", formatBytes(advanced.duplicateCandidates.sumOf { it.estimatedSavingsBytes }))
-                        Detail("Large old files", advanced.largeOldFiles.size.toString())
-                        Detail("Root modules", advanced.moduleFootprints.size.toString())
-                        Detail("Bind/overlays", advanced.mountTopology.size.toString())
-                        Detail("Measured apps", apps.size.toString())
+                        MetricGrid(
+                            listOf(
+                                "Duplicates" to advanced.duplicateCandidates.size.toString(),
+                                "Savings" to formatBytes(advanced.duplicateCandidates.sumOf { it.estimatedSavingsBytes }),
+                                "Old files" to advanced.largeOldFiles.size.toString(),
+                                "Modules" to advanced.moduleFootprints.size.toString(),
+                                "Bind/overlays" to advanced.mountTopology.size.toString(),
+                                "Measured apps" to apps.size.toString(),
+                            ),
+                        )
                         Button(onClick = vm::verifyTopDuplicates, enabled = advanced.duplicateCandidates.isNotEmpty()) { Text("Verify top duplicate group") }
                         verified?.let {
-                            Detail("Verified groups", it.groups.size.toString())
-                            Detail("Verified savings", formatBytes(it.reclaimableBytes))
+                            MetricGrid(
+                                listOf(
+                                    "Verified groups" to it.groups.size.toString(),
+                                    "Verified savings" to formatBytes(it.reclaimableBytes),
+                                ),
+                            )
                             Text("Checked ${it.checkedFiles}; skipped ${it.skippedFiles}", style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
             }
             if (advanced.largeOldFiles.isNotEmpty()) {
-                item { DustSectionHeader("Large old files") }
-                items(advanced.largeOldFiles.take(8), key = { it.path }) { old ->
-                    ListItem(
-                        headlineContent = { Text(old.path.substringAfterLast('/'), maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                        supportingContent = { Text("${old.ageDays} days old · ${old.path}", maxLines = 2, overflow = TextOverflow.Ellipsis) },
-                        trailingContent = { Text(formatBytes(old.sizeBytes)) },
-                    )
+                item {
+                    Card(Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            DustSectionHeader("Large old files", subtitle = "Oldest large files from the latest scan.")
+                            advanced.largeOldFiles.take(8).forEach { old ->
+                                Surface(tonalElevation = 1.dp, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
+                                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+                                            Text(
+                                                old.path.substringAfterLast('/'),
+                                                modifier = Modifier.weight(1f),
+                                                style = MaterialTheme.typography.titleMedium,
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            Text(formatBytes(old.sizeBytes), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                                        }
+                                        Text("${old.ageDays} days old", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        PathText(old.path, Modifier.fillMaxWidth(), maxLines = 3)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -608,7 +655,7 @@ private fun RootSearchScreen(
     openResult: (RootFileSearchResult) -> Unit,
 ) {
     var query by rememberSaveable { mutableStateOf("*.apk >10m") }
-    LazyColumn(modifier, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -624,12 +671,16 @@ private fun RootSearchScreen(
         } else {
             item { DustSectionHeader("Search results", subtitle = "${results.size} indexed match(es).") }
             items(results.take(80), key = { it.path }) { result ->
-                ListItem(
-                    modifier = Modifier.clickable { openResult(result) },
-                    headlineContent = { Text(result.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                    supportingContent = { Text("${result.category.label} · ${result.path}", maxLines = 2, overflow = TextOverflow.Ellipsis) },
-                    trailingContent = { Text(formatBytes(result.sizeBytes)) },
-                )
+                Card(Modifier.fillMaxWidth().clickable { openResult(result) }) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+                            Text(result.name, Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Medium)
+                            Text(formatBytes(result.sizeBytes), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                        }
+                        Text(result.category.label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        PathText(result.path, Modifier.fillMaxWidth(), maxLines = 2)
+                    }
+                }
             }
         }
     }
@@ -643,7 +694,7 @@ private fun PackageIntelligenceScreen(
     selectedApp: String?,
     onSelectApp: (String) -> Unit,
 ) {
-    LazyColumn(modifier, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { DustSectionHeader("Package intelligence", subtitle = "One app-focused surface for ownership, cache risk, largest paths, and measured footprint.") }
         if (packageProfiles.isEmpty()) {
             item { EmptyState("No package-owned paths", "The scan did not identify Android package-owned storage in this scope.") }
@@ -699,7 +750,7 @@ private fun PackageIntelligenceScreen(
 
 @Composable
 private fun ModuleAnalyzerScreen(modifier: Modifier, moduleReport: RootModuleReport?) {
-    LazyColumn(modifier, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { DustSectionHeader("Root module analyzer", subtitle = "KernelSU, Magisk, APatch, and generic module footprints from /data/adb/modules.") }
         item {
             Card(Modifier.fillMaxWidth()) {
@@ -743,7 +794,7 @@ private fun ModuleAnalyzerScreen(modifier: Modifier, moduleReport: RootModuleRep
 
 @Composable
 private fun CertificationScreen(modifier: Modifier, certification: DeviceCertificationReport?, vm: MainViewModel) {
-    LazyColumn(modifier, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -770,7 +821,7 @@ private fun CertificationScreen(modifier: Modifier, certification: DeviceCertifi
 
 @Composable
 private fun CleanupHistoryScreen(modifier: Modifier, operations: List<CleanupOperationEntity>, vm: MainViewModel) {
-    LazyColumn(modifier, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { DustSectionHeader("Cleanup activity", subtitle = "Quarantine and restore history lives here instead of being buried under analytics.") }
         if (operations.isEmpty()) {
             item { EmptyState("No cleanup operations yet", "Selected cleanup items will appear here after review and quarantine.") }
@@ -792,7 +843,7 @@ private fun CleanupHistoryScreen(modifier: Modifier, operations: List<CleanupOpe
 
 @Composable
 private fun MoreScreen(modifier: Modifier, navigate: (DustDestination) -> Unit) {
-    Column(modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(modifier.verticalScroll(rememberScrollState()).padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 128.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         DustSectionHeader("More", subtitle = "Specialized workbenches split out from the old Insights page.")
         DustNavigationModel.moreDestinations.forEach { destination ->
             Card(Modifier.fillMaxWidth().clickable { navigate(destination) }) {
@@ -821,7 +872,7 @@ private fun moreDestinationDescription(destination: DustDestination): String = w
 private fun CleanupReviewSheet(review: CleanupReview?, close: () -> Unit, execute: () -> Unit) {
     if (review == null) return
     ModalBottomSheet(onDismissRequest = close) {
-        LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        LazyColumn(Modifier.fillMaxWidth(), contentPadding = dustSheetPadding(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             item { Text("Review cleanup", style = MaterialTheme.typography.headlineSmall); Text("Quarantine is reversible. Permanent deletion is not part of the safe cleanup flow.") }
             item { Detail("Accepted", review.accepted.size.toString()); Detail("Blocked", review.blocked.size.toString()); Detail("Planned", formatBytes(review.plannedBytes)) }
             if (review.blocked.isNotEmpty()) item { Text("Blocked items", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold) }

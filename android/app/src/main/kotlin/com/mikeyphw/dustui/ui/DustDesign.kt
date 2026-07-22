@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -19,16 +20,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
-enum class DustDestination(val label: String, val shortLabel: String, val symbol: String) {
-    SCAN("Scan", "Scan", "◆"),
-    EXPLORER("Explorer", "Files", "▤"),
-    INSIGHTS("Overview", "Overview", "◎"),
-    SEARCH("Root search", "Search", "⌕"),
-    PACKAGES("Packages", "Apps", "◉"),
-    MODULES("Modules", "Modules", "▣"),
-    CERTIFICATION("Certification", "Cert", "✓"),
-    CLEANUP("Cleanup", "Cleanup", "↺"),
-    MORE("More", "More", "⋯"),
+enum class DustDestination(val label: String, val shortLabel: String, val symbol: String, val actionLabel: String) {
+    SCAN("Scan", "Scan", "↯", "Options"),
+    EXPLORER("Explorer", "Files", "▦", "Actions"),
+    INSIGHTS("Overview", "Overview", "◌", "Export"),
+    SEARCH("Root search", "Search", "⌕", "Tools"),
+    PACKAGES("Packages", "Apps", "▣", "Apps"),
+    MODULES("Modules", "Modules", "▥", "Tools"),
+    CERTIFICATION("Certification", "Cert", "✓", "Run"),
+    CLEANUP("Cleanup", "Cleanup", "↺", "Actions"),
+    MORE("More", "More", "•••", "More"),
 }
 
 object DustNavigationModel {
@@ -115,6 +116,58 @@ fun MetricRow(label: String, value: String, modifier: Modifier = Modifier) {
                 Box(Modifier.weight(0.66f)) { SelectionContainer { Text(value, style = MaterialTheme.typography.bodyMedium) } }
             }
         }
+    }
+}
+
+
+@Composable
+fun MetricGrid(metrics: List<Pair<String, String>>, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        metrics.chunked(2).forEach { row ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                row.forEach { (label, value) ->
+                    MetricTile(label = label, value = value, modifier = Modifier.weight(1f))
+                }
+                if (row.size == 1) Box(Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+fun MetricTile(label: String, value: String, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.widthIn(min = 0.dp),
+        tonalElevation = 1.dp,
+        shape = MaterialTheme.shapes.medium,
+    ) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            SelectionContainer { Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+        }
+    }
+}
+
+@Composable
+fun SegmentedChoice(
+    first: String,
+    second: String,
+    secondSelected: Boolean,
+    onFirst: () -> Unit,
+    onSecond: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        androidx.compose.material3.FilterChip(
+            selected = !secondSelected,
+            onClick = onFirst,
+            label = { Text(first) },
+        )
+        androidx.compose.material3.FilterChip(
+            selected = secondSelected,
+            onClick = onSecond,
+            label = { Text(second) },
+        )
     }
 }
 

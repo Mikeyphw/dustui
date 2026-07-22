@@ -24,8 +24,30 @@ class UiSourceContractTest {
     @Test fun `explorer distinguishes local and whole scan search`() {
         val source = sourceFile("DustUiApp.kt")
         assertTrue(source.contains("Current folder search"))
-        assertTrue(source.contains("Whole scan search"))
+        assertTrue(source.contains("Whole scan"))
         assertTrue(source.contains("RootSearchScreen"))
+    }
+
+    @Test fun `compact screens keep final sections readable`() {
+        val app = sourceFile("DustUiApp.kt")
+        assertTrue(app.contains("bottom = 128.dp"))
+        assertTrue(app.contains("Oldest large files from the latest scan."))
+        assertTrue(app.contains("Scan root"))
+        assertFalse(app.contains("label = { Text(\"Whole scan search\") }"))
+    }
+
+    @Test fun `remaining audit items are represented in source contract`() {
+        val app = sourceFile("DustUiApp.kt")
+        val design = sourceFile("DustDesign.kt")
+        val theme = sourceFile("Theme.kt")
+        assertTrue(app.contains("Text(destination.actionLabel)"))
+        assertFalse(app.contains("Text(\"Menu\")"))
+        assertTrue(app.contains("SegmentedChoice(\"List\", \"Treemap\""))
+        assertTrue(app.contains("MetricGrid("))
+        assertTrue(design.contains("actionLabel"))
+        assertTrue(design.contains("fun MetricGrid"))
+        assertTrue(design.contains("fun SegmentedChoice"))
+        assertTrue(theme.contains("letterSpacing = 0.sp"))
     }
 
     private fun sourceFile(name: String): String {

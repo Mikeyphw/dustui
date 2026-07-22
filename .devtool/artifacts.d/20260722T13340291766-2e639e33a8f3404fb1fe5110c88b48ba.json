@@ -1,0 +1,15 @@
+{
+  "applied_at": "2026-07-22T13:34:02.917665Z",
+  "artifact": "/home/mike/Downloads/dustui_phase13c_fixall_ui_overlay.zip",
+  "artifact_name": "dustui_phase13c_fixall_ui_overlay.zip",
+  "type": "overlay",
+  "sha256": "",
+  "status": "failed",
+  "validation_status": "ok",
+  "commit_message": "",
+  "commit_hash": "",
+  "file_count": 0,
+  "change_counts": {},
+  "manifest": {},
+  "history_id": "2e639e33a8f3404fb1fe5110c88b48ba"
+}

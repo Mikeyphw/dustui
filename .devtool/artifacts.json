@@ -7185,6 +7185,150 @@
         }
       },
       "history_id": "6dc5096854a142bc9f07c4c038adb284"
+    },
+    {
+      "applied_at": "2026-07-22T13:34:02.917665Z",
+      "artifact": "/home/mike/Downloads/dustui_phase13c_fixall_ui_overlay.zip",
+      "artifact_name": "dustui_phase13c_fixall_ui_overlay.zip",
+      "type": "overlay",
+      "sha256": "",
+      "status": "failed",
+      "validation_status": "ok",
+      "commit_message": "",
+      "commit_hash": "",
+      "file_count": 0,
+      "change_counts": {},
+      "manifest": {},
+      "history_id": "2e639e33a8f3404fb1fe5110c88b48ba"
+    },
+    {
+      "applied_at": "2026-07-22T13:39:57.284773Z",
+      "artifact": "/home/mike/Downloads/dustui_phase13c_fixall_ui_overlay.zip",
+      "artifact_name": "dustui_phase13c_fixall_ui_overlay.zip",
+      "type": "overlay",
+      "sha256": "225e54ec59db53a7357f6c8813c16ff77c62a28416ff4bb88c64d858d654a112",
+      "status": "ok",
+      "validation_status": "ok",
+      "commit_message": "Polish DustUI UI UX typography completely",
+      "commit_hash": "",
+      "file_count": 9,
+      "change_counts": {
+        "modify": 7,
+        "unchanged": 2
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Phase 13C Complete UI Polish",
+        "description": "Finishes the UI/UX/typography audit by fixing remaining compact-screen polish issues: contextual top actions, metric grids, explicit List/Treemap segmented controls, scan preset clipping, search result readability, tighter body typography, and stronger UI contract tests.",
+        "target": "dustui_android",
+        "workspaces": [
+          {
+            "name": "dustui_android",
+            "root": "android",
+            "target": "dustui_android"
+          }
+        ],
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "UI_UX_CONTRACT.md",
+              "action": "modify",
+              "sha256": "3fc8525dfb31d84f1fa13c225dfe9dfd6548b63b1d76763a74a2445201166937",
+              "size": 1920,
+              "source_sha256": "7ac7ffe190fa690b58709934333300a89513a060e04f496cc215f97138add6b8"
+            },
+            {
+              "path": "android/app/build.gradle.kts",
+              "action": "modify",
+              "sha256": "01c8a279ced684f0e47017a55c983f3581a6d9fa9faab61005b0c764b18b65b4",
+              "size": 2790,
+              "source_sha256": "d2de2c5a2b7796f4120e45346550d205859136fda7c36707a85716f1899e9d1c"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+              "action": "modify",
+              "sha256": "71460ad15edccee36895e1a3843270f254d7133719392f6cd97004ea7329e5a3",
+              "size": 7503,
+              "source_sha256": "3b5f0b69ee56178281c9fe6ce452d2cde386d6835f8bea5b290e2bfd33816c58"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "d997a0fa228e1410f121f9d61afb0fbbc5b14bb2e151eab87718c1cd1f3a2291",
+              "size": 49495,
+              "source_sha256": "a8c1fb4fefbb40e06de76acec0ab124ee3ae94043a69e76aab42f8d0ea5e9000"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Theme.kt",
+              "action": "modify",
+              "sha256": "6daf1615ccc7e156b7af5388abd2378989f6ce7bd111ed807f305ef539ee6411",
+              "size": 1591,
+              "source_sha256": "f33ca5a49068dcf99a70e2ea9f8c39adcec494e5d10f4bc9f978b2d0c4489bbc"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Treemap.kt",
+              "action": "modify",
+              "sha256": "5cc06e6ac04c6399c5e8ce02e9e5875692c697702222efeaf7a7e8c13f7c89cf",
+              "size": 4996,
+              "source_sha256": "5cc06e6ac04c6399c5e8ce02e9e5875692c697702222efeaf7a7e8c13f7c89cf"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+              "action": "modify",
+              "sha256": "93ed3364deb3dd0042a32ad17531f37cc37cdc6e24f1370ea2460e81ffc2159a",
+              "size": 1344,
+              "source_sha256": "93ed3364deb3dd0042a32ad17531f37cc37cdc6e24f1370ea2460e81ffc2159a"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+              "action": "modify",
+              "sha256": "d53d6e7e7022333b7ad77dd4905c0ed550661c68f781b1aa80ecef186d8e55ae",
+              "size": 2455,
+              "source_sha256": "e76b3cce7d4e673d0e2297b6ed95b294331048f5d4baf86a82bff774b5ac4bcf"
+            },
+            {
+              "path": "docs/ANDROID_UI_UX_PHASE12_13.md",
+              "action": "modify",
+              "sha256": "3fc8525dfb31d84f1fa13c225dfe9dfd6548b63b1d76763a74a2445201166937",
+              "size": 1920,
+              "source_sha256": "7ac7ffe190fa690b58709934333300a89513a060e04f496cc215f97138add6b8"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Polish DustUI UI UX typography completely"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "129f9fa017c199b7479c9da4e9776a79cb55d4af5bdcdd3b3716760197a9c303",
+            "timeout_seconds": 180
+          }
+        }
+      },
+      "history_id": "b4a91303c8e54433ab13384a601107c6"
     }
   ]
 }

@@ -18,9 +18,10 @@ private val DustTypography = Typography(
     titleLarge = BaseTypography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
     titleMedium = BaseTypography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
     titleSmall = BaseTypography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-    labelSmall = BaseTypography.labelSmall.copy(letterSpacing = 0.2.sp),
-    labelMedium = BaseTypography.labelMedium.copy(fontWeight = FontWeight.Medium),
-    bodySmall = BaseTypography.bodySmall.copy(lineHeight = 18.sp),
+    labelSmall = BaseTypography.labelSmall.copy(letterSpacing = 0.sp),
+    labelMedium = BaseTypography.labelMedium.copy(fontWeight = FontWeight.Medium, letterSpacing = 0.sp),
+    bodySmall = BaseTypography.bodySmall.copy(lineHeight = 18.sp, letterSpacing = 0.sp),
+    bodyMedium = BaseTypography.bodyMedium.copy(letterSpacing = 0.sp),
 )
 
 val DustPathFont = FontFamily.Monospace
