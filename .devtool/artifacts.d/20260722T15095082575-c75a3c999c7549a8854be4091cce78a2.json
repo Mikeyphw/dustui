@@ -1,0 +1,123 @@
+{
+  "applied_at": "2026-07-22T15:09:50.825757Z",
+  "artifact": "/home/mike/Downloads/dustui_phase14_release_packaging_overlay.zip",
+  "artifact_name": "dustui_phase14_release_packaging_overlay.zip",
+  "type": "overlay",
+  "sha256": "8049939c3022c8185cb8bbf064c82de78255bf1387b538c763af6224b6c1caef",
+  "status": "ok",
+  "validation_status": "ok",
+  "commit_message": "Implement DustUI Phase 14 device smoke and release packaging",
+  "commit_hash": "",
+  "file_count": 9,
+  "change_counts": {
+    "add": 6,
+    "modify": 3
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Phase 14 Device Smoke and Release Packaging",
+    "description": "Adds repeatable RC packaging, install/launch smoke evidence collection, stronger release gate checks, and release packaging tests for DustUI Android.",
+    "target": "dustui_android",
+    "workspaces": [
+      {
+        "name": "dustui_android",
+        "root": "android",
+        "target": "dustui_android"
+      }
+    ],
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "android/app/build.gradle.kts",
+          "action": "modify",
+          "sha256": "85d7296254776d1ce4e9d06133e512ec5477775ea3fe8016af9943ca710be8ee",
+          "size": 2790,
+          "source_sha256": "01c8a279ced684f0e47017a55c983f3581a6d9fa9faab61005b0c764b18b65b4"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ReleasePackaging.kt",
+          "action": "add",
+          "sha256": "1064d059b6e896a1edbf2b04fc0bb545388053b707d1834b4336c5adcf3f6ba0",
+          "size": 4746
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleasePackagingTest.kt",
+          "action": "add",
+          "sha256": "371c234ff650a3723dc00e4dc0940ab0d39e4c9d0a0f0258e44d7b761cc3b03d",
+          "size": 2258
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleaseScriptContractTest.kt",
+          "action": "add",
+          "sha256": "b890eca7c260c39d57fa66c4f76305bdf8e55208030f2a12827abd55c408d8cb",
+          "size": 1643
+        },
+        {
+          "path": "android/scripts/release-gate.sh",
+          "action": "modify",
+          "sha256": "18079c057cb17f5f8da2dc38a96851849d6d1517e13a4599ed2aa3a6eb863416",
+          "size": 1014,
+          "source_sha256": "324ed68b806b8917095deb81bd7185a7a11ef1ea01a478b7e0a6ef594e09982e"
+        },
+        {
+          "path": "android/scripts/device-certify.sh",
+          "action": "modify",
+          "sha256": "c604c9d273b3b00257a252575dbc0e656eed018aa931e7681ced4fc9372d9b91",
+          "size": 1461,
+          "source_sha256": "8667a8fe4e5ffb27438051981c3cf0ddd22fd67d090ea3ba5ef4e1a73553c0bd"
+        },
+        {
+          "path": "android/scripts/package-rc.sh",
+          "action": "add",
+          "sha256": "976aa444e67f18675f2ae522baf82cb60871d31d400f9570bb7cbb78ef88544d",
+          "size": 3496
+        },
+        {
+          "path": "android/scripts/install-smoke.sh",
+          "action": "add",
+          "sha256": "00b3a02ec723bb4f82a6d982e58f716cae2b81f02cfc48ce0dc495c50f3faf6d",
+          "size": 1059
+        },
+        {
+          "path": "docs/ANDROID_PHASE14_RELEASE_PACKAGING.md",
+          "action": "add",
+          "sha256": "6e08ad9457346bc9ab8e74b84c2312b35dcdf4bc61acc8da5504189bf35ba704",
+          "size": 1630
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Implement DustUI Phase 14 device smoke and release packaging"
+      }
+    },
+    "validation": {
+      "required": true,
+      "restore": true,
+      "build": true,
+      "test": true,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "build": "pass",
+        "tests": "pass",
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "4b98ccebbd672f7cd59f42d5eef8c7f0139e8542f628b501282f1cc30e3da887",
+        "timeout_seconds": 180
+      }
+    }
+  },
+  "history_id": "c75a3c999c7549a8854be4091cce78a2"
+}
