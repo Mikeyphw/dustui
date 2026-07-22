@@ -7831,6 +7831,85 @@
         }
       },
       "history_id": "5bb741adbb2c4015b27b978502a8d0bd"
+    },
+    {
+      "applied_at": "2026-07-22T17:56:14.120299Z",
+      "artifact": "/home/mike/Downloads/dustui_phase13d_explorer_scroll_overlay.zip",
+      "artifact_name": "dustui_phase13d_explorer_scroll_overlay.zip",
+      "type": "overlay",
+      "sha256": "32d7b64519924e3712ee846854f08d9c9c88f16893302477f4ea67fb508fedc1",
+      "status": "ok",
+      "validation_status": "ok",
+      "commit_message": "Fix DustUI Explorer full-screen scrolling",
+      "commit_hash": "",
+      "file_count": 2,
+      "change_counts": {
+        "modify": 2
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Phase 13D Explorer Full Scroll Fix",
+        "description": "Fixes the Explorer layout so the entire screen scrolls as one surface instead of leaving only a tiny result-list viewport below the filters.",
+        "target": "dustui_android",
+        "workspaces": [
+          {
+            "name": "dustui_android",
+            "root": "android",
+            "target": "dustui_android"
+          }
+        ],
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "f1a52479f7f0f271280c712020a5040510a8ad0c798c89382d1d6ee488dc0858",
+              "size": 49960,
+              "source_sha256": "d997a0fa228e1410f121f9d61afb0fbbc5b14bb2e151eab87718c1cd1f3a2291"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+              "action": "modify",
+              "sha256": "9d95d10459cfdc97a1f30246fe96b3373e9ab0dc9f05f66cbedd44dfb5c46236",
+              "size": 2948,
+              "source_sha256": "d53d6e7e7022333b7ad77dd4905c0ed550661c68f781b1aa80ecef186d8e55ae"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Fix DustUI Explorer full-screen scrolling"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "e79d73cd3bbcb551fdf023ca4f814603705982ec5627acda23c6304a80e02686",
+            "timeout_seconds": 180
+          }
+        }
+      },
+      "history_id": "49ccd1342b8b4e209a06467ebe8a0e01"
     }
   ]
 }

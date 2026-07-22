@@ -314,64 +314,83 @@ private fun Explorer(
 ) {
     var treemapMode by rememberSaveable(path) { mutableStateOf(false) }
     val selectionMode = selectedPaths.isNotEmpty()
-    Column(modifier) {
-        SessionCard(session, vm::cancelActive)
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = vm::up) { Text("Up") }
-            PathText(path, Modifier.weight(1f))
+    val chartEntries = entries.filter { it.isDirectory }.ifEmpty { entries }.take(6)
+
+    LazyColumn(
+        modifier.fillMaxSize(),
+        contentPadding = dustScreenPadding(horizontal = 0),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        item { SessionCard(session, vm::cancelActive) }
+        item {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = vm::up) { Text("Up") }
+                PathText(path, Modifier.weight(1f))
+            }
         }
-        Breadcrumbs(session.rootPath, path, vm::navigate)
-        val chartEntries = entries.filter { it.isDirectory }.ifEmpty { entries }.take(6)
+        item { Breadcrumbs(session.rootPath, path, vm::navigate) }
         if (chartEntries.isNotEmpty()) {
-            Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)) {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Largest children", style = MaterialTheme.typography.titleSmall)
-                    StorageBars(chartEntries.map { ChartSlice(it.name, it.sizeBytes, it.fileCount.toInt()) }) { label ->
-                        chartEntries.firstOrNull { it.name == label }?.let(vm::open)
+            item {
+                Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Largest children", style = MaterialTheme.typography.titleSmall)
+                        StorageBars(chartEntries.map { ChartSlice(it.name, it.sizeBytes, it.fileCount.toInt()) }) { label ->
+                            chartEntries.firstOrNull { it.name == label }?.let(vm::open)
+                        }
                     }
                 }
             }
         }
-        OutlinedTextField(
-            filter.query,
-            vm::updateQuery,
-            Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-            label = { Text("Current folder search") },
-            singleLine = true,
-            supportingText = { Text("Use Root search for the whole scan index.") },
-        )
-        LazyRow(
-            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-            contentPadding = PaddingValues(end = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            item { AssistChip(onClick = vm::cycleSort, label = { Text("Sort: ${filter.sort.name.lowercase()}") }) }
-            item { AssistChip(onClick = vm::cycleType, label = { Text("Type: ${filter.type.name.lowercase()}") }) }
-            item { SegmentedChoice("List", "Treemap", treemapMode, onFirst = { treemapMode = false }, onSecond = { treemapMode = true }) }
-            item { AssistChip(onClick = openRootSearch, label = { Text("Whole scan") }) }
-            filter.category?.let { category -> item { AssistChip(onClick = { vm.filterCategory(null) }, label = { Text(category) }, trailingIcon = { Text("×") }) } }
-            item { Text("${entries.size} entries", style = MaterialTheme.typography.labelMedium) }
+        item {
+            OutlinedTextField(
+                filter.query,
+                vm::updateQuery,
+                Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                label = { Text("Current folder search") },
+                singleLine = true,
+                supportingText = { Text("Use Root search for the whole scan index.") },
+            )
+        }
+        item {
+            LazyRow(
+                Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                contentPadding = PaddingValues(end = 56.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                item { AssistChip(onClick = vm::cycleSort, label = { Text("Sort: ${filter.sort.name.lowercase()}") }) }
+                item { AssistChip(onClick = vm::cycleType, label = { Text("Type: ${filter.type.name.lowercase()}") }) }
+                item { SegmentedChoice("List", "Treemap", treemapMode, onFirst = { treemapMode = false }, onSecond = { treemapMode = true }) }
+                item { AssistChip(onClick = openRootSearch, label = { Text("Whole scan") }) }
+                filter.category?.let { category -> item { AssistChip(onClick = { vm.filterCategory(null) }, label = { Text(category) }, trailingIcon = { Text("×") }) } }
+                item { Text("${entries.size} entries", style = MaterialTheme.typography.labelMedium) }
+            }
         }
         if (selectionMode) {
-            Surface(tonalElevation = 2.dp) {
-                Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("${selectedPaths.size} selected", Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
-                    TextButton(onClick = vm::clearSelection) { Text("Clear") }
-                    Button(onClick = vm::reviewCleanup) { Text("Review cleanup") }
+            item {
+                Surface(tonalElevation = 2.dp) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("${selectedPaths.size} selected", Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+                        TextButton(onClick = vm::clearSelection) { Text("Clear") }
+                        Button(onClick = vm::reviewCleanup) { Text("Review cleanup") }
+                    }
                 }
             }
         }
         if (treemapMode && entries.isNotEmpty()) {
-            Card(Modifier.fillMaxWidth().padding(12.dp)) {
-                Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Treemap · tap a block to open", style = MaterialTheme.typography.titleSmall)
-                    StorageTreemap(entries, vm::open)
-                    Text("Labels appear on large blocks. Exact sizes remain available in the list and details sheet.", style = MaterialTheme.typography.labelSmall)
+            item {
+                Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)) {
+                    Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Treemap · tap a block to open", style = MaterialTheme.typography.titleSmall)
+                        StorageTreemap(entries, vm::open)
+                        Text("Labels appear on large blocks. Exact sizes remain available in the list and details sheet.", style = MaterialTheme.typography.labelSmall)
+                    }
                 }
             }
         } else {
-            LazyColumn(Modifier.fillMaxSize(), contentPadding = dustScreenPadding(horizontal = 12), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (entries.isEmpty()) {
+                item { EmptyState("No matching direct children", "Change filters or scan a broader folder.", Modifier.padding(horizontal = 12.dp)) }
+            } else {
                 items(entries, key = { it.path }) { entry ->
                     EntryRow(
                         entry = entry,
@@ -383,7 +402,6 @@ private fun Explorer(
                         toggle = { vm.toggleSelection(entry) },
                     )
                 }
-                if (entries.isEmpty()) item { Box(Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) { Text("No matching direct children") } }
             }
         }
     }
@@ -415,7 +433,7 @@ private fun EntryRow(
     toggle: () -> Unit,
 ) {
     val share = if (total > 0) (entry.sizeBytes.toFloat() / total).coerceIn(0f, 1f) else 0f
-    Card(Modifier.fillMaxWidth().clickable(onClick = open)) {
+    Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp).clickable(onClick = open)) {
         Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (selectionMode) Checkbox(checked = selected, onCheckedChange = { toggle() })

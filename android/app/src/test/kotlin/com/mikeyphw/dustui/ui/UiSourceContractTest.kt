@@ -50,6 +50,14 @@ class UiSourceContractTest {
         assertTrue(theme.contains("letterSpacing = 0.sp"))
     }
 
+    @Test fun `explorer uses one full screen scroll surface`() {
+        val app = sourceFile("DustUiApp.kt")
+        assertTrue(app.contains("contentPadding = dustScreenPadding(horizontal = 0)"))
+        assertTrue(app.contains("contentPadding = PaddingValues(end = 56.dp)"))
+        assertFalse(app.contains("Column(modifier) {\n        SessionCard(session"))
+        assertFalse(app.contains("LazyColumn(Modifier.fillMaxSize(), contentPadding = dustScreenPadding(horizontal = 12)"))
+    }
+
     private fun sourceFile(name: String): String {
         val direct = File("src/main/kotlin/com/mikeyphw/dustui/ui/$name")
         if (direct.isFile) return direct.readText()
