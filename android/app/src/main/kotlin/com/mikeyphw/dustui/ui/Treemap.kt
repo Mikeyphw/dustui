@@ -3,6 +3,7 @@ package com.mikeyphw.dustui.ui
 import android.graphics.Paint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
@@ -25,8 +27,11 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,7 +42,8 @@ import kotlin.math.max
 
 @Composable
 fun StorageTreemap(entries: List<ScanEntryEntity>, onOpen: (ScanEntryEntity) -> Unit, modifier: Modifier = Modifier) {
-    val shown = entries.filter { it.sizeBytes > 0 }.sortedByDescending { it.sizeBytes }.take(80)
+    // Every visual block has a matching accessible row below it.
+    val shown = entries.filter { it.sizeBytes > 0 }.sortedByDescending { it.sizeBytes }.take(16)
     val border = MaterialTheme.colorScheme.surface
     val labelColor = MaterialTheme.colorScheme.onPrimary.toArgb()
     val palette = listOf(
@@ -48,9 +54,9 @@ fun StorageTreemap(entries: List<ScanEntryEntity>, onOpen: (ScanEntryEntity) -> 
         MaterialTheme.colorScheme.secondaryContainer,
         MaterialTheme.colorScheme.tertiaryContainer,
     )
-    val description = shown.take(12).joinToString(prefix = "Storage treemap. ", separator = ". ") { "${it.name}, ${formatBytes(it.sizeBytes)}" }
-    Column(modifier.semantics { contentDescription = description }, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        BoxWithConstraints(Modifier.fillMaxWidth().height(300.dp)) {
+    val description = shown.joinToString(prefix = "Storage treemap. ", separator = ". ") { "${it.name}, ${formatBytes(it.sizeBytes)}" }
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        BoxWithConstraints(Modifier.fillMaxWidth().height(300.dp).semantics { contentDescription = description }) {
             val density = LocalDensity.current
             val widthPx = with(density) { maxWidth.toPx() }
             val heightPx = with(density) { 300.dp.toPx() }
@@ -81,8 +87,14 @@ fun StorageTreemap(entries: List<ScanEntryEntity>, onOpen: (ScanEntryEntity) -> 
                 }
             }
         }
-        shown.take(8).forEachIndexed { index, entry ->
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text("Accessible largest items", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        shown.forEachIndexed { index, entry ->
+            Row(
+                Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                    .clickable(role = Role.Button) { onOpen(entry) }
+                    .semantics { role = Role.Button; contentDescription = "Open ${entry.name}, ${formatBytes(entry.sizeBytes)}" },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Box(Modifier.size(12.dp).background(palette[index % palette.size]))
                 Text(entry.name, Modifier.weight(1f).padding(horizontal = 8.dp), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(formatBytes(entry.sizeBytes), style = MaterialTheme.typography.labelMedium)

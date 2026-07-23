@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModel(private val repository: ScanRepository) : ViewModel() {
+    private var activeSessionId: String? = null
     val presets = ScanPreset.defaults
     val latestSession: StateFlow<ScanSessionEntity?> = repository.observeLatestSession()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
@@ -100,9 +101,30 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     init {
         refreshRoot()
         viewModelScope.launch { latestSession.collect { session ->
-            if (_explorerPath.value == null) _explorerPath.value = session?.rootPath
+            if (session?.id != activeSessionId) {
+                activeSessionId = session?.id
+                resetScanScopedState(session)
+            }
             if (session?.status == "COMPLETED") refreshInsights(session.id)
         } }
+    }
+
+    private fun resetScanScopedState(session: ScanSessionEntity?) {
+        _explorerPath.value = session?.rootPath
+        _filter.value = ExplorerFilter()
+        _selectedEntry.value = null
+        _selectedIntelligence.value = null
+        _selectedRootInspection.value = null
+        _selectedPaths.value = emptySet()
+        _cleanupReview.value = null
+        _rootSearchResults.value = emptyList()
+        _verifiedDuplicates.value = null
+        _appSummaries.value = emptyList()
+        _snapshotDelta.value = null
+        _snapshotHistory.value = emptyList()
+        _advancedReport.value = null
+        _packageProfiles.value = emptyList()
+        _moduleReport.value = null
     }
 
     fun refreshRoot() {
@@ -148,16 +170,40 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         val session = latestSession.value ?: return
         val chosen = allEntries.value.filter { it.path in _selectedPaths.value }
         if (chosen.isEmpty()) { _message.value = "Select at least one entry"; return }
-        viewModelScope.launch { _cleanupReview.value = repository.reviewCleanup(session, chosen) }
+        viewModelScope.launch {
+            val review = repository.reviewCleanup(session, chosen)
+            if (latestSession.value?.id == session.id) {
+                _cleanupReview.value = review
+            } else {
+                _message.value = "The active scan changed. Review the cleanup selection again."
+            }
+        }
     }
     fun dismissCleanupReview() { _cleanupReview.value = null }
     fun executeCleanup() {
         val session = latestSession.value ?: return
-        val chosen = allEntries.value.filter { it.path in _selectedPaths.value }
+        val review = _cleanupReview.value ?: run {
+            _message.value = "Review the cleanup selection before quarantine"
+            return
+        }
+        if (!review.matches(session.id, session.rootPath)) {
+            _cleanupReview.value = null
+            _message.value = "The active scan changed. Review the cleanup selection again."
+            return
+        }
+        if (!review.executable) {
+            _message.value = review.message ?: "This cleanup review cannot be executed"
+            return
+        }
         viewModelScope.launch {
-            val result = repository.executeCleanup(session, chosen)
+            if (latestSession.value?.id != review.scanId) {
+                _cleanupReview.value = null
+                _message.value = "The active scan changed. Review the cleanup selection again."
+                return@launch
+            }
+            val result = repository.executeCleanup(review)
             _message.value = if (result.ok) "Quarantined ${formatBytes(result.reclaimedBytes)}" else result.message ?: "Cleanup failed"
-            if (result.ok) { clearSelection(); refreshInsights() }
+            if (result.ok) { clearSelection(); refreshInsights(review.scanId) }
         }
     }
     fun restoreCleanup(operationId: String) {
@@ -169,12 +215,19 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     fun refreshInsights(scanId: String? = latestSession.value?.id) {
         if (scanId == null) return
         viewModelScope.launch {
-            _appSummaries.value = repository.appSummaries(scanId)
-            _snapshotDelta.value = repository.snapshotDelta()
-            _snapshotHistory.value = repository.snapshotHistory()
-            _advancedReport.value = repository.advancedAnalysis(scanId)
-            _packageProfiles.value = repository.packageProfiles(scanId)
-            _moduleReport.value = repository.moduleAnalysis(scanId)
+            val appSummaries = repository.appSummaries(scanId)
+            val snapshotDelta = repository.snapshotDelta()
+            val snapshotHistory = repository.snapshotHistory()
+            val advancedReport = repository.advancedAnalysis(scanId)
+            val packageProfiles = repository.packageProfiles(scanId)
+            val moduleReport = repository.moduleAnalysis(scanId)
+            if (latestSession.value?.id != scanId) return@launch
+            _appSummaries.value = appSummaries
+            _snapshotDelta.value = snapshotDelta
+            _snapshotHistory.value = snapshotHistory
+            _advancedReport.value = advancedReport
+            _packageProfiles.value = packageProfiles
+            _moduleReport.value = moduleReport
         }
     }
 
@@ -183,6 +236,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         if (scanId == null) { _message.value = "Run a scan before searching"; return }
         viewModelScope.launch {
             val results = repository.rootSearch(scanId, RootFileSearchRequest(query = query))
+            if (latestSession.value?.id != scanId) return@launch
             _rootSearchResults.value = results
             _message.value = "Found ${results.size} root-indexed result(s)"
         }

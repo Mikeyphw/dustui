@@ -2,6 +2,7 @@ package com.mikeyphw.dustui.ui
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -17,6 +18,13 @@ class DustNavigationModelTest {
         assertTrue(DustNavigationModel.wideDestinations.contains(DustDestination.MODULES))
         assertTrue(DustNavigationModel.wideDestinations.contains(DustDestination.CERTIFICATION))
         assertFalse(DustNavigationModel.wideDestinations.contains(DustDestination.MORE))
+    }
+
+    @Test fun `back returns compact specialized workbenches to more`() {
+        assertEquals(DustDestination.MORE, DustNavigationModel.backTarget(DustDestination.PACKAGES, wide = false))
+        assertEquals(DustDestination.SCAN, DustNavigationModel.backTarget(DustDestination.PACKAGES, wide = true))
+        assertEquals(DustDestination.SCAN, DustNavigationModel.backTarget(DustDestination.EXPLORER, wide = false))
+        assertNull(DustNavigationModel.backTarget(DustDestination.SCAN, wide = false))
     }
 
     @Test fun `only scan works without scan data`() {

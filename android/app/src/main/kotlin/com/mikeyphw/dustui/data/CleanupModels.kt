@@ -58,12 +58,18 @@ data class CleanupPlanItem(val path: String, val sizeBytes: Long)
 data class CleanupReview(
     val ok: Boolean,
     val operationId: String,
+    val scanId: String,
+    val rootPath: String,
+    val reviewedAt: Long,
     val accepted: List<CleanupPlanItem>,
     val blocked: List<CleanupBlockedItem>,
     val plannedBytes: Long,
     val message: String? = null,
 ) {
     val executable: Boolean get() = ok && accepted.isNotEmpty() && blocked.isEmpty()
+
+    fun matches(scanId: String, rootPath: String): Boolean =
+        this.scanId == scanId && this.rootPath == rootPath
 }
 
 data class CleanupBlockedItem(val path: String, val reason: String)

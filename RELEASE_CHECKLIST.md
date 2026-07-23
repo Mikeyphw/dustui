@@ -9,6 +9,16 @@
 - [ ] Confirm release APK builds.
 - [ ] Confirm Room schemas are exported.
 
+## Android UI/UX safety validation
+
+- [ ] Start a cleanup review, replace the active scan, and confirm the review and selection are cleared.
+- [ ] Confirm cleanup review lists every accepted path and every blocked path before quarantine.
+- [ ] Confirm Android Back closes review/details, exits selection, navigates Explorer upward, and returns compact More workbenches correctly.
+- [ ] Confirm donut charts stack at 360dp and interactive chart rows remain at least 48dp.
+- [ ] Confirm every treemap block has a keyboard/TalkBack-accessible matching action row.
+- [ ] Confirm package search reaches packages beyond the former first-24 limit.
+- [ ] Confirm notification permission is requested only when starting background scans or enabling scheduling.
+
 ## Device validation
 
 - [ ] Install the preferred APK on a rooted Android device.

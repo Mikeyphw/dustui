@@ -1,7 +1,9 @@
 package com.mikeyphw.dustui.data
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CleanupSafetyPolicyTest {
@@ -14,6 +16,22 @@ class CleanupSafetyPolicyTest {
     @Test fun blocksEscapesAndAllowsReviewedChildren() {
         assertEquals("Path is outside the reviewed scan root", CleanupSafetyPolicy.blockReason("/data/local/tmp/file", "/storage/emulated/0"))
         assertNull(CleanupSafetyPolicy.blockReason("/storage/emulated/0/Download/archive.zip", "/storage/emulated/0"))
+    }
+
+    @Test fun cleanupReviewIsBoundToItsScanAndRoot() {
+        val review = CleanupReview(
+            ok = true,
+            operationId = "operation",
+            scanId = "scan-a",
+            rootPath = "/storage/emulated/0",
+            reviewedAt = 123L,
+            accepted = listOf(CleanupPlanItem("/storage/emulated/0/Download/archive.zip", 42L)),
+            blocked = emptyList(),
+            plannedBytes = 42L,
+        )
+        assertTrue(review.matches("scan-a", "/storage/emulated/0"))
+        assertFalse(review.matches("scan-b", "/storage/emulated/0"))
+        assertFalse(review.matches("scan-a", "/data"))
     }
 
     @Test fun cleanupPlanRemovesNestedDuplicates() {

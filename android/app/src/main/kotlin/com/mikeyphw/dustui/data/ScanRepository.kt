@@ -95,15 +95,20 @@ class ScanRepository(
         return rootClient.reviewCleanup(plan)
     }
 
-    suspend fun executeCleanup(session: ScanSessionEntity, entries: List<ScanEntryEntity>): CleanupExecutionResult {
-        authorization.authorize().getOrElse { return CleanupExecutionResult(false, "authorization", "BLOCKED", 0, emptyList(), it.message) }
-        val plan = CleanupPlan(scanId = session.id, rootPath = session.rootPath, items = entries.map { CleanupPlanItem(it.path, it.sizeBytes) }).normalized()
+    suspend fun executeCleanup(review: CleanupReview): CleanupExecutionResult {
+        authorization.authorize().getOrElse { return CleanupExecutionResult(false, review.operationId, "BLOCKED", 0, emptyList(), it.message) }
+        val plan = CleanupPlan(
+            id = review.operationId,
+            scanId = review.scanId,
+            rootPath = review.rootPath,
+            items = review.accepted,
+        ).normalized()
         val createdAt = System.currentTimeMillis()
         val plannedBytes = plan.items.sumOf { it.sizeBytes }
-        dao.upsertCleanupOperation(CleanupOperationEntity(plan.id, session.id, session.rootPath, "EXECUTING", plan.items.size, plannedBytes, createdAt = createdAt))
+        dao.upsertCleanupOperation(CleanupOperationEntity(plan.id, plan.scanId, plan.rootPath, "EXECUTING", plan.items.size, plannedBytes, createdAt = createdAt))
         val result = runCatching { rootClient.executeCleanup(plan) }.getOrElse { CleanupExecutionResult(false, plan.id, "FAILED", 0, emptyList(), it.message) }
         if (result.entries.isNotEmpty()) dao.upsertQuarantineEntries(result.entries)
-        dao.upsertCleanupOperation(CleanupOperationEntity(plan.id, session.id, session.rootPath, result.status, plan.items.size, plannedBytes, result.reclaimedBytes, createdAt = createdAt, completedAt = System.currentTimeMillis(), message = result.message))
+        dao.upsertCleanupOperation(CleanupOperationEntity(plan.id, plan.scanId, plan.rootPath, result.status, plan.items.size, plannedBytes, result.reclaimedBytes, createdAt = createdAt, completedAt = System.currentTimeMillis(), message = result.message))
         return result
     }
 

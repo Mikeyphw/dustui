@@ -76,7 +76,11 @@ class RootServiceClient(private val context: Context) {
 
     suspend fun inspectPath(path: String, previewBytes: Int = 16 * 1024): RootPathInspection = cleanupCall { it.inspectPath(path, previewBytes) }.let(RootPathInspection::fromJson)
 
-    suspend fun reviewCleanup(plan: CleanupPlan): CleanupReview = cleanupCall { it.reviewCleanup(plan.normalized().toJson()) }.let(::parseReview)
+    suspend fun reviewCleanup(plan: CleanupPlan): CleanupReview {
+        val normalized = plan.normalized()
+        return cleanupCall { it.reviewCleanup(normalized.toJson()) }
+            .let { raw -> parseReview(raw, normalized) }
+    }
     suspend fun executeCleanup(plan: CleanupPlan): CleanupExecutionResult = cleanupCall(60_000L) { it.executeCleanup(plan.normalized().toJson()) }.let(::parseExecution)
     suspend fun restoreCleanup(operationId: String, rootPath: String): CleanupExecutionResult = cleanupCall(60_000L) { it.restoreCleanup(operationId, rootPath) }.let(::parseExecution)
 
@@ -84,13 +88,16 @@ class RootServiceClient(private val context: Context) {
         callMutex.withLock { withContext(Dispatchers.IO) { block(service()) } }
     }
 
-    private fun parseReview(raw: String): CleanupReview {
+    private fun parseReview(raw: String, plan: CleanupPlan): CleanupReview {
         val json = JSONObject(raw)
         val accepted = json.optJSONArray("accepted")
         val blocked = json.optJSONArray("blocked")
         return CleanupReview(
             ok = json.optBoolean("ok"),
-            operationId = json.optString("operationId"),
+            operationId = json.optString("operationId").ifBlank { plan.id },
+            scanId = plan.scanId,
+            rootPath = plan.rootPath,
+            reviewedAt = System.currentTimeMillis(),
             accepted = buildList { if (accepted != null) for (index in 0 until accepted.length()) accepted.getJSONObject(index).let { add(CleanupPlanItem(it.getString("path"), it.optLong("sizeBytes"))) } },
             blocked = buildList { if (blocked != null) for (index in 0 until blocked.length()) blocked.getJSONObject(index).let { add(CleanupBlockedItem(it.getString("path"), it.getString("reason"))) } },
             plannedBytes = json.optLong("plannedBytes"),

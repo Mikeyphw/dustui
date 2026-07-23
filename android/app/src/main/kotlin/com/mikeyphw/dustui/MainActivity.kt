@@ -25,9 +25,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        if (Build.VERSION.SDK_INT >= 33) {
-            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        setContent {
+            DustUiApp(viewModel) {
+                if (Build.VERSION.SDK_INT >= 33) {
+                    notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
         }
-        setContent { DustUiApp(viewModel) }
     }
 }

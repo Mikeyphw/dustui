@@ -129,4 +129,6 @@ MIT. `dust` is a separate Apache-2.0-licensed project and is not bundled.
 
 ## Android root app
 
-The repository also contains the Phase 1 Android implementation under `android/`. It uses a fixed libsu root service, a bundled native read-only scanner, foreground progress, Room persistence, cancellation, presets, and a Compose results screen. See [`docs/ANDROID_PHASE1.md`](docs/ANDROID_PHASE1.md).
+The repository contains the rooted Android storage workbench under `android/`. It uses a fixed libsu root service, bundled native read-only scanning, foreground progress, Room persistence, Explorer, search, package and module analysis, reversible quarantine, and release certification.
+
+The Android UI safety rules include scan-bound cleanup review, session-scoped state reset, hierarchical Back behavior, compact chart reflow, searchable package selection, and accessible treemap actions. See [`docs/ANDROID_UI_UX_SAFETY_OVERLAY.md`](docs/ANDROID_UI_UX_SAFETY_OVERLAY.md) and [`docs/UI_UX_CONTRACT.md`](docs/UI_UX_CONTRACT.md).

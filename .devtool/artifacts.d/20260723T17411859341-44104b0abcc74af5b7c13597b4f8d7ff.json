@@ -1,0 +1,147 @@
+{
+  "applied_at": "2026-07-23T17:41:18.593414Z",
+  "artifact": "/home/mike/Downloads/dustui_tui_ui_ux_overlay.zip",
+  "artifact_name": "dustui_tui_ui_ux_overlay.zip",
+  "type": "overlay",
+  "sha256": "05e56fc4834e8297ff1b266a31a0e6f1f7564ccaf7b915ff566de477c3a0c8bf",
+  "status": "rolled-back",
+  "validation_status": "failed",
+  "commit_message": "Improve DustUI TUI responsive UX",
+  "commit_hash": "",
+  "file_count": 12,
+  "change_counts": {
+    "add": 1,
+    "modify": 11
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI TUI responsive UX overhaul",
+    "description": "Rebased on dustui-20260723-142646.tar.gz. Implements responsive Textual layouts and repairs screen-stack class application, compact path width, medium summary visibility, modal mount synchronization, result columns, charting, compact-safe modals, and version alignment.",
+    "version": "1.0.2",
+    "repository": {
+      "name": "dustui"
+    },
+    "target": "dustui_tui",
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": ".devtool.toml",
+          "action": "modify",
+          "sha256": "3a1d224da47a257c35b03f8dff8a2cd2fc231ba9f81b345c1d2747b90a1ef680",
+          "size": 2180,
+          "source_sha256": "19cd446915227eecc5652c808627d489155b484076d19fb6241ff6b49cb23adc"
+        },
+        {
+          "path": "pyproject.toml",
+          "action": "modify",
+          "sha256": "95b5cdfcdc1b451f4666f694b8ad2c1a755446946fee2734ffb40488d2dfb32a",
+          "size": 1455,
+          "source_sha256": "669f81af04dfdd2c8e3629368851439de5df45b68e48f0e53ec3ece796294650"
+        },
+        {
+          "path": "README.md",
+          "action": "modify",
+          "sha256": "3633ba6497124e771d5f35c651573d2117f5ec3c22b883404aafb3bef268eef1",
+          "size": 4486,
+          "source_sha256": "a8da35c80f63cb4c45957d9bb32c8e4b55b30abcfd9254bb03689b0c4e7fd23d"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "action": "modify",
+          "sha256": "017a5c137a2bf720c92d606a5fa60035be4c88b19ee61c95217038eb92affda9",
+          "size": 2469,
+          "source_sha256": "9b840bd3f91f69ce3e7a4af85d1c66c505b23716d78ff4ccbe5e62926f38cd39"
+        },
+        {
+          "path": "docs/TUI_RESPONSIVE_UX_OVERLAY.md",
+          "action": "add",
+          "sha256": "2cdc31a71395a14995d6c8fc711a947d778d46c6b897049183c2875b32c0cbd2",
+          "size": 2812
+        },
+        {
+          "path": "docs/UI_UX_CONTRACT.md",
+          "action": "modify",
+          "sha256": "34aebeb578c6045ac6be2e75f228775d6ef3a43d7f533091db455a3e39b2c513",
+          "size": 5070,
+          "source_sha256": "0d7d2152a9e74e828b53884b2f77818a35b6835a40f5a1785bb45b05a8211e66"
+        },
+        {
+          "path": "src/dust_tui/__init__.py",
+          "action": "modify",
+          "sha256": "053a4d7680a9b41096c47abe463f141d3bb86092f4e8a2a11b4ad6588078f63d",
+          "size": 78,
+          "source_sha256": "15ca67df7db971900957d98230cacef7ba09c01c0502a53d4cb680a6f4810bd6"
+        },
+        {
+          "path": "src/dust_tui/app.py",
+          "action": "modify",
+          "sha256": "bd326cf414f6b9daee3486f769477a7ba5b55c1886fa8633ce9276e49bab27ca",
+          "size": 29292,
+          "source_sha256": "861e467b9a941839ec4e66f0601c7a6db0017ab09a457d457d4b3e2d93ea5b92"
+        },
+        {
+          "path": "src/dust_tui/screens.py",
+          "action": "modify",
+          "sha256": "610e6a3e5fda93d2655d26089f60e55599bffd9cfcaee182ff9699973ed18ae8",
+          "size": 17886,
+          "source_sha256": "987ddf717c8b84de252938c6e38bcb196892d0370f107e0526339f40a3a8dca3"
+        },
+        {
+          "path": "src/dust_tui/styles.tcss",
+          "action": "modify",
+          "sha256": "65903cf75d87408bd7748c6678cb407fa073c1b50fcb3c05ef610baf61507658",
+          "size": 5895,
+          "source_sha256": "2d800f702ab9fd25c08b7b560f7ca25d340731126b20b296bae354eb6ef5b76c"
+        },
+        {
+          "path": "tests/test_app.py",
+          "action": "modify",
+          "sha256": "dbc5168ed644761d139b799323e441c1f901829e77f52f8d99bc2bee86fbba3d",
+          "size": 10644,
+          "source_sha256": "57d6ee40d9a163ea9d6d5f1fa60dd8e28ff62f917c1448423286f1f5e480b839"
+        },
+        {
+          "path": "tests/test_ui_contract.py",
+          "action": "modify",
+          "sha256": "42a23a419c76f2c99db4f9a49d235f78631470c24edb776315b319e6da11b980",
+          "size": 1973,
+          "source_sha256": "8300effbff7c88d9a291e0801fee7fe3172d89a263fcba4471543bbf517de6fc"
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false,
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Improve DustUI TUI responsive UX"
+      }
+    },
+    "validation": {
+      "required": true,
+      "restore": true,
+      "build": true,
+      "test": true,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "build": "pass",
+        "tests": "pass",
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "454a6f4b613131da104ae34f9ec6bf42cf843e86b10a1bd5ca4109d57ce1ab9e",
+        "timeout_seconds": 900
+      }
+    }
+  },
+  "history_id": "44104b0abcc74af5b7c13597b4f8d7ff"
+}

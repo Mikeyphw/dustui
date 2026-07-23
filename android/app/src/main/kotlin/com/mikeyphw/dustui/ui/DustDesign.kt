@@ -13,11 +13,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 
 enum class DustDestination(val label: String, val shortLabel: String, val symbol: String, val actionLabel: String) {
@@ -73,6 +76,12 @@ object DustNavigationModel {
         DustDestination.CLEANUP,
         DustDestination.MORE,
     )
+
+    fun backTarget(destination: DustDestination, wide: Boolean): DustDestination? = when {
+        !wide && destination in moreDestinations -> DustDestination.MORE
+        destination != DustDestination.SCAN -> DustDestination.SCAN
+        else -> null
+    }
 }
 
 @Composable
@@ -85,15 +94,17 @@ fun DustSectionHeader(title: String, modifier: Modifier = Modifier, subtitle: St
 
 @Composable
 fun PathText(value: String, modifier: Modifier = Modifier, maxLines: Int = 1) {
-    SelectionContainer {
-        Text(
-            value,
-            modifier = modifier,
-            maxLines = maxLines,
-            overflow = TextOverflow.Ellipsis,
-            fontFamily = FontFamily.Monospace,
-            style = MaterialTheme.typography.labelSmall,
-        )
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+        SelectionContainer {
+            Text(
+                value,
+                modifier = modifier,
+                maxLines = maxLines,
+                overflow = TextOverflow.Ellipsis,
+                fontFamily = FontFamily.Monospace,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
     }
 }
 
@@ -122,13 +133,16 @@ fun MetricRow(label: String, value: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun MetricGrid(metrics: List<Pair<String, String>>, modifier: Modifier = Modifier) {
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        metrics.chunked(2).forEach { row ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                row.forEach { (label, value) ->
-                    MetricTile(label = label, value = value, modifier = Modifier.weight(1f))
+    BoxWithConstraints(modifier.fillMaxWidth()) {
+        val columns = if (maxWidth < 420.dp) 1 else 2
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            metrics.chunked(columns).forEach { row ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    row.forEach { (label, value) ->
+                        MetricTile(label = label, value = value, modifier = Modifier.weight(1f))
+                    }
+                    repeat(columns - row.size) { Box(Modifier.weight(1f)) }
                 }
-                if (row.size == 1) Box(Modifier.weight(1f))
             }
         }
     }

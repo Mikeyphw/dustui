@@ -1,0 +1,15 @@
+{
+  "applied_at": "2026-07-23T18:24:44.149937Z",
+  "artifact": "/home/mike/Downloads/dustui_android_ui_ux_overlay).zip",
+  "artifact_name": "dustui_android_ui_ux_overlay).zip",
+  "type": "overlay",
+  "sha256": "",
+  "status": "failed",
+  "validation_status": "not-run",
+  "commit_message": "",
+  "commit_hash": "",
+  "file_count": 0,
+  "change_counts": {},
+  "manifest": {},
+  "history_id": "5739221c3365434f9e64ae04fd98767c"
+}

@@ -4,6 +4,17 @@
 
 Final release-candidate hardening for the rooted Android storage workbench.
 
+### Android UI/UX safety overlay
+
+- Bound cleanup review and execution to the same scan ID, root, operation ID, and accepted item set.
+- Reset Explorer selection, details, filters, search results, package selection, and analysis when the active scan changes.
+- Added hierarchical Android Back behavior for sheets, details, selection mode, Explorer folders, More workbenches, and the Scan root.
+- Made storage charts, metric grids, package selection, and status pills adapt to compact screens.
+- Added accessible treemap actions and 48dp interactive chart rows.
+- Moved notification permission requests to scan and scheduling actions.
+- Expanded cleanup review to list every accepted and blocked path before quarantine.
+- Explicitly guarded scan-dependent Search and Packages routes so nullable session state compiles safely under Kotlin smart-cast rules.
+
 ### Added
 
 - Final RC readiness model with ship, ship-with-warnings, and do-not-ship decisions.

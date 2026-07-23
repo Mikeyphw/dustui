@@ -1,0 +1,182 @@
+{
+  "applied_at": "2026-07-23T18:33:27.191906Z",
+  "artifact": "/home/mike/Downloads/dustui_android_ui_ux_overlay(.zip",
+  "artifact_name": "dustui_android_ui_ux_overlay(.zip",
+  "type": "overlay",
+  "sha256": "6e69f1e1bd1743622df4069e9bd5040f53601478ba859d0e7fd161213bfb9a0b",
+  "status": "ok",
+  "validation_status": "not-run",
+  "commit_message": "Harden DustUI Android UI and cleanup safety",
+  "commit_hash": "",
+  "file_count": 17,
+  "change_counts": {
+    "add": 1,
+    "modify": 16
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Android UI/UX safety overhaul",
+    "description": "Rebased on dustui-20260723-142646.tar.gz. Binds cleanup execution to its reviewed scan and accepted paths, resets scan-scoped UI state, adds Android Back hierarchy, compact chart and package reflow, accessible treemap actions, contextual notification permission, and stronger source contracts. Compile-hardens scan-dependent Search and Packages routing with explicit nullable-session guards.",
+    "version": "1.0.1",
+    "repository": {
+      "name": "dustui"
+    },
+    "target": "dustui_android",
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "CHANGELOG.md",
+          "action": "modify",
+          "sha256": "2aa6c70e683f0d982e06049810649144dc537d1bae93e44c91e51527e3752793",
+          "size": 1982,
+          "source_sha256": "9b840bd3f91f69ce3e7a4af85d1c66c505b23716d78ff4ccbe5e62926f38cd39"
+        },
+        {
+          "path": "README.md",
+          "action": "modify",
+          "sha256": "e2af6730658471c8746d63c9b8d8f5878e07e5483c41d10e49e2e75cbc5cfc08",
+          "size": 4366,
+          "source_sha256": "a8da35c80f63cb4c45957d9bb32c8e4b55b30abcfd9254bb03689b0c4e7fd23d"
+        },
+        {
+          "path": "RELEASE_CHECKLIST.md",
+          "action": "modify",
+          "sha256": "d24331343107392d9799e19d090920d1aadb1122e959dedbd30fe228a975b117",
+          "size": 1994,
+          "source_sha256": "e4c0094165e92f93852a3b2b1bcc16bb02765aec271274386712d47409cd2e87"
+        },
+        {
+          "path": "UI_UX_CONTRACT.md",
+          "action": "modify",
+          "sha256": "94e7dcde8548295660c4d9bc8fd8c4824a5bb87cacba2676b15f7ec336488f95",
+          "size": 3544,
+          "source_sha256": "3fc8525dfb31d84f1fa13c225dfe9dfd6548b63b1d76763a74a2445201166937"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/MainActivity.kt",
+          "action": "modify",
+          "sha256": "21c2334858362b43b2291f4b4a5dfbb3febdac0f19e4b38caa41fba68e3a0655",
+          "size": 1191,
+          "source_sha256": "c3d149a6945094426c3ac212f3fdff0a8a88e6610dda966c1932f0d136358a65"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupModels.kt",
+          "action": "modify",
+          "sha256": "adede7e843b623ae3ad9d8d0ea6b7f94618f17c29d037170a1e4504db8a16075",
+          "size": 4022,
+          "source_sha256": "f2be0c15c6a43d6d4451cc6718a1ab625e3d07b2d6493b255a51536a4a37312b"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+          "action": "modify",
+          "sha256": "3d8e9141fb51ab353216ee569e2e6f8eba5e7d4c52bcea4aaf1eda4be21602f8",
+          "size": 8240,
+          "source_sha256": "d3083adf6b2707bccbddfa9a83c0d0ba2f7cf84b22b56273c275d1dc8eac80ef"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/RootServiceClient.kt",
+          "action": "modify",
+          "sha256": "ab0c093ff03cc7f17230970aff5fe01018292b5537f9d79f882d84637f8b696a",
+          "size": 10455,
+          "source_sha256": "d7deca2ef95070672f7754b3ffd7f788fe8f02dd2eb16d82c97b46f186872528"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+          "action": "modify",
+          "sha256": "9e04096b918d14ce0d0e6aa2436feeb09b4be0e3cafcee142b7a4d47c7fe5ae4",
+          "size": 8220,
+          "source_sha256": "71460ad15edccee36895e1a3843270f254d7133719392f6cd97004ea7329e5a3"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "action": "modify",
+          "sha256": "74ab14390557973744b05005acd889d6c78550e6188e987811238bcc2f2d3ca1",
+          "size": 58356,
+          "source_sha256": "f1a52479f7f0f271280c712020a5040510a8ad0c798c89382d1d6ee488dc0858"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+          "action": "modify",
+          "sha256": "21a2c2e0f895744ab535e6d01c443b309ce840916d67a5a58aa40ae3c0cdadda",
+          "size": 15428,
+          "source_sha256": "f5d1b4aa12a09a2b823359d85f94f6804de9af51ee0a3bd9dba2dfe92179c1d7"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/StorageCharts.kt",
+          "action": "modify",
+          "sha256": "4f17de9140491291e2dac0a983fa891dee373cdb2935945a0e128b7e4ca6bfc9",
+          "size": 8934,
+          "source_sha256": "5bc4a12ff4fb13a279f8e87adab7c71800cd804f068d5bde359e1d937c3a59a5"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Treemap.kt",
+          "action": "modify",
+          "sha256": "f1f1e3b53b2f05cbaab99b04cec8be3672bdec8e0ecc497db3176bc5928277be",
+          "size": 5661,
+          "source_sha256": "5cc06e6ac04c6399c5e8ce02e9e5875692c697702222efeaf7a7e8c13f7c89cf"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleanupSafetyPolicyTest.kt",
+          "action": "modify",
+          "sha256": "eef1615ba3ad66159f119263e78ca80b96da8aba969957060298027f3c5f5d8f",
+          "size": 2180,
+          "source_sha256": "c761d4512d0d8e5bac11f82c32f8081f8e7eb617f5bb4888f0a305453ae85f7e"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+          "action": "modify",
+          "sha256": "23e36b5e734131fc2c577078fc8ff93a617086b6c7e9d65e966af3a2f58d469a",
+          "size": 1890,
+          "source_sha256": "93ed3364deb3dd0042a32ad17531f37cc37cdc6e24f1370ea2460e81ffc2159a"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+          "action": "modify",
+          "sha256": "6180f382e166c801681bdac98adfa6458ae8cfbad5c5480f135b77adeecd2a9d",
+          "size": 5452,
+          "source_sha256": "9d95d10459cfdc97a1f30246fe96b3373e9ab0dc9f05f66cbedd44dfb5c46236"
+        },
+        {
+          "path": "docs/ANDROID_UI_UX_SAFETY_OVERLAY.md",
+          "action": "add",
+          "sha256": "78198fac11a62e6b2a5f00fe6b03b8ef608ce212eb9f76ce4f80612aeb25b4e5",
+          "size": 2596
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false,
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Harden DustUI Android UI and cleanup safety"
+      }
+    },
+    "validation": {
+      "required": true,
+      "restore": true,
+      "build": true,
+      "test": true,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "build": "pass",
+        "tests": "pass",
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "649e3525497fc97c513bd0b0fdd8d7173d29b35669284e0c58c6ef8fc5799769",
+        "timeout_seconds": 1800
+      }
+    }
+  },
+  "history_id": "1d9924e5495340cd9c41007bf32b28ab"
+}
