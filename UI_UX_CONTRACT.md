@@ -128,4 +128,16 @@ DustUI is a rooted Android storage workbench. The UI must remain readable on pho
 8. Legacy aliases such as `/data/data/<package>` and `/data/user/0/<package>` must not double-count the same logical location.
 9. Every residue location must expose evidence, size, file count, details, Explorer reveal, protection, selection, and reviewed permanent-deletion planning.
 10. Residue analysis is bound to the active scan. After filesystem mutation, inspection may continue, but selection and deletion planning require a fresh scan.
+## Ranked cleanup recommendation rules
+
+1. Ranking must be deterministic and expose the exact size, confidence, safety, and age point breakdown.
+2. Recommendations are candidates only; they must never trigger automatic or background deletion.
+3. Every recommendation must show exact current-scan paths and every path must support details, Explorer reveal, selection, and reviewed permanent-deletion planning.
+4. Exact duplicate recommendations must preserve expected SHA-256 values through review and immediate pre-deletion revalidation.
+5. Only active Verified or High-confidence, non-High-risk recommendations may enter page-level batch actions. Medium and Low-confidence heuristics require explicit per-item review.
+6. Overlapping ancestor and descendant paths must not be counted or selected twice across recommendation categories.
+7. Dismiss applies only to the active scan; Ignore persists; Show hidden must expose both states and Restore must be available.
+8. Hidden recommendations remain auditable and must not disappear from counts without explanation.
+9. Recommendation analysis is bound to the active scan. After filesystem mutation, browsing may continue but selection and planning require a fresh scan.
+10. Ranking, filtering, paging, and preference changes must preserve exact membership and complete with 0 warnings and 0 errors.
 

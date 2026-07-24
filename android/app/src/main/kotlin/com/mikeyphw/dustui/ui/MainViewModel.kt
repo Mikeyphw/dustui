@@ -10,6 +10,13 @@ import com.mikeyphw.dustui.data.AppResidueFilter
 import com.mikeyphw.dustui.data.AppResiduePage
 import com.mikeyphw.dustui.data.AppResidueSort
 import com.mikeyphw.dustui.data.AppResidueWorkbenchEngine
+import com.mikeyphw.dustui.data.CleanupRecommendationAnalysis
+import com.mikeyphw.dustui.data.CleanupRecommendationFilter
+import com.mikeyphw.dustui.data.CleanupRecommendationKind
+import com.mikeyphw.dustui.data.CleanupRecommendationPage
+import com.mikeyphw.dustui.data.CleanupRecommendationPreferences
+import com.mikeyphw.dustui.data.CleanupRecommendationSort
+import com.mikeyphw.dustui.data.CleanupRecommendationEngine
 import com.mikeyphw.dustui.data.ScanEntryEntity
 import com.mikeyphw.dustui.data.ScanRepository
 import com.mikeyphw.dustui.data.ScanSessionEntity
@@ -130,6 +137,20 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val residuePage: StateFlow<AppResiduePage> = combine(_residueAnalysis, _residueFilter) { analysis, filter ->
         AppResidueWorkbenchEngine.evaluate(analysis, filter)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppResiduePage.empty())
+    private val _recommendationAnalysis = MutableStateFlow<CleanupRecommendationAnalysis?>(null)
+    val recommendationAnalysis: StateFlow<CleanupRecommendationAnalysis?> = _recommendationAnalysis
+    private val _recommendationLoading = MutableStateFlow(false)
+    val recommendationLoading: StateFlow<Boolean> = _recommendationLoading
+    private val _recommendationFilter = MutableStateFlow(CleanupRecommendationFilter())
+    val recommendationFilter: StateFlow<CleanupRecommendationFilter> = _recommendationFilter
+    private val _recommendationPreferences = MutableStateFlow(CleanupRecommendationPreferences())
+    val recommendationPage: StateFlow<CleanupRecommendationPage> = combine(
+        _recommendationAnalysis,
+        _recommendationFilter,
+        _recommendationPreferences,
+    ) { analysis, filter, preferences ->
+        CleanupRecommendationEngine.evaluate(analysis, filter, preferences)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CleanupRecommendationPage.empty())
     private val _rootSearchResults = MutableStateFlow<List<RootFileSearchResult>>(emptyList())
     val rootSearchResults: StateFlow<List<RootFileSearchResult>> = _rootSearchResults
     private val _categoryFiles = MutableStateFlow<CategoryFileSelection?>(null)
@@ -197,6 +218,10 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         _residueAnalysis.value = null
         _residueLoading.value = false
         _residueFilter.value = AppResidueFilter()
+        _recommendationAnalysis.value = null
+        _recommendationLoading.value = false
+        _recommendationFilter.value = CleanupRecommendationFilter()
+        _recommendationPreferences.value = CleanupRecommendationPreferences()
         _moduleReport.value = null
         _scanDataStale.value = false
     }
@@ -404,8 +429,158 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
                 result.onSuccess { _residueAnalysis.value = it }
                     .onFailure { _message.value = it.message ?: "Unable to analyze app residue" }
                 _residueLoading.value = false
-                if (result.isSuccess && message != null) _message.value = message
+                if (result.isSuccess) reloadCleanupRecommendations(message)
             }
+        }
+    }
+
+    private fun reloadCleanupRecommendations(message: String? = null) {
+        val scanId = latestSession.value?.id ?: return
+        _recommendationLoading.value = true
+        viewModelScope.launch {
+            val result = runCatching { repository.cleanupRecommendations(scanId) }
+            if (latestSession.value?.id == scanId) {
+                result.onSuccess { analysis ->
+                    _recommendationAnalysis.value = analysis
+                    _recommendationPreferences.value = repository.cleanupRecommendationPreferences(scanId)
+                    if (message != null) _message.value = message
+                }.onFailure { _message.value = it.message ?: "Unable to rank cleanup recommendations" }
+                _recommendationLoading.value = false
+            }
+        }
+    }
+
+    fun updateRecommendationQuery(value: String) {
+        _recommendationFilter.value = _recommendationFilter.value.copy(query = value, page = 0)
+    }
+
+    fun filterRecommendationKind(kind: CleanupRecommendationKind?) {
+        _recommendationFilter.value = _recommendationFilter.value.copy(kind = kind, page = 0)
+    }
+
+    fun cycleRecommendationSort() {
+        val current = _recommendationFilter.value
+        val options = CleanupRecommendationSort.entries
+        _recommendationFilter.value = current.copy(sort = options[(current.sort.ordinal + 1) % options.size], page = 0)
+    }
+
+    fun toggleHiddenRecommendations() {
+        val current = _recommendationFilter.value
+        _recommendationFilter.value = current.copy(showHidden = !current.showHidden, page = 0)
+    }
+
+    fun previousRecommendationPage() {
+        val current = _recommendationFilter.value
+        _recommendationFilter.value = current.copy(page = (current.page - 1).coerceAtLeast(0))
+    }
+
+    fun nextRecommendationPage() {
+        val current = _recommendationFilter.value
+        val lastPage = (recommendationPage.value.pageCount - 1).coerceAtLeast(0)
+        _recommendationFilter.value = current.copy(page = (current.page + 1).coerceAtMost(lastPage))
+    }
+
+    fun selectCleanupRecommendation(recommendationId: String) {
+        val item = _recommendationAnalysis.value?.items?.firstOrNull { it.id == recommendationId }
+        selectRecommendationPaths(item?.paths.orEmpty(), item?.expectedSha256ByPath.orEmpty(), "recommendation")
+    }
+
+    fun reviewCleanupRecommendation(recommendationId: String) {
+        val item = _recommendationAnalysis.value?.items?.firstOrNull { it.id == recommendationId }
+        val paths = item?.paths.orEmpty()
+        if (paths.isEmpty()) {
+            _message.value = "This recommendation has no current paths"
+        } else {
+            reviewPaths(paths, item?.expectedSha256ByPath.orEmpty())
+        }
+    }
+
+    fun toggleCleanupRecommendationPath(recommendationId: String, path: String) {
+        if (_scanDataStale.value) {
+            _message.value = "Run a new scan before selecting files for deletion"
+            return
+        }
+        val item = _recommendationAnalysis.value?.items?.firstOrNull { it.id == recommendationId } ?: return
+        if (path !in item.paths) {
+            _message.value = "This path is no longer part of the recommendation"
+            return
+        }
+        val selected = _selectedPaths.value.toMutableSet()
+        val hashes = _selectedContentHashes.value.toMutableMap()
+        if (!selected.add(path)) {
+            selected.remove(path)
+            hashes.remove(path)
+        } else {
+            item.expectedSha256ByPath[path]?.let { hashes[path] = it }
+        }
+        _selectedPaths.value = selected
+        _selectedContentHashes.value = hashes
+        _cleanupReview.value = null
+    }
+
+    fun reviewCleanupRecommendationPath(recommendationId: String, path: String) {
+        val item = _recommendationAnalysis.value?.items?.firstOrNull { it.id == recommendationId } ?: return
+        if (path !in item.paths) {
+            _message.value = "This path is no longer part of the recommendation"
+            return
+        }
+        reviewPaths(listOf(path), item.expectedSha256ByPath.filterKeys { it == path })
+    }
+
+    fun selectRecommendationPage() = selectRecommendationPaths(
+        recommendationPage.value.batchPaths,
+        recommendationPage.value.batchHashes,
+        "high-confidence recommendation page",
+    )
+
+    fun reviewRecommendationPage() {
+        val paths = recommendationPage.value.batchPaths
+        if (paths.isEmpty()) {
+            _message.value = "No active high-confidence recommendations are visible on this page"
+        } else {
+            reviewPaths(paths, recommendationPage.value.batchHashes)
+        }
+    }
+
+    private fun selectRecommendationPaths(paths: List<String>, hashes: Map<String, String>, label: String) {
+        if (_scanDataStale.value) {
+            _message.value = "Run a new scan before selecting files for deletion"
+            return
+        }
+        if (paths.isEmpty()) {
+            _message.value = "No $label paths are available"
+            return
+        }
+        _selectedPaths.value = paths.toCollection(linkedSetOf())
+        _selectedContentHashes.value = hashes.filterKeys { it in _selectedPaths.value }
+        _cleanupReview.value = null
+        _message.value = "Selected ${paths.size} recommendation path(s)"
+    }
+
+    fun dismissCleanupRecommendation(recommendationId: String) = updateRecommendationPreference(recommendationId) { scanId ->
+        repository.dismissCleanupRecommendation(scanId, recommendationId)
+        "Dismissed until the next scan"
+    }
+
+    fun ignoreCleanupRecommendation(recommendationId: String) = updateRecommendationPreference(recommendationId) { scanId ->
+        repository.ignoreCleanupRecommendation(scanId, recommendationId)
+        "Ignored permanently. Hidden recommendations remain available through Show hidden."
+    }
+
+    fun restoreCleanupRecommendation(recommendationId: String) = updateRecommendationPreference(recommendationId) { scanId ->
+        repository.restoreCleanupRecommendation(scanId, recommendationId)
+        "Recommendation restored"
+    }
+
+    private fun updateRecommendationPreference(
+        recommendationId: String,
+        mutation: (String) -> String,
+    ) {
+        val scanId = latestSession.value?.id ?: return
+        _message.value = mutation(scanId)
+        _recommendationPreferences.value = repository.cleanupRecommendationPreferences(scanId)
+        if (recommendationPage.value.items.isEmpty() && recommendationPage.value.pageIndex > 0) {
+            previousRecommendationPage()
         }
     }
 
@@ -460,6 +635,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             if (latestSession.value?.id == session.id) {
                 _duplicateAnalysis.value = result
                 _message.value = result.message
+                reloadCleanupRecommendations()
             }
         }
     }
@@ -731,6 +907,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             val largeFileEntries = repository.largeFileEntries(scanId, largeFilePreset)
             _residueLoading.value = true
             val residueResult = runCatching { repository.appResidueAnalysis(scanId) }
+            _recommendationLoading.value = true
+            val recommendationResult = runCatching { repository.cleanupRecommendations(scanId) }
             val packageProfiles = repository.packageProfiles(scanId)
             val moduleReport = repository.moduleAnalysis(scanId)
             if (latestSession.value?.id != scanId) return@launch
@@ -746,6 +924,11 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             residueResult.onSuccess { _residueAnalysis.value = it }
                 .onFailure { _message.value = it.message ?: "Unable to analyze app residue" }
             _residueLoading.value = false
+            recommendationResult.onSuccess { analysis ->
+                _recommendationAnalysis.value = analysis
+                _recommendationPreferences.value = repository.cleanupRecommendationPreferences(scanId)
+            }.onFailure { _message.value = it.message ?: "Unable to rank cleanup recommendations" }
+            _recommendationLoading.value = false
             _moduleReport.value = moduleReport
         }
     }

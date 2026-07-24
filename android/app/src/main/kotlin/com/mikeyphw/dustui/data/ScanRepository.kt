@@ -25,6 +25,7 @@ class ScanRepository(
     private val intelligence = EntryIntelligenceResolver(context)
     private val duplicateStore = DuplicateAnalysisStore(context)
     private val residueProtectionStore = ResidueProtectionStore(context)
+    private val recommendationPreferenceStore = RecommendationPreferenceStore(context)
     @Volatile private var packageInventoryCache: Pair<Long, InstalledPackageInventory>? = null
     fun observeLatestSession(): Flow<ScanSessionEntity?> = dao.observeLatestSession()
     fun observeCleanupOperations(): Flow<List<CleanupOperationEntity>> = dao.observeCleanupOperations(50)
@@ -154,6 +155,29 @@ class ScanRepository(
 
     suspend fun moduleAnalysis(scanId: String): RootModuleReport = RootModuleAnalyzer.analyze(dao.entriesOnce(scanId))
 
+    suspend fun cleanupRecommendations(scanId: String): CleanupRecommendationAnalysis {
+        val duplicateAnalysis = duplicateStore.load(scanId)
+        val residueAnalysis = appResidueAnalysis(scanId)
+        recommendationPreferenceStore.pruneDismissedScans(scanId)
+        return CleanupRecommendationEngine.analyze(
+            scanId = scanId,
+            entries = dao.entriesOnce(scanId),
+            duplicateAnalysis = duplicateAnalysis,
+            residueAnalysis = residueAnalysis,
+        )
+    }
+
+    fun cleanupRecommendationPreferences(scanId: String): CleanupRecommendationPreferences =
+        recommendationPreferenceStore.snapshot(scanId)
+
+    fun dismissCleanupRecommendation(scanId: String, recommendationId: String) =
+        recommendationPreferenceStore.dismiss(scanId, recommendationId)
+
+    fun ignoreCleanupRecommendation(scanId: String, recommendationId: String) =
+        recommendationPreferenceStore.ignore(scanId, recommendationId)
+
+    fun restoreCleanupRecommendation(scanId: String, recommendationId: String) =
+        recommendationPreferenceStore.restore(scanId, recommendationId)
 
     suspend fun loadDuplicateAnalysis(scanId: String): DuplicateAnalysisSnapshot? = duplicateStore.load(scanId)
 

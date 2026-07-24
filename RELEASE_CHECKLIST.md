@@ -9,6 +9,19 @@
 - [ ] Confirm release APK builds.
 - [ ] Confirm Room schemas are exported.
 
+## Phase 19 ranked cleanup recommendation validation
+
+- [ ] Confirm compact users open Recommendations from More and wide users see it in the navigation rail.
+- [ ] Confirm every score shows its size, confidence, safety, and age point breakdown.
+- [ ] Confirm verified duplicates retain SHA-256 expectations through review and execution.
+- [ ] Confirm only active verified or high-confidence recommendations enter Select safe and Plan safe.
+- [ ] Confirm old installers, archives, logs, and large files require explicit recommendation or path review.
+- [ ] Confirm overlapping residue directories and child files are not double-counted or selected twice.
+- [ ] Confirm every surfaced path supports Details, Explorer, selection, and deletion planning.
+- [ ] Confirm Dismiss lasts only for the current scan, Ignore persists, Show hidden reveals both, and Restore reverses either state.
+- [ ] Confirm stale scan data blocks recommendation selection and deletion planning while preserving inspection.
+- [ ] Confirm Phase 19 completes with 0 warnings and 0 errors.
+
 ## Phase 18 uninstalled-app residue validation
 
 - [ ] Confirm Android user discovery and package listing include every available user before any result reaches high confidence.

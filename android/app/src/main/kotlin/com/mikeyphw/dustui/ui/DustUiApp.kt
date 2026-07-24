@@ -126,6 +126,9 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         val residueAnalysis by viewModel.residueAnalysis.collectAsStateWithLifecycle()
         val residuePage by viewModel.residuePage.collectAsStateWithLifecycle()
         val residueLoading by viewModel.residueLoading.collectAsStateWithLifecycle()
+        val recommendationAnalysis by viewModel.recommendationAnalysis.collectAsStateWithLifecycle()
+        val recommendationPage by viewModel.recommendationPage.collectAsStateWithLifecycle()
+        val recommendationLoading by viewModel.recommendationLoading.collectAsStateWithLifecycle()
         val certification by viewModel.certification.collectAsStateWithLifecycle()
         val packageProfiles by viewModel.packageProfiles.collectAsStateWithLifecycle()
         val rootSearchResults by viewModel.rootSearchResults.collectAsStateWithLifecycle()
@@ -208,13 +211,15 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                 Row(Modifier.padding(padding).fillMaxSize()) {
                     if (wide) {
                         NavigationRail(Modifier.fillMaxHeight()) {
-                            DustNavigationModel.wideDestinations.forEach { item ->
-                                NavigationRailItem(
-                                    selected = destination == item,
-                                    onClick = { selectDestination(item) },
-                                    icon = { Text(item.symbol, style = MaterialTheme.typography.titleMedium) },
-                                    label = { Text(item.shortLabel) },
-                                )
+                            Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
+                                DustNavigationModel.wideDestinations.forEach { item ->
+                                    NavigationRailItem(
+                                        selected = destination == item,
+                                        onClick = { selectDestination(item) },
+                                        icon = { Text(item.symbol, style = MaterialTheme.typography.titleMedium) },
+                                        label = { Text(item.shortLabel) },
+                                    )
+                                }
                             }
                         }
                     }
@@ -236,7 +241,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                             when {
                                 currentSession == null && DustNavigationModel.needsScanData(destination) -> EmptyState(
                                     title = "No scan yet",
-                                    detail = "Start a root scan before opening explorer, analytics, large-file cleanup, duplicate detection, app residue, search, packages, modules, certification, or deletion activity.",
+                                    detail = "Start a root scan before opening explorer, analytics, cleanup recommendations, large-file cleanup, duplicate detection, app residue, search, packages, modules, certification, or deletion activity.",
                                 )
                                 destination == DustDestination.SCAN -> ScanLauncher(
                                     Modifier.fillMaxSize(),
@@ -271,6 +276,18 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     },
                                     openDuplicates = { selectDestination(DustDestination.DUPLICATES) },
                                 )
+                                destination == DustDestination.RECOMMENDATIONS && currentSession != null -> CleanupRecommendationsScreen(
+                                    Modifier.fillMaxSize(),
+                                    recommendationAnalysis,
+                                    recommendationPage,
+                                    recommendationLoading,
+                                    selectedPaths,
+                                    scanDataStale,
+                                    viewModel,
+                                ) { filePath ->
+                                    viewModel.revealPath(filePath)
+                                    selectDestination(DustDestination.EXPLORER)
+                                }
                                 destination == DustDestination.LARGE_FILES && currentSession != null -> LargeFileWorkbenchScreen(
                                     Modifier.fillMaxSize(),
                                     largeFiles,
@@ -2179,6 +2196,7 @@ private fun MoreScreen(modifier: Modifier, navigate: (DustDestination) -> Unit) 
 }
 
 private fun moreDestinationDescription(destination: DustDestination): String = when (destination) {
+    DustDestination.RECOMMENDATIONS -> "Rank explainable cleanup candidates and review exact current-scan paths."
     DustDestination.LARGE_FILES -> "Filter, group, inspect, and batch-plan deletion for large files."
     DustDestination.DUPLICATES -> "Verify exact duplicate content and choose which physical copies to keep."
     DustDestination.APP_RESIDUE -> "Review evidence-ranked folders left by packages that are no longer installed."

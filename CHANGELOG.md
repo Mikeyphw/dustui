@@ -2,6 +2,16 @@
 
 ## 1.4.0-rc1
 
+### Phase 19 · Ranked cleanup recommendations
+
+- Added an explainable cleanup queue combining verified duplicates, high-confidence app residue, large old files, stale installers, old archives, and oversized logs.
+- Added deterministic ranking with visible size, confidence, safety, and age point breakdowns.
+- Limited page-level batch actions to active verified or high-confidence recommendations; heuristic age/size candidates require explicit review.
+- Added exact-path sheets with Details, Explorer, selection, and permanent-deletion planning for every surfaced path.
+- Added reversible Dismiss-until-next-scan, persistent Ignore, Show hidden, and Restore controls.
+- De-duplicated overlapping recommendation paths and preserved duplicate SHA-256 expectations through deletion review.
+- Kept recommendation-screen padding local to its source file so the Compose screen does not depend on a file-private helper.
+
 ### Phase 18 · Uninstalled-app residue detection
 
 - Added a dedicated app-residue workbench with evidence-ranked package groups, confidence filtering, deterministic paging, and exact-path actions.

@@ -8,6 +8,7 @@ import org.junit.Test
 
 class DustNavigationModelTest {
     @Test fun `compact navigation keeps specialized workbenches behind more`() {
+        assertEquals(DustDestination.MORE, DustNavigationModel.compactSelection(DustDestination.RECOMMENDATIONS))
         assertEquals(DustDestination.MORE, DustNavigationModel.compactSelection(DustDestination.LARGE_FILES))
         assertEquals(DustDestination.MORE, DustNavigationModel.compactSelection(DustDestination.DUPLICATES))
         assertEquals(DustDestination.MORE, DustNavigationModel.compactSelection(DustDestination.APP_RESIDUE))
@@ -17,6 +18,7 @@ class DustNavigationModelTest {
     }
 
     @Test fun `wide navigation exposes every primary workbench`() {
+        assertTrue(DustNavigationModel.wideDestinations.contains(DustDestination.RECOMMENDATIONS))
         assertTrue(DustNavigationModel.wideDestinations.contains(DustDestination.LARGE_FILES))
         assertTrue(DustNavigationModel.wideDestinations.contains(DustDestination.DUPLICATES))
         assertTrue(DustNavigationModel.wideDestinations.contains(DustDestination.APP_RESIDUE))
@@ -27,6 +29,7 @@ class DustNavigationModelTest {
     }
 
     @Test fun `back returns compact specialized workbenches to more`() {
+        assertEquals(DustDestination.MORE, DustNavigationModel.backTarget(DustDestination.RECOMMENDATIONS, wide = false))
         assertEquals(DustDestination.MORE, DustNavigationModel.backTarget(DustDestination.LARGE_FILES, wide = false))
         assertEquals(DustDestination.MORE, DustNavigationModel.backTarget(DustDestination.DUPLICATES, wide = false))
         assertEquals(DustDestination.MORE, DustNavigationModel.backTarget(DustDestination.APP_RESIDUE, wide = false))
