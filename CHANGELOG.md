@@ -2,6 +2,15 @@
 
 ## 1.4.0-rc1
 
+### Phase 16 · Large file workbench
+
+- Added a dedicated Android large-file destination backed by the complete active-scan entry set rather than only the Explorer display window.
+- Added presets for 100 MiB+, 500 MiB+, 1 GiB+, older files, old archives, large videos, and APK installers.
+- Added name/path/package search, category filtering, deterministic sort modes, page-local grouping, and 40-item paging.
+- Made every workbench row actionable through details, Explorer reveal, selection, and the existing fingerprinted permanent-deletion planner.
+- Added page-level Select page and Plan page actions with stale-scan blocking after filesystem mutation.
+- Added focused model, navigation, and UI source-contract coverage.
+
 Final release-candidate hardening for the rooted Android storage workbench.
 
 ### Actionable storage doughnut overlay

@@ -72,6 +72,9 @@ import com.mikeyphw.dustui.data.CleanupOperationEntity
 import com.mikeyphw.dustui.data.CleanupReview
 import com.mikeyphw.dustui.data.DeviceCertificationReport
 import com.mikeyphw.dustui.data.EntryIntelligence
+import com.mikeyphw.dustui.data.LargeFileItem
+import com.mikeyphw.dustui.data.LargeFilePage
+import com.mikeyphw.dustui.data.LargeFilePreset
 import com.mikeyphw.dustui.data.PackageStorageProfile
 import com.mikeyphw.dustui.data.RootFileSearchResult
 import com.mikeyphw.dustui.data.RootModuleReport
@@ -105,6 +108,8 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         val categoryFiles by viewModel.categoryFiles.collectAsStateWithLifecycle()
         val cleanupOperations by viewModel.cleanupOperations.collectAsStateWithLifecycle()
         val advancedReport by viewModel.advancedReport.collectAsStateWithLifecycle()
+        val largeFiles by viewModel.largeFiles.collectAsStateWithLifecycle()
+        val largeFileLoading by viewModel.largeFileLoading.collectAsStateWithLifecycle()
         val verifiedDuplicates by viewModel.verifiedDuplicates.collectAsStateWithLifecycle()
         val certification by viewModel.certification.collectAsStateWithLifecycle()
         val packageProfiles by viewModel.packageProfiles.collectAsStateWithLifecycle()
@@ -216,7 +221,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                             when {
                                 currentSession == null && DustNavigationModel.needsScanData(destination) -> EmptyState(
                                     title = "No scan yet",
-                                    detail = "Start a root scan before opening explorer, analytics, search, packages, modules, certification, or deletion activity.",
+                                    detail = "Start a root scan before opening explorer, analytics, large-file cleanup, search, packages, modules, certification, or deletion activity.",
                                 )
                                 destination == DustDestination.SCAN -> ScanLauncher(
                                     Modifier.fillMaxSize(),
@@ -251,6 +256,17 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                         selectDestination(DustDestination.EXPLORER)
                                     },
                                 )
+                                destination == DustDestination.LARGE_FILES && currentSession != null -> LargeFileWorkbenchScreen(
+                                    Modifier.fillMaxSize(),
+                                    largeFiles,
+                                    largeFileLoading,
+                                    selectedPaths,
+                                    scanDataStale,
+                                    viewModel,
+                                ) { filePath ->
+                                    viewModel.revealPath(filePath)
+                                    selectDestination(DustDestination.EXPLORER)
+                                }
                                 destination == DustDestination.SEARCH && currentSession != null -> RootSearchScreen(
                                     Modifier.fillMaxSize(),
                                     currentSession.id,
@@ -856,6 +872,198 @@ private fun CategoryFilesSheet(
 }
 
 @Composable
+private fun LargeFileWorkbenchScreen(
+    modifier: Modifier,
+    page: LargeFilePage,
+    loading: Boolean,
+    selectedPaths: Set<String>,
+    scanDataStale: Boolean,
+    vm: MainViewModel,
+    revealPath: (String) -> Unit,
+) {
+    LazyColumn(
+        modifier,
+        contentPadding = dustScreenPadding(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item {
+            DustSectionHeader(
+                "Large file workbench",
+                subtitle = "Filter and group current-scan files, then inspect or batch-plan permanent deletion.",
+            )
+        }
+        item {
+            MetricGrid(
+                listOf(
+                    "Matches" to page.totalMatches.toString(),
+                    "Matched size" to formatBytes(page.totalBytes),
+                    "Page" to if (page.pageCount == 0) "0 / 0" else "${page.pageIndex + 1} / ${page.pageCount}",
+                    "Page files" to page.pageItems.size.toString(),
+                ),
+            )
+        }
+        if (loading) {
+            item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
+        }
+        if (scanDataStale) {
+            item {
+                Surface(tonalElevation = 2.dp, shape = MaterialTheme.shapes.medium) {
+                    Text(
+                        "Results are stale after deletion. Browsing remains available, but selection and deletion planning require a fresh scan.",
+                        Modifier.fillMaxWidth().padding(12.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+        }
+        item {
+            OutlinedTextField(
+                value = page.filter.query,
+                onValueChange = vm::updateLargeFileQuery,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Find by name, path, or package") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            )
+        }
+        item {
+            Text("Presets", style = MaterialTheme.typography.labelLarge)
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(end = 24.dp),
+            ) {
+                items(LargeFilePreset.entries, key = { it.name }) { preset ->
+                    FilterChip(
+                        selected = page.filter.preset == preset,
+                        onClick = { vm.applyLargeFilePreset(preset) },
+                        label = { Text(preset.label) },
+                    )
+                }
+            }
+        }
+        item {
+            Text("Category", style = MaterialTheme.typography.labelLarge)
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(end = 24.dp),
+            ) {
+                item {
+                    FilterChip(
+                        selected = page.filter.category == null,
+                        onClick = { vm.filterLargeFilesByCategory(null) },
+                        label = { Text("All") },
+                    )
+                }
+                items(page.categories, key = { it }) { category ->
+                    FilterChip(
+                        selected = page.filter.category == category,
+                        onClick = { vm.filterLargeFilesByCategory(category) },
+                        label = { Text(category) },
+                    )
+                }
+            }
+        }
+        item {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = vm::cycleLargeFileSort, Modifier.weight(1f)) {
+                    Text("Sort: ${page.filter.sort.label}", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                OutlinedButton(onClick = vm::cycleLargeFileGroup, Modifier.weight(1f)) {
+                    Text("Group: ${page.filter.group.label}", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+        }
+        if (page.pageItems.isNotEmpty()) {
+            item {
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            "Current page",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            "${page.pageItems.size} file(s) · ${formatBytes(page.pageItems.sumOf { it.entry.sizeBytes })}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(
+                                onClick = vm::selectLargeFilePage,
+                                enabled = !scanDataStale,
+                                modifier = Modifier.weight(1f),
+                            ) { Text("Select page") }
+                            Button(
+                                onClick = vm::reviewLargeFilePage,
+                                enabled = !scanDataStale,
+                                modifier = Modifier.weight(1f),
+                            ) { Text("Plan page") }
+                        }
+                    }
+                }
+            }
+        }
+        if (page.pageItems.isEmpty() && !loading) {
+            item {
+                EmptyState(
+                    "No files match",
+                    "Change the preset, category, or search query. Directories are intentionally excluded.",
+                )
+            }
+        } else {
+            page.sections.forEach { section ->
+                item(key = "large-section:${section.label}") {
+                    DustSectionHeader(
+                        section.label,
+                        subtitle = "${section.items.size} file(s) · ${formatBytes(section.totalBytes)} on this page",
+                    )
+                }
+                items(section.items, key = { "large:${it.entry.path}" }) { item ->
+                    ActionablePathCard(
+                        path = item.entry.path,
+                        name = item.entry.name,
+                        sizeBytes = item.entry.sizeBytes,
+                        metadata = largeFileMetadata(item),
+                        selected = item.entry.path in selectedPaths,
+                        toggleSelection = { vm.togglePathSelection(item.entry.path) },
+                        showDetails = { vm.showPathDetails(item.entry.path) },
+                        reveal = { revealPath(item.entry.path) },
+                        delete = { vm.reviewPaths(listOf(item.entry.path)) },
+                        deletionEnabled = !scanDataStale,
+                    )
+                }
+            }
+            item {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedButton(
+                        onClick = vm::previousLargeFilePage,
+                        enabled = page.hasPrevious,
+                        modifier = Modifier.weight(1f),
+                    ) { Text("Previous") }
+                    Text(
+                        "${page.pageIndex + 1} / ${page.pageCount}",
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                    OutlinedButton(
+                        onClick = vm::nextLargeFilePage,
+                        enabled = page.hasNext,
+                        modifier = Modifier.weight(1f),
+                    ) { Text("Next") }
+                }
+            }
+        }
+    }
+}
+
+private fun largeFileMetadata(item: LargeFileItem): String = buildList {
+    add(item.category)
+    item.ageDays?.let { add("${it}d old") }
+    item.packageName?.let { add(it) }
+    if (item.extension.isNotBlank()) add(".${item.extension}")
+}.joinToString(" · ")
+
+@Composable
 private fun InsightsOverview(
     modifier: Modifier,
     delta: SnapshotDelta?,
@@ -1348,6 +1556,7 @@ private fun MoreScreen(modifier: Modifier, navigate: (DustDestination) -> Unit) 
 }
 
 private fun moreDestinationDescription(destination: DustDestination): String = when (destination) {
+    DustDestination.LARGE_FILES -> "Filter, group, inspect, and batch-plan deletion for large files."
     DustDestination.PACKAGES -> "App-owned storage profiles and largest paths."
     DustDestination.MODULES -> "Root module footprint and overlay conflict analysis."
     DustDestination.CERTIFICATION -> "Root backend, notification, lock-state, and release checks."

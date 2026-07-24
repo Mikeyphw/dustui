@@ -21,6 +21,12 @@ import com.mikeyphw.dustui.data.RootModuleReport
 import com.mikeyphw.dustui.data.RootFileSearchResult
 import com.mikeyphw.dustui.data.RootFileSearchRequest
 import com.mikeyphw.dustui.data.PackageStorageProfile
+import com.mikeyphw.dustui.data.LargeFileFilter
+import com.mikeyphw.dustui.data.LargeFileGroup
+import com.mikeyphw.dustui.data.LargeFilePage
+import com.mikeyphw.dustui.data.LargeFilePreset
+import com.mikeyphw.dustui.data.LargeFileSort
+import com.mikeyphw.dustui.data.LargeFileWorkbenchEngine
 import com.mikeyphw.dustui.scan.ScanPreset
 import com.mikeyphw.dustui.scan.ScanRequest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -98,6 +104,14 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val rootSearchResults: StateFlow<List<RootFileSearchResult>> = _rootSearchResults
     private val _categoryFiles = MutableStateFlow<CategoryFileSelection?>(null)
     val categoryFiles: StateFlow<CategoryFileSelection?> = _categoryFiles
+    private val _largeFileSourceEntries = MutableStateFlow<List<ScanEntryEntity>>(emptyList())
+    private val _largeFileLoading = MutableStateFlow(false)
+    val largeFileLoading: StateFlow<Boolean> = _largeFileLoading
+    private val _largeFileFilter = MutableStateFlow(LargeFileFilter())
+    val largeFileFilter: StateFlow<LargeFileFilter> = _largeFileFilter
+    val largeFiles: StateFlow<LargeFilePage> = combine(_largeFileSourceEntries, _largeFileFilter) { entries, filter ->
+        LargeFileWorkbenchEngine.evaluate(entries, filter)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LargeFilePage.empty())
     private val _moduleReport = MutableStateFlow<RootModuleReport?>(null)
     val moduleReport: StateFlow<RootModuleReport?> = _moduleReport
     val message: StateFlow<String?> = _message
@@ -123,6 +137,9 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         _cleanupReview.value = null
         _rootSearchResults.value = emptyList()
         _categoryFiles.value = null
+        _largeFileSourceEntries.value = emptyList()
+        _largeFileLoading.value = false
+        _largeFileFilter.value = LargeFileFilter()
         _verifiedDuplicates.value = null
         _appSummaries.value = emptyList()
         _snapshotDelta.value = null
@@ -174,6 +191,79 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     }
 
     fun dismissCategoryFiles() { _categoryFiles.value = null }
+
+    fun updateLargeFileQuery(value: String) {
+        _largeFileFilter.value = _largeFileFilter.value.copy(query = value, page = 0)
+    }
+
+    fun applyLargeFilePreset(preset: LargeFilePreset) {
+        _largeFileFilter.value = _largeFileFilter.value.copy(preset = preset, category = null, page = 0)
+        reloadLargeFileEntries(preset)
+    }
+
+    private fun reloadLargeFileEntries(preset: LargeFilePreset = _largeFileFilter.value.preset) {
+        val scanId = latestSession.value?.id ?: return
+        _largeFileLoading.value = true
+        viewModelScope.launch {
+            val result = runCatching { repository.largeFileEntries(scanId, preset) }
+            if (latestSession.value?.id == scanId && _largeFileFilter.value.preset == preset) {
+                result.onSuccess { _largeFileSourceEntries.value = it }
+                    .onFailure { _message.value = it.message ?: "Unable to load large files" }
+                _largeFileLoading.value = false
+            }
+        }
+    }
+
+    fun filterLargeFilesByCategory(category: String?) {
+        _largeFileFilter.value = _largeFileFilter.value.copy(category = category, page = 0)
+    }
+
+    fun cycleLargeFileSort() {
+        val current = _largeFileFilter.value
+        val options = LargeFileSort.entries
+        _largeFileFilter.value = current.copy(sort = options[(current.sort.ordinal + 1) % options.size], page = 0)
+    }
+
+    fun cycleLargeFileGroup() {
+        val current = _largeFileFilter.value
+        val options = LargeFileGroup.entries
+        _largeFileFilter.value = current.copy(group = options[(current.group.ordinal + 1) % options.size], page = 0)
+    }
+
+    fun previousLargeFilePage() {
+        val current = _largeFileFilter.value
+        _largeFileFilter.value = current.copy(page = (current.page - 1).coerceAtLeast(0))
+    }
+
+    fun nextLargeFilePage() {
+        val current = _largeFileFilter.value
+        val lastPage = (largeFiles.value.pageCount - 1).coerceAtLeast(0)
+        _largeFileFilter.value = current.copy(page = (current.page + 1).coerceAtMost(lastPage))
+    }
+
+    fun selectLargeFilePage() {
+        if (_scanDataStale.value) {
+            _message.value = "Run a new scan before selecting files for deletion"
+            return
+        }
+        val paths = largeFiles.value.pageItems.map { it.entry.path }
+        if (paths.isEmpty()) {
+            _message.value = "No large files are visible on this page"
+            return
+        }
+        _selectedPaths.value = paths.toCollection(linkedSetOf())
+        _cleanupReview.value = null
+        _message.value = "Selected ${paths.size} large file(s) from this page"
+    }
+
+    fun reviewLargeFilePage() {
+        val paths = largeFiles.value.pageItems.map { it.entry.path }
+        if (paths.isEmpty()) {
+            _message.value = "No large files are visible on this page"
+            return
+        }
+        reviewPaths(paths)
+    }
 
     fun selectCategoryPaths(categories: Set<String>) {
         if (_scanDataStale.value) {
@@ -319,6 +409,9 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             val snapshotDelta = repository.snapshotDelta()
             val snapshotHistory = repository.snapshotHistory()
             val advancedReport = repository.advancedAnalysis(scanId)
+            val largeFilePreset = _largeFileFilter.value.preset
+            _largeFileLoading.value = true
+            val largeFileEntries = repository.largeFileEntries(scanId, largeFilePreset)
             val packageProfiles = repository.packageProfiles(scanId)
             val moduleReport = repository.moduleAnalysis(scanId)
             if (latestSession.value?.id != scanId) return@launch
@@ -326,6 +419,10 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             _snapshotDelta.value = snapshotDelta
             _snapshotHistory.value = snapshotHistory
             _advancedReport.value = advancedReport
+            if (_largeFileFilter.value.preset == largeFilePreset) {
+                _largeFileSourceEntries.value = largeFileEntries
+                _largeFileLoading.value = false
+            }
             _packageProfiles.value = packageProfiles
             _moduleReport.value = moduleReport
         }

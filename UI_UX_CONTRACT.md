@@ -87,3 +87,16 @@ DustUI is a rooted Android storage workbench. The UI must remain readable on pho
 6. The accessible legend must expose category, size, percentage, count, button role, and selected state with at least a 48dp target.
 7. After any filesystem mutation, the chart must identify itself as stale. Read-only inspection may remain available, but new chart-driven selection and deletion require a rescan.
 
+
+## Large-file workbench rules
+
+1. The large-file workbench must operate on the complete active scan entry set, not a truncated Explorer display list.
+2. Directories must not appear as large-file deletion candidates.
+3. Presets must use explicit size, age, and file-category rules and must never infer safety from size alone.
+4. Search must cover file name, full path, and resolved package name.
+5. Category filters, sort changes, grouping changes, and preset changes must reset paging to the first page.
+6. Paging must be deterministic, bounded, and preserve exact membership without overlap.
+7. Group byte totals must reconcile with the exact files visible on the current page.
+8. Every surfaced file must support details, Explorer reveal, individual selection, and reviewed permanent-deletion planning.
+9. Page-level selection and deletion planning must use only the current visible page and feed the same fingerprinted deletion pipeline.
+10. After filesystem mutation, browsing may remain available, but selection and deletion planning must require a fresh scan.

@@ -1,0 +1,159 @@
+{
+  "applied_at": "2026-07-24T15:38:41.754026Z",
+  "artifact": "/home/mike/Downloads/dustui_android_phase16_large_file_workbench_overlay.zip",
+  "artifact_name": "dustui_android_phase16_large_file_workbench_overlay.zip",
+  "type": "overlay",
+  "sha256": "c3c4f3d6fc5f5bfbccbd62b5cd2b3c43992b3f852d2242625a75caa43572989e",
+  "status": "ok",
+  "validation_status": "ok",
+  "commit_message": "Add Android Phase 16 large file workbench",
+  "commit_hash": "",
+  "file_count": 14,
+  "change_counts": {
+    "add": 3,
+    "modify": 11
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Android Phase 16 large file workbench",
+    "description": "Builds on the validated actionable-doughnut baseline at commit d848622. Adds a complete-scan large-file workbench with preset-specific Room candidate queries, name/path/package search, category filters, deterministic sorting, page-local grouping, 40-item paging, actionable rows, page selection, and review-bound permanent-deletion planning with stale-scan guards.",
+    "version": "1.0.0",
+    "repository": {
+      "name": "dustui"
+    },
+    "target": "dustui_android",
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "CHANGELOG.md",
+          "action": "modify",
+          "sha256": "7035524254f182f8999c058465b47feb3ffa2e8c05a0eaeee994ed6c4d69dea2",
+          "size": 4552,
+          "source_sha256": "68b77775453932f47ca6f3c3617e638cfffa67e68da756325b68bcf458d3a634"
+        },
+        {
+          "path": "README.md",
+          "action": "modify",
+          "sha256": "07016d86aed5925a1a531f46ccfc538bc5a8038d36bf5fd56b8184321b12f16c",
+          "size": 5138,
+          "source_sha256": "1fcd6cdb2218e5cd6a79564c227380f695dea7f6d9de5e708c93ce967cbe3edb"
+        },
+        {
+          "path": "RELEASE_CHECKLIST.md",
+          "action": "modify",
+          "sha256": "93d575e48e6a0c94730c75e6abde20bdab95132c829c54834f0cb80d6d8f843b",
+          "size": 4579,
+          "source_sha256": "d37b71254cf6e9e922c9016d8a68c58b718eb8d20bc4599e0d8cf07439d4a5b6"
+        },
+        {
+          "path": "UI_UX_CONTRACT.md",
+          "action": "modify",
+          "sha256": "1178a7a617605547df2264f3bd6cf0bb7a1f3e9ccd2e8d0ce13a313532c2f0dd",
+          "size": 7058,
+          "source_sha256": "e22bd4bf9fb4731f93e5d3821db207d30226203c120e56dad84e82f590ecab96"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/LargeFileWorkbench.kt",
+          "action": "add",
+          "sha256": "5a82771881f3d992f5bc378af8b0175fcec856f30d3b4de03f6d0dc9f68fff81",
+          "size": 7118
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanDao.kt",
+          "action": "modify",
+          "sha256": "178dc581556a5df86aa27f9747aefb3745cd5d572a34689ba45ce0360aaf0d76",
+          "size": 2799,
+          "source_sha256": "981a42ace713a1cdc795b9817e99806dffa36f3cc729b7998eb10deca4d15740"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+          "action": "modify",
+          "sha256": "9a44045061941d7886565303305ce83dd355a845eed859db195e164250e191b4",
+          "size": 10555,
+          "source_sha256": "402b928cbcdf78fdb3641f53730dcfbdc3dff33eed1945674452812a1a35521e"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+          "action": "modify",
+          "sha256": "d1ab335c515ae640ee9b1eb7dbe51a3828b1a9ab9c887e7923945192704486c9",
+          "size": 8390,
+          "source_sha256": "9e04096b918d14ce0d0e6aa2436feeb09b4be0e3cafcee142b7a4d47c7fe5ae4"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "action": "modify",
+          "sha256": "4710ff311c846f328935394db76aabd9d8de514be9979e53b10f355b46e0bf46",
+          "size": 85501,
+          "source_sha256": "ca7a8e7035f3c1caf73d3c7e812ab2a52b4730bd108d4dc88fca5bcc3cd4c2b4"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+          "action": "modify",
+          "sha256": "06782b21fd07117673846bf556b4d14c6b2a6844e0f4336cc0ea1a503964808d",
+          "size": 23373,
+          "source_sha256": "359e6f5ce0d0573b78acc3b068751bae331a995a95c4cae802aa1ea3ffeb9b00"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/LargeFileWorkbenchTest.kt",
+          "action": "add",
+          "sha256": "56aa7e412b7f7c14cdc30cd258373f73642998879c926d82f75d9175012ac780",
+          "size": 5488
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+          "action": "modify",
+          "sha256": "b89d2541f487900d11547490cc9aed79ed23b3e773d717fc71d9d331a021ce90",
+          "size": 2213,
+          "source_sha256": "23e36b5e734131fc2c577078fc8ff93a617086b6c7e9d65e966af3a2f58d469a"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+          "action": "modify",
+          "sha256": "17480f2a24719f9d7a28f4f7bf521aa203684c715171c47659e2f59113f998c4",
+          "size": 10996,
+          "source_sha256": "2efe1092577b0348d9e312e0d24a8e3b815f5651ac67f28cff9449fdd4614ed1"
+        },
+        {
+          "path": "docs/ANDROID_PHASE16_LARGE_FILE_WORKBENCH.md",
+          "action": "add",
+          "sha256": "eac4832b9a0c6d94fa8d58ef53f524e00e2e463484497070310542266c313ce7",
+          "size": 2220
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false,
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Add Android Phase 16 large file workbench"
+      }
+    },
+    "validation": {
+      "required": true,
+      "restore": true,
+      "build": true,
+      "test": true,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "build": "pass",
+        "tests": "pass",
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "ff47943c7526a20c6dbf565e8f88642018d1a40c5f88ebe83baff68c9e394fe3",
+        "timeout_seconds": 1800
+      }
+    }
+  },
+  "history_id": "1fe46788a99147efa57489a3ea875620"
+}

@@ -28,6 +28,28 @@ interface ScanDao {
     @Query("SELECT * FROM scan_entries WHERE scanId = :scanId ORDER BY sizeBytes DESC")
     suspend fun entriesOnce(scanId: String): List<ScanEntryEntity>
 
+    @Query("SELECT * FROM scan_entries WHERE scanId = :scanId AND isDirectory = 0 AND sizeBytes >= :minBytes ORDER BY sizeBytes DESC, path COLLATE NOCASE")
+    suspend fun filesAtLeastOnce(scanId: String, minBytes: Long): List<ScanEntryEntity>
+
+    @Query("""
+        SELECT * FROM scan_entries
+        WHERE scanId = :scanId AND isDirectory = 0
+          AND (LOWER(name) LIKE '%.apk' OR LOWER(name) LIKE '%.apex')
+        ORDER BY sizeBytes DESC, path COLLATE NOCASE
+    """)
+    suspend fun installerFilesOnce(scanId: String): List<ScanEntryEntity>
+
+    @Query("""
+        SELECT * FROM scan_entries
+        WHERE scanId = :scanId AND isDirectory = 0
+          AND (
+            LOWER(name) LIKE '%.zip' OR LOWER(name) LIKE '%.7z' OR LOWER(name) LIKE '%.rar' OR
+            LOWER(name) LIKE '%.tar' OR LOWER(name) LIKE '%.gz' OR LOWER(name) LIKE '%.zst'
+          )
+        ORDER BY sizeBytes DESC, path COLLATE NOCASE
+    """)
+    suspend fun archiveFilesOnce(scanId: String): List<ScanEntryEntity>
+
     @Query("DELETE FROM scan_entries WHERE scanId = :scanId")
     suspend fun deleteEntries(scanId: String)
 

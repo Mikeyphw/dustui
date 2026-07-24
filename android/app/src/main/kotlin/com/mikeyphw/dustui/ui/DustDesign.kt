@@ -27,6 +27,7 @@ enum class DustDestination(val label: String, val shortLabel: String, val symbol
     SCAN("Scan", "Scan", "↯", "Options"),
     EXPLORER("Explorer", "Files", "▦", "Actions"),
     INSIGHTS("Overview", "Overview", "◌", "Export"),
+    LARGE_FILES("Large files", "Large", "▤", "Actions"),
     SEARCH("Root search", "Search", "⌕", "Tools"),
     PACKAGES("Packages", "Apps", "▣", "Apps"),
     MODULES("Modules", "Modules", "▥", "Tools"),
@@ -48,6 +49,7 @@ object DustNavigationModel {
         DustDestination.SCAN,
         DustDestination.EXPLORER,
         DustDestination.INSIGHTS,
+        DustDestination.LARGE_FILES,
         DustDestination.SEARCH,
         DustDestination.PACKAGES,
         DustDestination.MODULES,
@@ -56,6 +58,7 @@ object DustNavigationModel {
     )
 
     val moreDestinations = listOf(
+        DustDestination.LARGE_FILES,
         DustDestination.PACKAGES,
         DustDestination.MODULES,
         DustDestination.CERTIFICATION,
@@ -69,6 +72,7 @@ object DustNavigationModel {
 
     fun refreshesInsights(destination: DustDestination): Boolean = destination in setOf(
         DustDestination.INSIGHTS,
+        DustDestination.LARGE_FILES,
         DustDestination.SEARCH,
         DustDestination.PACKAGES,
         DustDestination.MODULES,

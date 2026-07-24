@@ -139,6 +139,36 @@ class UiSourceContractTest {
         assertTrue(analytics.contains("val sourceLabels: Set<String>"))
     }
 
+
+    @Test fun `large file workbench is filtered grouped paged and deletion bound`() {
+        val app = sourceFile("DustUiApp.kt")
+        val viewModel = sourceFile("MainViewModel.kt")
+        val design = sourceFile("DustDesign.kt")
+        val model = androidSource("src/main/kotlin/com/mikeyphw/dustui/data/LargeFileWorkbench.kt")
+        val dao = androidSource("src/main/kotlin/com/mikeyphw/dustui/data/ScanDao.kt")
+        val repository = androidSource("src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt")
+        assertTrue(design.contains("LARGE_FILES"))
+        assertTrue(app.contains("private fun LargeFileWorkbenchScreen"))
+        assertTrue(app.contains("Find by name, path, or package"))
+        assertTrue(app.contains("Select page"))
+        assertTrue(app.contains("Plan page"))
+        assertTrue(app.contains("largeFileMetadata(item)"))
+        assertTrue(viewModel.contains("LargeFileWorkbenchEngine.evaluate"))
+        assertTrue(viewModel.contains("fun selectLargeFilePage"))
+        assertTrue(viewModel.contains("fun reviewLargeFilePage"))
+        assertTrue(viewModel.contains("reviewPaths(paths)"))
+        assertTrue(model.contains("enum class LargeFilePreset"))
+        assertTrue(model.contains("enum class LargeFileGroup"))
+        assertTrue(model.contains("val pageSize: Int = 40"))
+        assertTrue(model.contains("filterNot { it.isDirectory }"))
+        assertTrue(model.contains("EntryIntelligenceResolver.packageFromPath"))
+        assertTrue(dao.contains("filesAtLeastOnce"))
+        assertTrue(dao.contains("installerFilesOnce"))
+        assertTrue(dao.contains("archiveFilesOnce"))
+        assertTrue(repository.contains("suspend fun largeFileEntries"))
+        assertFalse(viewModel.contains("combine(allEntries, _largeFileFilter)"))
+    }
+
     @Test fun `permanent deletion replaces quarantine runtime behavior`() {
         val app = sourceFile("DustUiApp.kt")
         val rootService = androidSource("src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt")

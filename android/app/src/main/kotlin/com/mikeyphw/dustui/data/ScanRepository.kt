@@ -65,6 +65,16 @@ class ScanRepository(
         return SnapshotAnalyzer.appSummaries(dao.entriesOnce(scanId), installed)
     }
 
+    suspend fun largeFileEntries(scanId: String, preset: LargeFilePreset): List<ScanEntryEntity> = when (preset) {
+        LargeFilePreset.LARGE -> dao.filesAtLeastOnce(scanId, 100L * 1024L * 1024L)
+        LargeFilePreset.VERY_LARGE -> dao.filesAtLeastOnce(scanId, 500L * 1024L * 1024L)
+        LargeFilePreset.HUGE -> dao.filesAtLeastOnce(scanId, 1024L * 1024L * 1024L)
+        LargeFilePreset.OLD -> dao.filesAtLeastOnce(scanId, 100L * 1024L * 1024L)
+        LargeFilePreset.OLD_ARCHIVES -> dao.archiveFilesOnce(scanId)
+        LargeFilePreset.LARGE_VIDEOS -> dao.filesAtLeastOnce(scanId, 500L * 1024L * 1024L)
+        LargeFilePreset.INSTALLERS -> dao.installerFilesOnce(scanId)
+    }
+
     suspend fun advancedAnalysis(scanId: String): AdvancedStorageReport {
         val installed = context.packageManager.getInstalledPackages(0).mapTo(mutableSetOf()) { it.packageName }
         return AdvancedStorageAnalyzer.analyze(dao.entriesOnce(scanId), installed, readMountTable())

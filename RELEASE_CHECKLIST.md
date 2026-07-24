@@ -9,6 +9,20 @@
 - [ ] Confirm release APK builds.
 - [ ] Confirm Room schemas are exported.
 
+## Phase 16 large-file workbench validation
+
+- [ ] Confirm compact users can open Large files from More and wide users can open it from the rail.
+- [ ] Confirm presets return only files matching their documented size, age, and category rules.
+- [ ] Confirm search matches file name, full path, and resolved package name.
+- [ ] Confirm category changes reset paging and do not show irrelevant categories for the active preset.
+- [ ] Confirm Largest, Oldest, Newest, Path, and Package sorts are deterministic.
+- [ ] Confirm Category, Directory, and Package grouping preserves exact page membership and byte totals.
+- [ ] Confirm Previous and Next never overlap or skip entries.
+- [ ] Confirm every row supports Details, Explorer, selection, and permanent-deletion planning.
+- [ ] Confirm Select page and Plan page use only the current visible page.
+- [ ] Confirm stale scan data blocks selection and deletion planning while preserving read-only inspection.
+- [ ] Confirm the workbench uses the complete active scan rather than the Explorer 10,000-row display limit.
+
 ## Android deletion and UI/UX safety validation
 
 - [ ] Start a cleanup review, replace the active scan, and confirm the review and selection are cleared.
