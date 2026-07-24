@@ -96,6 +96,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val packageProfiles: StateFlow<List<PackageStorageProfile>> = _packageProfiles
     private val _rootSearchResults = MutableStateFlow<List<RootFileSearchResult>>(emptyList())
     val rootSearchResults: StateFlow<List<RootFileSearchResult>> = _rootSearchResults
+    private val _categoryFiles = MutableStateFlow<CategoryFileSelection?>(null)
+    val categoryFiles: StateFlow<CategoryFileSelection?> = _categoryFiles
     private val _moduleReport = MutableStateFlow<RootModuleReport?>(null)
     val moduleReport: StateFlow<RootModuleReport?> = _moduleReport
     val message: StateFlow<String?> = _message
@@ -120,6 +122,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         _selectedPaths.value = emptySet()
         _cleanupReview.value = null
         _rootSearchResults.value = emptyList()
+        _categoryFiles.value = null
         _verifiedDuplicates.value = null
         _appSummaries.value = emptyList()
         _snapshotDelta.value = null
@@ -160,6 +163,42 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     }
     fun updateQuery(value: String) { _filter.value = _filter.value.copy(query = value) }
     fun filterCategory(value: String?) { _filter.value = _filter.value.copy(category = value) }
+
+    fun openCategoryFiles(label: String, categories: Set<String>) {
+        val matching = CategoryPathSelector.matchingEntries(allEntries.value, categories)
+        if (matching.isEmpty()) {
+            _message.value = "No indexed files are available for $label"
+            return
+        }
+        _categoryFiles.value = CategoryFileSelection(label, categories.toSet(), matching)
+    }
+
+    fun dismissCategoryFiles() { _categoryFiles.value = null }
+
+    fun selectCategoryPaths(categories: Set<String>) {
+        if (_scanDataStale.value) {
+            _message.value = "Run a new scan before selecting files for deletion"
+            return
+        }
+        val matching = CategoryPathSelector.matchingEntries(allEntries.value, categories)
+        if (matching.isEmpty()) {
+            _message.value = "No indexed files are available in this category"
+            return
+        }
+        _selectedPaths.value = matching.mapTo(linkedSetOf()) { it.path }
+        _cleanupReview.value = null
+        _message.value = "Selected ${matching.size} category file(s)"
+    }
+
+    fun reviewCategoryPaths(categories: Set<String>) {
+        val matching = CategoryPathSelector.matchingEntries(allEntries.value, categories)
+        if (matching.isEmpty()) {
+            _message.value = "No indexed files are available in this category"
+            return
+        }
+        reviewPaths(matching.map { it.path })
+    }
+
     fun cycleSort() { _filter.value = _filter.value.copy(sort = EntrySort.entries[(filter.value.sort.ordinal + 1) % EntrySort.entries.size]) }
     fun cycleType() { _filter.value = _filter.value.copy(type = EntryTypeFilter.entries[(filter.value.type.ordinal + 1) % EntryTypeFilter.entries.size]) }
     fun exportCsv() { latestSession.value?.let { repository.exportCsv(it, allEntries.value) } }
@@ -167,6 +206,10 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     fun toggleSelection(entry: ScanEntryEntity) = togglePathSelection(entry.path)
 
     fun togglePathSelection(path: String) {
+        if (_scanDataStale.value) {
+            _message.value = "Run a new scan before selecting files for deletion"
+            return
+        }
         val entry = allEntries.value.firstOrNull { it.path == path }
         if (entry == null) {
             _message.value = "This path is no longer part of the active scan"
@@ -205,6 +248,10 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     fun reviewCleanup() = reviewPaths(_selectedPaths.value)
 
     fun reviewPaths(paths: Collection<String>) {
+        if (_scanDataStale.value) {
+            _message.value = "Run a new scan before planning another deletion"
+            return
+        }
         val session = latestSession.value ?: return
         val requested = paths.toSet()
         val chosen = allEntries.value.filter { it.path in requested }

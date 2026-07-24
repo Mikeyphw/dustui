@@ -15,6 +15,11 @@
 - [ ] Confirm deletion review lists every approved path and every blocked path before the irreversible confirmation.
 - [ ] Confirm Android Back closes review/details, exits selection, navigates Explorer upward, and returns compact More workbenches correctly.
 - [ ] Confirm donut charts stack at 360dp and interactive chart rows remain at least 48dp.
+- [ ] Tap every storage-composition doughnut segment and confirm it opens the exact indexed files represented by that segment.
+- [ ] Confirm selected doughnut categories show bytes, percentage, file count, View files, Select all, and Plan deletion.
+- [ ] Confirm the aggregate Other slice lists its exact component categories and never creates duplicate Other legend rows.
+- [ ] Confirm TalkBack can select every category from the accessible legend and announces size, percentage, count, and selected state.
+- [ ] Delete a file, return to Overview, and confirm chart-driven selection and deletion are disabled until a new scan while read-only viewing remains available.
 - [ ] Confirm every treemap block has a keyboard/TalkBack-accessible matching action row.
 - [ ] Confirm package search reaches packages beyond the former first-24 limit.
 - [ ] Confirm notification permission is requested only when starting background scans or enabling scheduling.

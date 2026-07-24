@@ -4,6 +4,15 @@
 
 Final release-candidate hardening for the rooted Android storage workbench.
 
+### Actionable storage doughnut overlay
+
+- Made Overview storage-composition doughnut segments directly open the exact indexed files represented by the tapped slice.
+- Added selected-slice center details for category, bytes, percentage, and file count.
+- Added accessible category rows plus View files, Select all, and Plan deletion actions routed through the existing reviewed permanent-deletion pipeline.
+- Made the aggregate Other slice retain its exact source categories and expose a detailed category list without duplicate Other labels.
+- Added a category file sheet where every file supports selection, details, Explorer reveal, and permanent-deletion planning.
+- Disabled category selection and deletion actions when scan results are stale after filesystem mutation while keeping read-only inspection available.
+
 ### Permanent deletion and actionable-path overlay
 
 - Replaced the Android quarantine/restore workflow with review-bound permanent deletion.

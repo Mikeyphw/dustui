@@ -77,3 +77,13 @@ DustUI is a rooted Android storage workbench. The UI must remain readable on pho
 2. Every visual treemap block must have a matching accessible action with name and size.
 3. Machine paths must remain left-to-right and use readable body-size monospace text.
 4. Empty charts must display an explicit empty state rather than synthetic data.
+## Actionable doughnut-chart rules
+
+1. A storage-composition segment must open the exact indexed files represented by that segment; the chart must not be decorative.
+2. Selecting a segment must expose its category name, byte total, percentage, and file count.
+3. Each selected category must offer View files, Select all, and Plan deletion actions. Selection and deletion must reuse the reviewed permanent-deletion pipeline.
+4. Aggregated Other slices must retain the exact underlying category labels and expose them in a detailed list. They must not merge into an unexplained bucket.
+5. Every category file opened from the chart must retain details, Explorer reveal, selection, and single-file deletion planning.
+6. The accessible legend must expose category, size, percentage, count, button role, and selected state with at least a 48dp target.
+7. After any filesystem mutation, the chart must identify itself as stale. Read-only inspection may remain available, but new chart-driven selection and deletion require a rescan.
+

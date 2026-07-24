@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -62,6 +63,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.mikeyphw.dustui.data.AdvancedStorageAnalyzer
 import com.mikeyphw.dustui.data.AdvancedStorageReport
 import com.mikeyphw.dustui.data.AppStorageSummary
 import com.mikeyphw.dustui.data.CertificationStatus
@@ -78,6 +80,7 @@ import com.mikeyphw.dustui.data.ScanEntryEntity
 import com.mikeyphw.dustui.data.ScanSessionEntity
 import com.mikeyphw.dustui.data.SnapshotDelta
 import com.mikeyphw.dustui.data.SnapshotPoint
+import com.mikeyphw.dustui.data.StorageBucket
 import com.mikeyphw.dustui.data.VisualAnalytics
 import com.mikeyphw.dustui.scan.ScanStatus
 
@@ -99,6 +102,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         val snapshotHistory by viewModel.snapshotHistory.collectAsStateWithLifecycle()
         val selectedPaths by viewModel.selectedPaths.collectAsStateWithLifecycle()
         val cleanupReview by viewModel.cleanupReview.collectAsStateWithLifecycle()
+        val categoryFiles by viewModel.categoryFiles.collectAsStateWithLifecycle()
         val cleanupOperations by viewModel.cleanupOperations.collectAsStateWithLifecycle()
         val advancedReport by viewModel.advancedReport.collectAsStateWithLifecycle()
         val verifiedDuplicates by viewModel.verifiedDuplicates.collectAsStateWithLifecycle()
@@ -127,12 +131,13 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
             val wide = maxWidth >= 840.dp && maxHeight >= 520.dp
             val currentPath = path ?: session?.rootPath
             BackHandler(
-                enabled = cleanupReview != null || selected != null || selectedPaths.isNotEmpty() ||
+                enabled = cleanupReview != null || categoryFiles != null || selected != null || selectedPaths.isNotEmpty() ||
                     (destination == DustDestination.EXPLORER && session != null && currentPath != session?.rootPath) ||
                     destination != DustDestination.SCAN,
             ) {
                 when {
                     cleanupReview != null -> viewModel.dismissCleanupReview()
+                    categoryFiles != null -> viewModel.dismissCategoryFiles()
                     selected != null -> viewModel.closeDetails()
                     selectedPaths.isNotEmpty() -> viewModel.clearSelection()
                     destination == DustDestination.EXPLORER && session != null && currentPath != session?.rootPath -> viewModel.up()
@@ -238,16 +243,14 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     apps,
                                     verifiedDuplicates,
                                     selectedPaths,
+                                    scanDataStale,
                                     viewModel,
                                     requestNotificationPermission,
                                     revealPath = { filePath ->
                                         viewModel.revealPath(filePath)
                                         selectDestination(DustDestination.EXPLORER)
                                     },
-                                ) { category ->
-                                    viewModel.filterCategory(category)
-                                    selectDestination(DustDestination.EXPLORER)
-                                }
+                                )
                                 destination == DustDestination.SEARCH && currentSession != null -> RootSearchScreen(
                                     Modifier.fillMaxSize(),
                                     currentSession.id,
@@ -298,6 +301,19 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                 }
             }
         }
+        val categorySelection = categoryFiles
+        if (categorySelection != null) CategoryFilesSheet(
+            selection = categorySelection,
+            selectedPaths = selectedPaths,
+            vm = viewModel,
+            deletionEnabled = !scanDataStale,
+            close = viewModel::dismissCategoryFiles,
+            reveal = { filePath ->
+                viewModel.dismissCategoryFiles()
+                viewModel.revealPath(filePath)
+                destination = DustDestination.EXPLORER
+            },
+        )
         val selectedEntry = selected
         if (selectedEntry != null) EntryDetails(
             selectedEntry,
@@ -688,6 +704,7 @@ private fun ActionablePathCard(
     reveal: () -> Unit,
     delete: () -> Unit,
     modifier: Modifier = Modifier,
+    deletionEnabled: Boolean = true,
 ) {
     Card(modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -698,14 +715,142 @@ private fun ActionablePathCard(
             Text(metadata, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             PathText(path, Modifier.fillMaxWidth(), maxLines = 3)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = selected, onCheckedChange = { toggleSelection() })
-                Text(if (selected) "Selected for batch deletion" else "Select for batch deletion", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                Checkbox(checked = selected, onCheckedChange = { toggleSelection() }, enabled = deletionEnabled)
+                Text(
+                    when {
+                        !deletionEnabled -> "Run a new scan before selecting for deletion"
+                        selected -> "Selected for batch deletion"
+                        else -> "Select for batch deletion"
+                    },
+                    Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = showDetails, Modifier.weight(1f)) { Text("Details") }
                 OutlinedButton(onClick = reveal, Modifier.weight(1f)) { Text("Explorer") }
             }
-            Button(onClick = delete, Modifier.fillMaxWidth()) { Text("Delete permanently…") }
+            Button(onClick = delete, enabled = deletionEnabled, modifier = Modifier.fillMaxWidth()) { Text("Delete permanently…") }
+        }
+    }
+}
+
+@Composable
+private fun StorageCompositionActions(
+    slice: ChartSlice,
+    sourceBuckets: List<StorageBucket>,
+    enabled: Boolean,
+    viewFiles: () -> Unit,
+    selectAll: () -> Unit,
+    planDeletion: () -> Unit,
+    viewCategory: (StorageBucket) -> Unit,
+) {
+    Surface(tonalElevation = 1.dp) {
+        Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("${slice.label} actions", fontWeight = FontWeight.SemiBold)
+            Text(
+                "${formatBytes(slice.bytes)} across ${slice.count} indexed files.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Button(onClick = viewFiles, Modifier.fillMaxWidth()) { Text("View files") }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = selectAll, enabled = enabled, modifier = Modifier.weight(1f)) { Text("Select all") }
+                Button(onClick = planDeletion, enabled = enabled, modifier = Modifier.weight(1f)) { Text("Plan deletion") }
+            }
+            if (slice.sourceLabels.size > 1) {
+                HorizontalDivider()
+                Text(
+                    "Other includes ${slice.sourceLabels.size} categories. Open one category or use the actions above for the full group.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                sourceBuckets.sortedByDescending { it.bytes }.forEach { bucket ->
+                    Row(
+                        Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(bucket.label, fontWeight = FontWeight.Medium)
+                            Text(
+                                "${formatBytes(bucket.bytes)} · ${bucket.count} files",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        TextButton(onClick = { viewCategory(bucket) }) { Text("View") }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CategoryFilesSheet(
+    selection: CategoryFileSelection,
+    selectedPaths: Set<String>,
+    vm: MainViewModel,
+    deletionEnabled: Boolean,
+    close: () -> Unit,
+    reveal: (String) -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = close) {
+        Column(
+            Modifier.fillMaxWidth().fillMaxHeight(0.9f).padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            DustSectionHeader(
+                "${selection.title} files",
+                subtitle = "${selection.entries.size} indexed files · ${formatBytes(selection.entries.sumOf { it.sizeBytes })}",
+            )
+            if (selection.categories.size > 1) {
+                Text(
+                    selection.categories.sorted().joinToString(prefix = "Includes: "),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (!deletionEnabled) {
+                Text(
+                    "These results are stale after deletion. Viewing is available, but deletion actions require a new scan.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = { vm.selectCategoryPaths(selection.categories) },
+                    enabled = deletionEnabled,
+                    modifier = Modifier.weight(1f),
+                ) { Text("Select all") }
+                Button(
+                    onClick = { close(); vm.reviewCategoryPaths(selection.categories) },
+                    enabled = deletionEnabled,
+                    modifier = Modifier.weight(1f),
+                ) { Text("Plan deletion") }
+            }
+            LazyColumn(
+                Modifier.fillMaxWidth().weight(1f),
+                contentPadding = PaddingValues(bottom = 96.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                items(selection.entries, key = { it.path }) { entry ->
+                    ActionablePathCard(
+                        path = entry.path,
+                        name = entry.name,
+                        sizeBytes = entry.sizeBytes,
+                        metadata = AdvancedStorageAnalyzer.fileCategory(entry.name),
+                        selected = entry.path in selectedPaths,
+                        toggleSelection = { vm.togglePathSelection(entry.path) },
+                        showDetails = { close(); vm.showPathDetails(entry.path) },
+                        reveal = { reveal(entry.path) },
+                        delete = { close(); vm.reviewPaths(listOf(entry.path)) },
+                        deletionEnabled = deletionEnabled,
+                    )
+                }
+            }
         }
     }
 }
@@ -719,12 +864,12 @@ private fun InsightsOverview(
     apps: List<AppStorageSummary>,
     verified: com.mikeyphw.dustui.data.DuplicateVerificationReport?,
     selectedPaths: Set<String>,
+    scanDataStale: Boolean,
     vm: MainViewModel,
     requestNotificationPermission: () -> Unit,
     revealPath: (String) -> Unit,
-    exploreCategory: (String) -> Unit,
 ) {
-    var selectedType by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedType by rememberSaveable(advanced?.typeBuckets?.hashCode()) { mutableStateOf<String?>(null) }
     LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             DustSectionHeader("Overview", subtitle = "Storage trends, composition, and cleanup signals.")
@@ -755,11 +900,39 @@ private fun InsightsOverview(
             item {
                 Card(Modifier.fillMaxWidth()) {
                     val slices = VisualAnalytics.compactSlices(advanced.typeBuckets)
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        DustSectionHeader("Storage composition")
-                        StorageDonut(slices, Modifier.fillMaxWidth(), selectedType) { selectedType = it }
-                        selectedType?.takeUnless { it == "Other" }?.let { category ->
-                            Button(onClick = { exploreCategory(category) }, Modifier.fillMaxWidth()) { Text("Explore $category") }
+                    val selectedSlice = slices.firstOrNull { it.label == selectedType }
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        DustSectionHeader(
+                            "Storage composition",
+                            subtitle = "Tap a doughnut slice to open its files, or select a category below for batch actions.",
+                        )
+                        StorageDonut(
+                            slices = slices,
+                            modifier = Modifier.fillMaxWidth(),
+                            selected = selectedType,
+                            onSelect = { slice -> selectedType = slice.label.takeUnless { it == selectedType } },
+                            onSliceOpen = { slice ->
+                                selectedType = slice.label
+                                vm.openCategoryFiles(slice.label, slice.sourceLabels)
+                            },
+                        )
+                        if (scanDataStale) {
+                            Text(
+                                "This chart is stale after deletion. Run a new scan before planning another category deletion.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                        selectedSlice?.let { slice ->
+                            StorageCompositionActions(
+                                slice = slice,
+                                sourceBuckets = advanced.typeBuckets.filter { it.label in slice.sourceLabels },
+                                enabled = !scanDataStale,
+                                viewFiles = { vm.openCategoryFiles(slice.label, slice.sourceLabels) },
+                                selectAll = { vm.selectCategoryPaths(slice.sourceLabels) },
+                                planDeletion = { vm.reviewCategoryPaths(slice.sourceLabels) },
+                                viewCategory = { bucket -> vm.openCategoryFiles(bucket.label, setOf(bucket.label)) },
+                            )
                         }
                     }
                 }

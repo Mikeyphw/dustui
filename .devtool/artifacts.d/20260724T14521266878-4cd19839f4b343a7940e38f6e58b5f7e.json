@@ -1,0 +1,153 @@
+{
+  "applied_at": "2026-07-24T14:52:12.668780Z",
+  "artifact": "/home/mike/Downloads/dustui_android_actionable_donut_overlay.zip",
+  "artifact_name": "dustui_android_actionable_donut_overlay.zip",
+  "type": "overlay",
+  "sha256": "552bc154ea9f89ae6a8ab301f6792aff4c96a5b867e48c5beb2e3e44652754af",
+  "status": "ok",
+  "validation_status": "ok",
+  "commit_message": "Make Android storage doughnut actionable",
+  "commit_hash": "",
+  "file_count": 13,
+  "change_counts": {
+    "add": 2,
+    "modify": 11
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Android actionable storage doughnut",
+    "description": "Builds on the validated permanent-deletion baseline at commit 716038e. Makes the Overview storage doughnut directly open exact indexed category files, adds selected-slice size/percentage/count details, accessible legend selection, View/Select all/Plan deletion actions, an actionable category file sheet, exact aggregate Other membership, and stale-scan deletion guards.",
+    "version": "1.0.0",
+    "repository": {
+      "name": "dustui"
+    },
+    "target": "dustui_android",
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "CHANGELOG.md",
+          "action": "modify",
+          "sha256": "68b77775453932f47ca6f3c3617e638cfffa67e68da756325b68bcf458d3a634",
+          "size": 3826,
+          "source_sha256": "7c473fced259f8f49fb52cada63738c252eb9da2b272df3405422a2c4fc8a06e"
+        },
+        {
+          "path": "README.md",
+          "action": "modify",
+          "sha256": "1fcd6cdb2218e5cd6a79564c227380f695dea7f6d9de5e708c93ce967cbe3edb",
+          "size": 4850,
+          "source_sha256": "dfbe3c8246c35634244044e7f6916ec19425269f88e39f421c5a2861cdefa57b"
+        },
+        {
+          "path": "RELEASE_CHECKLIST.md",
+          "action": "modify",
+          "sha256": "d37b71254cf6e9e922c9016d8a68c58b718eb8d20bc4599e0d8cf07439d4a5b6",
+          "size": 3514,
+          "source_sha256": "a22ba84abc253790f8d816d7a918a33fe7530aca1625acac12650f1584145dd3"
+        },
+        {
+          "path": "UI_UX_CONTRACT.md",
+          "action": "modify",
+          "sha256": "e22bd4bf9fb4731f93e5d3821db207d30226203c120e56dad84e82f590ecab96",
+          "size": 5991,
+          "source_sha256": "a375d44820743b53d631e4c7e2206353561e76666f67a46091f5fac1d4d9507a"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/VisualAnalytics.kt",
+          "action": "modify",
+          "sha256": "4c2c0f4840e19cd9f63a5252d7b9fbd4405a672597265292f41c86cee701ef51",
+          "size": 1962,
+          "source_sha256": "2718e74bccbf8c3e921465d2ef81ce19a1adca1451fbf800429dba68430de6a8"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "action": "modify",
+          "sha256": "ca7a8e7035f3c1caf73d3c7e812ab2a52b4730bd108d4dc88fca5bcc3cd4c2b4",
+          "size": 76041,
+          "source_sha256": "560c626b5d023f44be690970a387b4765ebe25072e80e181450dfd2d864aa3db"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/ExplorerModels.kt",
+          "action": "modify",
+          "sha256": "65f6f1d5aa0c1518e645c433b21fc29b708d79a43139641ff57752aa37a4ae42",
+          "size": 1070,
+          "source_sha256": "31cc8099fa01dbe1f075692a107f366d8ba036d3ce129d3c50242674eefb429f"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+          "action": "modify",
+          "sha256": "359e6f5ce0d0573b78acc3b068751bae331a995a95c4cae802aa1ea3ffeb9b00",
+          "size": 19017,
+          "source_sha256": "f49498094b054361e63608ccb6dd1de3d39862c5aec679fcd6ae9ea762fe2c4e"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/StorageCharts.kt",
+          "action": "modify",
+          "sha256": "37503b5e38fbae74ce6919daf24db811ba8f9ba852f4fbd35bf1a58c30ac6970",
+          "size": 13279,
+          "source_sha256": "e7d5c7e51cf5d9ac58a692d8154b55bc3377eaacb7eff6d944bb844cc2ea10a8"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/VisualAnalyticsTest.kt",
+          "action": "modify",
+          "sha256": "a15478d10c7fdf61953e810f1d5fc480c68932439e4dd7d04a92df492581763d",
+          "size": 1323,
+          "source_sha256": "3c9474f0417fecdcf24239b8e7d276b590493eeffca1a54e61ee78d2654d1f63"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/CategoryPathSelectorTest.kt",
+          "action": "add",
+          "sha256": "e2618a53196a464d0fdc3cfada55f0e0e89a0b6941c109351477e06d4de0c0e5",
+          "size": 1326
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+          "action": "modify",
+          "sha256": "2efe1092577b0348d9e312e0d24a8e3b815f5651ac67f28cff9449fdd4614ed1",
+          "size": 9200,
+          "source_sha256": "7e04afdec4ba3f6e0ccb1fc79f63841c9888da2157e192e4dd755d394bae5281"
+        },
+        {
+          "path": "docs/ANDROID_ACTIONABLE_STORAGE_DONUT.md",
+          "action": "add",
+          "sha256": "d4e92123d289f48e91bbcbb4e5a3594b93c45216a0c0103930c5f443e474f3fc",
+          "size": 2302
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false,
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Make Android storage doughnut actionable"
+      }
+    },
+    "validation": {
+      "required": true,
+      "restore": true,
+      "build": true,
+      "test": true,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "build": "pass",
+        "tests": "pass",
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "9a5a2266d4f07ad47bfe1542f79c58deccb2686aec3f407896168bf5b16cc854",
+        "timeout_seconds": 1800
+      }
+    }
+  },
+  "history_id": "4cd19839f4b343a7940e38f6e58b5f7e"
+}

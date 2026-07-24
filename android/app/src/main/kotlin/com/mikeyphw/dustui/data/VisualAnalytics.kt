@@ -1,6 +1,11 @@
 package com.mikeyphw.dustui.data
 
-data class ChartSlice(val label: String, val bytes: Long, val count: Int = 0)
+data class ChartSlice(
+    val label: String,
+    val bytes: Long,
+    val count: Int = 0,
+    val sourceLabels: Set<String> = setOf(label),
+)
 data class SnapshotPoint(val timestamp: Long, val totalBytes: Long)
 
 data class VisualAnalyticsReport(
@@ -13,12 +18,18 @@ object VisualAnalytics {
     fun compactSlices(buckets: List<StorageBucket>, limit: Int = 5): List<ChartSlice> {
         val positive = buckets.filter { it.bytes > 0 }.sortedByDescending { it.bytes }
         if (positive.size <= limit) return positive.map { ChartSlice(it.label, it.bytes, it.count) }
-        val visible = positive.take(limit)
-        val other = positive.drop(limit)
+
+        // Keep the aggregate label unique. A literal "Other" file category is folded into
+        // the aggregate together with the lower-ranked categories rather than producing two
+        // indistinguishable doughnut slices.
+        val ranked = positive.filterNot { it.label == "Other" }
+        val visible = ranked.take(limit)
+        val remainder = ranked.drop(limit) + positive.filter { it.label == "Other" }
         return visible.map { ChartSlice(it.label, it.bytes, it.count) } + ChartSlice(
             label = "Other",
-            bytes = other.sumOf { it.bytes },
-            count = other.sumOf { it.count },
+            bytes = remainder.sumOf { it.bytes },
+            count = remainder.sumOf { it.count },
+            sourceLabels = remainder.mapTo(linkedSetOf()) { it.label },
         )
     }
 

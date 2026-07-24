@@ -2,6 +2,7 @@ package com.mikeyphw.dustui.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -25,24 +26,30 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mikeyphw.dustui.data.ChartSlice
 import com.mikeyphw.dustui.data.SnapshotPoint
+import kotlin.math.atan2
+import kotlin.math.hypot
 import kotlin.math.max
+import kotlin.math.min
 
 @Composable
 fun StorageDonut(
     slices: List<ChartSlice>,
     modifier: Modifier = Modifier,
     selected: String? = null,
-    onSelect: ((String) -> Unit)? = null,
+    onSelect: ((ChartSlice) -> Unit)? = null,
+    onSliceOpen: ((ChartSlice) -> Unit)? = null,
 ) {
     if (slices.isEmpty() || slices.sumOf { it.bytes } <= 0L) {
         Text(
@@ -55,18 +62,29 @@ fun StorageDonut(
     }
     val total = slices.sumOf { it.bytes }
     val colors = chartColors()
-    val description = slices.joinToString { "${it.label} ${formatBytes(it.bytes)}" }
+    val selectedSlice = slices.firstOrNull { it.label == selected }
+    val description = slices.joinToString { slice ->
+        "${slice.label} ${formatBytes(slice.bytes)}, ${percentageOf(slice.bytes, total)} percent, ${slice.count} files"
+    }
     BoxWithConstraints(modifier) {
         val compact = maxWidth < 480.dp
         if (compact) {
-            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                DonutPlot(slices, total, colors, selected, description)
-                DonutLegend(slices, colors, selected, onSelect, Modifier.fillMaxWidth())
+            Column(
+                Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                DonutPlot(slices, total, colors, selectedSlice, description, onSelect, onSliceOpen)
+                DonutLegend(slices, total, colors, selected, onSelect, Modifier.fillMaxWidth())
             }
         } else {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                DonutPlot(slices, total, colors, selected, description)
-                DonutLegend(slices, colors, selected, onSelect, Modifier.weight(1f))
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                DonutPlot(slices, total, colors, selectedSlice, description, onSelect, onSliceOpen)
+                DonutLegend(slices, total, colors, selected, onSelect, Modifier.weight(1f))
             }
         }
     }
@@ -77,11 +95,51 @@ private fun DonutPlot(
     slices: List<ChartSlice>,
     total: Long,
     colors: List<Color>,
-    selected: String?,
+    selectedSlice: ChartSlice?,
     description: String,
+    onSelect: ((ChartSlice) -> Unit)?,
+    onSliceOpen: ((ChartSlice) -> Unit)?,
 ) {
+    val sliceAction = onSliceOpen ?: onSelect
+    val interaction = if (sliceAction == null) {
+        Modifier
+    } else {
+        Modifier.pointerInput(slices, total, sliceAction) {
+            detectTapGestures { tap ->
+                val centerX = size.width / 2f
+                val centerY = size.height / 2f
+                val dx = tap.x - centerX
+                val dy = tap.y - centerY
+                val outerRadius = min(size.width, size.height) / 2f
+                val innerRadius = (outerRadius - 40.dp.toPx()).coerceAtLeast(0f)
+                val distance = hypot(dx.toDouble(), dy.toDouble()).toFloat()
+                if (distance < innerRadius || distance > outerRadius) return@detectTapGestures
+
+                val clockwiseFromTop = ((Math.toDegrees(atan2(dy.toDouble(), dx.toDouble())) + 90.0 + 360.0) % 360.0).toFloat()
+                var accumulated = 0f
+                for (slice in slices) {
+                    val sweep = 360f * slice.bytes.toFloat() / total.toFloat()
+                    if (clockwiseFromTop >= accumulated && clockwiseFromTop < accumulated + sweep) {
+                        sliceAction(slice)
+                        break
+                    }
+                    accumulated += sweep
+                }
+            }
+        }
+    }
     Box(Modifier.size(170.dp), contentAlignment = Alignment.Center) {
-        Canvas(Modifier.fillMaxSize().semantics { contentDescription = "Storage composition: $description" }) {
+        Canvas(
+            Modifier.fillMaxSize()
+                .then(interaction)
+                .semantics {
+                    contentDescription = if (sliceAction == null) {
+                        "Storage composition: $description"
+                    } else {
+                        "Storage composition chart. Tap a doughnut slice to open its files. Accessible category actions are listed below. $description"
+                    }
+                },
+        ) {
             var start = -90f
             slices.forEachIndexed { index, slice ->
                 val sweep = 360f * slice.bytes.toFloat() / total.toFloat()
@@ -90,14 +148,35 @@ private fun DonutPlot(
                     startAngle = start,
                     sweepAngle = sweep,
                     useCenter = false,
-                    style = Stroke(width = if (selected == slice.label) 34f else 26f, cap = StrokeCap.Butt),
+                    style = Stroke(width = if (selectedSlice?.label == slice.label) 34f else 26f, cap = StrokeCap.Butt),
                 )
                 start += sweep
             }
         }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(formatBytes(total), fontWeight = FontWeight.Bold)
-            Text("measured", style = MaterialTheme.typography.labelSmall)
+        Column(
+            Modifier.padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(1.dp),
+        ) {
+            if (selectedSlice == null) {
+                Text(formatBytes(total), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                Text("measured", style = MaterialTheme.typography.labelSmall)
+            } else {
+                Text(
+                    selectedSlice.label,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(formatBytes(selectedSlice.bytes), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                Text(
+                    "${percentageOf(selectedSlice.bytes, total)}% · ${selectedSlice.count} files",
+                    style = MaterialTheme.typography.labelSmall,
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
     }
 }
@@ -105,23 +184,45 @@ private fun DonutPlot(
 @Composable
 private fun DonutLegend(
     slices: List<ChartSlice>,
+    total: Long,
     colors: List<Color>,
     selectedLabel: String?,
-    onSelect: ((String) -> Unit)?,
+    onSelect: ((ChartSlice) -> Unit)?,
     modifier: Modifier,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         slices.forEachIndexed { index, slice ->
-            val interactive = if (onSelect == null) Modifier else Modifier
-                .clickable(role = Role.Button) { onSelect(slice.label) }
-                .semantics { role = Role.Button; selected = selectedLabel == slice.label }
+            val percentage = percentageOf(slice.bytes, total)
+            val interactive = if (onSelect == null) {
+                Modifier
+            } else {
+                Modifier
+                    .clickable(role = Role.Button) { onSelect(slice) }
+                    .semantics {
+                        role = Role.Button
+                        selected = selectedLabel == slice.label
+                        contentDescription = "${slice.label}, ${formatBytes(slice.bytes)}, $percentage percent, ${slice.count} files"
+                    }
+            }
             Row(
                 Modifier.fillMaxWidth().heightIn(min = 48.dp).then(interactive).padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Canvas(Modifier.size(10.dp)) { drawCircle(colors[index % colors.size]) }
                 Spacer(Modifier.width(8.dp))
-                Text(slice.label, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        slice.label,
+                        fontWeight = if (selectedLabel == slice.label) FontWeight.SemiBold else FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        "$percentage% · ${slice.count} files",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 Text(formatBytes(slice.bytes), fontWeight = if (selectedLabel == slice.label) FontWeight.Bold else FontWeight.Normal)
             }
         }
@@ -183,6 +284,8 @@ fun SnapshotLineChart(points: List<SnapshotPoint>, modifier: Modifier = Modifier
         }
     }
 }
+
+private fun percentageOf(bytes: Long, total: Long): Int = if (total <= 0L) 0 else ((bytes * 100.0) / total).toInt().coerceIn(0, 100)
 
 @Composable
 private fun chartColors(): List<Color> = listOf(

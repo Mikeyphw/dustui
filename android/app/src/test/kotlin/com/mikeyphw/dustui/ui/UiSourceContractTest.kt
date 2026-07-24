@@ -115,6 +115,30 @@ class UiSourceContractTest {
         assertTrue(viewModel.contains("fun showPathDetails(path: String)"))
     }
 
+    @Test fun `storage doughnut is an actionable accessible file surface`() {
+        val app = sourceFile("DustUiApp.kt")
+        val charts = sourceFile("StorageCharts.kt")
+        val viewModel = sourceFile("MainViewModel.kt")
+        val analytics = androidSource("src/main/kotlin/com/mikeyphw/dustui/data/VisualAnalytics.kt")
+        assertTrue(charts.contains("detectTapGestures"))
+        assertTrue(charts.contains("Tap a doughnut slice to open its files"))
+        assertTrue(charts.contains("selectedSlice.count"))
+        assertTrue(charts.contains("contentDescription = \"\${slice.label}"))
+        assertTrue(charts.contains("\${slice.count} files"))
+        assertTrue(app.contains("private fun StorageCompositionActions"))
+        assertTrue(app.contains("private fun CategoryFilesSheet"))
+        assertTrue(app.contains("Other includes \${slice.sourceLabels.size} categories"))
+        assertTrue(app.contains("vm.openCategoryFiles(slice.label, slice.sourceLabels)"))
+        assertTrue(app.contains("vm.selectCategoryPaths(slice.sourceLabels)"))
+        assertTrue(app.contains("vm.reviewCategoryPaths(slice.sourceLabels)"))
+        assertTrue(app.contains("These results are stale after deletion"))
+        assertTrue(viewModel.contains("fun openCategoryFiles"))
+        assertTrue(viewModel.contains("fun selectCategoryPaths"))
+        assertTrue(viewModel.contains("fun reviewCategoryPaths"))
+        assertTrue(viewModel.contains("Run a new scan before planning another deletion"))
+        assertTrue(analytics.contains("val sourceLabels: Set<String>"))
+    }
+
     @Test fun `permanent deletion replaces quarantine runtime behavior`() {
         val app = sourceFile("DustUiApp.kt")
         val rootService = androidSource("src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt")
