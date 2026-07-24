@@ -66,11 +66,13 @@ class UiSourceContractTest {
         assertTrue(viewModel.contains("resetScanScopedState(session)"))
         assertTrue(viewModel.contains("review.matches(session.id, session.rootPath)"))
         assertTrue(viewModel.contains("repository.executeCleanup(review)"))
-        assertTrue(repository.contains("items = review.accepted"))
+        assertTrue(repository.contains("rootClient.executeCleanup(review)"))
         assertTrue(cleanup.contains("val scanId: String"))
         assertTrue(cleanup.contains("val rootPath: String"))
-        assertTrue(app.contains("Items to quarantine"))
+        assertTrue(app.contains("Exact paths to delete"))
         assertTrue(app.contains("items(review.accepted"))
+        assertTrue(app.contains("I understand this deletion is irreversible."))
+        assertTrue(app.contains("Delete permanently"))
     }
 
     @Test fun `android navigation compact charts and package selection follow the audit contract`() {
@@ -93,6 +95,41 @@ class UiSourceContractTest {
         assertTrue(treemap.contains("clickable(role = Role.Button)"))
         assertTrue(design.contains("val columns = if (maxWidth < 420.dp) 1 else 2"))
         assertTrue(activity.indexOf("setContent") < activity.indexOf("notificationPermission.launch"))
+    }
+
+
+    @Test fun `surfaced file paths are actionable across workbenches`() {
+        val app = sourceFile("DustUiApp.kt")
+        val viewModel = sourceFile("MainViewModel.kt")
+        assertTrue(app.contains("private fun ActionablePathCard"))
+        assertTrue(app.contains("Delete permanently…"))
+        assertTrue(app.contains("selectedPaths: Set<String>"))
+        assertTrue(app.contains("advanced.largeOldFiles.take(8).forEach"))
+        assertTrue(app.contains("items(results.take(80)"))
+        assertTrue(app.contains("items(profile.largestPaths.take(8)"))
+        assertTrue(app.contains("items(module.largestPaths.take(3)"))
+        assertTrue(app.contains("items(conflict.sourcePaths"))
+        assertTrue(app.contains("Actions apply to module source files, never the protected system target."))
+        assertTrue(viewModel.contains("fun reviewPaths(paths: Collection<String>)"))
+        assertTrue(viewModel.contains("fun revealPath(path: String)"))
+        assertTrue(viewModel.contains("fun showPathDetails(path: String)"))
+    }
+
+    @Test fun `permanent deletion replaces quarantine runtime behavior`() {
+        val app = sourceFile("DustUiApp.kt")
+        val rootService = androidSource("src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt")
+        val aidl = androidSource("src/main/aidl/com/mikeyphw/dustui/root/IDustRootService.aidl")
+        val charts = sourceFile("StorageCharts.kt")
+        assertFalse(app.contains("Quarantine"))
+        assertFalse(app.contains("Restore"))
+        assertFalse(aidl.contains("restoreCleanup"))
+        assertTrue(rootService.contains("Path contents changed after review"))
+        assertTrue(rootService.contains("treeDigest"))
+        assertTrue(rootService.contains("Files.walkFileTree"))
+        assertFalse(charts.contains("onSelect?.invoke"))
+        assertFalse(app.contains("moduleReport?.modules"))
+        assertFalse(app.contains("moduleReport?.overlayConflicts"))
+        assertTrue(app.contains("val report = moduleReport"))
     }
 
     private fun sourceFile(name: String): String = androidSource("src/main/kotlin/com/mikeyphw/dustui/ui/$name")

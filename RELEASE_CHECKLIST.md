@@ -9,15 +9,22 @@
 - [ ] Confirm release APK builds.
 - [ ] Confirm Room schemas are exported.
 
-## Android UI/UX safety validation
+## Android deletion and UI/UX safety validation
 
 - [ ] Start a cleanup review, replace the active scan, and confirm the review and selection are cleared.
-- [ ] Confirm cleanup review lists every accepted path and every blocked path before quarantine.
+- [ ] Confirm deletion review lists every approved path and every blocked path before the irreversible confirmation.
 - [ ] Confirm Android Back closes review/details, exits selection, navigates Explorer upward, and returns compact More workbenches correctly.
 - [ ] Confirm donut charts stack at 360dp and interactive chart rows remain at least 48dp.
 - [ ] Confirm every treemap block has a keyboard/TalkBack-accessible matching action row.
 - [ ] Confirm package search reaches packages beyond the former first-24 limit.
 - [ ] Confirm notification permission is requested only when starting background scans or enabling scheduling.
+- [ ] Confirm changing or replacing a reviewed file causes execution to refuse that path.
+- [ ] Confirm selected symlinks, protected Android paths, scan roots, outside-root paths, and nested filesystem boundaries are blocked.
+- [ ] Confirm a mixed plan deletes approved paths, skips blocked paths, and reports partial failures per item.
+- [ ] Confirm actual deleted bytes are recorded and the UI requests a rescan after any successful mutation.
+- [ ] Confirm old large files, search results, package paths, module source files, Explorer rows, treemap rows, and details sheets expose useful actions.
+- [ ] Confirm module conflict actions target module-owned source files rather than protected system overlay targets.
+- [ ] Confirm Kotlin and lint complete with 0 warnings, including no unnecessary safe-call warnings.
 
 ## Device validation
 

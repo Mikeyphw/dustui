@@ -14,7 +14,9 @@ import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
+import java.nio.file.FileVisitResult
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -102,40 +104,80 @@ class DustRootService : RootService() {
         override fun reviewCleanup(planJson: String): String = reviewPlan(planJson).toString()
 
         override fun executeCleanup(planJson: String): String {
-            val review = reviewPlan(planJson)
-            if (!review.optBoolean("ok") || review.getJSONArray("blocked").length() > 0) return review.toString()
-            val plan = JSONObject(planJson)
-            val operationId = plan.getString("id")
-            val rootPath = Paths.get(plan.getString("rootPath")).normalize()
-            val vault = rootPath.resolve(".dustui-quarantine").resolve(operationId)
-            val moved = JSONArray()
-            var reclaimed = 0L
-            return runCatching {
-                Files.createDirectories(vault)
-                val manifestPath = vault.resolve("manifest.json")
-                val manifest = JSONObject().put("operationId", operationId).put("rootPath", rootPath.toString()).put("entries", moved)
-                Files.write(manifestPath, manifest.toString().toByteArray(Charsets.UTF_8))
-                val accepted = review.getJSONArray("accepted")
-                for (index in 0 until accepted.length()) {
-                    val item = accepted.getJSONObject(index)
-                    val source = Paths.get(item.getString("path")).normalize()
-                    val relative = rootPath.relativize(source)
-                    val destination = vault.resolve("payload").resolve(relative).normalize()
-                    require(destination.startsWith(vault)) { "Unsafe quarantine destination" }
-                    Files.createDirectories(destination.parent)
-                    runCatching { Files.move(source, destination, StandardCopyOption.ATOMIC_MOVE) }
-                        .recoverCatching { Files.move(source, destination) }
-                        .getOrThrow()
-                    val size = item.optLong("sizeBytes")
-                    reclaimed += size
-                    moved.put(JSONObject().put("id", "$operationId:$index").put("operationId", operationId).put("originalPath", source.toString()).put("quarantinePath", destination.toString()).put("sizeBytes", size))
-                    Files.write(manifestPath, manifest.toString().toByteArray(Charsets.UTF_8))
+            val execution = runCatching { JSONObject(planJson) }.getOrElse { error ->
+                return failure(error.message ?: "Invalid deletion plan")
+            }
+            val operationId = execution.optString("operationId")
+            val scanId = execution.optString("scanId")
+            val rootPath = runCatching { Paths.get(execution.getString("rootPath")).normalize() }.getOrElse { error ->
+                return deletionFailure(operationId, error.message ?: "Invalid deletion root")
+            }
+            val accepted = execution.optJSONArray("accepted") ?: JSONArray()
+            if (operationId.isBlank() || scanId.isBlank() || !rootPath.isAbsolute || accepted.length() == 0) {
+                return deletionFailure(operationId, "Deletion requires a reviewed operation, scan, root, and at least one approved item")
+            }
+
+            val results = JSONArray()
+            var deletedBytes = 0L
+            var failedCount = 0
+            for (index in 0 until accepted.length()) {
+                val item = accepted.getJSONObject(index)
+                val rawPath = item.optString("path")
+                val plannedBytes = item.optLong("plannedBytes")
+                val target = runCatching { Paths.get(rawPath).normalize() }.getOrNull()
+                val rejection = when {
+                    target == null -> "Invalid path"
+                    CleanupSafetyPolicy.blockReason(target.toString(), rootPath.toString()) != null ->
+                        CleanupSafetyPolicy.blockReason(target.toString(), rootPath.toString())
+                    !Files.exists(target, LinkOption.NOFOLLOW_LINKS) -> "Path no longer exists"
+                    Files.isSymbolicLink(target) -> "Selected symbolic links are not deleted"
+                    !fingerprintMatches(target, rootPath, item.optJSONObject("fingerprint")) ->
+                        "Path contents changed after review; create a new deletion plan"
+                    else -> null
                 }
-                JSONObject().put("ok", true).put("operationId", operationId).put("status", "QUARANTINED").put("reclaimedBytes", reclaimed).put("entries", moved)
-            }.getOrElse { error ->
-                JSONObject().put("ok", false).put("operationId", operationId).put("status", if (moved.length() > 0) "PARTIAL" else "FAILED").put("reclaimedBytes", reclaimed).put("entries", moved).put("message", error.message ?: error.javaClass.simpleName)
-            }.toString()
+                val outcome = if (target == null || rejection != null) {
+                    DeleteOutcome(0, false, rejection ?: "Deletion was rejected")
+                } else {
+                    deletePath(target, rootPath)
+                }
+                val itemStatus = when {
+                    outcome.complete -> "DELETED"
+                    outcome.deletedBytes > 0 -> "PARTIAL"
+                    else -> "FAILED"
+                }
+                if (!outcome.complete) failedCount++
+                deletedBytes += outcome.deletedBytes
+                results.put(
+                    JSONObject()
+                        .put("path", rawPath)
+                        .put("plannedBytes", plannedBytes)
+                        .put("deletedBytes", outcome.deletedBytes)
+                        .put("status", itemStatus)
+                        .put("message", outcome.message),
+                )
+            }
+
+            val status = when {
+                failedCount == 0 -> "COMPLETED"
+                deletedBytes > 0 -> "PARTIAL"
+                else -> "FAILED"
+            }
+            val message = when (status) {
+                "COMPLETED" -> "Permanent deletion completed"
+                "PARTIAL" -> "$failedCount item(s) were not fully deleted"
+                else -> "No approved items were deleted"
+            }
+            return JSONObject()
+                .put("ok", failedCount == 0)
+                .put("operationId", operationId)
+                .put("status", status)
+                .put("deletedBytes", deletedBytes)
+                .put("failedCount", failedCount)
+                .put("items", results)
+                .put("message", message)
+                .toString()
         }
+
 
         override fun verifyDuplicates(requestJson: String): String = runCatching {
             val request = JSONObject(requestJson)
@@ -225,28 +267,7 @@ class DustRootService : RootService() {
                 .toString()
         }.getOrElse { error -> failure(error.message ?: error.javaClass.simpleName) }
 
-        override fun restoreCleanup(operationId: String, rootPath: String): String {
-            val root = Paths.get(rootPath).normalize()
-            val vault = root.resolve(".dustui-quarantine").resolve(operationId)
-            return runCatching {
-                val manifest = JSONObject(String(Files.readAllBytes(vault.resolve("manifest.json")), Charsets.UTF_8))
-                val entries = manifest.getJSONArray("entries")
-                var restored = 0
-                for (index in entries.length() - 1 downTo 0) {
-                    val entry = entries.getJSONObject(index)
-                    val source = Paths.get(entry.getString("quarantinePath")).normalize()
-                    val destination = Paths.get(entry.getString("originalPath")).normalize()
-                    require(destination.startsWith(root) && !Files.exists(destination, LinkOption.NOFOLLOW_LINKS)) { "Restore destination is unsafe or already exists: $destination" }
-                    Files.createDirectories(destination.parent)
-                    runCatching { Files.move(source, destination, StandardCopyOption.ATOMIC_MOVE) }
-                        .recoverCatching { Files.move(source, destination) }
-                        .getOrThrow()
-                    restored++
-                }
-                Files.deleteIfExists(vault.resolve("manifest.json"))
-                JSONObject().put("ok", true).put("operationId", operationId).put("status", "RESTORED").put("restoredCount", restored)
-            }.getOrElse { error -> JSONObject().put("ok", false).put("operationId", operationId).put("status", "RESTORE_FAILED").put("message", error.message ?: error.javaClass.simpleName) }.toString()
-        }
+
     }
 
     private fun detectRootBackend(): String = when {
@@ -271,7 +292,9 @@ class DustRootService : RootService() {
     private fun reviewPlan(planJson: String): JSONObject = runCatching {
         val plan = JSONObject(planJson)
         val operationId = plan.getString("id")
-        val rootPath = plan.getString("rootPath")
+        val rootPath = Paths.get(plan.getString("rootPath")).normalize()
+        require(rootPath.isAbsolute) { "Deletion root must be absolute" }
+        require(Files.exists(rootPath, LinkOption.NOFOLLOW_LINKS)) { "Scan root no longer exists" }
         val accepted = JSONArray()
         val blocked = JSONArray()
         val items = plan.getJSONArray("items")
@@ -279,21 +302,176 @@ class DustRootService : RootService() {
         for (index in 0 until items.length()) {
             val item = items.getJSONObject(index)
             val rawPath = item.getString("path")
-            val path = Paths.get(rawPath).normalize()
-            val policyReason = CleanupSafetyPolicy.blockReason(path.toString(), rootPath)
+            val path = runCatching { Paths.get(rawPath).normalize() }.getOrNull()
+            val plannedDirectory = item.optBoolean("directory")
+            val plannedModifiedAt = item.optLong("modifiedAt")
+            val plannedItemBytes = item.optLong("sizeBytes")
+            val policyReason = if (path == null) "Invalid path" else CleanupSafetyPolicy.blockReason(path.toString(), rootPath.toString())
+            val selectedSymlink = path != null && Files.isSymbolicLink(path)
+            val inspection = if (policyReason == null && path != null && !selectedSymlink) inspectDeletionTree(path, rootPath) else null
             val reason = when {
                 policyReason != null -> policyReason
-                !Files.exists(path, LinkOption.NOFOLLOW_LINKS) -> "Path no longer exists"
-                Files.isSymbolicLink(path) -> "Symbolic links cannot be quarantined"
+                selectedSymlink -> "Selected symbolic links are not deleted"
+                inspection == null -> "Path no longer exists or cannot be inspected"
+                inspection.error != null -> inspection.error
+                inspection.isDirectory != plannedDirectory -> "Path type changed since scan"
+                plannedModifiedAt > 0 && inspection.modifiedAt != plannedModifiedAt -> "Path changed since scan"
+                !inspection.isDirectory && plannedItemBytes >= 0 && inspection.statSizeBytes != plannedItemBytes -> "File size changed since scan"
                 else -> null
             }
-            if (reason == null) {
-                accepted.put(JSONObject().put("path", path.toString()).put("sizeBytes", item.optLong("sizeBytes")))
-                plannedBytes += item.optLong("sizeBytes")
-            } else blocked.put(JSONObject().put("path", rawPath).put("reason", reason))
+            if (reason == null && path != null && inspection != null) {
+                accepted.put(
+                    JSONObject()
+                        .put("path", path.toString())
+                        .put("plannedBytes", inspection.contentBytes)
+                        .put("directory", inspection.isDirectory)
+                        .put("fingerprint", inspection.toJson()),
+                )
+                plannedBytes += inspection.contentBytes
+            } else {
+                blocked.put(JSONObject().put("path", rawPath).put("reason", reason ?: "Unable to plan deletion"))
+            }
         }
-        JSONObject().put("ok", true).put("operationId", operationId).put("accepted", accepted).put("blocked", blocked).put("plannedBytes", plannedBytes)
-    }.getOrElse { error -> JSONObject().put("ok", false).put("operationId", "").put("accepted", JSONArray()).put("blocked", JSONArray()).put("plannedBytes", 0).put("message", error.message ?: error.javaClass.simpleName) }
+        JSONObject()
+            .put("ok", true)
+            .put("operationId", operationId)
+            .put("accepted", accepted)
+            .put("blocked", blocked)
+            .put("plannedBytes", plannedBytes)
+    }.getOrElse { error ->
+        JSONObject()
+            .put("ok", false)
+            .put("operationId", "")
+            .put("accepted", JSONArray())
+            .put("blocked", JSONArray())
+            .put("plannedBytes", 0)
+            .put("message", error.message ?: error.javaClass.simpleName)
+    }
+
+    private fun inspectDeletionTree(target: Path, rootPath: Path): TreeFingerprint? {
+        if (!Files.exists(target, LinkOption.NOFOLLOW_LINKS) || Files.isSymbolicLink(target)) return null
+        val rootDevice = runCatching { Os.lstat(rootPath.toString()).st_dev }.getOrNull() ?: return null
+        val topStat = runCatching { Os.lstat(target.toString()) }.getOrNull() ?: return null
+        if (topStat.st_dev != rootDevice) {
+            return TreeFingerprint.from(topStat, Files.isDirectory(target, LinkOption.NOFOLLOW_LINKS), error = "Selected path crosses a filesystem boundary")
+        }
+        val digest = MessageDigest.getInstance("SHA-256")
+        var entryCount = 0L
+        var contentBytes = 0L
+        var error: String? = null
+        runCatching {
+            Files.walkFileTree(target, object : SimpleFileVisitor<Path>() {
+                private fun record(path: Path, stat: android.system.StructStat, regularFile: Boolean) {
+                    if (stat.st_dev != rootDevice) throw java.io.IOException("Nested filesystem boundary: $path")
+                    entryCount++
+                    if (entryCount > MAX_DELETE_PLAN_ENTRIES) throw java.io.IOException("Selection exceeds $MAX_DELETE_PLAN_ENTRIES planned entries; choose smaller items")
+                    val relative = if (path == target) "." else target.relativize(path).toString()
+                    val marker = "$relative\u0000${stat.st_dev}\u0000${stat.st_ino}\u0000${stat.st_mode}\u0000${stat.st_size}\u0000${stat.st_mtime}\n"
+                    digest.update(marker.toByteArray(Charsets.UTF_8))
+                    if (regularFile) contentBytes += stat.st_size.coerceAtLeast(0L)
+                }
+
+                override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
+                    record(dir, Os.lstat(dir.toString()), regularFile = false)
+                    return FileVisitResult.CONTINUE
+                }
+
+                override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+                    val stat = Os.lstat(file.toString())
+                    record(file, stat, regularFile = attrs.isRegularFile)
+                    return FileVisitResult.CONTINUE
+                }
+
+                override fun visitFileFailed(file: Path, exc: java.io.IOException): FileVisitResult {
+                    throw java.io.IOException("Unable to inspect $file: ${exc.message ?: exc.javaClass.simpleName}", exc)
+                }
+            })
+        }.onFailure { failure -> error = failure.message ?: failure.javaClass.simpleName }
+        return TreeFingerprint.from(
+            stat = topStat,
+            isDirectory = Files.isDirectory(target, LinkOption.NOFOLLOW_LINKS),
+            treeDigest = digest.digest().joinToString("") { byte -> (byte.toInt() and 0xff).toString(16).padStart(2, '0') },
+            entryCount = entryCount,
+            contentBytes = contentBytes,
+            error = error,
+        )
+    }
+
+    private fun fingerprintMatches(path: Path, rootPath: Path, expected: JSONObject?): Boolean {
+        if (expected == null) return false
+        val actual = inspectDeletionTree(path, rootPath) ?: return false
+        if (actual.error != null) return false
+        return actual.device == expected.optLong("device") &&
+            actual.inode == expected.optLong("inode") &&
+            actual.mode == expected.optInt("mode") &&
+            actual.statSizeBytes == expected.optLong("statSizeBytes") &&
+            actual.modifiedAt == expected.optLong("modifiedAt") &&
+            actual.treeDigest == expected.optString("treeDigest") &&
+            actual.entryCount == expected.optLong("entryCount")
+    }
+
+    private fun deletePath(target: Path, rootPath: Path): DeleteOutcome {
+        val rootDevice = runCatching { Os.lstat(rootPath.toString()).st_dev }.getOrElse { error ->
+            return DeleteOutcome(0, false, error.message ?: "Unable to inspect deletion root")
+        }
+        var deletedBytes = 0L
+        val failures = mutableListOf<String>()
+        runCatching {
+            Files.walkFileTree(target, object : SimpleFileVisitor<Path>() {
+                override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
+                    val device = runCatching { Os.lstat(dir.toString()).st_dev }.getOrNull()
+                    return if (device == null || device != rootDevice) {
+                        failures += "Filesystem boundary or unreadable directory skipped: $dir"
+                        FileVisitResult.SKIP_SUBTREE
+                    } else {
+                        FileVisitResult.CONTINUE
+                    }
+                }
+
+                override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+                    val device = runCatching { Os.lstat(file.toString()).st_dev }.getOrNull()
+                    if (device == null || device != rootDevice) {
+                        failures += "Filesystem boundary or unreadable item skipped: $file"
+                        return FileVisitResult.CONTINUE
+                    }
+                    val bytes = if (attrs.isRegularFile) attrs.size() else 0L
+                    runCatching { Files.delete(file) }
+                        .onSuccess { deletedBytes += bytes }
+                        .onFailure { failures += "$file: ${it.message ?: it.javaClass.simpleName}" }
+                    return FileVisitResult.CONTINUE
+                }
+
+                override fun visitFileFailed(file: Path, exc: java.io.IOException): FileVisitResult {
+                    failures += "$file: ${exc.message ?: exc.javaClass.simpleName}"
+                    return FileVisitResult.CONTINUE
+                }
+
+                override fun postVisitDirectory(dir: Path, exc: java.io.IOException?): FileVisitResult {
+                    if (exc != null) failures += "$dir: ${exc.message ?: exc.javaClass.simpleName}"
+                    runCatching { Files.delete(dir) }
+                        .onFailure { failures += "$dir: ${it.message ?: it.javaClass.simpleName}" }
+                    return FileVisitResult.CONTINUE
+                }
+            })
+        }.onFailure { failures += it.message ?: it.javaClass.simpleName }
+        val complete = !Files.exists(target, LinkOption.NOFOLLOW_LINKS)
+        return DeleteOutcome(
+            deletedBytes = deletedBytes,
+            complete = complete,
+            message = failures.takeIf { it.isNotEmpty() }?.joinToString("\n"),
+        )
+    }
+
+    private fun deletionFailure(operationId: String, message: String): String = JSONObject()
+        .put("ok", false)
+        .put("operationId", operationId)
+        .put("status", "FAILED")
+        .put("deletedBytes", 0)
+        .put("failedCount", 0)
+        .put("items", JSONArray())
+        .put("message", message)
+        .toString()
+
 
     private fun state(scan: ActiveScan): String = JSONObject()
         .put("ok", true)
@@ -316,6 +494,52 @@ class DustRootService : RootService() {
             scan.completedAt.get()?.let { it < cutoff } == true
         }
     }
+
+    private data class TreeFingerprint(
+        val device: Long,
+        val inode: Long,
+        val mode: Int,
+        val statSizeBytes: Long,
+        val modifiedAt: Long,
+        val isDirectory: Boolean,
+        val treeDigest: String,
+        val entryCount: Long,
+        val contentBytes: Long,
+        val error: String?,
+    ) {
+        fun toJson(): JSONObject = JSONObject()
+            .put("device", device)
+            .put("inode", inode)
+            .put("mode", mode)
+            .put("statSizeBytes", statSizeBytes)
+            .put("modifiedAt", modifiedAt)
+            .put("treeDigest", treeDigest)
+            .put("entryCount", entryCount)
+
+        companion object {
+            fun from(
+                stat: android.system.StructStat,
+                isDirectory: Boolean,
+                treeDigest: String = "",
+                entryCount: Long = 0,
+                contentBytes: Long = 0,
+                error: String? = null,
+            ): TreeFingerprint = TreeFingerprint(
+                device = stat.st_dev,
+                inode = stat.st_ino,
+                mode = stat.st_mode,
+                statSizeBytes = stat.st_size,
+                modifiedAt = stat.st_mtime,
+                isDirectory = isDirectory,
+                treeDigest = treeDigest,
+                entryCount = entryCount,
+                contentBytes = contentBytes,
+                error = error,
+            )
+        }
+    }
+
+    private data class DeleteOutcome(val deletedBytes: Long, val complete: Boolean, val message: String?)
 
     private class ActiveScan(val scanId: String) {
         val status = AtomicReference("starting")
@@ -352,5 +576,6 @@ class DustRootService : RootService() {
 
     private companion object {
         const val COMPLETED_RETENTION_MS = 24 * 60 * 60 * 1000L
+        const val MAX_DELETE_PLAN_ENTRIES = 100_000L
     }
 }

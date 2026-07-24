@@ -29,6 +29,7 @@ data class RootModuleProfile(
 data class ModuleOverlayConflict(
     val targetPath: String,
     val moduleIds: List<String>,
+    val sourcePaths: List<PackagePathSummary>,
 )
 
 object RootModuleAnalyzer {
@@ -40,7 +41,7 @@ object RootModuleAnalyzer {
             .groupBy({ it.first }, { it.second })
         val profiles = grouped.map { (moduleId, owned) -> profile(moduleId, owned) }
             .sortedByDescending { it.totalBytes }
-        return RootModuleReport(profiles, conflicts(profiles))
+        return RootModuleReport(profiles, conflicts(profiles, entries))
     }
 
     fun moduleId(path: String): String? {
@@ -77,12 +78,23 @@ object RootModuleAnalyzer {
         )
     }
 
-    private fun conflicts(profiles: List<RootModuleProfile>): List<ModuleOverlayConflict> = profiles
-        .flatMap { profile -> profile.overlayTargets.map { it.lowercase(Locale.ROOT) to profile.moduleId } }
-        .groupBy({ it.first }, { it.second })
-        .filterValues { it.distinct().size > 1 }
-        .map { (target, modules) -> ModuleOverlayConflict(target, modules.distinct().sorted()) }
-        .sortedBy { it.targetPath }
+    private fun conflicts(profiles: List<RootModuleProfile>, entries: List<ScanEntryEntity>): List<ModuleOverlayConflict> {
+        val modulesByTarget = profiles
+            .flatMap { profile -> profile.overlayTargets.map { it.lowercase(Locale.ROOT) to profile.moduleId } }
+            .groupBy({ it.first }, { it.second })
+            .filterValues { it.distinct().size > 1 }
+        return modulesByTarget.map { (target, modules) ->
+            val moduleIds = modules.distinct().sorted()
+            val sources = entries.asSequence()
+                .filter { moduleId(it.path) in moduleIds }
+                .filter { overlayTarget(it.path)?.lowercase(Locale.ROOT) == target }
+                .map { PackagePathSummary(it.path, it.sizeBytes, moduleEntryKind(it.path)) }
+                .distinctBy { it.path }
+                .sortedByDescending { it.sizeBytes }
+                .toList()
+            ModuleOverlayConflict(target, moduleIds, sources)
+        }.sortedBy { it.targetPath }
+    }
 
     private fun moduleEntryKind(path: String): String = when {
         path.endsWith("/module.prop") -> "Metadata"

@@ -7,12 +7,13 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
 import com.mikeyphw.dustui.scan.ScanRequest
+import com.mikeyphw.dustui.data.CleanupApprovedItem
 import com.mikeyphw.dustui.data.CleanupBlockedItem
 import com.mikeyphw.dustui.data.CleanupExecutionResult
+import com.mikeyphw.dustui.data.CleanupItemResult
 import com.mikeyphw.dustui.data.CleanupPlan
-import com.mikeyphw.dustui.data.CleanupPlanItem
+import com.mikeyphw.dustui.data.CleanupPathFingerprint
 import com.mikeyphw.dustui.data.CleanupReview
-import com.mikeyphw.dustui.data.QuarantineEntryEntity
 import com.mikeyphw.dustui.data.DuplicateVerificationReport
 import com.mikeyphw.dustui.data.VerifiedDuplicateGroup
 import com.mikeyphw.dustui.data.RootPathInspection
@@ -81,8 +82,9 @@ class RootServiceClient(private val context: Context) {
         return cleanupCall { it.reviewCleanup(normalized.toJson()) }
             .let { raw -> parseReview(raw, normalized) }
     }
-    suspend fun executeCleanup(plan: CleanupPlan): CleanupExecutionResult = cleanupCall(60_000L) { it.executeCleanup(plan.normalized().toJson()) }.let(::parseExecution)
-    suspend fun restoreCleanup(operationId: String, rootPath: String): CleanupExecutionResult = cleanupCall(60_000L) { it.restoreCleanup(operationId, rootPath) }.let(::parseExecution)
+
+    suspend fun executeCleanup(review: CleanupReview): CleanupExecutionResult =
+        cleanupCall(120_000L) { it.executeCleanup(review.toExecutionJson()) }.let(::parseExecution)
 
     private suspend fun cleanupCall(timeoutMs: Long = CALL_TIMEOUT_MS, block: (IDustRootService) -> String): String = withTimeout(timeoutMs) {
         callMutex.withLock { withContext(Dispatchers.IO) { block(service()) } }
@@ -98,8 +100,33 @@ class RootServiceClient(private val context: Context) {
             scanId = plan.scanId,
             rootPath = plan.rootPath,
             reviewedAt = System.currentTimeMillis(),
-            accepted = buildList { if (accepted != null) for (index in 0 until accepted.length()) accepted.getJSONObject(index).let { add(CleanupPlanItem(it.getString("path"), it.optLong("sizeBytes"))) } },
-            blocked = buildList { if (blocked != null) for (index in 0 until blocked.length()) blocked.getJSONObject(index).let { add(CleanupBlockedItem(it.getString("path"), it.getString("reason"))) } },
+            accepted = buildList {
+                if (accepted != null) for (index in 0 until accepted.length()) {
+                    val item = accepted.getJSONObject(index)
+                    val fingerprint = item.getJSONObject("fingerprint")
+                    add(
+                        CleanupApprovedItem(
+                            path = item.getString("path"),
+                            plannedBytes = item.optLong("plannedBytes"),
+                            isDirectory = item.optBoolean("directory"),
+                            fingerprint = CleanupPathFingerprint(
+                                device = fingerprint.optLong("device"),
+                                inode = fingerprint.optLong("inode"),
+                                mode = fingerprint.optInt("mode"),
+                                statSizeBytes = fingerprint.optLong("statSizeBytes"),
+                                modifiedAt = fingerprint.optLong("modifiedAt"),
+                                treeDigest = fingerprint.getString("treeDigest"),
+                                entryCount = fingerprint.optLong("entryCount"),
+                            ),
+                        ),
+                    )
+                }
+            },
+            blocked = buildList {
+                if (blocked != null) for (index in 0 until blocked.length()) {
+                    blocked.getJSONObject(index).let { add(CleanupBlockedItem(it.getString("path"), it.getString("reason"))) }
+                }
+            },
             plannedBytes = json.optLong("plannedBytes"),
             message = json.optString("message").takeIf(String::isNotBlank),
         )
@@ -107,13 +134,27 @@ class RootServiceClient(private val context: Context) {
 
     private fun parseExecution(raw: String): CleanupExecutionResult {
         val json = JSONObject(raw)
-        val entries = json.optJSONArray("entries")
+        val items = json.optJSONArray("items")
         return CleanupExecutionResult(
             ok = json.optBoolean("ok"),
             operationId = json.optString("operationId"),
             status = json.optString("status"),
-            reclaimedBytes = json.optLong("reclaimedBytes"),
-            entries = buildList { if (entries != null) for (index in 0 until entries.length()) entries.getJSONObject(index).let { add(QuarantineEntryEntity(it.getString("id"), it.getString("operationId"), it.getString("originalPath"), it.getString("quarantinePath"), it.optLong("sizeBytes"))) } },
+            deletedBytes = json.optLong("deletedBytes"),
+            failedCount = json.optInt("failedCount"),
+            items = buildList {
+                if (items != null) for (index in 0 until items.length()) {
+                    val item = items.getJSONObject(index)
+                    add(
+                        CleanupItemResult(
+                            path = item.getString("path"),
+                            plannedBytes = item.optLong("plannedBytes"),
+                            deletedBytes = item.optLong("deletedBytes"),
+                            status = item.optString("status"),
+                            message = item.optString("message").takeIf(String::isNotBlank),
+                        ),
+                    )
+                }
+            },
             message = json.optString("message").takeIf(String::isNotBlank),
         )
     }

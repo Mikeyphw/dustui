@@ -27,7 +27,12 @@ class RootModuleAnalyzerTest {
             entry("/data/adb/modules/b/system/bin/tool", 200),
         ))
         assertEquals(1, report.overlayConflicts.size)
-        assertEquals(listOf("a", "b"), report.overlayConflicts.single().moduleIds)
+        val conflict = report.overlayConflicts.single()
+        assertEquals(listOf("a", "b"), conflict.moduleIds)
+        assertEquals(
+            listOf("/data/adb/modules/b/system/bin/tool", "/data/adb/modules/a/system/bin/tool"),
+            conflict.sourcePaths.map { it.path },
+        )
     }
 
     private fun entry(path: String, size: Long) = ScanEntryEntity("scan", path, path.substringBeforeLast('/'), path.substringAfterLast('/'), size, size, false, 1, 0L, 1)

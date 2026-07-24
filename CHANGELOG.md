@@ -4,6 +4,16 @@
 
 Final release-candidate hardening for the rooted Android storage workbench.
 
+### Permanent deletion and actionable-path overlay
+
+- Replaced the Android quarantine/restore workflow with review-bound permanent deletion.
+- Added exact per-path planning with protected-path checks, scan metadata validation, filesystem-boundary rejection, symlink rejection, and device/inode/tree fingerprints.
+- Revalidated every approved fingerprint immediately before mutation and reported each top-level item as deleted, partial, or failed.
+- Recorded actual deleted regular-file bytes and marked scan results stale after any successful filesystem mutation.
+- Made old large files, root-search results, package paths, module-owned files, module conflict sources, Explorer entries, treemap entries, and detail sheets actionable through selection, inspection, reveal, and deletion planning.
+- Kept protected overlay target paths informational while exposing the real module source files that can be reviewed.
+- Removed the four unnecessary safe-call warnings from module analytics and storage-chart callbacks.
+
 ### Android UI/UX safety overlay
 
 - Bound cleanup review and execution to the same scan ID, root, operation ID, and accepted item set.
@@ -12,7 +22,7 @@ Final release-candidate hardening for the rooted Android storage workbench.
 - Made storage charts, metric grids, package selection, and status pills adapt to compact screens.
 - Added accessible treemap actions and 48dp interactive chart rows.
 - Moved notification permission requests to scan and scheduling actions.
-- Expanded cleanup review to list every accepted and blocked path before quarantine.
+- Expanded cleanup review to list every accepted and blocked path before permanent deletion.
 - Explicitly guarded scan-dependent Search and Packages routes so nullable session state compiles safely under Kotlin smart-cast rules.
 
 ### Added

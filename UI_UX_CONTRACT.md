@@ -37,24 +37,39 @@ DustUI is a rooted Android storage workbench. The UI must remain readable on pho
 4. Destination routing must use `DustDestination`, not ad-hoc boolean toggles.
 
 
-## Session and cleanup safety rules
+## Session and permanent-deletion safety rules
 
 1. Scan-scoped selections, filters, details, search results, reviews, and analysis must reset when the active scan ID changes.
-2. A cleanup review must record its scan ID, root path, operation ID, review timestamp, and exact accepted items.
-3. Cleanup execution must use the accepted items from that review, not rebuild a plan from live selection.
+2. A deletion review must record its scan ID, root path, operation ID, review timestamp, and exact accepted items.
+3. Deletion execution must use the accepted items from that review, not rebuild a plan from live selection.
 4. Execution must be rejected when the active scan ID or root differs from the review.
-5. The review sheet must list every accepted path and every blocked path before quarantine.
+5. The review sheet must list every approved path and every blocked path before irreversible confirmation.
 6. Review actions must remain visible while the item list scrolls.
+7. Every approved path must carry a device, inode, mode, size, modification, entry-count, and tree fingerprint from review to execution.
+8. Execution must revalidate fingerprints, reject selected symlinks and filesystem-boundary traversal, and never follow symlinks.
+9. Blocked paths are skipped rather than silently promoted; approved paths may proceed after explicit irreversible confirmation.
+10. Results must report each top-level path as deleted, partial, or failed and record only bytes actually deleted.
+11. Any successful mutation makes the persisted scan stale and must prompt a new scan.
+12. Android cleanup must not move files into an app-private quarantine or advertise reclaim before deletion succeeds.
 
 ## Back and adaptive-layout rules
 
-1. Back closes cleanup review, details, and selection mode before changing destinations.
+1. Back closes deletion review, details, and selection mode before changing destinations.
 2. In Explorer, Back navigates to the parent until the scan root is reached.
 3. Compact specialized workbenches return to More; primary workbenches return to Scan.
 4. Wide mode must consider both width and height.
 5. Donut charts stack vertically on compact widths, and metric grids collapse to one column when needed.
 6. Package status indicators must wrap rather than overflow.
 7. Package navigation must remain searchable and must not silently truncate the available packages.
+
+
+## Actionable-path rules
+
+1. Every indexed file or directory surfaced outside Explorer must offer a path to details, Explorer reveal, selection, or deletion planning.
+2. Overview old-file cards, whole-scan search results, package-owned paths, module-owned paths, treemap rows, and detail sheets must not be inert text.
+3. Module overlay conflict targets are informational protected paths; actions must operate on the indexed module source files that produce the conflict.
+4. Compact action cards must stack controls instead of compressing the path or overflowing horizontally.
+5. Batch selection and single-item deletion must feed the same review and fingerprint pipeline.
 
 ## Accessibility rules
 

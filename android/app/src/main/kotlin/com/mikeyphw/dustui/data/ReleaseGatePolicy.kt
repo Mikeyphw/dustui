@@ -1,22 +1,13 @@
 package com.mikeyphw.dustui.data
 
 import java.io.File
+import java.util.ArrayDeque
 
 object ReleaseGatePolicy {
     private val taskerActions = setOf("scan", "cancel")
 
     fun isAllowedTaskerAction(action: String): Boolean = action.lowercase() in taskerActions
 
-    fun validateRestoreEntry(originalPath: String, quarantinePath: String): String? {
-        val original = normalize(originalPath) ?: return "Invalid original path"
-        val quarantined = normalize(quarantinePath) ?: return "Invalid quarantine path"
-        if (!quarantined.contains("/.dustui-quarantine/")) return "Path is not inside a DustUI quarantine vault"
-        if (original.contains("/.dustui-quarantine/")) return "Original path cannot be inside quarantine"
-        if (CleanupSafetyPolicy.blockReason(original, "/") != null && original in setOf("/", "/data", "/system", "/vendor")) {
-            return "Protected destination"
-        }
-        return null
-    }
 
     fun normalize(path: String): String? {
         if (!path.startsWith('/')) return null

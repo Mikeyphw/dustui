@@ -1,5 +1,7 @@
 # Android UI/UX safety overlay
 
+> **Superseded cleanup behavior:** the permanent-deletion overlay replaces the Quarantine action described below. Scan binding, adaptive layout, navigation, and accessibility rules remain active.
+
 This overlay is based on `dustui-20260723-142646.tar.gz` and addresses the Android release blockers and highest-priority compact UX findings.
 
 ## Cleanup integrity

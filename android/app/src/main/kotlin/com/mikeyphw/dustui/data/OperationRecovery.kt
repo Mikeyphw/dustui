@@ -7,7 +7,7 @@ object OperationRecovery {
             operation.copy(
                 status = "INTERRUPTED",
                 completedAt = operation.completedAt ?: now,
-                message = operation.message ?: "Operation was interrupted before completion; inspect quarantine before retrying.",
+                message = operation.message ?: "Permanent deletion was interrupted. Some items may already be gone; run a new scan before planning another deletion.",
             )
         } else operation
 }

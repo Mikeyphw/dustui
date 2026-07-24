@@ -106,6 +106,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         val packageProfiles by viewModel.packageProfiles.collectAsStateWithLifecycle()
         val rootSearchResults by viewModel.rootSearchResults.collectAsStateWithLifecycle()
         val moduleReport by viewModel.moduleReport.collectAsStateWithLifecycle()
+        val scanDataStale by viewModel.scanDataStale.collectAsStateWithLifecycle()
         val snackbar = remember { SnackbarHostState() }
         var destination by rememberSaveable { mutableStateOf(DustDestination.SCAN) }
         var menuOpen by remember { mutableStateOf(false) }
@@ -192,70 +193,127 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                             }
                         }
                     }
-                    Box(Modifier.weight(1f).fillMaxSize()) {
-                        val currentSession = session
-                        when {
-                            currentSession == null && DustNavigationModel.needsScanData(destination) -> EmptyState(
-                                title = "No scan yet",
-                                detail = "Start a root scan before opening explorer, analytics, search, packages, modules, certification, or cleanup history.",
-                            )
-                            destination == DustDestination.SCAN -> ScanLauncher(
-                                Modifier.fillMaxSize(),
-                                rootState,
-                                currentSession,
-                                viewModel,
-                                requestNotificationPermission,
-                            ) { selectDestination(DustDestination.EXPLORER) }
-                            destination == DustDestination.EXPLORER && currentSession != null -> Explorer(
-                                Modifier.fillMaxSize(),
-                                currentSession,
-                                path ?: currentSession.rootPath,
-                                entries,
-                                filter,
-                                selectedPaths,
-                                viewModel,
-                                openRootSearch = { selectDestination(DustDestination.SEARCH) },
-                            )
-                            destination == DustDestination.INSIGHTS -> InsightsOverview(
-                                Modifier.fillMaxSize(),
-                                delta,
-                                snapshotHistory,
-                                advancedReport,
-                                apps,
-                                verifiedDuplicates,
-                                viewModel,
-                                requestNotificationPermission,
-                            ) { category ->
-                                viewModel.filterCategory(category)
-                                selectDestination(DustDestination.EXPLORER)
+                    Column(Modifier.weight(1f).fillMaxSize()) {
+                        if (scanDataStale) {
+                            Surface(tonalElevation = 3.dp) {
+                                Row(
+                                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    Text("Files were deleted. Scan results are now stale.", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                                    TextButton(onClick = { selectDestination(DustDestination.SCAN) }) { Text("New scan") }
+                                }
                             }
-                            destination == DustDestination.SEARCH && currentSession != null -> RootSearchScreen(
-                                Modifier.fillMaxSize(),
-                                currentSession.id,
-                                rootSearchResults,
-                                viewModel,
-                            ) { result ->
-                                viewModel.openSearchResult(result)
-                                selectDestination(DustDestination.EXPLORER)
+                        }
+                        Box(Modifier.weight(1f).fillMaxSize()) {
+                            val currentSession = session
+                            when {
+                                currentSession == null && DustNavigationModel.needsScanData(destination) -> EmptyState(
+                                    title = "No scan yet",
+                                    detail = "Start a root scan before opening explorer, analytics, search, packages, modules, certification, or deletion activity.",
+                                )
+                                destination == DustDestination.SCAN -> ScanLauncher(
+                                    Modifier.fillMaxSize(),
+                                    rootState,
+                                    currentSession,
+                                    viewModel,
+                                    requestNotificationPermission,
+                                ) { selectDestination(DustDestination.EXPLORER) }
+                                destination == DustDestination.EXPLORER && currentSession != null -> Explorer(
+                                    Modifier.fillMaxSize(),
+                                    currentSession,
+                                    path ?: currentSession.rootPath,
+                                    entries,
+                                    filter,
+                                    selectedPaths,
+                                    viewModel,
+                                    openRootSearch = { selectDestination(DustDestination.SEARCH) },
+                                )
+                                destination == DustDestination.INSIGHTS -> InsightsOverview(
+                                    Modifier.fillMaxSize(),
+                                    delta,
+                                    snapshotHistory,
+                                    advancedReport,
+                                    apps,
+                                    verifiedDuplicates,
+                                    selectedPaths,
+                                    viewModel,
+                                    requestNotificationPermission,
+                                    revealPath = { filePath ->
+                                        viewModel.revealPath(filePath)
+                                        selectDestination(DustDestination.EXPLORER)
+                                    },
+                                ) { category ->
+                                    viewModel.filterCategory(category)
+                                    selectDestination(DustDestination.EXPLORER)
+                                }
+                                destination == DustDestination.SEARCH && currentSession != null -> RootSearchScreen(
+                                    Modifier.fillMaxSize(),
+                                    currentSession.id,
+                                    rootSearchResults,
+                                    selectedPaths,
+                                    viewModel,
+                                ) { result ->
+                                    viewModel.revealPath(result.path)
+                                    selectDestination(DustDestination.EXPLORER)
+                                }
+                                destination == DustDestination.PACKAGES && currentSession != null -> PackageIntelligenceScreen(
+                                    Modifier.fillMaxSize(),
+                                    currentSession.id,
+                                    packageProfiles,
+                                    apps,
+                                    selectedApp,
+                                    selectedPaths,
+                                    viewModel,
+                                    revealPath = { filePath ->
+                                        viewModel.revealPath(filePath)
+                                        selectDestination(DustDestination.EXPLORER)
+                                    },
+                                    onSelectApp = { selectedApp = it },
+                                )
+                                destination == DustDestination.MODULES -> ModuleAnalyzerScreen(
+                                    Modifier.fillMaxSize(),
+                                    moduleReport,
+                                    selectedPaths,
+                                    viewModel,
+                                ) { filePath ->
+                                    viewModel.revealPath(filePath)
+                                    selectDestination(DustDestination.EXPLORER)
+                                }
+                                destination == DustDestination.CERTIFICATION -> CertificationScreen(Modifier.fillMaxSize(), certification, viewModel)
+                                destination == DustDestination.CLEANUP -> CleanupHistoryScreen(Modifier.fillMaxSize(), cleanupOperations)
+                                destination == DustDestination.MORE -> MoreScreen(Modifier.fillMaxSize(), ::selectDestination)
                             }
-                            destination == DustDestination.PACKAGES && currentSession != null -> PackageIntelligenceScreen(
-                                Modifier.fillMaxSize(),
-                                currentSession.id,
-                                packageProfiles,
-                                apps,
-                                selectedApp,
-                                onSelectApp = { selectedApp = it },
-                            )
-                            destination == DustDestination.MODULES -> ModuleAnalyzerScreen(Modifier.fillMaxSize(), moduleReport)
-                            destination == DustDestination.CERTIFICATION -> CertificationScreen(Modifier.fillMaxSize(), certification, viewModel)
-                            destination == DustDestination.CLEANUP -> CleanupHistoryScreen(Modifier.fillMaxSize(), cleanupOperations, viewModel)
-                            destination == DustDestination.MORE -> MoreScreen(Modifier.fillMaxSize(), ::selectDestination)
+                            if (destination != DustDestination.EXPLORER && selectedPaths.isNotEmpty()) {
+                                SelectionActionBar(
+                                    selectedCount = selectedPaths.size,
+                                    clear = viewModel::clearSelection,
+                                    review = viewModel::reviewCleanup,
+                                    modifier = Modifier.align(Alignment.BottomCenter),
+                                )
+                            }
                         }
                     }
                 }
             }
         }
-        if (selected != null) EntryDetails(selected, intelligence, rootInspection, viewModel::closeDetails)
+        val selectedEntry = selected
+        if (selectedEntry != null) EntryDetails(
+            selectedEntry,
+            intelligence,
+            rootInspection,
+            close = viewModel::closeDetails,
+            reveal = {
+                viewModel.closeDetails()
+                viewModel.revealPath(selectedEntry.path)
+                destination = DustDestination.EXPLORER
+            },
+            delete = {
+                viewModel.closeDetails()
+                viewModel.reviewPaths(listOf(selectedEntry.path))
+            },
+        )
         if (cleanupReview != null) CleanupReviewSheet(cleanupReview, viewModel::dismissCleanupReview, viewModel::executeCleanup)
     }
 }
@@ -429,18 +487,38 @@ private fun Explorer(
         }
         }
         if (selectionMode) {
-            Surface(
-                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                tonalElevation = 6.dp,
-                shadowElevation = 6.dp,
-                shape = MaterialTheme.shapes.large,
-            ) {
-                Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("${selectedPaths.size} selected", Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
-                    TextButton(onClick = vm::clearSelection) { Text("Clear") }
-                    Button(onClick = vm::reviewCleanup) { Text("Review") }
-                }
-            }
+            SelectionActionBar(
+                selectedCount = selectedPaths.size,
+                clear = vm::clearSelection,
+                review = vm::reviewCleanup,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        }
+    }
+}
+
+
+@Composable
+private fun SelectionActionBar(
+    selectedCount: Int,
+    clear: () -> Unit,
+    review: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+        tonalElevation = 6.dp,
+        shadowElevation = 6.dp,
+        shape = MaterialTheme.shapes.large,
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text("$selectedCount selected", Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+            TextButton(onClick = clear) { Text("Clear") }
+            Button(onClick = review) { Text("Review deletion") }
         }
     }
 }
@@ -518,8 +596,14 @@ private fun SessionCard(session: ScanSessionEntity, cancel: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EntryDetails(entry: ScanEntryEntity?, info: EntryIntelligence?, root: RootPathInspection?, close: () -> Unit) {
-    if (entry == null) return
+private fun EntryDetails(
+    entry: ScanEntryEntity,
+    info: EntryIntelligence?,
+    root: RootPathInspection?,
+    close: () -> Unit,
+    reveal: () -> Unit,
+    delete: () -> Unit,
+) {
     ModalBottomSheet(onDismissRequest = close) {
         LazyColumn(Modifier.fillMaxWidth(), contentPadding = dustSheetPadding(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             item {
@@ -576,7 +660,11 @@ private fun EntryDetails(entry: ScanEntryEntity?, info: EntryIntelligence?, root
                 }
             }
             item {
-                Button(onClick = close, Modifier.fillMaxWidth()) { Text("Close") }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = reveal, Modifier.weight(1f)) { Text("Show in Explorer") }
+                    Button(onClick = delete, Modifier.weight(1f)) { Text("Delete…") }
+                }
+                TextButton(onClick = close, Modifier.fillMaxWidth()) { Text("Close") }
                 Spacer(Modifier.height(24.dp))
             }
         }
@@ -589,6 +677,40 @@ private fun Detail(label: String, value: String) {
 }
 
 @Composable
+private fun ActionablePathCard(
+    path: String,
+    name: String,
+    sizeBytes: Long?,
+    metadata: String,
+    selected: Boolean,
+    toggleSelection: () -> Unit,
+    showDetails: () -> Unit,
+    reveal: () -> Unit,
+    delete: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+                Text(name.ifBlank { path }, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                sizeBytes?.let { Text(formatBytes(it), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+            }
+            Text(metadata, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            PathText(path, Modifier.fillMaxWidth(), maxLines = 3)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(checked = selected, onCheckedChange = { toggleSelection() })
+                Text(if (selected) "Selected for batch deletion" else "Select for batch deletion", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = showDetails, Modifier.weight(1f)) { Text("Details") }
+                OutlinedButton(onClick = reveal, Modifier.weight(1f)) { Text("Explorer") }
+            }
+            Button(onClick = delete, Modifier.fillMaxWidth()) { Text("Delete permanently…") }
+        }
+    }
+}
+
+@Composable
 private fun InsightsOverview(
     modifier: Modifier,
     delta: SnapshotDelta?,
@@ -596,8 +718,10 @@ private fun InsightsOverview(
     advanced: AdvancedStorageReport?,
     apps: List<AppStorageSummary>,
     verified: com.mikeyphw.dustui.data.DuplicateVerificationReport?,
+    selectedPaths: Set<String>,
     vm: MainViewModel,
     requestNotificationPermission: () -> Unit,
+    revealPath: (String) -> Unit,
     exploreCategory: (String) -> Unit,
 ) {
     var selectedType by rememberSaveable { mutableStateOf<String?>(null) }
@@ -684,22 +808,17 @@ private fun InsightsOverview(
                                 subtitle = if (advanced.largeOldFiles.size > 8) "Showing 8 of ${advanced.largeOldFiles.size} oldest large files." else "Oldest large files from the latest scan.",
                             )
                             advanced.largeOldFiles.take(8).forEach { old ->
-                                Surface(tonalElevation = 1.dp, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
-                                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
-                                            Text(
-                                                old.path.substringAfterLast('/'),
-                                                modifier = Modifier.weight(1f),
-                                                style = MaterialTheme.typography.titleMedium,
-                                                maxLines = 2,
-                                                overflow = TextOverflow.Ellipsis,
-                                            )
-                                            Text(formatBytes(old.sizeBytes), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                                        }
-                                        Text("${old.ageDays} days old", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        PathText(old.path, Modifier.fillMaxWidth(), maxLines = 3)
-                                    }
-                                }
+                                ActionablePathCard(
+                                    path = old.path,
+                                    name = old.path.substringAfterLast('/'),
+                                    sizeBytes = old.sizeBytes,
+                                    metadata = "${old.ageDays} days old",
+                                    selected = old.path in selectedPaths,
+                                    toggleSelection = { vm.togglePathSelection(old.path) },
+                                    showDetails = { vm.showPathDetails(old.path) },
+                                    reveal = { revealPath(old.path) },
+                                    delete = { vm.reviewPaths(listOf(old.path)) },
+                                )
                             }
                         }
                     }
@@ -714,6 +833,7 @@ private fun RootSearchScreen(
     modifier: Modifier,
     scanId: String,
     results: List<RootFileSearchResult>,
+    selectedPaths: Set<String>,
     vm: MainViewModel,
     openResult: (RootFileSearchResult) -> Unit,
 ) {
@@ -754,16 +874,20 @@ private fun RootSearchScreen(
                 )
             }
             items(results.take(80), key = { it.path }) { result ->
-                Card(onClick = { openResult(result) }, modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
-                            Text(result.name, Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Medium)
-                            Text(formatBytes(result.sizeBytes), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
-                        }
-                        Text(result.category.label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        PathText(result.path, Modifier.fillMaxWidth(), maxLines = 2)
-                    }
-                }
+                ActionablePathCard(
+                    path = result.path,
+                    name = result.name,
+                    sizeBytes = result.sizeBytes,
+                    metadata = buildString {
+                        append(result.category.label)
+                        if (result.isDirectory) append(" · directory")
+                    },
+                    selected = result.path in selectedPaths,
+                    toggleSelection = { vm.togglePathSelection(result.path) },
+                    showDetails = { vm.showPathDetails(result.path) },
+                    reveal = { openResult(result) },
+                    delete = { vm.reviewPaths(listOf(result.path)) },
+                )
             }
         }
     }
@@ -776,6 +900,9 @@ private fun PackageIntelligenceScreen(
     packageProfiles: List<PackageStorageProfile>,
     apps: List<AppStorageSummary>,
     selectedApp: String?,
+    selectedPaths: Set<String>,
+    vm: MainViewModel,
+    revealPath: (String) -> Unit,
     onSelectApp: (String) -> Unit,
 ) {
     var packageQuery by rememberSaveable(scanId) { mutableStateOf("") }
@@ -864,10 +991,16 @@ private fun PackageIntelligenceScreen(
                 )
             }
             items(profile.largestPaths.take(8), key = { it.path }) { path ->
-                ListItem(
-                    headlineContent = { Text(path.path.substringAfterLast('/'), maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                    supportingContent = { Text("${path.category} · ${path.path}", maxLines = 2, overflow = TextOverflow.Ellipsis) },
-                    trailingContent = { Text(formatBytes(path.sizeBytes)) },
+                ActionablePathCard(
+                    path = path.path,
+                    name = path.path.substringAfterLast('/'),
+                    sizeBytes = path.sizeBytes,
+                    metadata = path.category,
+                    selected = path.path in selectedPaths,
+                    toggleSelection = { vm.togglePathSelection(path.path) },
+                    showDetails = { vm.showPathDetails(path.path) },
+                    reveal = { revealPath(path.path) },
+                    delete = { vm.reviewPaths(listOf(path.path)) },
                 )
             }
         }
@@ -875,13 +1008,19 @@ private fun PackageIntelligenceScreen(
 }
 
 @Composable
-private fun ModuleAnalyzerScreen(modifier: Modifier, moduleReport: RootModuleReport?) {
+private fun ModuleAnalyzerScreen(
+    modifier: Modifier,
+    moduleReport: RootModuleReport?,
+    selectedPaths: Set<String>,
+    vm: MainViewModel,
+    revealPath: (String) -> Unit,
+) {
+    val report = moduleReport
     LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { DustSectionHeader("Root module analyzer", subtitle = "KernelSU, Magisk, APatch, and generic module footprints from /data/adb/modules.") }
         item {
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    val report = moduleReport
                     if (report == null) {
                         Text("Module analysis is preparing…")
                     } else {
@@ -890,39 +1029,76 @@ private fun ModuleAnalyzerScreen(modifier: Modifier, moduleReport: RootModuleRep
                         Detail("Disabled", report.disabledCount.toString())
                         Detail("WebUI", report.webUiCount.toString())
                         Detail("Overlay conflicts", report.conflictCount.toString())
-                        if (report.conflictCount > 0) Text("Multiple modules target the same overlay path. Review before cleanup or uninstall.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                        if (report.conflictCount > 0) Text("Multiple modules target the same overlay path. Review the module-owned source files before deleting anything.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
         }
-        moduleReport?.modules?.take(20)?.let { modules ->
+        if (report != null) {
+            val modules = report.modules.take(20)
             if (modules.isNotEmpty()) item {
                 DustSectionHeader(
                     "Modules by footprint",
-                    subtitle = if ((moduleReport?.modules?.size ?: 0) > 20) "Showing 20 of ${moduleReport?.modules?.size} modules." else null,
+                    subtitle = if (report.modules.size > 20) "Showing 20 of ${report.modules.size} modules. Each module exposes up to three actionable files." else "Each module exposes up to three actionable files.",
                 )
             }
-            items(modules, key = { it.moduleId }) { module ->
-                ListItem(
-                    headlineContent = { Text(module.moduleId, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                    supportingContent = { Text("${module.entryCount} entries · ${module.overlayTargets.size} overlay target(s)${if (module.disabled) " · disabled" else ""}") },
-                    trailingContent = { Text(formatBytes(module.totalBytes)) },
-                )
+            modules.forEach { module ->
+                item(key = "module:${module.moduleId}") {
+                    Card(Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Text(module.moduleId, Modifier.weight(1f), fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(formatBytes(module.totalBytes), fontWeight = FontWeight.SemiBold)
+                            }
+                            Text("${module.entryCount} entries · ${module.overlayTargets.size} overlay target(s)${if (module.disabled) " · disabled" else ""}", style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+                items(module.largestPaths.take(3), key = { "${module.moduleId}:${it.path}" }) { source ->
+                    ActionablePathCard(
+                        path = source.path,
+                        name = source.path.substringAfterLast('/'),
+                        sizeBytes = source.sizeBytes,
+                        metadata = "${module.moduleId} · ${source.category}",
+                        selected = source.path in selectedPaths,
+                        toggleSelection = { vm.togglePathSelection(source.path) },
+                        showDetails = { vm.showPathDetails(source.path) },
+                        reveal = { revealPath(source.path) },
+                        delete = { vm.reviewPaths(listOf(source.path)) },
+                    )
+                }
             }
-        }
-        moduleReport?.overlayConflicts?.take(12)?.let { conflicts ->
+
+            val conflicts = report.overlayConflicts.take(12)
             if (conflicts.isNotEmpty()) item {
                 DustSectionHeader(
                     "Module overlay conflicts",
-                    subtitle = if ((moduleReport?.overlayConflicts?.size ?: 0) > 12) "Showing 12 of ${moduleReport?.overlayConflicts?.size} conflicts." else null,
+                    subtitle = if (report.overlayConflicts.size > 12) "Showing 12 of ${report.overlayConflicts.size} conflicts. Actions apply to module source files, never the protected system target." else "Actions apply to module source files, never the protected system target.",
                 )
             }
-            items(conflicts, key = { it.targetPath }) { conflict ->
-                ListItem(
-                    headlineContent = { Text(conflict.targetPath, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                    supportingContent = { Text(conflict.moduleIds.joinToString(), maxLines = 2, overflow = TextOverflow.Ellipsis) },
-                    trailingContent = { StatusPill("conflict", danger = true) },
-                )
+            conflicts.forEach { conflict ->
+                item(key = "conflict:${conflict.targetPath}") {
+                    Card(Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Target overlay path", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            PathText(conflict.targetPath, Modifier.fillMaxWidth(), maxLines = 3)
+                            Text("Modules: ${conflict.moduleIds.joinToString()}", style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+                items(conflict.sourcePaths, key = { "conflict-source:${conflict.targetPath}:${it.path}" }) { source ->
+                    ActionablePathCard(
+                        path = source.path,
+                        name = source.path.substringAfterLast('/'),
+                        sizeBytes = source.sizeBytes,
+                        metadata = "Module overlay source · ${source.category}",
+                        selected = source.path in selectedPaths,
+                        toggleSelection = { vm.togglePathSelection(source.path) },
+                        showDetails = { vm.showPathDetails(source.path) },
+                        reveal = { revealPath(source.path) },
+                        delete = { vm.reviewPaths(listOf(source.path)) },
+                    )
+                }
             }
         }
     }
@@ -956,20 +1132,23 @@ private fun CertificationScreen(modifier: Modifier, certification: DeviceCertifi
 }
 
 @Composable
-private fun CleanupHistoryScreen(modifier: Modifier, operations: List<CleanupOperationEntity>, vm: MainViewModel) {
+private fun CleanupHistoryScreen(modifier: Modifier, operations: List<CleanupOperationEntity>) {
     LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { DustSectionHeader("Cleanup activity", subtitle = "Quarantine and restore history lives here instead of being buried under analytics.") }
+        item { DustSectionHeader("Deletion activity", subtitle = "Permanent deletion plans, completed bytes, and partial-failure details.") }
         if (operations.isEmpty()) {
-            item { EmptyState("No cleanup operations yet", "Selected cleanup items will appear here after review and quarantine.") }
+            item { EmptyState("No deletion operations yet", "Reviewed permanent deletions will appear here after execution.") }
         } else {
             items(operations, key = { it.id }) { operation ->
                 Card(Modifier.fillMaxWidth()) {
                     Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                             Text(operation.status.lowercase().replaceFirstChar { it.uppercase() }, fontWeight = FontWeight.SemiBold)
-                            Text("${operation.selectedCount} items · ${formatBytes(operation.reclaimedBytes)}", style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                "${operation.selectedCount} planned · ${formatBytes(operation.deletedBytes)} deleted of ${formatBytes(operation.plannedBytes)}",
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                            operation.message?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                         }
-                        if (operation.status in setOf("QUARANTINED", "PARTIAL")) OutlinedButton(onClick = { vm.restoreCleanup(operation.id) }) { Text("Restore") }
                     }
                 }
             }
@@ -999,7 +1178,7 @@ private fun moreDestinationDescription(destination: DustDestination): String = w
     DustDestination.PACKAGES -> "App-owned storage profiles and largest paths."
     DustDestination.MODULES -> "Root module footprint and overlay conflict analysis."
     DustDestination.CERTIFICATION -> "Root backend, notification, lock-state, and release checks."
-    DustDestination.CLEANUP -> "Quarantine, restore, and cleanup history."
+    DustDestination.CLEANUP -> "Permanent deletion activity and partial-failure details."
     else -> destination.label
 }
 
@@ -1007,40 +1186,51 @@ private fun moreDestinationDescription(destination: DustDestination): String = w
 @Composable
 private fun CleanupReviewSheet(review: CleanupReview?, close: () -> Unit, execute: () -> Unit) {
     if (review == null) return
+    var confirmed by remember(review.operationId) { mutableStateOf(false) }
     ModalBottomSheet(onDismissRequest = close) {
-        Column(Modifier.fillMaxWidth().fillMaxHeight(0.9f)) {
+        Column(Modifier.fillMaxWidth().fillMaxHeight(0.92f)) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Review cleanup", style = MaterialTheme.typography.headlineSmall)
-                Text("Quarantine is reversible. Permanent deletion is not part of the safe cleanup flow.")
+                Text("Review permanent deletion", style = MaterialTheme.typography.headlineSmall)
+                Text(
+                    "Approved paths will be deleted immediately and cannot be restored. Each path is fingerprinted now and revalidated before execution.",
+                    color = MaterialTheme.colorScheme.error,
+                )
                 PathText(review.rootPath, Modifier.fillMaxWidth(), maxLines = 2)
-                Text("Reviewed ${formatTimestamp(review.reviewedAt)}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Reviewed ${formatTimestamp(review.reviewedAt / 1000)}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 MetricGrid(
                     listOf(
-                        "Accepted" to review.accepted.size.toString(),
+                        "Approved" to review.accepted.size.toString(),
                         "Blocked" to review.blocked.size.toString(),
                         "Planned" to formatBytes(review.plannedBytes),
                     ),
                 )
+                if (review.blocked.isNotEmpty() && review.accepted.isNotEmpty()) {
+                    Text("Blocked paths will be skipped; approved paths can still be deleted.", style = MaterialTheme.typography.bodySmall)
+                }
             }
             LazyColumn(
                 Modifier.fillMaxWidth().weight(1f),
                 contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                if (review.accepted.isNotEmpty()) item { Text("Items to quarantine", fontWeight = FontWeight.SemiBold) }
+                if (review.accepted.isNotEmpty()) item { Text("Exact paths to delete", fontWeight = FontWeight.SemiBold) }
                 items(review.accepted, key = { it.path }) { accepted ->
                     Card(Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Text(accepted.path.substringAfterLast('/').ifBlank { accepted.path }, Modifier.weight(1f), fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                                Text(formatBytes(accepted.sizeBytes), fontWeight = FontWeight.SemiBold)
+                                Text(formatBytes(accepted.plannedBytes), fontWeight = FontWeight.SemiBold)
                             }
                             PathText(accepted.path, Modifier.fillMaxWidth(), maxLines = 3)
-                            Text("Directories include their reviewed descendants.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                if (accepted.isDirectory) "Directory tree · ${accepted.fingerprint.entryCount} fingerprinted entries" else "File fingerprint verified",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
                     }
                 }
-                if (review.blocked.isNotEmpty()) item { Text("Blocked items", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold) }
+                if (review.blocked.isNotEmpty()) item { Text("Blocked paths", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold) }
                 items(review.blocked, key = { it.path }) { blocked ->
                     ListItem(
                         headlineContent = { Text(blocked.path, maxLines = 2, overflow = TextOverflow.Ellipsis) },
@@ -1050,9 +1240,15 @@ private fun CleanupReviewSheet(review: CleanupReview?, close: () -> Unit, execut
                 review.message?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
             }
             Surface(tonalElevation = 6.dp, shadowElevation = 6.dp) {
-                Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = close, Modifier.weight(1f)) { Text("Cancel") }
-                    Button(onClick = execute, enabled = review.executable, modifier = Modifier.weight(1f)) { Text("Quarantine") }
+                Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = confirmed, onCheckedChange = { confirmed = it })
+                        Text("I understand this deletion is irreversible.", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = close, Modifier.weight(1f)) { Text("Cancel") }
+                        Button(onClick = execute, enabled = review.executable && confirmed, modifier = Modifier.weight(1f)) { Text("Delete permanently") }
+                    }
                 }
             }
         }

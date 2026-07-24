@@ -1,0 +1,224 @@
+{
+  "applied_at": "2026-07-24T14:22:16.164818Z",
+  "artifact": "/home/mike/Downloads/dustui_android_permanent_deletion_overlay.zip",
+  "artifact_name": "dustui_android_permanent_deletion_overlay.zip",
+  "type": "overlay",
+  "sha256": "ded362273d4bcc1c529508a29f48481692c9a9b1a605141287222128c834d15b",
+  "status": "ok",
+  "validation_status": "ok",
+  "commit_message": "Add reviewed permanent deletion and actionable file surfaces",
+  "commit_hash": "",
+  "file_count": 23,
+  "change_counts": {
+    "add": 1,
+    "modify": 22
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Android permanent deletion and actionable files",
+    "description": "Builds on the successful Android UI/UX safety overlay applied to dustui-20260723-142646.tar.gz. Replaces quarantine and restore with scan-bound, fingerprinted permanent-deletion planning and no-follow execution; reports per-path partial failures and actual deleted bytes; makes surfaced files actionable across Overview, search, packages, modules, Explorer, treemap, and details; and removes the known unnecessary safe-call warnings.",
+    "version": "1.1.0",
+    "repository": {
+      "name": "dustui"
+    },
+    "target": "dustui_android",
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "CHANGELOG.md",
+          "action": "modify",
+          "sha256": "7c473fced259f8f49fb52cada63738c252eb9da2b272df3405422a2c4fc8a06e",
+          "size": 3005,
+          "source_sha256": "2aa6c70e683f0d982e06049810649144dc537d1bae93e44c91e51527e3752793"
+        },
+        {
+          "path": "README.md",
+          "action": "modify",
+          "sha256": "dfbe3c8246c35634244044e7f6916ec19425269f88e39f421c5a2861cdefa57b",
+          "size": 4561,
+          "source_sha256": "e2af6730658471c8746d63c9b8d8f5878e07e5483c41d10e49e2e75cbc5cfc08"
+        },
+        {
+          "path": "RELEASE_CHECKLIST.md",
+          "action": "modify",
+          "sha256": "a22ba84abc253790f8d816d7a918a33fe7530aca1625acac12650f1584145dd3",
+          "size": 2844,
+          "source_sha256": "d24331343107392d9799e19d090920d1aadb1122e959dedbd30fe228a975b117"
+        },
+        {
+          "path": "UI_UX_CONTRACT.md",
+          "action": "modify",
+          "sha256": "a375d44820743b53d631e4c7e2206353561e76666f67a46091f5fac1d4d9507a",
+          "size": 4964,
+          "source_sha256": "94e7dcde8548295660c4d9bc8fd8c4824a5bb87cacba2676b15f7ec336488f95"
+        },
+        {
+          "path": "android/app/src/main/aidl/com/mikeyphw/dustui/root/IDustRootService.aidl",
+          "action": "modify",
+          "sha256": "b345a664f34f24ef4f201742fa2284f19ff785273a33a6137e6a4c93e2042e10",
+          "size": 558,
+          "source_sha256": "109555fc49dfac7b61a0e970c7beeafccd4ce8ae2bbd22eac8ca5c954799d026"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupAuthorization.kt",
+          "action": "modify",
+          "sha256": "1f02085b3698edee0ce51556381be19afebeb79c40e2dfcc55dc909109d27935",
+          "size": 509,
+          "source_sha256": "8844e5d6ba19a41d58e516aecf091435fe73c6bd7f8cf14f6f31b9f944a1ed87"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupModels.kt",
+          "action": "modify",
+          "sha256": "6bdadba68b72ffa17d3a91a406bbb4b1233fb4d359f57fc010089cf8a8bb1cf1",
+          "size": 6180,
+          "source_sha256": "adede7e843b623ae3ad9d8d0ea6b7f94618f17c29d037170a1e4504db8a16075"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ModuleAnalyzer.kt",
+          "action": "modify",
+          "sha256": "9ba21df678f5f0fc72a765107d2cd1f5ad6e5d0da8165a14ddbd8b6eb4e78633",
+          "size": 4621,
+          "source_sha256": "6961bbd798cba7e8a2e752b793619f1469a0a64cf6fde9c4f7dbfb12695330a8"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/OperationRecovery.kt",
+          "action": "modify",
+          "sha256": "b28b2828f239863e69708cb0ea65e5dfeeb6af9adc60f3fa924e041cb3c39422",
+          "size": 628,
+          "source_sha256": "b8b1b1e5d308275331809e995f013eeafd2686ee30c8f7d07f7a8fed35511a96"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ReleaseGatePolicy.kt",
+          "action": "modify",
+          "sha256": "1bc892448987bf01dbddeca1b6c26833b0c926e5c5781c005daf7219a6e6a6c4",
+          "size": 1156,
+          "source_sha256": "58c12490bf2afd94deb7edb0feeb9752574fa959d6335021eeccbea4ebb64732"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanDao.kt",
+          "action": "modify",
+          "sha256": "981a42ace713a1cdc795b9817e99806dffa36f3cc729b7998eb10deca4d15740",
+          "size": 1795,
+          "source_sha256": "a191074725a2c9dabdac853eef49582ac1a9784cf6dacb8305f37854eb230b30"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+          "action": "modify",
+          "sha256": "402b928cbcdf78fdb3641f53730dcfbdc3dff33eed1945674452812a1a35521e",
+          "size": 9865,
+          "source_sha256": "3d8e9141fb51ab353216ee569e2e6f8eba5e7d4c52bcea4aaf1eda4be21602f8"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt",
+          "action": "modify",
+          "sha256": "ba65f3255c3450e1711991be4e37e7f6262762a140e83c7fe488d520a4b62e9f",
+          "size": 28188,
+          "source_sha256": "0bb3ab6946db10e4afe791d0f3b16abb105887e7ae8f6f54220874dcd4acd8e4"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/RootServiceClient.kt",
+          "action": "modify",
+          "sha256": "2e566672d462487a91ae07c9d7c0f4c6d333c615d2cf6971d64e1988abb65209",
+          "size": 11861,
+          "source_sha256": "ab0c093ff03cc7f17230970aff5fe01018292b5537f9d79f882d84637f8b696a"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "action": "modify",
+          "sha256": "560c626b5d023f44be690970a387b4765ebe25072e80e181450dfd2d864aa3db",
+          "size": 67712,
+          "source_sha256": "74ab14390557973744b05005acd889d6c78550e6188e987811238bcc2f2d3ca1"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+          "action": "modify",
+          "sha256": "f49498094b054361e63608ccb6dd1de3d39862c5aec679fcd6ae9ea762fe2c4e",
+          "size": 17120,
+          "source_sha256": "21a2c2e0f895744ab535e6d01c443b309ce840916d67a5a58aa40ae3c0cdadda"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/StorageCharts.kt",
+          "action": "modify",
+          "sha256": "e7d5c7e51cf5d9ac58a692d8154b55bc3377eaacb7eff6d944bb844cc2ea10a8",
+          "size": 8918,
+          "source_sha256": "4f17de9140491291e2dac0a983fa891dee373cdb2935945a0e128b7e4ca6bfc9"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleanupSafetyPolicyTest.kt",
+          "action": "modify",
+          "sha256": "5d9c863b7ebb05bb3416dab7587c362f9680aa01cc50dc3aaf1d6fc9f0005923",
+          "size": 3214,
+          "source_sha256": "eef1615ba3ad66159f119263e78ca80b96da8aba969957060298027f3c5f5d8f"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleaseGatePolicyTest.kt",
+          "action": "modify",
+          "sha256": "9cb8198aefe1d26cef6308dcd6b0ad48582af27e96d9945d6c0d4d6dfd4492f9",
+          "size": 993,
+          "source_sha256": "5cb964ddfcb484e9bcbbda6b60eba295e9070cfc7420aa82bc3336713c856772"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootModuleAnalyzerTest.kt",
+          "action": "modify",
+          "sha256": "1daf1261228598b489dc7e9754f8653ff2987ec3b61e3978c49d2706ac9acb10",
+          "size": 1652,
+          "source_sha256": "e41f14aa75c794ee56a27e5fcae767506d2d3cb6f0cd5a5e917362ba55dc354e"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+          "action": "modify",
+          "sha256": "7e04afdec4ba3f6e0ccb1fc79f63841c9888da2157e192e4dd755d394bae5281",
+          "size": 7617,
+          "source_sha256": "6180f382e166c801681bdac98adfa6458ae8cfbad5c5480f135b77adeecd2a9d"
+        },
+        {
+          "path": "docs/ANDROID_PERMANENT_DELETION_AND_ACTIONABLE_PATHS.md",
+          "action": "add",
+          "sha256": "44fedcb435ae26e9e6123060bc10515b1e0fb31ebfd8a6c40d97d92ae83a28f2",
+          "size": 3473
+        },
+        {
+          "path": "docs/ANDROID_UI_UX_SAFETY_OVERLAY.md",
+          "action": "modify",
+          "sha256": "e0028c9c8d0c94e5924a30bfee7fe22dff65bcdf2cd995c0446ad138efa69444",
+          "size": 2793,
+          "source_sha256": "78198fac11a62e6b2a5f00fe6b03b8ef608ce212eb9f76ce4f80612aeb25b4e5"
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false,
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Add reviewed permanent deletion and actionable file surfaces"
+      }
+    },
+    "validation": {
+      "required": true,
+      "restore": true,
+      "build": true,
+      "test": true,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "build": "pass",
+        "tests": "pass",
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "809eab50d336b0fb0cf35a2ede0ba289251d11294eb9311d749862189472c05a",
+        "timeout_seconds": 1800
+      }
+    }
+  },
+  "history_id": "8e96fc5c3b3940c5a582149b706602fc"
+}

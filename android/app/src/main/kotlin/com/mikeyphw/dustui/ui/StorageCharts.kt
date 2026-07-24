@@ -113,7 +113,7 @@ private fun DonutLegend(
     Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         slices.forEachIndexed { index, slice ->
             val interactive = if (onSelect == null) Modifier else Modifier
-                .clickable(role = Role.Button) { onSelect?.invoke(slice.label) }
+                .clickable(role = Role.Button) { onSelect(slice.label) }
                 .semantics { role = Role.Button; selected = selectedLabel == slice.label }
             Row(
                 Modifier.fillMaxWidth().heightIn(min = 48.dp).then(interactive).padding(vertical = 4.dp),
@@ -135,7 +135,7 @@ fun StorageBars(slices: List<ChartSlice>, modifier: Modifier = Modifier, onSelec
     val barColor = MaterialTheme.colorScheme.primary
     Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         slices.forEach { slice ->
-            val interactive = if (onSelect == null) Modifier else Modifier.clickable(role = Role.Button) { onSelect?.invoke(slice.label) }
+            val interactive = if (onSelect == null) Modifier else Modifier.clickable(role = Role.Button) { onSelect(slice.label) }
             Column(
                 Modifier.fillMaxWidth().heightIn(min = if (onSelect == null) 0.dp else 48.dp).then(interactive)
                     .semantics { contentDescription = "${slice.label}, ${formatBytes(slice.bytes)}" }

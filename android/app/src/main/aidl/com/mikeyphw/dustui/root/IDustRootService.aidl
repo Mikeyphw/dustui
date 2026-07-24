@@ -10,7 +10,6 @@ interface IDustRootService {
     String cancelScan(String scanId);
     String reviewCleanup(String planJson);
     String executeCleanup(String planJson);
-    String restoreCleanup(String operationId, String rootPath);
     String verifyDuplicates(String requestJson);
     String inspectPath(String path, int previewBytes);
 }

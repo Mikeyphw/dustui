@@ -8,9 +8,9 @@ import org.junit.Test
 
 class CleanupSafetyPolicyTest {
     @Test fun blocksCriticalPathsAndScanRoot() {
-        assertEquals("The scan root cannot be quarantined", CleanupSafetyPolicy.blockReason("/data/user/0", "/data/user/0"))
+        assertEquals("The scan root cannot be deleted", CleanupSafetyPolicy.blockReason("/data/user/0", "/data/user/0"))
         assertEquals("Protected Android path", CleanupSafetyPolicy.blockReason("/data/system", "/data"))
-        assertEquals("Virtual filesystem content is protected", CleanupSafetyPolicy.blockReason("/proc/123/maps", "/"))
+        assertEquals("Protected Android path", CleanupSafetyPolicy.blockReason("/proc/123/maps", "/"))
     }
 
     @Test fun blocksEscapesAndAllowsReviewedChildren() {
@@ -25,13 +25,42 @@ class CleanupSafetyPolicyTest {
             scanId = "scan-a",
             rootPath = "/storage/emulated/0",
             reviewedAt = 123L,
-            accepted = listOf(CleanupPlanItem("/storage/emulated/0/Download/archive.zip", 42L)),
+            accepted = listOf(
+                CleanupApprovedItem(
+                    path = "/storage/emulated/0/Download/archive.zip",
+                    plannedBytes = 42L,
+                    isDirectory = false,
+                    fingerprint = CleanupPathFingerprint(1, 2, 3, 42, 4, "digest", 1),
+                ),
+            ),
             blocked = emptyList(),
             plannedBytes = 42L,
         )
         assertTrue(review.matches("scan-a", "/storage/emulated/0"))
         assertFalse(review.matches("scan-b", "/storage/emulated/0"))
         assertFalse(review.matches("scan-a", "/data"))
+        assertTrue(review.toExecutionJson().contains("treeDigest"))
+    }
+
+    @Test fun blockedItemsDoNotPreventApprovedDeletion() {
+        val review = CleanupReview(
+            ok = true,
+            operationId = "operation",
+            scanId = "scan",
+            rootPath = "/storage/emulated/0",
+            reviewedAt = 1,
+            accepted = listOf(
+                CleanupApprovedItem(
+                    "/storage/emulated/0/Download/ok.zip",
+                    10,
+                    false,
+                    CleanupPathFingerprint(1, 2, 3, 10, 4, "digest", 1),
+                ),
+            ),
+            blocked = listOf(CleanupBlockedItem("/data/system", "Protected Android path")),
+            plannedBytes = 10,
+        )
+        assertTrue(review.executable)
     }
 
     @Test fun cleanupPlanRemovesNestedDuplicates() {
@@ -39,7 +68,7 @@ class CleanupSafetyPolicyTest {
             scanId = "scan",
             rootPath = "/storage/emulated/0",
             items = listOf(
-                CleanupPlanItem("/storage/emulated/0/Download", 100),
+                CleanupPlanItem("/storage/emulated/0/Download", 100, isDirectory = true),
                 CleanupPlanItem("/storage/emulated/0/Download/nested.zip", 50),
                 CleanupPlanItem("/storage/emulated/0/DCIM/old.jpg", 25),
             ),

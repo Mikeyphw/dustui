@@ -11,6 +11,7 @@ import com.mikeyphw.dustui.root.RootServiceClient
 import com.mikeyphw.dustui.scan.ScanForegroundService
 import com.mikeyphw.dustui.scan.ScanRequest
 import kotlinx.coroutines.flow.Flow
+import java.util.Locale
 
 class ScanRepository(
     private val context: Context,
@@ -91,33 +92,94 @@ class ScanRepository(
     suspend fun verifyDuplicates(group: DuplicateCandidateGroup): DuplicateVerificationReport = rootClient.verifyDuplicates(group.paths, group.sizeBytes)
 
     suspend fun reviewCleanup(session: ScanSessionEntity, entries: List<ScanEntryEntity>): CleanupReview {
-        val plan = CleanupPlan(scanId = session.id, rootPath = session.rootPath, items = entries.map { CleanupPlanItem(it.path, it.sizeBytes) }).normalized()
+        val plan = CleanupPlan(
+            scanId = session.id,
+            rootPath = session.rootPath,
+            items = entries.map { entry ->
+                CleanupPlanItem(
+                    path = entry.path,
+                    sizeBytes = entry.sizeBytes,
+                    isDirectory = entry.isDirectory,
+                    modifiedAt = entry.modifiedAt,
+                )
+            },
+        ).normalized()
         return rootClient.reviewCleanup(plan)
     }
 
     suspend fun executeCleanup(review: CleanupReview): CleanupExecutionResult {
-        authorization.authorize().getOrElse { return CleanupExecutionResult(false, review.operationId, "BLOCKED", 0, emptyList(), it.message) }
-        val plan = CleanupPlan(
-            id = review.operationId,
-            scanId = review.scanId,
-            rootPath = review.rootPath,
-            items = review.accepted,
-        ).normalized()
+        authorization.authorize().getOrElse { error ->
+            return CleanupExecutionResult(
+                ok = false,
+                operationId = review.operationId,
+                status = "BLOCKED",
+                deletedBytes = 0,
+                failedCount = review.accepted.size,
+                items = review.accepted.map { item ->
+                    CleanupItemResult(item.path, item.plannedBytes, 0, "BLOCKED", error.message)
+                },
+                message = error.message,
+            )
+        }
         val createdAt = System.currentTimeMillis()
-        val plannedBytes = plan.items.sumOf { it.sizeBytes }
-        dao.upsertCleanupOperation(CleanupOperationEntity(plan.id, plan.scanId, plan.rootPath, "EXECUTING", plan.items.size, plannedBytes, createdAt = createdAt))
-        val result = runCatching { rootClient.executeCleanup(plan) }.getOrElse { CleanupExecutionResult(false, plan.id, "FAILED", 0, emptyList(), it.message) }
-        if (result.entries.isNotEmpty()) dao.upsertQuarantineEntries(result.entries)
-        dao.upsertCleanupOperation(CleanupOperationEntity(plan.id, plan.scanId, plan.rootPath, result.status, plan.items.size, plannedBytes, result.reclaimedBytes, createdAt = createdAt, completedAt = System.currentTimeMillis(), message = result.message))
-        return result
+        val plannedBytes = review.accepted.sumOf { it.plannedBytes }
+        dao.upsertCleanupOperation(
+            CleanupOperationEntity(
+                id = review.operationId,
+                scanId = review.scanId,
+                rootPath = review.rootPath,
+                status = "EXECUTING",
+                selectedCount = review.accepted.size,
+                plannedBytes = plannedBytes,
+                createdAt = createdAt,
+            ),
+        )
+        val result = runCatching { rootClient.executeCleanup(review) }.getOrElse { error ->
+            CleanupExecutionResult(
+                ok = false,
+                operationId = review.operationId,
+                status = "FAILED",
+                deletedBytes = 0,
+                failedCount = review.accepted.size,
+                items = review.accepted.map { item ->
+                    CleanupItemResult(item.path, item.plannedBytes, 0, "FAILED", error.message)
+                },
+                message = error.message,
+            )
+        }
+        val summary = deletionSummary(result)
+        dao.upsertCleanupOperation(
+            CleanupOperationEntity(
+                id = review.operationId,
+                scanId = review.scanId,
+                rootPath = review.rootPath,
+                status = result.status,
+                selectedCount = review.accepted.size,
+                plannedBytes = plannedBytes,
+                deletedBytes = result.deletedBytes,
+                createdAt = createdAt,
+                completedAt = System.currentTimeMillis(),
+                message = summary,
+            ),
+        )
+        return result.copy(message = summary)
     }
 
-    suspend fun restoreCleanup(operationId: String): CleanupExecutionResult {
-        authorization.authorize().getOrElse { return CleanupExecutionResult(false, operationId, "RESTORE_BLOCKED", 0, emptyList(), it.message) }
-        val operation = dao.cleanupOperation(operationId) ?: return CleanupExecutionResult(false, operationId, "RESTORE_FAILED", 0, emptyList(), "Unknown cleanup operation")
-        val result = runCatching { rootClient.restoreCleanup(operationId, operation.rootPath) }.getOrElse { CleanupExecutionResult(false, operationId, "RESTORE_FAILED", 0, emptyList(), it.message) }
-        dao.upsertCleanupOperation(operation.copy(status = result.status, completedAt = System.currentTimeMillis(), message = result.message))
-        return result
+    private fun deletionSummary(result: CleanupExecutionResult): String {
+        val failures = result.items.filter { it.status != "DELETED" }
+        if (failures.isEmpty()) return "Deleted ${result.items.size} item(s) permanently"
+        val details = failures.take(3).joinToString("; ") { item ->
+            "${item.path}: ${item.message ?: item.status.lowercase()}"
+        }
+        val remainder = if (failures.size > 3) "; and ${failures.size - 3} more" else ""
+        return "Deleted ${formatDeletedBytes(result.deletedBytes)}; ${failures.size} item(s) incomplete: $details$remainder"
+    }
+
+    private fun formatDeletedBytes(bytes: Long): String = when {
+        bytes >= 1024L * 1024L * 1024L -> String.format(Locale.US, "%.1f GiB", bytes / (1024.0 * 1024.0 * 1024.0))
+        bytes >= 1024L * 1024L -> String.format(Locale.US, "%.1f MiB", bytes / (1024.0 * 1024.0))
+        bytes >= 1024L -> String.format(Locale.US, "%.1f KiB", bytes / 1024.0)
+        else -> "$bytes B"
     }
 
     suspend fun recoverInterruptedOperations(): Int {

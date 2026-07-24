@@ -78,6 +78,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     private val _rootState = MutableStateFlow<RootUiState>(RootUiState.Checking)
     val rootState: StateFlow<RootUiState> = _rootState
     private val _message = MutableStateFlow<String?>(null)
+    private val _scanDataStale = MutableStateFlow(false)
+    val scanDataStale: StateFlow<Boolean> = _scanDataStale
     private val _appSummaries = MutableStateFlow<List<AppStorageSummary>>(emptyList())
     val appSummaries: StateFlow<List<AppStorageSummary>> = _appSummaries
     private val _snapshotDelta = MutableStateFlow<SnapshotDelta?>(null)
@@ -125,6 +127,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         _advancedReport.value = null
         _packageProfiles.value = emptyList()
         _moduleReport.value = null
+        _scanDataStale.value = false
     }
 
     fun refreshRoot() {
@@ -161,57 +164,107 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     fun cycleType() { _filter.value = _filter.value.copy(type = EntryTypeFilter.entries[(filter.value.type.ordinal + 1) % EntryTypeFilter.entries.size]) }
     fun exportCsv() { latestSession.value?.let { repository.exportCsv(it, allEntries.value) } }
 
-    fun toggleSelection(entry: ScanEntryEntity) {
-        _selectedPaths.value = _selectedPaths.value.toMutableSet().also { if (!it.add(entry.path)) it.remove(entry.path) }
+    fun toggleSelection(entry: ScanEntryEntity) = togglePathSelection(entry.path)
+
+    fun togglePathSelection(path: String) {
+        val entry = allEntries.value.firstOrNull { it.path == path }
+        if (entry == null) {
+            _message.value = "This path is no longer part of the active scan"
+            return
+        }
+        _selectedPaths.value = _selectedPaths.value.toMutableSet().also { selected ->
+            if (!selected.add(entry.path)) selected.remove(entry.path)
+        }
         _cleanupReview.value = null
     }
-    fun clearSelection() { _selectedPaths.value = emptySet(); _cleanupReview.value = null }
-    fun reviewCleanup() {
+
+    fun showPathDetails(path: String) {
+        val entry = allEntries.value.firstOrNull { it.path == path }
+        if (entry == null) {
+            _message.value = "This path is no longer part of the active scan"
+        } else {
+            select(entry)
+        }
+    }
+
+    fun revealPath(path: String) {
+        val entry = allEntries.value.firstOrNull { it.path == path }
+        if (entry == null) {
+            _message.value = "This path is no longer part of the active scan"
+            return
+        }
+        _explorerPath.value = entry.parentPath
+        _filter.value = ExplorerFilter()
+    }
+
+    fun clearSelection() {
+        _selectedPaths.value = emptySet()
+        _cleanupReview.value = null
+    }
+
+    fun reviewCleanup() = reviewPaths(_selectedPaths.value)
+
+    fun reviewPaths(paths: Collection<String>) {
         val session = latestSession.value ?: return
-        val chosen = allEntries.value.filter { it.path in _selectedPaths.value }
-        if (chosen.isEmpty()) { _message.value = "Select at least one entry"; return }
+        val requested = paths.toSet()
+        val chosen = allEntries.value.filter { it.path in requested }
+        if (chosen.isEmpty()) {
+            _message.value = "Select at least one indexed path"
+            return
+        }
+        _selectedPaths.value = chosen.mapTo(linkedSetOf()) { it.path }
+        _cleanupReview.value = null
         viewModelScope.launch {
             val review = repository.reviewCleanup(session, chosen)
             if (latestSession.value?.id == session.id) {
                 _cleanupReview.value = review
+                if (review.accepted.isEmpty()) {
+                    _message.value = review.message ?: "No selected paths passed deletion safety checks"
+                }
             } else {
-                _message.value = "The active scan changed. Review the cleanup selection again."
+                _message.value = "The active scan changed. Plan the deletion again."
             }
         }
     }
+
     fun dismissCleanupReview() { _cleanupReview.value = null }
+
     fun executeCleanup() {
         val session = latestSession.value ?: return
         val review = _cleanupReview.value ?: run {
-            _message.value = "Review the cleanup selection before quarantine"
+            _message.value = "Review the permanent deletion plan first"
             return
         }
         if (!review.matches(session.id, session.rootPath)) {
             _cleanupReview.value = null
-            _message.value = "The active scan changed. Review the cleanup selection again."
+            _message.value = "The active scan changed. Plan the deletion again."
             return
         }
         if (!review.executable) {
-            _message.value = review.message ?: "This cleanup review cannot be executed"
+            _message.value = review.message ?: "This deletion plan has no approved paths"
             return
         }
         viewModelScope.launch {
             if (latestSession.value?.id != review.scanId) {
                 _cleanupReview.value = null
-                _message.value = "The active scan changed. Review the cleanup selection again."
+                _message.value = "The active scan changed. Plan the deletion again."
                 return@launch
             }
             val result = repository.executeCleanup(review)
-            _message.value = if (result.ok) "Quarantined ${formatBytes(result.reclaimedBytes)}" else result.message ?: "Cleanup failed"
-            if (result.ok) { clearSelection(); refreshInsights(review.scanId) }
+            _cleanupReview.value = null
+            val filesystemChanged = result.items.any { it.status == "DELETED" || it.status == "PARTIAL" }
+            if (filesystemChanged) {
+                _scanDataStale.value = true
+                clearSelection()
+            }
+            _message.value = when {
+                result.ok -> "Deleted ${formatBytes(result.deletedBytes)} permanently. Run a new scan to refresh results."
+                result.deletedBytes > 0 -> result.message ?: "Deleted ${formatBytes(result.deletedBytes)}, but some paths failed. Run a new scan."
+                else -> result.message ?: "Permanent deletion failed"
+            }
         }
     }
-    fun restoreCleanup(operationId: String) {
-        viewModelScope.launch {
-            val result = repository.restoreCleanup(operationId)
-            _message.value = if (result.ok) "Cleanup restored" else result.message ?: "Restore failed"
-        }
-    }
+
     fun refreshInsights(scanId: String? = latestSession.value?.id) {
         if (scanId == null) return
         viewModelScope.launch {

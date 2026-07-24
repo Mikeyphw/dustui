@@ -1,7 +1,6 @@
 package com.mikeyphw.dustui.data
 
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.nio.file.Files
@@ -11,13 +10,8 @@ class ReleaseGatePolicyTest {
         assertTrue(ReleaseGatePolicy.isAllowedTaskerAction("scan"))
         assertTrue(ReleaseGatePolicy.isAllowedTaskerAction("cancel"))
         assertFalse(ReleaseGatePolicy.isAllowedTaskerAction("cleanup"))
+        assertFalse(ReleaseGatePolicy.isAllowedTaskerAction("delete"))
         assertFalse(ReleaseGatePolicy.isAllowedTaskerAction("shell"))
-    }
-
-    @Test fun `restore manifest rejects traversal and forged vaults`() {
-        assertTrue(ReleaseGatePolicy.validateRestoreEntry("/data/user/0/app/cache", "/tmp/fake") != null)
-        assertTrue(ReleaseGatePolicy.validateRestoreEntry("/data/../system", "/data/.dustui-quarantine/x") != null)
-        assertNull(ReleaseGatePolicy.validateRestoreEntry("/data/user/0/app/cache", "/data/.dustui-quarantine/op/cache"))
     }
 
     @Test fun `fingerprint detects replacement`() {
