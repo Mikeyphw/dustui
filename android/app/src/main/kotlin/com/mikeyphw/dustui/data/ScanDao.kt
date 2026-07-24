@@ -5,6 +5,8 @@ import androidx.room.Query
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
+data class DuplicateSizeBucket(val sizeBytes: Long, val candidateCount: Int)
+
 @Dao
 interface ScanDao {
     @Upsert
@@ -28,8 +30,32 @@ interface ScanDao {
     @Query("SELECT * FROM scan_entries WHERE scanId = :scanId ORDER BY sizeBytes DESC")
     suspend fun entriesOnce(scanId: String): List<ScanEntryEntity>
 
+    @Query("SELECT * FROM scan_entries WHERE scanId = :scanId AND path = :path LIMIT 1")
+    suspend fun entryOnce(scanId: String, path: String): ScanEntryEntity?
+
+    @Query("SELECT * FROM scan_entries WHERE scanId = :scanId AND path IN (:paths)")
+    suspend fun entriesByPathsOnce(scanId: String, paths: List<String>): List<ScanEntryEntity>
+
     @Query("SELECT * FROM scan_entries WHERE scanId = :scanId AND isDirectory = 0 AND sizeBytes >= :minBytes ORDER BY sizeBytes DESC, path COLLATE NOCASE")
     suspend fun filesAtLeastOnce(scanId: String, minBytes: Long): List<ScanEntryEntity>
+
+    @Query("""
+        SELECT sizeBytes, COUNT(*) AS candidateCount
+        FROM scan_entries
+        WHERE scanId = :scanId AND isDirectory = 0 AND sizeBytes >= :minBytes
+        GROUP BY sizeBytes
+        HAVING COUNT(*) > 1
+        ORDER BY (sizeBytes * (COUNT(*) - 1)) DESC, sizeBytes DESC
+    """)
+    suspend fun duplicateSizeBuckets(scanId: String, minBytes: Long): List<DuplicateSizeBucket>
+
+    @Query("""
+        SELECT * FROM scan_entries
+        WHERE scanId = :scanId AND isDirectory = 0 AND sizeBytes = :sizeBytes
+        ORDER BY path COLLATE NOCASE
+        LIMIT :limit
+    """)
+    suspend fun duplicateFilesBySizeOnce(scanId: String, sizeBytes: Long, limit: Int): List<ScanEntryEntity>
 
     @Query("""
         SELECT * FROM scan_entries

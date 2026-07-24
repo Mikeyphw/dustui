@@ -10,6 +10,9 @@ import com.mikeyphw.dustui.scan.ScheduledScanWorker
 import com.mikeyphw.dustui.root.RootServiceClient
 import com.mikeyphw.dustui.scan.ScanForegroundService
 import com.mikeyphw.dustui.scan.ScanRequest
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import java.util.Locale
 
@@ -20,10 +23,15 @@ class ScanRepository(
 ) {
     private val authorization = CleanupAuthorization(context)
     private val intelligence = EntryIntelligenceResolver(context)
+    private val duplicateStore = DuplicateAnalysisStore(context)
     fun observeLatestSession(): Flow<ScanSessionEntity?> = dao.observeLatestSession()
     fun observeCleanupOperations(): Flow<List<CleanupOperationEntity>> = dao.observeCleanupOperations(50)
     fun observeEntries(scanId: String): Flow<List<ScanEntryEntity>> = dao.observeEntries(scanId, 10_000)
     suspend fun rootAvailable(): Boolean = rootClient.rootAvailable()
+    suspend fun entry(scanId: String, path: String): ScanEntryEntity? = dao.entryOnce(scanId, path)
+    suspend fun entriesByPaths(scanId: String, paths: Collection<String>): List<ScanEntryEntity> =
+        if (paths.isEmpty()) emptyList() else dao.entriesByPathsOnce(scanId, paths.distinct())
+
 
     suspend fun deviceCertification(): DeviceCertificationReport {
         val rootConnected = rootClient.rootAvailable()
@@ -99,9 +107,115 @@ class ScanRepository(
     suspend fun moduleAnalysis(scanId: String): RootModuleReport = RootModuleAnalyzer.analyze(dao.entriesOnce(scanId))
 
 
-    suspend fun verifyDuplicates(group: DuplicateCandidateGroup): DuplicateVerificationReport = rootClient.verifyDuplicates(group.paths, group.sizeBytes)
+    suspend fun loadDuplicateAnalysis(scanId: String): DuplicateAnalysisSnapshot? = duplicateStore.load(scanId)
 
-    suspend fun reviewCleanup(session: ScanSessionEntity, entries: List<ScanEntryEntity>): CleanupReview {
+    suspend fun cancelDuplicateAnalysis(scanId: String): Boolean = rootClient.cancelDuplicateVerification(scanId)
+
+    suspend fun clearDuplicateAnalysis(scanId: String) = duplicateStore.clear(scanId)
+
+    suspend fun analyzeDuplicates(
+        scanId: String,
+        minSizeBytes: Long,
+        reset: Boolean = false,
+        onUpdate: (DuplicateAnalysisSnapshot) -> Unit = {},
+    ): DuplicateAnalysisSnapshot {
+        if (reset) duplicateStore.clear(scanId)
+        val session = requireNotNull(dao.session(scanId)) { "Duplicate analysis scan no longer exists" }
+        val existing = duplicateStore.load(scanId)?.takeIf { it.minSizeBytes == minSizeBytes }
+        val buckets = dao.duplicateSizeBuckets(scanId, minSizeBytes)
+        val bucketSizes = buckets.mapTo(linkedSetOf()) { it.sizeBytes }
+        val now = System.currentTimeMillis()
+        var snapshot = (existing ?: DuplicateAnalysisSnapshot.empty(scanId, minSizeBytes, now)).copy(
+            status = "RUNNING",
+            totalBuckets = buckets.size,
+            completedBuckets = existing?.completedSizes?.count { it in bucketSizes } ?: 0,
+            completedSizes = existing?.completedSizes?.filterTo(linkedSetOf()) { it in bucketSizes }.orEmpty(),
+            groups = existing?.groups?.filter { it.sizeBytes in bucketSizes }.orEmpty(),
+            currentSizeBytes = null,
+            updatedAt = now,
+            message = null,
+        )
+        duplicateStore.save(snapshot)
+        onUpdate(snapshot)
+        try {
+            for (bucket in buckets) {
+                currentCoroutineContext().ensureActive()
+                if (bucket.sizeBytes in snapshot.completedSizes) continue
+                snapshot = snapshot.copy(
+                    status = "RUNNING",
+                    currentSizeBytes = bucket.sizeBytes,
+                    updatedAt = System.currentTimeMillis(),
+                    message = "Verifying ${bucket.candidateCount} files sized ${formatDeletedBytes(bucket.sizeBytes)}",
+                )
+                duplicateStore.save(snapshot)
+                onUpdate(snapshot)
+
+                val candidates = dao.duplicateFilesBySizeOnce(scanId, bucket.sizeBytes, MAX_DUPLICATE_BUCKET_PATHS + 1)
+                if (candidates.size > MAX_DUPLICATE_BUCKET_PATHS) {
+                    snapshot = snapshot.copy(
+                        completedBuckets = snapshot.completedBuckets + 1,
+                        skippedFiles = snapshot.skippedFiles + bucket.candidateCount,
+                        completedSizes = snapshot.completedSizes + bucket.sizeBytes,
+                        currentSizeBytes = null,
+                        updatedAt = System.currentTimeMillis(),
+                        message = "Skipped an unusually large same-size bucket with ${bucket.candidateCount} files",
+                    )
+                } else {
+                    val report = rootClient.verifyDuplicates(scanId, candidates.map { it.path }, bucket.sizeBytes, session.rootPath)
+                    val mergedGroups = snapshot.groups.filterNot { it.sizeBytes == bucket.sizeBytes } + report.groups
+                    snapshot = snapshot.copy(
+                        completedBuckets = snapshot.completedBuckets + 1,
+                        checkedFiles = snapshot.checkedFiles + report.checkedFiles,
+                        skippedFiles = snapshot.skippedFiles + report.skippedFiles,
+                        partialGroups = snapshot.partialGroups + report.partialGroups,
+                        bytesHashed = snapshot.bytesHashed + report.bytesHashed,
+                        groups = mergedGroups.sortedWith(compareByDescending<VerifiedDuplicateGroup> { it.safeReclaimableBytes }.thenByDescending { it.sizeBytes }.thenBy { it.sha256 }),
+                        completedSizes = snapshot.completedSizes + bucket.sizeBytes,
+                        currentSizeBytes = null,
+                        updatedAt = System.currentTimeMillis(),
+                        message = report.message,
+                    )
+                }
+                duplicateStore.save(snapshot)
+                onUpdate(snapshot)
+            }
+            snapshot = snapshot.copy(
+                status = "COMPLETED",
+                currentSizeBytes = null,
+                updatedAt = System.currentTimeMillis(),
+                message = if (snapshot.groups.isEmpty()) "No exact duplicate groups were verified" else "Verified ${snapshot.groups.size} exact duplicate group(s)",
+            )
+            duplicateStore.save(snapshot)
+            onUpdate(snapshot)
+            return snapshot
+        } catch (cancelled: CancellationException) {
+            snapshot = snapshot.copy(
+                status = "PAUSED",
+                currentSizeBytes = null,
+                updatedAt = System.currentTimeMillis(),
+                message = "Duplicate analysis paused. Resume continues with the next size bucket.",
+            )
+            duplicateStore.save(snapshot)
+            onUpdate(snapshot)
+            throw cancelled
+        } catch (error: Throwable) {
+            snapshot = snapshot.copy(
+                status = "FAILED",
+                currentSizeBytes = null,
+                updatedAt = System.currentTimeMillis(),
+                message = error.message ?: error.javaClass.simpleName,
+            )
+            duplicateStore.save(snapshot)
+            onUpdate(snapshot)
+            return snapshot
+        }
+    }
+
+    suspend fun reviewCleanup(
+        session: ScanSessionEntity,
+        entries: List<ScanEntryEntity>,
+        expectedSha256ByPath: Map<String, String> = emptyMap(),
+    ): CleanupReview {
         val plan = CleanupPlan(
             scanId = session.id,
             rootPath = session.rootPath,
@@ -111,6 +225,7 @@ class ScanRepository(
                     sizeBytes = entry.sizeBytes,
                     isDirectory = entry.isDirectory,
                     modifiedAt = entry.modifiedAt,
+                    expectedSha256 = expectedSha256ByPath[entry.path],
                 )
             },
         ).normalized()
@@ -212,5 +327,9 @@ class ScanRepository(
             putExtra(Intent.EXTRA_STREAM, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
         }, "Export DustUI scan").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
+    private companion object {
+        const val MAX_DUPLICATE_BUCKET_PATHS = 2_000
     }
 }

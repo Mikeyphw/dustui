@@ -1,0 +1,214 @@
+{
+  "applied_at": "2026-07-24T16:27:51.952452Z",
+  "artifact": "/home/mike/Downloads/dustui_android_phase17_duplicate_detection_overlay.zip",
+  "artifact_name": "dustui_android_phase17_duplicate_detection_overlay.zip",
+  "type": "overlay",
+  "sha256": "308e90eff7ff801e8020eb2b11abe86d903a8e538ec9581b31b3b732f437c17d",
+  "status": "ok",
+  "validation_status": "ok",
+  "commit_message": "Add Android Phase 17 duplicate detection",
+  "commit_hash": "",
+  "file_count": 22,
+  "change_counts": {
+    "add": 4,
+    "modify": 18
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Android Phase 17 exact duplicate detection",
+    "description": "Builds on validated Phase 16 commit a503f0e. Adds resumable exact duplicate analysis with size bucketing, edge and complete SHA-256 hashing, physical-copy and hard-link accounting, protected-copy anchors, retained-copy strategies, cooperative cancellation, deterministic paging, and content-hash-bound permanent-deletion review and execution.",
+    "version": "1.0.1",
+    "repository": {
+      "name": "dustui"
+    },
+    "target": "dustui_android",
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "CHANGELOG.md",
+          "action": "modify",
+          "sha256": "3e3201647ab9ebdefa799f198544a09a8d91cd9fa2db728b7c56411eb87abcc0",
+          "size": 5529,
+          "source_sha256": "7035524254f182f8999c058465b47feb3ffa2e8c05a0eaeee994ed6c4d69dea2"
+        },
+        {
+          "path": "README.md",
+          "action": "modify",
+          "sha256": "19d676691c7e4bafb35a417e877a19c2b1c414e1ca24e712db0b9fe4995b7dd1",
+          "size": 5428,
+          "source_sha256": "07016d86aed5925a1a531f46ccfc538bc5a8038d36bf5fd56b8184321b12f16c"
+        },
+        {
+          "path": "RELEASE_CHECKLIST.md",
+          "action": "modify",
+          "sha256": "5d2dd05bdc6e86b484f108a4950d95a547ce4991768afe0e87e19009d5a0df35",
+          "size": 6166,
+          "source_sha256": "93d575e48e6a0c94730c75e6abde20bdab95132c829c54834f0cb80d6d8f843b"
+        },
+        {
+          "path": "UI_UX_CONTRACT.md",
+          "action": "modify",
+          "sha256": "6599ed35d5d22dfa991b6826ffac64ef8541928245c718e912c38dfb3723c899",
+          "size": 8699,
+          "source_sha256": "1178a7a617605547df2264f3bd6cf0bb7a1f3e9ccd2e8d0ce13a313532c2f0dd"
+        },
+        {
+          "path": "android/app/src/main/aidl/com/mikeyphw/dustui/root/IDustRootService.aidl",
+          "action": "modify",
+          "sha256": "0d97ba344fdf91606b1f6bbf1b5e48cb7b66eed167c049fabb65612cfbc63ea5",
+          "size": 613,
+          "source_sha256": "b345a664f34f24ef4f201742fa2284f19ff785273a33a6137e6a4c93e2042e10"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupModels.kt",
+          "action": "modify",
+          "sha256": "922b3aac02182916f6cfaaa889336d58c98781b7cedf90bf57d2498f36bd950d",
+          "size": 6449,
+          "source_sha256": "6bdadba68b72ffa17d3a91a406bbb4b1233fb4d359f57fc010089cf8a8bb1cf1"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DuplicateAnalysisStore.kt",
+          "action": "add",
+          "sha256": "1e798b70d46a90e036c801d6966aba9665e37acfafc7853c0bd84866bebe4096",
+          "size": 6757
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DuplicateVerification.kt",
+          "action": "modify",
+          "sha256": "e0d02f8131ec15c28b86cded43c2e208726b533435f696bd6e0e4b0d0d0d69b1",
+          "size": 1234,
+          "source_sha256": "64999e5c008c11e4d96c905c0fdbf1cf6a9a7b453f911bcfb08c655080473bdf"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DuplicateWorkbench.kt",
+          "action": "add",
+          "sha256": "70ae07fb08168606ad1c81e8c8292e06245f8ab335bd1d631a38eb1c230466bd",
+          "size": 7781
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanDao.kt",
+          "action": "modify",
+          "sha256": "b284c8544fc112092a6d3fbc794e4ebbbbeb10690215c87d937c6a543fa2bc98",
+          "size": 3927,
+          "source_sha256": "178dc581556a5df86aa27f9747aefb3745cd5d572a34689ba45ce0360aaf0d76"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+          "action": "modify",
+          "sha256": "a9c9c625a30097809b8ad7adad92a8ce6b208c35d478211d4e820907565993ab",
+          "size": 16680,
+          "source_sha256": "9a44045061941d7886565303305ce83dd355a845eed859db195e164250e191b4"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt",
+          "action": "modify",
+          "sha256": "bbb64f7356e102c66f4b5e11587d9b975dcdd5e988d379fae4e1ab8d3fff3026",
+          "size": 38695,
+          "source_sha256": "ba65f3255c3450e1711991be4e37e7f6262762a140e83c7fe488d520a4b62e9f"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/RootServiceClient.kt",
+          "action": "modify",
+          "sha256": "3c1ac8bc73340184b857971da0f6471e85ba9ee193f55dc204907f0fcb316507",
+          "size": 14805,
+          "source_sha256": "2e566672d462487a91ae07c9d7c0f4c6d333c615d2cf6971d64e1988abb65209"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+          "action": "modify",
+          "sha256": "86aca7ac6fe00cc0212526f8098d962700a629d2be20badcaf05d9a639d11856",
+          "size": 8555,
+          "source_sha256": "d1ab335c515ae640ee9b1eb7dbe51a3828b1a9ab9c887e7923945192704486c9"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "action": "modify",
+          "sha256": "d308443eeeb97be2f773da85b24c0b7b74b092e70d840255b0fa306a668832d9",
+          "size": 102208,
+          "source_sha256": "4710ff311c846f328935394db76aabd9d8de514be9979e53b10f355b46e0bf46"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+          "action": "modify",
+          "sha256": "e715e4becd217af2e6f13ed50f7b90dc18d1045582f8f3bf0a11f8e6231503fe",
+          "size": 31976,
+          "source_sha256": "06782b21fd07117673846bf556b4d14c6b2a6844e0f4336cc0ea1a503964808d"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleanupSafetyPolicyTest.kt",
+          "action": "modify",
+          "sha256": "aee3cc135ecd820530e13ffe6ad3829b7bc6592cf25c8b3e3cd4d91063afa6e4",
+          "size": 4283,
+          "source_sha256": "5d9c863b7ebb05bb3416dab7587c362f9680aa01cc50dc3aaf1d6fc9f0005923"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/DuplicateVerificationTest.kt",
+          "action": "modify",
+          "sha256": "ad55d01585be4ef0293cea7843bc23aafa396ed234902a527360e4d959925acb",
+          "size": 2090,
+          "source_sha256": "fbcf43124eb1d8212f6261bccaed453c69507b8980b0c06493448e9c58b5fde3"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/DuplicateWorkbenchTest.kt",
+          "action": "add",
+          "sha256": "5a0cb33671c1072236a0c30feccd8f869f416d076d33ece804ea8db67848304f",
+          "size": 5409
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+          "action": "modify",
+          "sha256": "480b38650c9caf05f58f491ccedfd772eacc139fe553d08e48fd0350f8e93347",
+          "size": 2533,
+          "source_sha256": "b89d2541f487900d11547490cc9aed79ed23b3e773d717fc71d9d331a021ce90"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+          "action": "modify",
+          "sha256": "a3c9e9c5de2b09168f1db1c55d2d7e3f0d8ab3b198856648a7c499521c36f8fc",
+          "size": 13772,
+          "source_sha256": "17480f2a24719f9d7a28f4f7bf521aa203684c715171c47659e2f59113f998c4"
+        },
+        {
+          "path": "docs/ANDROID_PHASE17_DUPLICATE_DETECTION.md",
+          "action": "add",
+          "sha256": "2e472c0f6d6db3545460400af07522773947eb7c0c21c35b27cec2d5bb6f3383",
+          "size": 3601
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false,
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Add Android Phase 17 duplicate detection"
+      }
+    },
+    "validation": {
+      "required": true,
+      "restore": true,
+      "build": true,
+      "test": true,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "build": "pass",
+        "tests": "pass",
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "677eaf7f6fc0a8a6d5919d07c687afe3f4ccccc78af2b6314004ff23584d9007",
+        "timeout_seconds": 2400
+      }
+    }
+  },
+  "history_id": "c6a13194a2cb456e9ec20fe80275cfdf"
+}

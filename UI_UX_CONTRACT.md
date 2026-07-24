@@ -100,3 +100,18 @@ DustUI is a rooted Android storage workbench. The UI must remain readable on pho
 8. Every surfaced file must support details, Explorer reveal, individual selection, and reviewed permanent-deletion planning.
 9. Page-level selection and deletion planning must use only the current visible page and feed the same fingerprinted deletion pipeline.
 10. After filesystem mutation, browsing may remain available, but selection and deletion planning must require a fresh scan.
+
+## Exact duplicate-detection rules
+
+1. Equal size, filename, extension, or edge hash must never be presented as proof of duplication. Exact groups require a complete SHA-256 match.
+2. Files must be stat-checked after hashing; files that change while hashing are skipped.
+3. Paths sharing the same device and inode represent one physical copy. Hard links must not inflate copy counts or reclaimable bytes.
+4. Hard-linked and protected physical copies remain visible but are never selected automatically for deletion.
+5. Analysis must be bound to one completed scan, persist progress after each size bucket, support pause/resume, and reset when the active scan changes.
+6. Every duplicate group must visibly identify the retained physical copy before deletion candidates are offered. Manual mode selects nothing until a retained copy is chosen.
+7. Newest, oldest, shortest-path, and preferred-folder strategies are recommendations only; the user can override the retained copy.
+8. Duplicate deletion selection must carry the verified SHA-256 into review. The root service must rehash during review and immediately before deletion.
+9. A same-size file whose content changed after analysis must be blocked rather than treated as a duplicate.
+10. Page and group actions must use exact visible membership and route through the existing scan-bound permanent-deletion planner.
+11. Analysis thresholds and page boundaries must be explicit; skipped oversized buckets and unreadable files must be counted rather than hidden.
+12. After any filesystem mutation, duplicate analysis is stale and cannot drive new selection or deletion until a fresh scan.

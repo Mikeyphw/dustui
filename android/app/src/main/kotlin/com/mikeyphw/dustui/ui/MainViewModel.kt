@@ -12,7 +12,12 @@ import com.mikeyphw.dustui.data.SnapshotDelta
 import com.mikeyphw.dustui.data.CleanupReview
 import com.mikeyphw.dustui.data.CleanupOperationEntity
 import com.mikeyphw.dustui.data.AdvancedStorageReport
-import com.mikeyphw.dustui.data.DuplicateVerificationReport
+import com.mikeyphw.dustui.data.DuplicateAnalysisSnapshot
+import com.mikeyphw.dustui.data.DuplicateFilter
+import com.mikeyphw.dustui.data.DuplicateKeepStrategy
+import com.mikeyphw.dustui.data.DuplicatePage
+import com.mikeyphw.dustui.data.DuplicateThreshold
+import com.mikeyphw.dustui.data.DuplicateWorkbenchEngine
 import com.mikeyphw.dustui.data.AdvancedStorageAnalyzer
 import com.mikeyphw.dustui.data.SnapshotPoint
 import com.mikeyphw.dustui.data.DeviceCertificationReport
@@ -29,7 +34,9 @@ import com.mikeyphw.dustui.data.LargeFileSort
 import com.mikeyphw.dustui.data.LargeFileWorkbenchEngine
 import com.mikeyphw.dustui.scan.ScanPreset
 import com.mikeyphw.dustui.scan.ScanRequest
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -56,6 +63,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     private val _selectedEntry = MutableStateFlow<ScanEntryEntity?>(null)
     private val _selectedPaths = MutableStateFlow<Set<String>>(emptySet())
     val selectedPaths: StateFlow<Set<String>> = _selectedPaths
+    private val _selectedContentHashes = MutableStateFlow<Map<String, String>>(emptyMap())
     private val _cleanupReview = MutableStateFlow<CleanupReview?>(null)
     val cleanupReview: StateFlow<CleanupReview?> = _cleanupReview
     val cleanupOperations: StateFlow<List<CleanupOperationEntity>> = repository.observeCleanupOperations()
@@ -94,8 +102,15 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val snapshotHistory: StateFlow<List<SnapshotPoint>> = _snapshotHistory
     private val _advancedReport = MutableStateFlow<AdvancedStorageReport?>(null)
     val advancedReport: StateFlow<AdvancedStorageReport?> = _advancedReport
-    private val _verifiedDuplicates = MutableStateFlow<DuplicateVerificationReport?>(null)
-    val verifiedDuplicates: StateFlow<DuplicateVerificationReport?> = _verifiedDuplicates
+    private val _duplicateAnalysis = MutableStateFlow<DuplicateAnalysisSnapshot?>(null)
+    val duplicateAnalysis: StateFlow<DuplicateAnalysisSnapshot?> = _duplicateAnalysis
+    private val _duplicateFilter = MutableStateFlow(DuplicateFilter())
+    val duplicateFilter: StateFlow<DuplicateFilter> = _duplicateFilter
+    private val _duplicateManualKeep = MutableStateFlow<Map<String, String>>(emptyMap())
+    val duplicatePage: StateFlow<DuplicatePage> = combine(_duplicateAnalysis, _duplicateFilter, _duplicateManualKeep) { analysis, filter, manualKeep ->
+        DuplicateWorkbenchEngine.evaluate(analysis, filter, manualKeep)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DuplicatePage.empty())
+    private var duplicateAnalysisJob: Job? = null
     private val _certification = MutableStateFlow<DeviceCertificationReport?>(null)
     val certification: StateFlow<DeviceCertificationReport?> = _certification
     private val _packageProfiles = MutableStateFlow<List<PackageStorageProfile>>(emptyList())
@@ -134,13 +149,31 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         _selectedIntelligence.value = null
         _selectedRootInspection.value = null
         _selectedPaths.value = emptySet()
+        _selectedContentHashes.value = emptyMap()
         _cleanupReview.value = null
         _rootSearchResults.value = emptyList()
         _categoryFiles.value = null
         _largeFileSourceEntries.value = emptyList()
         _largeFileLoading.value = false
         _largeFileFilter.value = LargeFileFilter()
-        _verifiedDuplicates.value = null
+        duplicateAnalysisJob?.cancel()
+        duplicateAnalysisJob = null
+        _duplicateAnalysis.value = null
+        _duplicateFilter.value = DuplicateFilter()
+        _duplicateManualKeep.value = emptyMap()
+        if (session?.status == "COMPLETED") {
+            viewModelScope.launch(Dispatchers.IO) {
+                val stored = repository.loadDuplicateAnalysis(session.id)
+                if (latestSession.value?.id == session.id) {
+                    _duplicateAnalysis.value = stored
+                    stored?.let { snapshot ->
+                        DuplicateThreshold.entries.firstOrNull { it.minBytes == snapshot.minSizeBytes }?.let { threshold ->
+                            _duplicateFilter.value = _duplicateFilter.value.copy(threshold = threshold)
+                        }
+                    }
+                }
+            }
+        }
         _appSummaries.value = emptyList()
         _snapshotDelta.value = null
         _snapshotHistory.value = emptyList()
@@ -252,6 +285,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             return
         }
         _selectedPaths.value = paths.toCollection(linkedSetOf())
+        _selectedContentHashes.value = emptyMap()
         _cleanupReview.value = null
         _message.value = "Selected ${paths.size} large file(s) from this page"
     }
@@ -265,6 +299,134 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         reviewPaths(paths)
     }
 
+    fun updateDuplicateQuery(value: String) {
+        _duplicateFilter.value = _duplicateFilter.value.copy(query = value, page = 0)
+    }
+
+    fun setDuplicateThreshold(threshold: DuplicateThreshold) {
+        if (_duplicateAnalysis.value?.running == true) return
+        clearVerifiedDuplicateSelection()
+        _duplicateFilter.value = _duplicateFilter.value.copy(threshold = threshold, page = 0)
+    }
+
+    fun setDuplicateKeepStrategy(strategy: DuplicateKeepStrategy) {
+        clearVerifiedDuplicateSelection()
+        _duplicateFilter.value = _duplicateFilter.value.copy(keepStrategy = strategy, page = 0)
+    }
+
+    fun updateDuplicatePreferredDirectory(value: String) {
+        clearVerifiedDuplicateSelection()
+        _duplicateFilter.value = _duplicateFilter.value.copy(preferredDirectory = value, page = 0)
+    }
+
+    fun previousDuplicatePage() {
+        val current = _duplicateFilter.value
+        _duplicateFilter.value = current.copy(page = (current.page - 1).coerceAtLeast(0))
+    }
+
+    fun nextDuplicatePage() {
+        val current = _duplicateFilter.value
+        val lastPage = (duplicatePage.value.pageCount - 1).coerceAtLeast(0)
+        _duplicateFilter.value = current.copy(page = (current.page + 1).coerceAtMost(lastPage))
+    }
+
+    fun startDuplicateAnalysis(reset: Boolean = false) {
+        val session = latestSession.value
+        if (session?.status != "COMPLETED") {
+            _message.value = "Complete a scan before verifying duplicate files"
+            return
+        }
+        if (_scanDataStale.value) {
+            _message.value = "Run a new scan before verifying duplicates"
+            return
+        }
+        if (duplicateAnalysisJob?.isActive == true) return
+        clearVerifiedDuplicateSelection()
+        val threshold = _duplicateFilter.value.threshold
+        duplicateAnalysisJob = viewModelScope.launch(Dispatchers.IO) {
+            val result = repository.analyzeDuplicates(session.id, threshold.minBytes, reset) { update ->
+                if (latestSession.value?.id == session.id) _duplicateAnalysis.value = update
+            }
+            if (latestSession.value?.id == session.id) {
+                _duplicateAnalysis.value = result
+                _message.value = result.message
+            }
+        }
+    }
+
+    fun cancelDuplicateAnalysis() {
+        val scanId = latestSession.value?.id
+        if (scanId != null) {
+            viewModelScope.launch(Dispatchers.IO) { repository.cancelDuplicateAnalysis(scanId) }
+        }
+        duplicateAnalysisJob?.cancel()
+        duplicateAnalysisJob = null
+    }
+
+    fun chooseDuplicateKeep(groupId: String, copyKey: String) {
+        clearVerifiedDuplicateSelection()
+        _duplicateManualKeep.value = _duplicateManualKeep.value.toMutableMap().also { it[groupId] = copyKey }
+        _duplicateFilter.value = _duplicateFilter.value.copy(keepStrategy = DuplicateKeepStrategy.MANUAL)
+    }
+
+    fun selectDuplicateGroup(groupId: String) {
+        val item = duplicatePage.value.items.firstOrNull { it.group.sha256 == groupId }
+        selectDuplicatePaths(item?.deletionPaths.orEmpty(), item?.group?.sha256, "duplicate group")
+    }
+
+    fun reviewDuplicateGroup(groupId: String) {
+        val item = duplicatePage.value.items.firstOrNull { it.group.sha256 == groupId }
+        val paths = item?.deletionPaths.orEmpty()
+        if (paths.isEmpty()) {
+            _message.value = "Choose a retained copy before planning deletion"
+        } else {
+            reviewPaths(paths, paths.associateWith { item?.group?.sha256.orEmpty() })
+        }
+    }
+
+    fun selectDuplicatePage() {
+        val hashes = duplicatePage.value.items.flatMap { item -> item.deletionPaths.map { it to item.group.sha256 } }.toMap()
+        selectDuplicatePaths(hashes.keys.toList(), null, "duplicate page", hashes)
+    }
+
+    fun reviewDuplicatePage() {
+        val paths = duplicatePage.value.deletionPaths
+        if (paths.isEmpty()) {
+            _message.value = "No safely removable duplicate copies are visible on this page"
+        } else {
+            val hashes = duplicatePage.value.items.flatMap { item -> item.deletionPaths.map { it to item.group.sha256 } }.toMap()
+            reviewPaths(paths, hashes)
+        }
+    }
+
+    private fun clearVerifiedDuplicateSelection() {
+        if (_selectedContentHashes.value.isNotEmpty()) {
+            _selectedPaths.value = emptySet()
+            _selectedContentHashes.value = emptyMap()
+            _cleanupReview.value = null
+        }
+    }
+
+    private fun selectDuplicatePaths(
+        paths: List<String>,
+        sharedHash: String?,
+        label: String,
+        explicitHashes: Map<String, String> = emptyMap(),
+    ) {
+        if (_scanDataStale.value) {
+            _message.value = "Run a new scan before selecting files for deletion"
+            return
+        }
+        if (paths.isEmpty()) {
+            _message.value = "No safely removable copies are available for this $label"
+            return
+        }
+        _selectedPaths.value = paths.toCollection(linkedSetOf())
+        _selectedContentHashes.value = if (explicitHashes.isNotEmpty()) explicitHashes else sharedHash?.let { hash -> paths.associateWith { hash } }.orEmpty()
+        _cleanupReview.value = null
+        _message.value = "Selected ${paths.size} verified duplicate copy or copies"
+    }
+
     fun selectCategoryPaths(categories: Set<String>) {
         if (_scanDataStale.value) {
             _message.value = "Run a new scan before selecting files for deletion"
@@ -276,6 +438,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             return
         }
         _selectedPaths.value = matching.mapTo(linkedSetOf()) { it.path }
+        _selectedContentHashes.value = emptyMap()
         _cleanupReview.value = null
         _message.value = "Selected ${matching.size} category file(s)"
     }
@@ -308,51 +471,83 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         _selectedPaths.value = _selectedPaths.value.toMutableSet().also { selected ->
             if (!selected.add(entry.path)) selected.remove(entry.path)
         }
+        if (entry.path !in _selectedPaths.value) {
+            _selectedContentHashes.value = _selectedContentHashes.value - entry.path
+        }
         _cleanupReview.value = null
     }
 
     fun showPathDetails(path: String) {
-        val entry = allEntries.value.firstOrNull { it.path == path }
-        if (entry == null) {
-            _message.value = "This path is no longer part of the active scan"
-        } else {
+        allEntries.value.firstOrNull { it.path == path }?.let { entry ->
             select(entry)
+            return
+        }
+        val scanId = latestSession.value?.id ?: return
+        viewModelScope.launch {
+            val entry = repository.entry(scanId, path)
+            if (latestSession.value?.id != scanId) return@launch
+            if (entry == null) _message.value = "This path is no longer part of the active scan" else select(entry)
         }
     }
 
     fun revealPath(path: String) {
-        val entry = allEntries.value.firstOrNull { it.path == path }
-        if (entry == null) {
-            _message.value = "This path is no longer part of the active scan"
+        allEntries.value.firstOrNull { it.path == path }?.let { entry ->
+            _explorerPath.value = entry.parentPath
+            _filter.value = ExplorerFilter()
             return
         }
-        _explorerPath.value = entry.parentPath
-        _filter.value = ExplorerFilter()
+        val scanId = latestSession.value?.id ?: return
+        viewModelScope.launch {
+            val entry = repository.entry(scanId, path)
+            if (latestSession.value?.id != scanId) return@launch
+            if (entry == null) {
+                _message.value = "This path is no longer part of the active scan"
+            } else {
+                _explorerPath.value = entry.parentPath
+                _filter.value = ExplorerFilter()
+            }
+        }
     }
 
     fun clearSelection() {
         _selectedPaths.value = emptySet()
+        _selectedContentHashes.value = emptyMap()
         _cleanupReview.value = null
     }
 
-    fun reviewCleanup() = reviewPaths(_selectedPaths.value)
+    fun reviewCleanup() = reviewPaths(_selectedPaths.value, _selectedContentHashes.value)
 
-    fun reviewPaths(paths: Collection<String>) {
+    fun reviewPaths(paths: Collection<String>) = reviewPaths(paths, emptyMap())
+
+    fun reviewPaths(paths: Collection<String>, expectedSha256ByPath: Map<String, String>) {
         if (_scanDataStale.value) {
             _message.value = "Run a new scan before planning another deletion"
             return
         }
         val session = latestSession.value ?: return
-        val requested = paths.toSet()
-        val chosen = allEntries.value.filter { it.path in requested }
-        if (chosen.isEmpty()) {
+        val requested = paths.distinct()
+        if (requested.isEmpty()) {
             _message.value = "Select at least one indexed path"
             return
         }
-        _selectedPaths.value = chosen.mapTo(linkedSetOf()) { it.path }
+        _selectedPaths.value = requested.toCollection(linkedSetOf())
+        _selectedContentHashes.value = expectedSha256ByPath.filterKeys { it in requested }
         _cleanupReview.value = null
         viewModelScope.launch {
-            val review = repository.reviewCleanup(session, chosen)
+            val resolved = repository.entriesByPaths(session.id, requested)
+            if (latestSession.value?.id != session.id) {
+                _message.value = "The active scan changed. Plan the deletion again."
+                return@launch
+            }
+            val byPath = resolved.associateBy { it.path }
+            val chosen = requested.mapNotNull(byPath::get)
+            if (chosen.isEmpty()) {
+                _message.value = "Selected paths no longer belong to the active scan"
+                return@launch
+            }
+            _selectedPaths.value = chosen.mapTo(linkedSetOf()) { it.path }
+            _selectedContentHashes.value = _selectedContentHashes.value.filterKeys { it in _selectedPaths.value }
+            val review = repository.reviewCleanup(session, chosen, _selectedContentHashes.value)
             if (latestSession.value?.id == session.id) {
                 _cleanupReview.value = review
                 if (review.accepted.isEmpty()) {
@@ -452,15 +647,6 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         }
     }
 
-    fun verifyTopDuplicates() {
-        val group = _advancedReport.value?.duplicateCandidates?.firstOrNull()
-        if (group == null) { _message.value = "No duplicate candidates to verify"; return }
-        viewModelScope.launch {
-            val report = repository.verifyDuplicates(group)
-            _verifiedDuplicates.value = report
-            _message.value = report.message ?: "Verified ${report.checkedFiles} files"
-        }
-    }
     fun scheduleLatest(hours: Long = 24) {
         val request = latestSession.value?.optionsJson?.let { runCatching { ScanRequest.fromJson(it) }.getOrNull() }
         if (request == null) _message.value = "Run a scan before scheduling" else { repository.schedule(request, hours); _message.value = "Scheduled every $hours hours" }

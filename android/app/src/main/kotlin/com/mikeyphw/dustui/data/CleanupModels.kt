@@ -62,6 +62,7 @@ data class CleanupPlan(
                     .put("sizeBytes", item.sizeBytes)
                     .put("directory", item.isDirectory)
                     .put("modifiedAt", item.modifiedAt)
+                    .apply { item.expectedSha256?.let { put("expectedSha256", it) } }
             }),
         )
         .toString()
@@ -72,6 +73,7 @@ data class CleanupPlanItem(
     val sizeBytes: Long,
     val isDirectory: Boolean = false,
     val modifiedAt: Long = 0,
+    val expectedSha256: String? = null,
 )
 
 data class CleanupPathFingerprint(
@@ -82,6 +84,7 @@ data class CleanupPathFingerprint(
     val modifiedAt: Long,
     val treeDigest: String,
     val entryCount: Long,
+    val contentSha256: String? = null,
 )
 
 data class CleanupApprovedItem(
@@ -127,7 +130,8 @@ data class CleanupReview(
                             .put("statSizeBytes", item.fingerprint.statSizeBytes)
                             .put("modifiedAt", item.fingerprint.modifiedAt)
                             .put("treeDigest", item.fingerprint.treeDigest)
-                            .put("entryCount", item.fingerprint.entryCount),
+                            .put("entryCount", item.fingerprint.entryCount)
+                            .apply { item.fingerprint.contentSha256?.let { put("contentSha256", it) } },
                     )
             }),
         )

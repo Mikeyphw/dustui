@@ -63,6 +63,34 @@ class CleanupSafetyPolicyTest {
         assertTrue(review.executable)
     }
 
+    @Test fun duplicateContentHashTravelsFromPlanToExecutionFingerprint() {
+        val hash = "a".repeat(64)
+        val plan = CleanupPlan(
+            scanId = "scan",
+            rootPath = "/storage/emulated/0",
+            items = listOf(CleanupPlanItem("/storage/emulated/0/a.bin", 10, expectedSha256 = hash)),
+        )
+        assertTrue(plan.toJson().contains("\"expectedSha256\":\"$hash\""))
+        val review = CleanupReview(
+            ok = true,
+            operationId = "operation",
+            scanId = "scan",
+            rootPath = "/storage/emulated/0",
+            reviewedAt = 1,
+            accepted = listOf(
+                CleanupApprovedItem(
+                    "/storage/emulated/0/a.bin",
+                    10,
+                    false,
+                    CleanupPathFingerprint(1, 2, 3, 10, 4, "digest", 1, contentSha256 = hash),
+                ),
+            ),
+            blocked = emptyList(),
+            plannedBytes = 10,
+        )
+        assertTrue(review.toExecutionJson().contains("\"contentSha256\":\"$hash\""))
+    }
+
     @Test fun cleanupPlanRemovesNestedDuplicates() {
         val plan = CleanupPlan(
             scanId = "scan",

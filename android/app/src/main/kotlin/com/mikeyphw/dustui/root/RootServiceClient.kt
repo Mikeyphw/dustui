@@ -14,7 +14,9 @@ import com.mikeyphw.dustui.data.CleanupItemResult
 import com.mikeyphw.dustui.data.CleanupPlan
 import com.mikeyphw.dustui.data.CleanupPathFingerprint
 import com.mikeyphw.dustui.data.CleanupReview
+import com.mikeyphw.dustui.data.DuplicateSkippedPath
 import com.mikeyphw.dustui.data.DuplicateVerificationReport
+import com.mikeyphw.dustui.data.DuplicateVerifiedPath
 import com.mikeyphw.dustui.data.VerifiedDuplicateGroup
 import com.mikeyphw.dustui.data.RootPathInspection
 import org.json.JSONArray
@@ -59,20 +61,70 @@ class RootServiceClient(private val context: Context) {
     suspend fun scanState(scanId: String): RootScanState = call { it.scanState(scanId) }
     suspend fun cancelScan(scanId: String): RootScanState = call { it.cancelScan(scanId) }
 
-    suspend fun verifyDuplicates(paths: List<String>, sizeBytes: Long): DuplicateVerificationReport = cleanupCall(120_000L) { service ->
-        service.verifyDuplicates(JSONObject().put("sizeBytes", sizeBytes).put("paths", JSONArray(paths)).toString())
+    suspend fun verifyDuplicates(scanId: String, paths: List<String>, sizeBytes: Long, scanRoot: String): DuplicateVerificationReport = cleanupCall(DUPLICATE_TIMEOUT_MS) { service ->
+        service.verifyDuplicates(
+            JSONObject()
+                .put("scanId", scanId)
+                .put("sizeBytes", sizeBytes)
+                .put("partialBytes", 64 * 1024)
+                .put("scanRoot", scanRoot)
+                .put("paths", JSONArray(paths))
+                .toString(),
+        )
     }.let { raw ->
         val json = JSONObject(raw)
-        val groups = json.optJSONArray("groups")
+        if (json.optBoolean("cancelled")) throw kotlinx.coroutines.CancellationException("Duplicate verification cancelled")
+        check(json.optBoolean("ok")) { json.optString("message", "Duplicate verification failed") }
+        val groupsJson = json.optJSONArray("groups") ?: JSONArray()
+        val skippedJson = json.optJSONArray("skipped") ?: JSONArray()
         DuplicateVerificationReport(
-            groups = buildList { if (groups != null) for (index in 0 until groups.length()) groups.getJSONObject(index).let { group ->
-                val pathsJson = group.getJSONArray("paths")
-                add(VerifiedDuplicateGroup(group.getString("sha256"), group.optLong("sizeBytes"), buildList { for (pathIndex in 0 until pathsJson.length()) add(pathsJson.getString(pathIndex)) }, group.optLong("reclaimableBytes")))
-            } },
+            groups = buildList {
+                for (index in 0 until groupsJson.length()) {
+                    val group = groupsJson.getJSONObject(index)
+                    val pathsJson = group.optJSONArray("paths") ?: JSONArray()
+                    add(VerifiedDuplicateGroup(
+                        sha256 = group.getString("sha256"),
+                        partialHash = group.optString("partialHash"),
+                        sizeBytes = group.optLong("sizeBytes"),
+                        pathRecords = buildList {
+                            for (pathIndex in 0 until pathsJson.length()) {
+                                val item = pathsJson.getJSONObject(pathIndex)
+                                add(DuplicateVerifiedPath(
+                                    path = item.getString("path"),
+                                    deviceId = item.optLong("deviceId"),
+                                    inode = item.optLong("inode"),
+                                    linkCount = item.optLong("linkCount", 1L),
+                                    modifiedAt = item.optLong("modifiedAt"),
+                                    copyKey = item.getString("copyKey"),
+                                    hardLinked = item.optBoolean("hardLinked"),
+                                    autoDeleteEligible = item.optBoolean("autoDeleteEligible"),
+                                    deletionBlockReason = item.optString("deletionBlockReason").takeIf(String::isNotBlank),
+                                ))
+                            }
+                        },
+                        physicalCopyCount = group.optInt("physicalCopyCount"),
+                        hardLinkedCopyCount = group.optInt("hardLinkedCopyCount"),
+                        reclaimableBytes = group.optLong("reclaimableBytes"),
+                        safeReclaimableBytes = group.optLong("safeReclaimableBytes"),
+                    ))
+                }
+            },
             checkedFiles = json.optInt("checkedFiles"),
-            skippedFiles = json.optInt("skippedFiles"),
+            skipped = buildList {
+                for (index in 0 until skippedJson.length()) {
+                    val item = skippedJson.getJSONObject(index)
+                    add(DuplicateSkippedPath(item.optString("path"), item.optString("reason", "Skipped")))
+                }
+            },
+            partialGroups = json.optInt("partialGroups"),
+            bytesHashed = json.optLong("bytesHashed"),
             message = json.optString("message").takeIf(String::isNotBlank),
         )
+    }
+
+
+    suspend fun cancelDuplicateVerification(scanId: String): Boolean = withContext(Dispatchers.IO) {
+        runCatching { JSONObject(service().cancelDuplicateVerification(scanId)).optBoolean("cancelled") }.getOrDefault(false)
     }
 
     suspend fun inspectPath(path: String, previewBytes: Int = 16 * 1024): RootPathInspection = cleanupCall { it.inspectPath(path, previewBytes) }.let(RootPathInspection::fromJson)
@@ -117,6 +169,7 @@ class RootServiceClient(private val context: Context) {
                                 modifiedAt = fingerprint.optLong("modifiedAt"),
                                 treeDigest = fingerprint.getString("treeDigest"),
                                 entryCount = fingerprint.optLong("entryCount"),
+                                contentSha256 = fingerprint.optString("contentSha256").takeIf(String::isNotBlank),
                             ),
                         ),
                     )
@@ -251,6 +304,7 @@ class RootServiceClient(private val context: Context) {
         const val ROOT_TIMEOUT_MS = 8_000L
         const val BIND_TIMEOUT_MS = 20_000L
         const val START_TIMEOUT_MS = 30_000L
+        const val DUPLICATE_TIMEOUT_MS = 10 * 60 * 1000L
         const val CALL_TIMEOUT_MS = 10_000L
     }
 }

@@ -71,6 +71,12 @@ import com.mikeyphw.dustui.data.ChartSlice
 import com.mikeyphw.dustui.data.CleanupOperationEntity
 import com.mikeyphw.dustui.data.CleanupReview
 import com.mikeyphw.dustui.data.DeviceCertificationReport
+import com.mikeyphw.dustui.data.DuplicateAnalysisSnapshot
+import com.mikeyphw.dustui.data.DuplicateGroupItem
+import com.mikeyphw.dustui.data.DuplicateKeepStrategy
+import com.mikeyphw.dustui.data.DuplicatePage
+import com.mikeyphw.dustui.data.DuplicatePhysicalCopy
+import com.mikeyphw.dustui.data.DuplicateThreshold
 import com.mikeyphw.dustui.data.EntryIntelligence
 import com.mikeyphw.dustui.data.LargeFileItem
 import com.mikeyphw.dustui.data.LargeFilePage
@@ -110,7 +116,8 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         val advancedReport by viewModel.advancedReport.collectAsStateWithLifecycle()
         val largeFiles by viewModel.largeFiles.collectAsStateWithLifecycle()
         val largeFileLoading by viewModel.largeFileLoading.collectAsStateWithLifecycle()
-        val verifiedDuplicates by viewModel.verifiedDuplicates.collectAsStateWithLifecycle()
+        val duplicateAnalysis by viewModel.duplicateAnalysis.collectAsStateWithLifecycle()
+        val duplicatePage by viewModel.duplicatePage.collectAsStateWithLifecycle()
         val certification by viewModel.certification.collectAsStateWithLifecycle()
         val packageProfiles by viewModel.packageProfiles.collectAsStateWithLifecycle()
         val rootSearchResults by viewModel.rootSearchResults.collectAsStateWithLifecycle()
@@ -221,7 +228,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                             when {
                                 currentSession == null && DustNavigationModel.needsScanData(destination) -> EmptyState(
                                     title = "No scan yet",
-                                    detail = "Start a root scan before opening explorer, analytics, large-file cleanup, search, packages, modules, certification, or deletion activity.",
+                                    detail = "Start a root scan before opening explorer, analytics, large-file cleanup, duplicate detection, search, packages, modules, certification, or deletion activity.",
                                 )
                                 destination == DustDestination.SCAN -> ScanLauncher(
                                     Modifier.fillMaxSize(),
@@ -246,7 +253,6 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     snapshotHistory,
                                     advancedReport,
                                     apps,
-                                    verifiedDuplicates,
                                     selectedPaths,
                                     scanDataStale,
                                     viewModel,
@@ -255,11 +261,23 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                         viewModel.revealPath(filePath)
                                         selectDestination(DustDestination.EXPLORER)
                                     },
+                                    openDuplicates = { selectDestination(DustDestination.DUPLICATES) },
                                 )
                                 destination == DustDestination.LARGE_FILES && currentSession != null -> LargeFileWorkbenchScreen(
                                     Modifier.fillMaxSize(),
                                     largeFiles,
                                     largeFileLoading,
+                                    selectedPaths,
+                                    scanDataStale,
+                                    viewModel,
+                                ) { filePath ->
+                                    viewModel.revealPath(filePath)
+                                    selectDestination(DustDestination.EXPLORER)
+                                }
+                                destination == DustDestination.DUPLICATES && currentSession != null -> DuplicateWorkbenchScreen(
+                                    Modifier.fillMaxSize(),
+                                    duplicateAnalysis,
+                                    duplicatePage,
                                     selectedPaths,
                                     scanDataStale,
                                     viewModel,
@@ -1064,18 +1082,342 @@ private fun largeFileMetadata(item: LargeFileItem): String = buildList {
 }.joinToString(" · ")
 
 @Composable
+private fun DuplicateWorkbenchScreen(
+    modifier: Modifier,
+    analysis: DuplicateAnalysisSnapshot?,
+    page: DuplicatePage,
+    selectedPaths: Set<String>,
+    scanDataStale: Boolean,
+    vm: MainViewModel,
+    revealPath: (String) -> Unit,
+) {
+    LazyColumn(
+        modifier,
+        contentPadding = dustScreenPadding(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item {
+            DustSectionHeader(
+                "Duplicate file workbench",
+                subtitle = "Size buckets narrow candidates, edge fingerprints reduce work, and complete SHA-256 hashes prove exact content matches.",
+            )
+        }
+        if (scanDataStale) {
+            item {
+                Surface(tonalElevation = 2.dp, shape = MaterialTheme.shapes.medium) {
+                    Text(
+                        "Results are stale after deletion. Run a new scan before hashing, selecting, or deleting duplicate copies.",
+                        Modifier.fillMaxWidth().padding(12.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+        }
+        item {
+            MetricGrid(
+                listOf(
+                    "Verified groups" to (analysis?.groups?.size ?: 0).toString(),
+                    "Safe savings" to formatBytes(analysis?.safeReclaimableBytes ?: 0L),
+                    "Checked files" to (analysis?.checkedFiles ?: 0).toString(),
+                    "Progress" to duplicateProgressLabel(analysis),
+                ),
+            )
+        }
+        item {
+            Text("Minimum file size", style = MaterialTheme.typography.labelLarge)
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(end = 24.dp),
+            ) {
+                items(DuplicateThreshold.entries, key = { it.name }) { threshold ->
+                    FilterChip(
+                        selected = page.filter.threshold == threshold,
+                        onClick = { vm.setDuplicateThreshold(threshold) },
+                        enabled = analysis?.running != true,
+                        label = { Text(threshold.label) },
+                    )
+                }
+            }
+        }
+        item {
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(duplicateStatusTitle(analysis), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        analysis?.message ?: "Run verification to find exact duplicate content in the active scan.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    if (analysis?.running == true) {
+                        LinearProgressIndicator(Modifier.fillMaxWidth())
+                        analysis.currentSizeBytes?.let { Text("Current bucket: ${formatBytes(it)} files", style = MaterialTheme.typography.labelMedium) }
+                        OutlinedButton(onClick = vm::cancelDuplicateAnalysis, modifier = Modifier.fillMaxWidth()) { Text("Pause analysis") }
+                    } else {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { vm.startDuplicateAnalysis(reset = false) },
+                                enabled = !scanDataStale,
+                                modifier = Modifier.weight(1f),
+                            ) { Text(if (analysis?.resumable == true) "Resume" else "Run") }
+                            OutlinedButton(
+                                onClick = { vm.startDuplicateAnalysis(reset = true) },
+                                enabled = !scanDataStale,
+                                modifier = Modifier.weight(1f),
+                            ) { Text("Restart") }
+                        }
+                    }
+                    if (analysis != null) {
+                        Text(
+                            "Hashed ${formatBytes(analysis.bytesHashed)} · skipped ${analysis.skippedFiles} · partial groups ${analysis.partialGroups}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+        if (analysis?.groups?.isNotEmpty() == true) {
+            item {
+                OutlinedTextField(
+                    value = page.filter.query,
+                    onValueChange = vm::updateDuplicateQuery,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Find by path, filename, or hash") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                )
+            }
+            item {
+                Text("Copy to keep", style = MaterialTheme.typography.labelLarge)
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(end = 24.dp),
+                ) {
+                    items(DuplicateKeepStrategy.entries, key = { it.name }) { strategy ->
+                        FilterChip(
+                            selected = page.filter.keepStrategy == strategy,
+                            onClick = { vm.setDuplicateKeepStrategy(strategy) },
+                            label = { Text(strategy.label) },
+                        )
+                    }
+                }
+            }
+            if (page.filter.keepStrategy == DuplicateKeepStrategy.PREFERRED_DIRECTORY) {
+                item {
+                    OutlinedTextField(
+                        value = page.filter.preferredDirectory,
+                        onValueChange = vm::updateDuplicatePreferredDirectory,
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Preferred directory to keep") },
+                        supportingText = { Text("When no copy is inside this folder, the shortest path is kept.") },
+                        singleLine = true,
+                    )
+                }
+            }
+            item {
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Current page", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "${page.items.size} group(s) · ${page.deletionPaths.size} recommended copy or copies · ${formatBytes(page.items.sumOf { it.plannedBytes })}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(
+                                onClick = vm::selectDuplicatePage,
+                                enabled = !scanDataStale && page.deletionPaths.isNotEmpty(),
+                                modifier = Modifier.weight(1f),
+                            ) { Text("Select page") }
+                            Button(
+                                onClick = vm::reviewDuplicatePage,
+                                enabled = !scanDataStale && page.deletionPaths.isNotEmpty(),
+                                modifier = Modifier.weight(1f),
+                            ) { Text("Plan page") }
+                        }
+                    }
+                }
+            }
+        }
+        if (analysis != null && !analysis.running && page.totalGroups == 0) {
+            item {
+                EmptyState(
+                    "No verified duplicates",
+                    if (analysis.status == "COMPLETED") "No exact content matches were found for this threshold." else "Run or resume duplicate verification.",
+                )
+            }
+        }
+        items(page.items, key = { "duplicate:${it.group.sha256}" }) { item ->
+            DuplicateGroupCard(
+                item = item,
+                selectedPaths = selectedPaths,
+                deletionEnabled = !scanDataStale,
+                vm = vm,
+                revealPath = revealPath,
+            )
+        }
+        if (page.pageCount > 1) {
+            item {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedButton(onClick = vm::previousDuplicatePage, enabled = page.hasPrevious, modifier = Modifier.weight(1f)) { Text("Previous") }
+                    Text("${page.pageIndex + 1} / ${page.pageCount}", style = MaterialTheme.typography.labelLarge)
+                    OutlinedButton(onClick = vm::nextDuplicatePage, enabled = page.hasNext, modifier = Modifier.weight(1f)) { Text("Next") }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DuplicateGroupCard(
+    item: DuplicateGroupItem,
+    selectedPaths: Set<String>,
+    deletionEnabled: Boolean,
+    vm: MainViewModel,
+    revealPath: (String) -> Unit,
+) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+                Column(Modifier.weight(1f)) {
+                    Text("Exact duplicate group", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "${item.group.physicalCopyCount} physical copies · ${item.group.pathRecords.size} paths",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Text(formatBytes(item.group.sizeBytes), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            }
+            PathText("SHA-256 ${item.group.sha256}", Modifier.fillMaxWidth(), maxLines = 2)
+            MetricGrid(
+                listOf(
+                    "Possible savings" to formatBytes(item.group.reclaimableBytes),
+                    "Safely selectable" to formatBytes(item.plannedBytes),
+                    "Hard-link copies" to item.hardLinkedCopies.toString(),
+                    "Recommended deletes" to item.deletionPaths.size.toString(),
+                ),
+            )
+            item.copies.forEach { copy ->
+                DuplicateCopyCard(
+                    groupId = item.group.sha256,
+                    copy = copy,
+                    kept = copy.key == item.keepCopyKey,
+                    selectedPaths = selectedPaths,
+                    vm = vm,
+                    revealPath = revealPath,
+                )
+            }
+            if (item.hardLinkedCopies > 0) {
+                Text(
+                    "Hard-linked copies are shown but never auto-selected because deleting one link may reclaim no storage.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = { vm.selectDuplicateGroup(item.group.sha256) },
+                    enabled = deletionEnabled && item.deletionPaths.isNotEmpty(),
+                    modifier = Modifier.weight(1f),
+                ) { Text("Select recommended") }
+                Button(
+                    onClick = { vm.reviewDuplicateGroup(item.group.sha256) },
+                    enabled = deletionEnabled && item.deletionPaths.isNotEmpty(),
+                    modifier = Modifier.weight(1f),
+                ) { Text("Plan deletion") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DuplicateCopyCard(
+    groupId: String,
+    copy: DuplicatePhysicalCopy,
+    kept: Boolean,
+    selectedPaths: Set<String>,
+    vm: MainViewModel,
+    revealPath: (String) -> Unit,
+) {
+    Surface(tonalElevation = if (kept) 3.dp else 1.dp, shape = MaterialTheme.shapes.medium) {
+        Column(Modifier.fillMaxWidth().padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    when {
+                        copy.hardLinked -> "Hard-linked physical copy"
+                        copy.deletionBlockReason != null -> "Protected physical copy"
+                        kept -> "Copy to keep"
+                        else -> "Removable physical copy"
+                    },
+                    Modifier.weight(1f),
+                    fontWeight = FontWeight.SemiBold,
+                )
+                if (copy.primaryPath in selectedPaths) Text("Selected", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+            }
+            Text(
+                "Modified ${formatTimestamp(copy.modifiedAt)} · ${copy.paths.size} indexed path${if (copy.paths.size == 1) "" else "s"}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            copy.deletionBlockReason?.let { reason ->
+                Text(reason, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
+            copy.paths.forEach { record ->
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    PathText(record.path, Modifier.fillMaxWidth(), maxLines = 3)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = { vm.showPathDetails(record.path) }, modifier = Modifier.weight(1f)) { Text("Details") }
+                        TextButton(onClick = { revealPath(record.path) }, modifier = Modifier.weight(1f)) { Text("Explorer") }
+                    }
+                }
+            }
+            OutlinedButton(
+                onClick = { vm.chooseDuplicateKeep(groupId, copy.key) },
+                enabled = copy.autoDeleteEligible && !kept,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    when {
+                        !copy.autoDeleteEligible -> "Retained by safety"
+                        kept -> "Kept"
+                        else -> "Keep this physical copy"
+                    },
+                )
+            }
+        }
+    }
+}
+
+private fun duplicateProgressLabel(analysis: DuplicateAnalysisSnapshot?): String = when {
+    analysis == null -> "Not run"
+    analysis.totalBuckets == 0 && analysis.status == "COMPLETED" -> "Complete"
+    analysis.totalBuckets == 0 -> analysis.status.lowercase().replaceFirstChar { it.titlecase() }
+    else -> "${analysis.completedBuckets} / ${analysis.totalBuckets}"
+}
+
+private fun duplicateStatusTitle(analysis: DuplicateAnalysisSnapshot?): String = when (analysis?.status) {
+    "RUNNING" -> "Verifying duplicate content"
+    "PAUSED" -> "Analysis paused"
+    "FAILED" -> "Analysis needs attention"
+    "COMPLETED" -> "Analysis complete"
+    else -> "Duplicate verification"
+}
+
+@Composable
 private fun InsightsOverview(
     modifier: Modifier,
     delta: SnapshotDelta?,
     history: List<SnapshotPoint>,
     advanced: AdvancedStorageReport?,
     apps: List<AppStorageSummary>,
-    verified: com.mikeyphw.dustui.data.DuplicateVerificationReport?,
     selectedPaths: Set<String>,
     scanDataStale: Boolean,
     vm: MainViewModel,
     requestNotificationPermission: () -> Unit,
     revealPath: (String) -> Unit,
+    openDuplicates: () -> Unit,
 ) {
     var selectedType by rememberSaveable(advanced?.typeBuckets?.hashCode()) { mutableStateOf<String?>(null) }
     LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1167,15 +1509,8 @@ private fun InsightsOverview(
                                 "Measured apps" to apps.size.toString(),
                             ),
                         )
-                        Button(onClick = vm::verifyTopDuplicates, enabled = advanced.duplicateCandidates.isNotEmpty()) { Text("Verify top duplicate group") }
-                        verified?.let {
-                            MetricGrid(
-                                listOf(
-                                    "Verified groups" to it.groups.size.toString(),
-                                    "Verified savings" to formatBytes(it.reclaimableBytes),
-                                ),
-                            )
-                            Text("Checked ${it.checkedFiles}; skipped ${it.skippedFiles}", style = MaterialTheme.typography.bodySmall)
+                        Button(onClick = openDuplicates, enabled = advanced.duplicateCandidates.isNotEmpty(), modifier = Modifier.fillMaxWidth()) {
+                            Text("Open duplicate workbench")
                         }
                     }
                 }
@@ -1557,6 +1892,7 @@ private fun MoreScreen(modifier: Modifier, navigate: (DustDestination) -> Unit) 
 
 private fun moreDestinationDescription(destination: DustDestination): String = when (destination) {
     DustDestination.LARGE_FILES -> "Filter, group, inspect, and batch-plan deletion for large files."
+    DustDestination.DUPLICATES -> "Verify exact duplicate content and choose which physical copies to keep."
     DustDestination.PACKAGES -> "App-owned storage profiles and largest paths."
     DustDestination.MODULES -> "Root module footprint and overlay conflict analysis."
     DustDestination.CERTIFICATION -> "Root backend, notification, lock-state, and release checks."

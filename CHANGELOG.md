@@ -2,6 +2,17 @@
 
 ## 1.4.0-rc1
 
+### Phase 17 · Exact duplicate detection
+
+- Added a dedicated Android duplicate workbench backed by complete same-size candidate buckets from the active scan.
+- Added edge hashing followed by full SHA-256 verification before any files are declared exact duplicates.
+- Collapsed paths by device and inode so hard links never inflate reclaimable-byte estimates or become automatic deletion candidates.
+- Added resumable, cancelable, scan-bound analysis persisted after each completed size bucket.
+- Added newest, oldest, shortest-path, preferred-folder, and manual retained-copy strategies with deterministic paging.
+- Bound expected SHA-256 values into duplicate deletion plans and reverified content during review and immediately before permanent deletion.
+- Excluded protected paths from recommended deletion while keeping them visible as retained-copy anchors.
+- Added group/page selection, exact-path inspection, Explorer reveal, and reviewed permanent-deletion planning.
+
 ### Phase 16 · Large file workbench
 
 - Added a dedicated Android large-file destination backed by the complete active-scan entry set rather than only the Explorer display window.

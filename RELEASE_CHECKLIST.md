@@ -9,6 +9,25 @@
 - [ ] Confirm release APK builds.
 - [ ] Confirm Room schemas are exported.
 
+## Phase 17 duplicate-detection validation
+
+- [ ] Confirm equal-size candidates are edge-hashed and only complete SHA-256 matches become duplicate groups.
+- [ ] Modify a file while hashing and confirm it is skipped as changed.
+- [ ] Confirm two paths sharing device/inode count as one physical copy and do not inflate reclaimable bytes.
+- [ ] Confirm hard-linked and protected copies remain visible but are never automatically selected.
+- [ ] Confirm Newest, Oldest, Shortest path, Preferred folder, and Manual strategies retain the intended physical copy.
+- [ ] Confirm Manual selects no deletion candidates until a retained copy is chosen.
+- [ ] Pause analysis, relaunch the app, resume, and confirm completed size buckets are not rehashed.
+- [ ] Change thresholds and confirm persisted results from another threshold are not reused.
+- [ ] Confirm group and page selection preserve exact SHA-256 expectations in the deletion plan.
+- [ ] Change a duplicate file after analysis but before review and confirm review blocks it.
+- [ ] Change a reviewed duplicate file before confirmation and confirm execution blocks it after rehashing.
+- [ ] Confirm protected paths are excluded from recommended deletion while remaining visible as copy anchors.
+- [ ] Confirm every path supports Details and Explorer reveal.
+- [ ] Confirm oversized same-size buckets and unreadable files are counted as skipped rather than silently omitted.
+- [ ] Confirm deletion makes duplicate results stale and requires a fresh scan.
+- [ ] Confirm duplicate analysis remains responsive, cancelable, and warning-free.
+
 ## Phase 16 large-file workbench validation
 
 - [ ] Confirm compact users can open Large files from More and wide users can open it from the rail.
