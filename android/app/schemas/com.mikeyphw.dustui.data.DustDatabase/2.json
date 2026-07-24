@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "799300ae2e34c4fb83cb66a13103ffa6",
+    "identityHash": "fc1244ffaee1edc5a84bb3dfe96855ff",
     "entities": [
       {
         "tableName": "scan_sessions",
@@ -232,7 +232,7 @@
             "notNull": true
           },
           {
-            "fieldPath": "reclaimedBytes",
+            "fieldPath": "deletedBytes",
             "columnName": "reclaimedBytes",
             "affinity": "INTEGER",
             "notNull": true
@@ -262,13 +262,13 @@
         },
         "indices": [
           {
-            "name": "index_cleanup_operations_createdAt",
+            "name": "index_cleanup_operations_scanId",
             "unique": false,
             "columnNames": [
-              "createdAt"
+              "scanId"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_cleanup_operations_createdAt` ON `${TABLE_NAME}` (`createdAt`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_cleanup_operations_scanId` ON `${TABLE_NAME}` (`scanId`)"
           }
         ]
       },
@@ -333,7 +333,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '799300ae2e34c4fb83cb66a13103ffa6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fc1244ffaee1edc5a84bb3dfe96855ff')"
     ]
   }
 }
