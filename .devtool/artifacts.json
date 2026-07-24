@@ -2,6 +2,378 @@
   "schema_version": 2,
   "artifacts": [
     {
+      "applied_at": "2026-07-21T04:11:32.641395Z",
+      "artifact": "/storage/emulated/0/Download/dustui_root_phase1_overlay.zip",
+      "artifact_name": "dustui_root_phase1_overlay.zip",
+      "type": "overlay",
+      "sha256": "5bed5db159159ddcd788aaa6d82f802d8fa463be386039836daab92aec398d65",
+      "status": "rolled-back",
+      "validation_status": "failed",
+      "commit_message": "Implement DustUI Android Phase 1 root scanner",
+      "commit_hash": "",
+      "file_count": 50,
+      "change_counts": {
+        "add": 48,
+        "modify": 2
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Root Android Phase 1",
+        "description": "Adds the complete read-only root scanning foundation while preserving the existing Python/Textual project.",
+        "target": "dustui_android",
+        "workspaces": [
+          {
+            "name": "dustui_python",
+            "root": "."
+          },
+          {
+            "name": "dustui_android",
+            "root": "android",
+            "target": "dustui_android"
+          }
+        ],
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": ".devtool.toml",
+              "action": "add",
+              "sha256": "f755319ae0fc85a63206232b2ae0b885a02af211aa9682780523b748c252ea8a",
+              "size": 955
+            },
+            {
+              "path": ".gitignore",
+              "action": "modify",
+              "sha256": "fc9f98c344d2cbdd2825d4968f77f0d1480e467de0b077d313c33b4933362227",
+              "size": 4920,
+              "source_sha256": "f055707275a0c58698560ec0f971861cdb5c863839875a8197d92eaf824c24ac"
+            },
+            {
+              "path": "README.md",
+              "action": "modify",
+              "sha256": "a8da35c80f63cb4c45957d9bb32c8e4b55b30abcfd9254bb03689b0c4e7fd23d",
+              "size": 4039,
+              "source_sha256": "2fb32db85c2b40f1eeda2716a00cd9f4678589cda28c2dbf37065a733b15dec5"
+            },
+            {
+              "path": "android/app/build.gradle.kts",
+              "action": "add",
+              "sha256": "d6ec517b81c5ac6b26e18c632b447b987473f8c8c428a03fc910dcec07cd4548",
+              "size": 2620
+            },
+            {
+              "path": "android/app/proguard-rules.pro",
+              "action": "add",
+              "sha256": "e8f54c7fb790a24105531fa2848cc5d8220852c76c4b50ec40cd91d85dfdd497",
+              "size": 188
+            },
+            {
+              "path": "android/app/src/main/AndroidManifest.xml",
+              "action": "add",
+              "sha256": "d8f07c245e5035685dd46e0ad90838a18fddf2810f27097326a2155411ed6d3b",
+              "size": 1681
+            },
+            {
+              "path": "android/app/src/main/aidl/com/mikeyphw/dustui/root/IDustRootService.aidl",
+              "action": "add",
+              "sha256": "d6d3369a49d67a13265517a9a9b07af348a496bdc2c3a9e54f0cf7c0fb35f6df",
+              "size": 367
+            },
+            {
+              "path": "android/app/src/main/cpp/CMakeLists.txt",
+              "action": "add",
+              "sha256": "1252667ceb8c2214ccc9262a28530084c4568e3bb28b50907937a46ca7862131",
+              "size": 359
+            },
+            {
+              "path": "android/app/src/main/cpp/dustui_scanner.cpp",
+              "action": "add",
+              "sha256": "d553b51750113ad3e49b951c2786bdc217c62e6a81ad636f5fcd14d738d52404",
+              "size": 13024
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/AppContainer.kt",
+              "action": "add",
+              "sha256": "cfbf1afa5724a31a94c598c60aa247f690459d826ec725fc0d12e3c3b16ce6e9",
+              "size": 621
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/DustUiApplication.kt",
+              "action": "add",
+              "sha256": "2f99a784ee90a89c639a3ddb8cf50eeb866a857328cb3ede283bf0b15f5abf41",
+              "size": 369
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/MainActivity.kt",
+              "action": "add",
+              "sha256": "c3d149a6945094426c3ac212f3fdff0a8a88e6610dda966c1932f0d136358a65",
+              "size": 1131
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DustDatabase.kt",
+              "action": "add",
+              "sha256": "58a8820f00dc589e5287a8d5b883c7498216b1d84e47e770ff1fb780ab6f6af8",
+              "size": 307
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanDao.kt",
+              "action": "add",
+              "sha256": "ec4a7d996ef2ceb9ee59cf626c6b0eaf7a149143260ec8431474f38a371568c0",
+              "size": 897
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanEntities.kt",
+              "action": "add",
+              "sha256": "b338c91435daf19b60b0ef7e116c713d7bda7d20fe30c3d7753bb455ac551e95",
+              "size": 1032
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+              "action": "add",
+              "sha256": "d744aad5a333f64e02aa589841d9b0f1c0e0717380a41e7b7158f221e827793a",
+              "size": 848
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt",
+              "action": "add",
+              "sha256": "97518690d48adf4208acc4101fd3d3ec19a8ac105958640570607d0b83724882",
+              "size": 5227
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/NativeDustScanner.kt",
+              "action": "add",
+              "sha256": "fe191c525dc2a243873ad14489983763ebc751855222f98a61d510e05bae7b73",
+              "size": 538
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/RootServiceClient.kt",
+              "action": "add",
+              "sha256": "15938487265a04e4cf6327cd4abb9728cc32f059406f18c3c2bb0d36fa22e2b4",
+              "size": 5381
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/scan/NdjsonTailReader.kt",
+              "action": "add",
+              "sha256": "a132ece72bfc35ac9ffdf8838abbc2090efed765c146dd8019decbeec495ff11",
+              "size": 1349
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/scan/ScanEventParser.kt",
+              "action": "add",
+              "sha256": "3e962357486b8de82b0e8d936816cbe3db9f9c7719efcec9234258d58b6c3b9a",
+              "size": 2534
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/scan/ScanForegroundService.kt",
+              "action": "add",
+              "sha256": "0662accbb93591322c199f3fc0888d904ca079f090b53950988fececb1109b60",
+              "size": 14019
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/scan/ScanModels.kt",
+              "action": "add",
+              "sha256": "b7698b810d70a115cc98fa6bc3fadba54b9b413efb1667b0a49e1baea69af82f",
+              "size": 3590
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/scan/ScanPreset.kt",
+              "action": "add",
+              "sha256": "f663115b76b7c5de7136991fbb25648cdb6b0a58deb53dc8384d5ef012da27ce",
+              "size": 989
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "add",
+              "sha256": "aeeb2467971a31e31083e41eaf6c069f0445cd859ddeecf8dd2be9eb36e39230",
+              "size": 11515
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Formatters.kt",
+              "action": "add",
+              "sha256": "2f4c7da03189a24061f203be8c05a7e2e75daa571b7d9294ec225851edb839be",
+              "size": 600
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+              "action": "add",
+              "sha256": "7a908b6c9526732cb059dcaa0a2bd2d6cc50443811670b6ab3f72aa471bbc7fc",
+              "size": 2940
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Theme.kt",
+              "action": "add",
+              "sha256": "88e6b2974620024854bee0c27a8928f9fc725dc2daaa008462586bd9bd1ade7d",
+              "size": 487
+            },
+            {
+              "path": "android/app/src/main/res/drawable/ic_launcher_foreground.xml",
+              "action": "add",
+              "sha256": "122857192a975af830f2fa25de03e7fa962f5224cea2c99b9aefc72041d8a600",
+              "size": 307
+            },
+            {
+              "path": "android/app/src/main/res/drawable/ic_scan.xml",
+              "action": "add",
+              "sha256": "7a9d8c0693547b6da2d3bf77c7e0f048e3ca844b284b48f2ef90b1127dab5b8b",
+              "size": 343
+            },
+            {
+              "path": "android/app/src/main/res/mipmap-anydpi/ic_launcher.xml",
+              "action": "add",
+              "sha256": "3a40ef845178433bf8ef7f4e92192f366615f7e3dfcb6778d339c62bb4386e88",
+              "size": 377
+            },
+            {
+              "path": "android/app/src/main/res/mipmap-anydpi/ic_launcher_round.xml",
+              "action": "add",
+              "sha256": "3a40ef845178433bf8ef7f4e92192f366615f7e3dfcb6778d339c62bb4386e88",
+              "size": 377
+            },
+            {
+              "path": "android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+              "action": "add",
+              "sha256": "58a573fd230af0532c0f386ef03949c5fd04a5fd6014f9e22a4163642d91c22e",
+              "size": 228
+            },
+            {
+              "path": "android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml",
+              "action": "add",
+              "sha256": "58a573fd230af0532c0f386ef03949c5fd04a5fd6014f9e22a4163642d91c22e",
+              "size": 228
+            },
+            {
+              "path": "android/app/src/main/res/values/colors.xml",
+              "action": "add",
+              "sha256": "66094d5134557713b244487e6219ae69290d9f94fbc0884ea142b0cb9d8af5d8",
+              "size": 79
+            },
+            {
+              "path": "android/app/src/main/res/values/strings.xml",
+              "action": "add",
+              "sha256": "86f77b8ca8199483f964027576f6e5508b6462a6d1e6654511151e4e6d2f239c",
+              "size": 302
+            },
+            {
+              "path": "android/app/src/main/res/values/themes.xml",
+              "action": "add",
+              "sha256": "60e0b929d868b949ef825645b2e4cb4faacd1a7ef775ac6494c649a9a72e5919",
+              "size": 515
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/scan/NdjsonTailReaderTest.kt",
+              "action": "add",
+              "sha256": "dc54e4cdb8360c63f9984dfbf4faa999d4925ac78635e42fd18e8a0102a75988",
+              "size": 658
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/scan/ScanEventParserTest.kt",
+              "action": "add",
+              "sha256": "0df02dc6ec750cea0c875c4181349e011bce006fa7fe67e0caa83763b59c86ea",
+              "size": 950
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/scan/ScanRequestTest.kt",
+              "action": "add",
+              "sha256": "840553d635fab7e77502cbc56e2a8594e889c446fae0fc513008595772539fb6",
+              "size": 1093
+            },
+            {
+              "path": "android/app/src/testNative/scanner_test.cpp",
+              "action": "add",
+              "sha256": "f680498b638a1372844c4fb4e908a3d59e68061317aaa1aca684942f318b43d8",
+              "size": 2340
+            },
+            {
+              "path": "android/build.gradle.kts",
+              "action": "add",
+              "sha256": "90d7f1db2556dfbd5534a958029068a713a8b337f0c9e5b0850b0a1affad57e6",
+              "size": 232
+            },
+            {
+              "path": "android/gradle/libs.versions.toml",
+              "action": "add",
+              "sha256": "c9e85471deb6b2e3ba7e32de67319692f82828f824269ffaad8a5f7a2002c179",
+              "size": 2232
+            },
+            {
+              "path": "android/gradle/wrapper/gradle-wrapper.jar",
+              "action": "add",
+              "sha256": "d3b261c2820e9e3d8d639ed084900f11f4a86050a8f83342ade7b6bc9b0d2bdd",
+              "size": 43462
+            },
+            {
+              "path": "android/gradle/wrapper/gradle-wrapper.properties",
+              "action": "add",
+              "sha256": "fdd2c02f08434679d8262bd67f744f3ca34912273ec4cba831595e6854122b0f",
+              "size": 232
+            },
+            {
+              "path": "android/gradle.properties",
+              "action": "add",
+              "sha256": "d9fb9d8ca466955ecf8718c66510f5f59878a030a05fe368086f6719cb1081c1",
+              "size": 264
+            },
+            {
+              "path": "android/gradlew",
+              "action": "add",
+              "sha256": "fc977a94723af68aaffa4e5d60496fb4aeed1884b6b19e5e2f2fd7612673313d",
+              "size": 8692
+            },
+            {
+              "path": "android/gradlew.bat",
+              "action": "add",
+              "sha256": "bdecf875b6868cbcbd36a1f85eedf0832f358ff28092c5797ed645f7edce77d9",
+              "size": 2918
+            },
+            {
+              "path": "android/settings.gradle.kts",
+              "action": "add",
+              "sha256": "301e5f1c9e422feb8e05e566748e9a4834951a1b4a7d0196c9fce40aa48d0e62",
+              "size": 370
+            },
+            {
+              "path": "docs/ANDROID_PHASE1.md",
+              "action": "add",
+              "sha256": "1ac15d2bf53f090d065050b4df3fc0693280c28825397a74d092593feccf08fd",
+              "size": 1796
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Implement DustUI Android Phase 1 root scanner"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "chroot",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "7bae3c4cfd4b775e12bab519a618d13d2b02bf3ec1bda24f329af2da9379f920",
+            "timeout_seconds": 180
+          }
+        }
+      },
+      "history_id": "1bbe2b8a4414489fb08a83424a773da2"
+    },
+    {
       "applied_at": "2026-07-21T13:34:41.025647Z",
       "artifact": "/home/mike/dustui_root_phase1_overlay.zip",
       "artifact_name": "dustui_root_phase1_overlay.zip",
@@ -7187,6 +7559,718 @@
       "history_id": "6dc5096854a142bc9f07c4c038adb284"
     },
     {
+      "applied_at": "2026-07-21T21:54:33.832208Z",
+      "artifact": "/storage/emulated/0/Download/dustui_phase13c_fixall_ui_overlay.zip",
+      "artifact_name": "dustui_phase13c_fixall_ui_overlay.zip",
+      "type": "overlay",
+      "sha256": "8628c8310ec2fe7c8569979fa6052123a7fbfcd491f74ff4ddbd5c5c7189ed5c",
+      "status": "failed",
+      "validation_status": "ok",
+      "commit_message": "Polish DustUI UI UX typography completely",
+      "commit_hash": "",
+      "file_count": 7,
+      "change_counts": {
+        "add": 7
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Phase 13C Complete UI Polish",
+        "description": "Finishes the UI/UX/typography audit by fixing remaining compact-screen polish issues: contextual top actions, metric grids, explicit List/Treemap segmented controls, scan preset clipping, search result readability, tighter body typography, and stronger UI contract tests.",
+        "target": "dustui_android",
+        "workspaces": [
+          {
+            "name": "dustui_android",
+            "root": "android",
+            "target": "dustui_android"
+          }
+        ],
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "UI_UX_CONTRACT.md",
+              "action": "modify",
+              "sha256": "3fc8525dfb31d84f1fa13c225dfe9dfd6548b63b1d76763a74a2445201166937",
+              "size": 1920
+            },
+            {
+              "path": "android/app/build.gradle.kts",
+              "action": "modify",
+              "sha256": "01c8a279ced684f0e47017a55c983f3581a6d9fa9faab61005b0c764b18b65b4",
+              "size": 2790
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+              "action": "modify",
+              "sha256": "71460ad15edccee36895e1a3843270f254d7133719392f6cd97004ea7329e5a3",
+              "size": 7503
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "ce9e15431818bbcf112750795f960281d5a4f721d151ae12eff9b13e02ba3137",
+              "size": 49450
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Theme.kt",
+              "action": "modify",
+              "sha256": "6daf1615ccc7e156b7af5388abd2378989f6ce7bd111ed807f305ef539ee6411",
+              "size": 1591
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+              "action": "modify",
+              "sha256": "d53d6e7e7022333b7ad77dd4905c0ed550661c68f781b1aa80ecef186d8e55ae",
+              "size": 2455
+            },
+            {
+              "path": "docs/ANDROID_UI_UX_PHASE12_13.md",
+              "action": "modify",
+              "sha256": "3fc8525dfb31d84f1fa13c225dfe9dfd6548b63b1d76763a74a2445201166937",
+              "size": 1920
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Polish DustUI UI UX typography completely"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "b1f775507195ee0ca5e2ba30d8e3d66a0185bc14ba59f357f32f284f9c16b853",
+            "timeout_seconds": 180
+          }
+        }
+      },
+      "history_id": "3574b5842e4b403ca02dc8412e5895ba"
+    },
+    {
+      "applied_at": "2026-07-21T21:55:12.093942Z",
+      "artifact": "/storage/emulated/0/Download/dustui_phase13c_fixall_ui_overlay.zip",
+      "artifact_name": "dustui_phase13c_fixall_ui_overlay.zip",
+      "type": "overlay",
+      "sha256": "8628c8310ec2fe7c8569979fa6052123a7fbfcd491f74ff4ddbd5c5c7189ed5c",
+      "status": "failed",
+      "validation_status": "ok",
+      "commit_message": "Polish DustUI UI UX typography completely",
+      "commit_hash": "",
+      "file_count": 7,
+      "change_counts": {
+        "modify": 7
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Phase 13C Complete UI Polish",
+        "description": "Finishes the UI/UX/typography audit by fixing remaining compact-screen polish issues: contextual top actions, metric grids, explicit List/Treemap segmented controls, scan preset clipping, search result readability, tighter body typography, and stronger UI contract tests.",
+        "target": "dustui_android",
+        "workspaces": [
+          {
+            "name": "dustui_android",
+            "root": "android",
+            "target": "dustui_android"
+          }
+        ],
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "UI_UX_CONTRACT.md",
+              "action": "modify",
+              "sha256": "3fc8525dfb31d84f1fa13c225dfe9dfd6548b63b1d76763a74a2445201166937",
+              "size": 1920
+            },
+            {
+              "path": "android/app/build.gradle.kts",
+              "action": "modify",
+              "sha256": "01c8a279ced684f0e47017a55c983f3581a6d9fa9faab61005b0c764b18b65b4",
+              "size": 2790
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+              "action": "modify",
+              "sha256": "71460ad15edccee36895e1a3843270f254d7133719392f6cd97004ea7329e5a3",
+              "size": 7503
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "ce9e15431818bbcf112750795f960281d5a4f721d151ae12eff9b13e02ba3137",
+              "size": 49450
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Theme.kt",
+              "action": "modify",
+              "sha256": "6daf1615ccc7e156b7af5388abd2378989f6ce7bd111ed807f305ef539ee6411",
+              "size": 1591
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+              "action": "modify",
+              "sha256": "d53d6e7e7022333b7ad77dd4905c0ed550661c68f781b1aa80ecef186d8e55ae",
+              "size": 2455
+            },
+            {
+              "path": "docs/ANDROID_UI_UX_PHASE12_13.md",
+              "action": "modify",
+              "sha256": "3fc8525dfb31d84f1fa13c225dfe9dfd6548b63b1d76763a74a2445201166937",
+              "size": 1920
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Polish DustUI UI UX typography completely"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "b1f775507195ee0ca5e2ba30d8e3d66a0185bc14ba59f357f32f284f9c16b853",
+            "timeout_seconds": 180
+          }
+        }
+      },
+      "history_id": "92a7ec489c7f4e4fb5bcaefb01e66571"
+    },
+    {
+      "applied_at": "2026-07-21T22:02:34.669478Z",
+      "artifact": "/storage/emulated/0/Download/dustui_phase13c_fixall_ui_overlay-1.zip",
+      "artifact_name": "dustui_phase13c_fixall_ui_overlay-1.zip",
+      "type": "overlay",
+      "sha256": "66ba55c1201974e9429b57cd629148d315788d34c8587e601239c5ffa5da6377",
+      "status": "failed",
+      "validation_status": "ok",
+      "commit_message": "Polish DustUI UI UX typography completely",
+      "commit_hash": "",
+      "file_count": 9,
+      "change_counts": {
+        "modify": 7,
+        "unchanged": 2
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Phase 13C Complete UI Polish",
+        "description": "Finishes the UI/UX/typography audit by fixing remaining compact-screen polish issues: contextual top actions, metric grids, explicit List/Treemap segmented controls, scan preset clipping, search result readability, tighter body typography, and stronger UI contract tests.",
+        "target": "dustui_android",
+        "workspaces": [
+          {
+            "name": "dustui_android",
+            "root": "android",
+            "target": "dustui_android"
+          }
+        ],
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "UI_UX_CONTRACT.md",
+              "action": "modify",
+              "sha256": "3fc8525dfb31d84f1fa13c225dfe9dfd6548b63b1d76763a74a2445201166937",
+              "size": 1920
+            },
+            {
+              "path": "android/app/build.gradle.kts",
+              "action": "modify",
+              "sha256": "01c8a279ced684f0e47017a55c983f3581a6d9fa9faab61005b0c764b18b65b4",
+              "size": 2790
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+              "action": "modify",
+              "sha256": "71460ad15edccee36895e1a3843270f254d7133719392f6cd97004ea7329e5a3",
+              "size": 7503
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "d997a0fa228e1410f121f9d61afb0fbbc5b14bb2e151eab87718c1cd1f3a2291",
+              "size": 49495
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Theme.kt",
+              "action": "modify",
+              "sha256": "6daf1615ccc7e156b7af5388abd2378989f6ce7bd111ed807f305ef539ee6411",
+              "size": 1591
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Treemap.kt",
+              "action": "modify",
+              "sha256": "5cc06e6ac04c6399c5e8ce02e9e5875692c697702222efeaf7a7e8c13f7c89cf",
+              "size": 4996
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+              "action": "modify",
+              "sha256": "93ed3364deb3dd0042a32ad17531f37cc37cdc6e24f1370ea2460e81ffc2159a",
+              "size": 1344
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+              "action": "modify",
+              "sha256": "d53d6e7e7022333b7ad77dd4905c0ed550661c68f781b1aa80ecef186d8e55ae",
+              "size": 2455
+            },
+            {
+              "path": "docs/ANDROID_UI_UX_PHASE12_13.md",
+              "action": "modify",
+              "sha256": "3fc8525dfb31d84f1fa13c225dfe9dfd6548b63b1d76763a74a2445201166937",
+              "size": 1920
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Polish DustUI UI UX typography completely"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "129f9fa017c199b7479c9da4e9776a79cb55d4af5bdcdd3b3716760197a9c303",
+            "timeout_seconds": 180
+          }
+        }
+      },
+      "history_id": "b8ddfde480ab4d4291f7522b70ca1daa"
+    },
+    {
+      "applied_at": "2026-07-21T22:04:20.948587Z",
+      "artifact": "/storage/emulated/0/Download/dustui_phase13c_fixall_ui_overlay.zip",
+      "artifact_name": "dustui_phase13c_fixall_ui_overlay.zip",
+      "type": "overlay",
+      "sha256": "66ba55c1201974e9429b57cd629148d315788d34c8587e601239c5ffa5da6377",
+      "status": "failed",
+      "validation_status": "ok",
+      "commit_message": "Polish DustUI UI UX typography completely",
+      "commit_hash": "",
+      "file_count": 9,
+      "change_counts": {
+        "modify": 7,
+        "unchanged": 2
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Phase 13C Complete UI Polish",
+        "description": "Finishes the UI/UX/typography audit by fixing remaining compact-screen polish issues: contextual top actions, metric grids, explicit List/Treemap segmented controls, scan preset clipping, search result readability, tighter body typography, and stronger UI contract tests.",
+        "target": "dustui_android",
+        "workspaces": [
+          {
+            "name": "dustui_android",
+            "root": "android",
+            "target": "dustui_android"
+          }
+        ],
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "UI_UX_CONTRACT.md",
+              "action": "modify",
+              "sha256": "3fc8525dfb31d84f1fa13c225dfe9dfd6548b63b1d76763a74a2445201166937",
+              "size": 1920
+            },
+            {
+              "path": "android/app/build.gradle.kts",
+              "action": "modify",
+              "sha256": "01c8a279ced684f0e47017a55c983f3581a6d9fa9faab61005b0c764b18b65b4",
+              "size": 2790
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+              "action": "modify",
+              "sha256": "71460ad15edccee36895e1a3843270f254d7133719392f6cd97004ea7329e5a3",
+              "size": 7503
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "d997a0fa228e1410f121f9d61afb0fbbc5b14bb2e151eab87718c1cd1f3a2291",
+              "size": 49495
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Theme.kt",
+              "action": "modify",
+              "sha256": "6daf1615ccc7e156b7af5388abd2378989f6ce7bd111ed807f305ef539ee6411",
+              "size": 1591
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Treemap.kt",
+              "action": "modify",
+              "sha256": "5cc06e6ac04c6399c5e8ce02e9e5875692c697702222efeaf7a7e8c13f7c89cf",
+              "size": 4996
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+              "action": "modify",
+              "sha256": "93ed3364deb3dd0042a32ad17531f37cc37cdc6e24f1370ea2460e81ffc2159a",
+              "size": 1344
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+              "action": "modify",
+              "sha256": "d53d6e7e7022333b7ad77dd4905c0ed550661c68f781b1aa80ecef186d8e55ae",
+              "size": 2455
+            },
+            {
+              "path": "docs/ANDROID_UI_UX_PHASE12_13.md",
+              "action": "modify",
+              "sha256": "3fc8525dfb31d84f1fa13c225dfe9dfd6548b63b1d76763a74a2445201166937",
+              "size": 1920
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Polish DustUI UI UX typography completely"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "129f9fa017c199b7479c9da4e9776a79cb55d4af5bdcdd3b3716760197a9c303",
+            "timeout_seconds": 180
+          }
+        }
+      },
+      "history_id": "7cf234961127407399ac74e52fd521c3"
+    },
+    {
+      "applied_at": "2026-07-22T00:25:50.656042Z",
+      "artifact": "/storage/emulated/0/Download/dustui_phase13c_fixall_ui_overlay-1.zip",
+      "artifact_name": "dustui_phase13c_fixall_ui_overlay-1.zip",
+      "type": "overlay",
+      "sha256": "225e54ec59db53a7357f6c8813c16ff77c62a28416ff4bb88c64d858d654a112",
+      "status": "rolled-back",
+      "validation_status": "failed",
+      "commit_message": "Polish DustUI UI UX typography completely",
+      "commit_hash": "",
+      "file_count": 9,
+      "change_counts": {
+        "modify": 7,
+        "unchanged": 2
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Phase 13C Complete UI Polish",
+        "description": "Finishes the UI/UX/typography audit by fixing remaining compact-screen polish issues: contextual top actions, metric grids, explicit List/Treemap segmented controls, scan preset clipping, search result readability, tighter body typography, and stronger UI contract tests.",
+        "target": "dustui_android",
+        "workspaces": [
+          {
+            "name": "dustui_android",
+            "root": "android",
+            "target": "dustui_android"
+          }
+        ],
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "UI_UX_CONTRACT.md",
+              "action": "modify",
+              "sha256": "3fc8525dfb31d84f1fa13c225dfe9dfd6548b63b1d76763a74a2445201166937",
+              "size": 1920,
+              "source_sha256": "7ac7ffe190fa690b58709934333300a89513a060e04f496cc215f97138add6b8"
+            },
+            {
+              "path": "android/app/build.gradle.kts",
+              "action": "modify",
+              "sha256": "01c8a279ced684f0e47017a55c983f3581a6d9fa9faab61005b0c764b18b65b4",
+              "size": 2790,
+              "source_sha256": "d2de2c5a2b7796f4120e45346550d205859136fda7c36707a85716f1899e9d1c"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+              "action": "modify",
+              "sha256": "71460ad15edccee36895e1a3843270f254d7133719392f6cd97004ea7329e5a3",
+              "size": 7503,
+              "source_sha256": "3b5f0b69ee56178281c9fe6ce452d2cde386d6835f8bea5b290e2bfd33816c58"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "d997a0fa228e1410f121f9d61afb0fbbc5b14bb2e151eab87718c1cd1f3a2291",
+              "size": 49495,
+              "source_sha256": "a8c1fb4fefbb40e06de76acec0ab124ee3ae94043a69e76aab42f8d0ea5e9000"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Theme.kt",
+              "action": "modify",
+              "sha256": "6daf1615ccc7e156b7af5388abd2378989f6ce7bd111ed807f305ef539ee6411",
+              "size": 1591,
+              "source_sha256": "f33ca5a49068dcf99a70e2ea9f8c39adcec494e5d10f4bc9f978b2d0c4489bbc"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Treemap.kt",
+              "action": "modify",
+              "sha256": "5cc06e6ac04c6399c5e8ce02e9e5875692c697702222efeaf7a7e8c13f7c89cf",
+              "size": 4996,
+              "source_sha256": "5cc06e6ac04c6399c5e8ce02e9e5875692c697702222efeaf7a7e8c13f7c89cf"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+              "action": "modify",
+              "sha256": "93ed3364deb3dd0042a32ad17531f37cc37cdc6e24f1370ea2460e81ffc2159a",
+              "size": 1344,
+              "source_sha256": "93ed3364deb3dd0042a32ad17531f37cc37cdc6e24f1370ea2460e81ffc2159a"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+              "action": "modify",
+              "sha256": "d53d6e7e7022333b7ad77dd4905c0ed550661c68f781b1aa80ecef186d8e55ae",
+              "size": 2455,
+              "source_sha256": "e76b3cce7d4e673d0e2297b6ed95b294331048f5d4baf86a82bff774b5ac4bcf"
+            },
+            {
+              "path": "docs/ANDROID_UI_UX_PHASE12_13.md",
+              "action": "modify",
+              "sha256": "3fc8525dfb31d84f1fa13c225dfe9dfd6548b63b1d76763a74a2445201166937",
+              "size": 1920,
+              "source_sha256": "7ac7ffe190fa690b58709934333300a89513a060e04f496cc215f97138add6b8"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Polish DustUI UI UX typography completely"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "129f9fa017c199b7479c9da4e9776a79cb55d4af5bdcdd3b3716760197a9c303",
+            "timeout_seconds": 180
+          }
+        }
+      },
+      "history_id": "16172246f3394c7891f918447e266382"
+    },
+    {
+      "applied_at": "2026-07-22T02:41:22.193534Z",
+      "artifact": "/storage/emulated/0/Download/dustui_phase13c_fixall_ui_overlay-1.zip",
+      "artifact_name": "dustui_phase13c_fixall_ui_overlay-1.zip",
+      "type": "overlay",
+      "sha256": "225e54ec59db53a7357f6c8813c16ff77c62a28416ff4bb88c64d858d654a112",
+      "status": "rolled-back",
+      "validation_status": "failed",
+      "commit_message": "Polish DustUI UI UX typography completely",
+      "commit_hash": "",
+      "file_count": 9,
+      "change_counts": {
+        "modify": 7,
+        "unchanged": 2
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Phase 13C Complete UI Polish",
+        "description": "Finishes the UI/UX/typography audit by fixing remaining compact-screen polish issues: contextual top actions, metric grids, explicit List/Treemap segmented controls, scan preset clipping, search result readability, tighter body typography, and stronger UI contract tests.",
+        "target": "dustui_android",
+        "workspaces": [
+          {
+            "name": "dustui_android",
+            "root": "android",
+            "target": "dustui_android"
+          }
+        ],
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "UI_UX_CONTRACT.md",
+              "action": "modify",
+              "sha256": "3fc8525dfb31d84f1fa13c225dfe9dfd6548b63b1d76763a74a2445201166937",
+              "size": 1920,
+              "source_sha256": "7ac7ffe190fa690b58709934333300a89513a060e04f496cc215f97138add6b8"
+            },
+            {
+              "path": "android/app/build.gradle.kts",
+              "action": "modify",
+              "sha256": "01c8a279ced684f0e47017a55c983f3581a6d9fa9faab61005b0c764b18b65b4",
+              "size": 2790,
+              "source_sha256": "d2de2c5a2b7796f4120e45346550d205859136fda7c36707a85716f1899e9d1c"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+              "action": "modify",
+              "sha256": "71460ad15edccee36895e1a3843270f254d7133719392f6cd97004ea7329e5a3",
+              "size": 7503,
+              "source_sha256": "3b5f0b69ee56178281c9fe6ce452d2cde386d6835f8bea5b290e2bfd33816c58"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "d997a0fa228e1410f121f9d61afb0fbbc5b14bb2e151eab87718c1cd1f3a2291",
+              "size": 49495,
+              "source_sha256": "a8c1fb4fefbb40e06de76acec0ab124ee3ae94043a69e76aab42f8d0ea5e9000"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Theme.kt",
+              "action": "modify",
+              "sha256": "6daf1615ccc7e156b7af5388abd2378989f6ce7bd111ed807f305ef539ee6411",
+              "size": 1591,
+              "source_sha256": "f33ca5a49068dcf99a70e2ea9f8c39adcec494e5d10f4bc9f978b2d0c4489bbc"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Treemap.kt",
+              "action": "modify",
+              "sha256": "5cc06e6ac04c6399c5e8ce02e9e5875692c697702222efeaf7a7e8c13f7c89cf",
+              "size": 4996,
+              "source_sha256": "5cc06e6ac04c6399c5e8ce02e9e5875692c697702222efeaf7a7e8c13f7c89cf"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+              "action": "modify",
+              "sha256": "93ed3364deb3dd0042a32ad17531f37cc37cdc6e24f1370ea2460e81ffc2159a",
+              "size": 1344,
+              "source_sha256": "93ed3364deb3dd0042a32ad17531f37cc37cdc6e24f1370ea2460e81ffc2159a"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+              "action": "modify",
+              "sha256": "d53d6e7e7022333b7ad77dd4905c0ed550661c68f781b1aa80ecef186d8e55ae",
+              "size": 2455,
+              "source_sha256": "e76b3cce7d4e673d0e2297b6ed95b294331048f5d4baf86a82bff774b5ac4bcf"
+            },
+            {
+              "path": "docs/ANDROID_UI_UX_PHASE12_13.md",
+              "action": "modify",
+              "sha256": "3fc8525dfb31d84f1fa13c225dfe9dfd6548b63b1d76763a74a2445201166937",
+              "size": 1920,
+              "source_sha256": "7ac7ffe190fa690b58709934333300a89513a060e04f496cc215f97138add6b8"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Polish DustUI UI UX typography completely"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "129f9fa017c199b7479c9da4e9776a79cb55d4af5bdcdd3b3716760197a9c303",
+            "timeout_seconds": 180
+          }
+        }
+      },
+      "history_id": "6a381fb2d7d243eb92b1dcd95e6b81c1"
+    },
+    {
       "applied_at": "2026-07-22T13:34:02.917665Z",
       "artifact": "/home/mike/Downloads/dustui_phase13c_fixall_ui_overlay.zip",
       "artifact_name": "dustui_phase13c_fixall_ui_overlay.zip",
@@ -9724,6 +10808,454 @@
         }
       },
       "history_id": "1d9924e5495340cd9c41007bf32b28ab"
+    },
+    {
+      "applied_at": "2026-07-23T23:43:16.794118Z",
+      "artifact": "/storage/emulated/0/Download/dustui_android_permanent_deletion_overlay.zip",
+      "artifact_name": "dustui_android_permanent_deletion_overlay.zip",
+      "type": "overlay",
+      "sha256": "ded362273d4bcc1c529508a29f48481692c9a9b1a605141287222128c834d15b",
+      "status": "rolled-back",
+      "validation_status": "failed",
+      "commit_message": "Add reviewed permanent deletion and actionable file surfaces",
+      "commit_hash": "",
+      "file_count": 23,
+      "change_counts": {
+        "add": 1,
+        "modify": 22
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Android permanent deletion and actionable files",
+        "description": "Builds on the successful Android UI/UX safety overlay applied to dustui-20260723-142646.tar.gz. Replaces quarantine and restore with scan-bound, fingerprinted permanent-deletion planning and no-follow execution; reports per-path partial failures and actual deleted bytes; makes surfaced files actionable across Overview, search, packages, modules, Explorer, treemap, and details; and removes the known unnecessary safe-call warnings.",
+        "version": "1.1.0",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "CHANGELOG.md",
+              "action": "modify",
+              "sha256": "7c473fced259f8f49fb52cada63738c252eb9da2b272df3405422a2c4fc8a06e",
+              "size": 3005,
+              "source_sha256": "2aa6c70e683f0d982e06049810649144dc537d1bae93e44c91e51527e3752793"
+            },
+            {
+              "path": "README.md",
+              "action": "modify",
+              "sha256": "dfbe3c8246c35634244044e7f6916ec19425269f88e39f421c5a2861cdefa57b",
+              "size": 4561,
+              "source_sha256": "e2af6730658471c8746d63c9b8d8f5878e07e5483c41d10e49e2e75cbc5cfc08"
+            },
+            {
+              "path": "RELEASE_CHECKLIST.md",
+              "action": "modify",
+              "sha256": "a22ba84abc253790f8d816d7a918a33fe7530aca1625acac12650f1584145dd3",
+              "size": 2844,
+              "source_sha256": "d24331343107392d9799e19d090920d1aadb1122e959dedbd30fe228a975b117"
+            },
+            {
+              "path": "UI_UX_CONTRACT.md",
+              "action": "modify",
+              "sha256": "a375d44820743b53d631e4c7e2206353561e76666f67a46091f5fac1d4d9507a",
+              "size": 4964,
+              "source_sha256": "94e7dcde8548295660c4d9bc8fd8c4824a5bb87cacba2676b15f7ec336488f95"
+            },
+            {
+              "path": "android/app/src/main/aidl/com/mikeyphw/dustui/root/IDustRootService.aidl",
+              "action": "modify",
+              "sha256": "b345a664f34f24ef4f201742fa2284f19ff785273a33a6137e6a4c93e2042e10",
+              "size": 558,
+              "source_sha256": "109555fc49dfac7b61a0e970c7beeafccd4ce8ae2bbd22eac8ca5c954799d026"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupAuthorization.kt",
+              "action": "modify",
+              "sha256": "1f02085b3698edee0ce51556381be19afebeb79c40e2dfcc55dc909109d27935",
+              "size": 509,
+              "source_sha256": "8844e5d6ba19a41d58e516aecf091435fe73c6bd7f8cf14f6f31b9f944a1ed87"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupModels.kt",
+              "action": "modify",
+              "sha256": "6bdadba68b72ffa17d3a91a406bbb4b1233fb4d359f57fc010089cf8a8bb1cf1",
+              "size": 6180,
+              "source_sha256": "adede7e843b623ae3ad9d8d0ea6b7f94618f17c29d037170a1e4504db8a16075"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ModuleAnalyzer.kt",
+              "action": "modify",
+              "sha256": "9ba21df678f5f0fc72a765107d2cd1f5ad6e5d0da8165a14ddbd8b6eb4e78633",
+              "size": 4621,
+              "source_sha256": "6961bbd798cba7e8a2e752b793619f1469a0a64cf6fde9c4f7dbfb12695330a8"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/OperationRecovery.kt",
+              "action": "modify",
+              "sha256": "b28b2828f239863e69708cb0ea65e5dfeeb6af9adc60f3fa924e041cb3c39422",
+              "size": 628,
+              "source_sha256": "b8b1b1e5d308275331809e995f013eeafd2686ee30c8f7d07f7a8fed35511a96"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ReleaseGatePolicy.kt",
+              "action": "modify",
+              "sha256": "1bc892448987bf01dbddeca1b6c26833b0c926e5c5781c005daf7219a6e6a6c4",
+              "size": 1156,
+              "source_sha256": "58c12490bf2afd94deb7edb0feeb9752574fa959d6335021eeccbea4ebb64732"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanDao.kt",
+              "action": "modify",
+              "sha256": "981a42ace713a1cdc795b9817e99806dffa36f3cc729b7998eb10deca4d15740",
+              "size": 1795,
+              "source_sha256": "a191074725a2c9dabdac853eef49582ac1a9784cf6dacb8305f37854eb230b30"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+              "action": "modify",
+              "sha256": "402b928cbcdf78fdb3641f53730dcfbdc3dff33eed1945674452812a1a35521e",
+              "size": 9865,
+              "source_sha256": "3d8e9141fb51ab353216ee569e2e6f8eba5e7d4c52bcea4aaf1eda4be21602f8"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt",
+              "action": "modify",
+              "sha256": "ba65f3255c3450e1711991be4e37e7f6262762a140e83c7fe488d520a4b62e9f",
+              "size": 28188,
+              "source_sha256": "0bb3ab6946db10e4afe791d0f3b16abb105887e7ae8f6f54220874dcd4acd8e4"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/RootServiceClient.kt",
+              "action": "modify",
+              "sha256": "2e566672d462487a91ae07c9d7c0f4c6d333c615d2cf6971d64e1988abb65209",
+              "size": 11861,
+              "source_sha256": "ab0c093ff03cc7f17230970aff5fe01018292b5537f9d79f882d84637f8b696a"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "560c626b5d023f44be690970a387b4765ebe25072e80e181450dfd2d864aa3db",
+              "size": 67712,
+              "source_sha256": "74ab14390557973744b05005acd889d6c78550e6188e987811238bcc2f2d3ca1"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+              "action": "modify",
+              "sha256": "f49498094b054361e63608ccb6dd1de3d39862c5aec679fcd6ae9ea762fe2c4e",
+              "size": 17120,
+              "source_sha256": "21a2c2e0f895744ab535e6d01c443b309ce840916d67a5a58aa40ae3c0cdadda"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/StorageCharts.kt",
+              "action": "modify",
+              "sha256": "e7d5c7e51cf5d9ac58a692d8154b55bc3377eaacb7eff6d944bb844cc2ea10a8",
+              "size": 8918,
+              "source_sha256": "4f17de9140491291e2dac0a983fa891dee373cdb2935945a0e128b7e4ca6bfc9"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleanupSafetyPolicyTest.kt",
+              "action": "modify",
+              "sha256": "5d9c863b7ebb05bb3416dab7587c362f9680aa01cc50dc3aaf1d6fc9f0005923",
+              "size": 3214,
+              "source_sha256": "eef1615ba3ad66159f119263e78ca80b96da8aba969957060298027f3c5f5d8f"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleaseGatePolicyTest.kt",
+              "action": "modify",
+              "sha256": "9cb8198aefe1d26cef6308dcd6b0ad48582af27e96d9945d6c0d4d6dfd4492f9",
+              "size": 993,
+              "source_sha256": "5cb964ddfcb484e9bcbbda6b60eba295e9070cfc7420aa82bc3336713c856772"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootModuleAnalyzerTest.kt",
+              "action": "modify",
+              "sha256": "1daf1261228598b489dc7e9754f8653ff2987ec3b61e3978c49d2706ac9acb10",
+              "size": 1652,
+              "source_sha256": "e41f14aa75c794ee56a27e5fcae767506d2d3cb6f0cd5a5e917362ba55dc354e"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+              "action": "modify",
+              "sha256": "7e04afdec4ba3f6e0ccb1fc79f63841c9888da2157e192e4dd755d394bae5281",
+              "size": 7617,
+              "source_sha256": "6180f382e166c801681bdac98adfa6458ae8cfbad5c5480f135b77adeecd2a9d"
+            },
+            {
+              "path": "docs/ANDROID_PERMANENT_DELETION_AND_ACTIONABLE_PATHS.md",
+              "action": "add",
+              "sha256": "44fedcb435ae26e9e6123060bc10515b1e0fb31ebfd8a6c40d97d92ae83a28f2",
+              "size": 3473
+            },
+            {
+              "path": "docs/ANDROID_UI_UX_SAFETY_OVERLAY.md",
+              "action": "modify",
+              "sha256": "e0028c9c8d0c94e5924a30bfee7fe22dff65bcdf2cd995c0446ad138efa69444",
+              "size": 2793,
+              "source_sha256": "78198fac11a62e6b2a5f00fe6b03b8ef608ce212eb9f76ce4f80612aeb25b4e5"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Add reviewed permanent deletion and actionable file surfaces"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "809eab50d336b0fb0cf35a2ede0ba289251d11294eb9311d749862189472c05a",
+            "timeout_seconds": 1800
+          }
+        }
+      },
+      "history_id": "f90f41f0338f41239bf470f713021595"
+    },
+    {
+      "applied_at": "2026-07-23T23:47:45.049014Z",
+      "artifact": "/home/mike/Downloads/dustui_android_permanent_deletion_overlay.zip",
+      "artifact_name": "dustui_android_permanent_deletion_overlay.zip",
+      "type": "overlay",
+      "sha256": "ded362273d4bcc1c529508a29f48481692c9a9b1a605141287222128c834d15b",
+      "status": "rolled-back",
+      "validation_status": "failed",
+      "commit_message": "Add reviewed permanent deletion and actionable file surfaces",
+      "commit_hash": "",
+      "file_count": 23,
+      "change_counts": {
+        "add": 1,
+        "modify": 22
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Android permanent deletion and actionable files",
+        "description": "Builds on the successful Android UI/UX safety overlay applied to dustui-20260723-142646.tar.gz. Replaces quarantine and restore with scan-bound, fingerprinted permanent-deletion planning and no-follow execution; reports per-path partial failures and actual deleted bytes; makes surfaced files actionable across Overview, search, packages, modules, Explorer, treemap, and details; and removes the known unnecessary safe-call warnings.",
+        "version": "1.1.0",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "CHANGELOG.md",
+              "action": "modify",
+              "sha256": "7c473fced259f8f49fb52cada63738c252eb9da2b272df3405422a2c4fc8a06e",
+              "size": 3005,
+              "source_sha256": "2aa6c70e683f0d982e06049810649144dc537d1bae93e44c91e51527e3752793"
+            },
+            {
+              "path": "README.md",
+              "action": "modify",
+              "sha256": "dfbe3c8246c35634244044e7f6916ec19425269f88e39f421c5a2861cdefa57b",
+              "size": 4561,
+              "source_sha256": "e2af6730658471c8746d63c9b8d8f5878e07e5483c41d10e49e2e75cbc5cfc08"
+            },
+            {
+              "path": "RELEASE_CHECKLIST.md",
+              "action": "modify",
+              "sha256": "a22ba84abc253790f8d816d7a918a33fe7530aca1625acac12650f1584145dd3",
+              "size": 2844,
+              "source_sha256": "d24331343107392d9799e19d090920d1aadb1122e959dedbd30fe228a975b117"
+            },
+            {
+              "path": "UI_UX_CONTRACT.md",
+              "action": "modify",
+              "sha256": "a375d44820743b53d631e4c7e2206353561e76666f67a46091f5fac1d4d9507a",
+              "size": 4964,
+              "source_sha256": "94e7dcde8548295660c4d9bc8fd8c4824a5bb87cacba2676b15f7ec336488f95"
+            },
+            {
+              "path": "android/app/src/main/aidl/com/mikeyphw/dustui/root/IDustRootService.aidl",
+              "action": "modify",
+              "sha256": "b345a664f34f24ef4f201742fa2284f19ff785273a33a6137e6a4c93e2042e10",
+              "size": 558,
+              "source_sha256": "109555fc49dfac7b61a0e970c7beeafccd4ce8ae2bbd22eac8ca5c954799d026"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupAuthorization.kt",
+              "action": "modify",
+              "sha256": "1f02085b3698edee0ce51556381be19afebeb79c40e2dfcc55dc909109d27935",
+              "size": 509,
+              "source_sha256": "8844e5d6ba19a41d58e516aecf091435fe73c6bd7f8cf14f6f31b9f944a1ed87"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupModels.kt",
+              "action": "modify",
+              "sha256": "6bdadba68b72ffa17d3a91a406bbb4b1233fb4d359f57fc010089cf8a8bb1cf1",
+              "size": 6180,
+              "source_sha256": "adede7e843b623ae3ad9d8d0ea6b7f94618f17c29d037170a1e4504db8a16075"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ModuleAnalyzer.kt",
+              "action": "modify",
+              "sha256": "9ba21df678f5f0fc72a765107d2cd1f5ad6e5d0da8165a14ddbd8b6eb4e78633",
+              "size": 4621,
+              "source_sha256": "6961bbd798cba7e8a2e752b793619f1469a0a64cf6fde9c4f7dbfb12695330a8"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/OperationRecovery.kt",
+              "action": "modify",
+              "sha256": "b28b2828f239863e69708cb0ea65e5dfeeb6af9adc60f3fa924e041cb3c39422",
+              "size": 628,
+              "source_sha256": "b8b1b1e5d308275331809e995f013eeafd2686ee30c8f7d07f7a8fed35511a96"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ReleaseGatePolicy.kt",
+              "action": "modify",
+              "sha256": "1bc892448987bf01dbddeca1b6c26833b0c926e5c5781c005daf7219a6e6a6c4",
+              "size": 1156,
+              "source_sha256": "58c12490bf2afd94deb7edb0feeb9752574fa959d6335021eeccbea4ebb64732"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanDao.kt",
+              "action": "modify",
+              "sha256": "981a42ace713a1cdc795b9817e99806dffa36f3cc729b7998eb10deca4d15740",
+              "size": 1795,
+              "source_sha256": "a191074725a2c9dabdac853eef49582ac1a9784cf6dacb8305f37854eb230b30"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+              "action": "modify",
+              "sha256": "402b928cbcdf78fdb3641f53730dcfbdc3dff33eed1945674452812a1a35521e",
+              "size": 9865,
+              "source_sha256": "3d8e9141fb51ab353216ee569e2e6f8eba5e7d4c52bcea4aaf1eda4be21602f8"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt",
+              "action": "modify",
+              "sha256": "ba65f3255c3450e1711991be4e37e7f6262762a140e83c7fe488d520a4b62e9f",
+              "size": 28188,
+              "source_sha256": "0bb3ab6946db10e4afe791d0f3b16abb105887e7ae8f6f54220874dcd4acd8e4"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/RootServiceClient.kt",
+              "action": "modify",
+              "sha256": "2e566672d462487a91ae07c9d7c0f4c6d333c615d2cf6971d64e1988abb65209",
+              "size": 11861,
+              "source_sha256": "ab0c093ff03cc7f17230970aff5fe01018292b5537f9d79f882d84637f8b696a"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "560c626b5d023f44be690970a387b4765ebe25072e80e181450dfd2d864aa3db",
+              "size": 67712,
+              "source_sha256": "74ab14390557973744b05005acd889d6c78550e6188e987811238bcc2f2d3ca1"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+              "action": "modify",
+              "sha256": "f49498094b054361e63608ccb6dd1de3d39862c5aec679fcd6ae9ea762fe2c4e",
+              "size": 17120,
+              "source_sha256": "21a2c2e0f895744ab535e6d01c443b309ce840916d67a5a58aa40ae3c0cdadda"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/StorageCharts.kt",
+              "action": "modify",
+              "sha256": "e7d5c7e51cf5d9ac58a692d8154b55bc3377eaacb7eff6d944bb844cc2ea10a8",
+              "size": 8918,
+              "source_sha256": "4f17de9140491291e2dac0a983fa891dee373cdb2935945a0e128b7e4ca6bfc9"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleanupSafetyPolicyTest.kt",
+              "action": "modify",
+              "sha256": "5d9c863b7ebb05bb3416dab7587c362f9680aa01cc50dc3aaf1d6fc9f0005923",
+              "size": 3214,
+              "source_sha256": "eef1615ba3ad66159f119263e78ca80b96da8aba969957060298027f3c5f5d8f"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleaseGatePolicyTest.kt",
+              "action": "modify",
+              "sha256": "9cb8198aefe1d26cef6308dcd6b0ad48582af27e96d9945d6c0d4d6dfd4492f9",
+              "size": 993,
+              "source_sha256": "5cb964ddfcb484e9bcbbda6b60eba295e9070cfc7420aa82bc3336713c856772"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootModuleAnalyzerTest.kt",
+              "action": "modify",
+              "sha256": "1daf1261228598b489dc7e9754f8653ff2987ec3b61e3978c49d2706ac9acb10",
+              "size": 1652,
+              "source_sha256": "e41f14aa75c794ee56a27e5fcae767506d2d3cb6f0cd5a5e917362ba55dc354e"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+              "action": "modify",
+              "sha256": "7e04afdec4ba3f6e0ccb1fc79f63841c9888da2157e192e4dd755d394bae5281",
+              "size": 7617,
+              "source_sha256": "6180f382e166c801681bdac98adfa6458ae8cfbad5c5480f135b77adeecd2a9d"
+            },
+            {
+              "path": "docs/ANDROID_PERMANENT_DELETION_AND_ACTIONABLE_PATHS.md",
+              "action": "add",
+              "sha256": "44fedcb435ae26e9e6123060bc10515b1e0fb31ebfd8a6c40d97d92ae83a28f2",
+              "size": 3473
+            },
+            {
+              "path": "docs/ANDROID_UI_UX_SAFETY_OVERLAY.md",
+              "action": "modify",
+              "sha256": "e0028c9c8d0c94e5924a30bfee7fe22dff65bcdf2cd995c0446ad138efa69444",
+              "size": 2793,
+              "source_sha256": "78198fac11a62e6b2a5f00fe6b03b8ef608ce212eb9f76ce4f80612aeb25b4e5"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Add reviewed permanent deletion and actionable file surfaces"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "809eab50d336b0fb0cf35a2ede0ba289251d11294eb9311d749862189472c05a",
+            "timeout_seconds": 1800
+          }
+        }
+      },
+      "history_id": "151e51eab1514839a5931de43c7bc344"
     }
   ]
 }

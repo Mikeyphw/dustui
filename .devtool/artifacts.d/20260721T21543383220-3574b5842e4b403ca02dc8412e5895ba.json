@@ -1,0 +1,107 @@
+{
+  "applied_at": "2026-07-21T21:54:33.832208Z",
+  "artifact": "/storage/emulated/0/Download/dustui_phase13c_fixall_ui_overlay.zip",
+  "artifact_name": "dustui_phase13c_fixall_ui_overlay.zip",
+  "type": "overlay",
+  "sha256": "8628c8310ec2fe7c8569979fa6052123a7fbfcd491f74ff4ddbd5c5c7189ed5c",
+  "status": "failed",
+  "validation_status": "ok",
+  "commit_message": "Polish DustUI UI UX typography completely",
+  "commit_hash": "",
+  "file_count": 7,
+  "change_counts": {
+    "add": 7
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Phase 13C Complete UI Polish",
+    "description": "Finishes the UI/UX/typography audit by fixing remaining compact-screen polish issues: contextual top actions, metric grids, explicit List/Treemap segmented controls, scan preset clipping, search result readability, tighter body typography, and stronger UI contract tests.",
+    "target": "dustui_android",
+    "workspaces": [
+      {
+        "name": "dustui_android",
+        "root": "android",
+        "target": "dustui_android"
+      }
+    ],
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "UI_UX_CONTRACT.md",
+          "action": "modify",
+          "sha256": "3fc8525dfb31d84f1fa13c225dfe9dfd6548b63b1d76763a74a2445201166937",
+          "size": 1920
+        },
+        {
+          "path": "android/app/build.gradle.kts",
+          "action": "modify",
+          "sha256": "01c8a279ced684f0e47017a55c983f3581a6d9fa9faab61005b0c764b18b65b4",
+          "size": 2790
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+          "action": "modify",
+          "sha256": "71460ad15edccee36895e1a3843270f254d7133719392f6cd97004ea7329e5a3",
+          "size": 7503
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "action": "modify",
+          "sha256": "ce9e15431818bbcf112750795f960281d5a4f721d151ae12eff9b13e02ba3137",
+          "size": 49450
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Theme.kt",
+          "action": "modify",
+          "sha256": "6daf1615ccc7e156b7af5388abd2378989f6ce7bd111ed807f305ef539ee6411",
+          "size": 1591
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+          "action": "modify",
+          "sha256": "d53d6e7e7022333b7ad77dd4905c0ed550661c68f781b1aa80ecef186d8e55ae",
+          "size": 2455
+        },
+        {
+          "path": "docs/ANDROID_UI_UX_PHASE12_13.md",
+          "action": "modify",
+          "sha256": "3fc8525dfb31d84f1fa13c225dfe9dfd6548b63b1d76763a74a2445201166937",
+          "size": 1920
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Polish DustUI UI UX typography completely"
+      }
+    },
+    "validation": {
+      "required": true,
+      "restore": true,
+      "build": true,
+      "test": true,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "build": "pass",
+        "tests": "pass",
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "b1f775507195ee0ca5e2ba30d8e3d66a0185bc14ba59f357f32f284f9c16b853",
+        "timeout_seconds": 180
+      }
+    }
+  },
+  "history_id": "3574b5842e4b403ca02dc8412e5895ba"
+}
