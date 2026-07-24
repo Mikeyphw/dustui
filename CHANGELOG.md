@@ -2,6 +2,17 @@
 
 ## 1.4.0-rc1
 
+### Phase 18 · Uninstalled-app residue detection
+
+- Added a dedicated app-residue workbench with evidence-ranked package groups, confidence filtering, deterministic paging, and exact-path actions.
+- Added fixed root-service queries for Android users and installed packages so high confidence requires package absence across every discovered user.
+- Classified managed Android package directories separately from probable exports and uncertain name-only shared folders.
+- Downgraded candidates when package visibility is incomplete or related installed packages may still own the data.
+- Added persistent user-protected residue folders that are excluded from recommendations and batch selection.
+- Kept probable and uncertain locations unselected by default while preserving explicit details, Explorer reveal, selection, and reviewed permanent-deletion planning.
+- Added legacy `/data/data` alias de-duplication, focused analyzer tests, navigation contracts, and release validation.
+- Switched residue protection persistence to the AndroidX KTX `SharedPreferences.edit` extension so lint remains warning- and error-free.
+
 ### Phase 17 · Exact duplicate detection
 
 - Added a dedicated Android duplicate workbench backed by complete same-size candidate buckets from the active scan.

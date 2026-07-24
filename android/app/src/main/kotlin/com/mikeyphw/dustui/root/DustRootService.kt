@@ -20,6 +20,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
@@ -324,6 +325,8 @@ class DustRootService : RootService() {
             return JSONObject().put("ok", true).put("cancelled", cancelled).toString()
         }
 
+        override fun installedPackages(): String = installedPackageInventory()
+
 
         override fun inspectPath(path: String, previewBytes: Int): String = runCatching {
             val target = Paths.get(path).normalize()
@@ -381,6 +384,71 @@ class DustRootService : RootService() {
         }.getOrElse { error -> failure(error.message ?: error.javaClass.simpleName) }
 
 
+    }
+
+    private fun installedPackageInventory(): String = runCatching {
+        val userCommand = runFixedCommand("/system/bin/cmd", "user", "list")
+        val discoveredUsers = USER_INFO_PATTERN.findAll(userCommand.output)
+            .mapNotNull { match -> match.groupValues.getOrNull(1)?.toIntOrNull() }
+            .toCollection(sortedSetOf())
+            .ifEmpty { sortedSetOf(0) }
+        var complete = userCommand.ok
+        val users = JSONArray()
+        val failures = mutableListOf<String>()
+        discoveredUsers.forEach { userId ->
+            val packageCommand = runFixedCommand(
+                "/system/bin/cmd",
+                "package",
+                "list",
+                "packages",
+                "--user",
+                userId.toString(),
+            )
+            if (!packageCommand.ok) {
+                complete = false
+                failures += "user $userId"
+            }
+            val packages = packageCommand.output.lineSequence()
+                .map(String::trim)
+                .filter { it.startsWith("package:") }
+                .map { it.removePrefix("package:").substringBefore('=') }
+                .filter { PACKAGE_NAME_PATTERN.matches(it) }
+                .distinct()
+                .sorted()
+                .toList()
+            users.put(JSONObject().put("id", userId).put("packages", JSONArray(packages)))
+        }
+        JSONObject()
+            .put("ok", users.length() > 0)
+            .put("complete", complete && failures.isEmpty())
+            .put("users", users)
+            .put(
+                "message",
+                when {
+                    failures.isNotEmpty() -> "Package visibility failed for ${failures.joinToString()}"
+                    !userCommand.ok -> "Android user discovery was incomplete"
+                    else -> JSONObject.NULL
+                },
+            )
+            .toString()
+    }.getOrElse { error ->
+        JSONObject()
+            .put("ok", false)
+            .put("complete", false)
+            .put("users", JSONArray())
+            .put("message", error.message ?: error.javaClass.simpleName)
+            .toString()
+    }
+
+    private fun runFixedCommand(vararg command: String): FixedCommandResult {
+        val process = ProcessBuilder(*command).redirectErrorStream(true).start()
+        val finished = process.waitFor(FIXED_COMMAND_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        if (!finished) process.destroyForcibly()
+        val output = runCatching { process.inputStream.bufferedReader().use { it.readText() } }.getOrDefault("")
+        return FixedCommandResult(
+            ok = finished && process.exitValue() == 0,
+            output = output,
+        )
     }
 
     private fun detectRootBackend(): String = when {
@@ -744,6 +812,8 @@ class DustRootService : RootService() {
 
     private data class DeleteOutcome(val deletedBytes: Long, val complete: Boolean, val message: String?)
 
+    private data class FixedCommandResult(val ok: Boolean, val output: String)
+
     private class ActiveScan(val scanId: String) {
         val status = AtomicReference("starting")
         val exitCode = AtomicReference<Int?>(null)
@@ -778,6 +848,9 @@ class DustRootService : RootService() {
     }
 
     private companion object {
+        val USER_INFO_PATTERN = Regex("UserInfo\\{(\\d+):")
+        val PACKAGE_NAME_PATTERN = Regex("^[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z0-9_]+)+$")
+        const val FIXED_COMMAND_TIMEOUT_SECONDS = 15L
         const val COMPLETED_RETENTION_MS = 24 * 60 * 60 * 1000L
         const val MAX_DELETE_PLAN_ENTRIES = 100_000L
         const val MAX_DUPLICATE_BUCKET_PATHS = 2_000

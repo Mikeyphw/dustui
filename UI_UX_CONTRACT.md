@@ -115,3 +115,17 @@ DustUI is a rooted Android storage workbench. The UI must remain readable on pho
 10. Page and group actions must use exact visible membership and route through the existing scan-bound permanent-deletion planner.
 11. Analysis thresholds and page boundaries must be explicit; skipped oversized buckets and unreadable files must be counted rather than hidden.
 12. After any filesystem mutation, duplicate analysis is stale and cannot drive new selection or deletion until a fresh scan.
+
+## Uninstalled-app residue rules
+
+1. High-confidence residue requires an exact Android package-oriented directory and proof that the package is absent across every discovered Android user.
+2. If user discovery or package visibility is incomplete, all candidates must remain Uncertain and no batch recommendation may be produced.
+3. Installed packages are excluded regardless of which checked user owns them.
+4. Known export, backup, and log folders may be Probable; package-shaped shared folders remain Uncertain.
+5. Related installed packages must be shown and must reduce confidence rather than being ignored.
+6. Probable and Uncertain locations are never automatically selected. The user may act only through explicit per-path selection and the normal deletion review.
+7. User-protected residue paths persist across launches and are excluded from group and page recommendations.
+8. Legacy aliases such as `/data/data/<package>` and `/data/user/0/<package>` must not double-count the same logical location.
+9. Every residue location must expose evidence, size, file count, details, Explorer reveal, protection, selection, and reviewed permanent-deletion planning.
+10. Residue analysis is bound to the active scan. After filesystem mutation, inspection may continue, but selection and deletion planning require a fresh scan.
+

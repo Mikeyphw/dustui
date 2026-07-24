@@ -12444,6 +12444,364 @@
         }
       },
       "history_id": "c6a13194a2cb456e9ec20fe80275cfdf"
+    },
+    {
+      "applied_at": "2026-07-24T17:00:43.771088Z",
+      "artifact": "/home/mike/Downloads/dustui_android_phase18_app_residue_overlay.zip",
+      "artifact_name": "dustui_android_phase18_app_residue_overlay.zip",
+      "type": "overlay",
+      "sha256": "60f6f6db798d65e505da5e0db9b3874bbafa6ec81f56943019a96543dbccf872",
+      "status": "rolled-back",
+      "validation_status": "failed",
+      "commit_message": "Add Android Phase 18 app residue detection",
+      "commit_hash": "",
+      "file_count": 17,
+      "change_counts": {
+        "add": 4,
+        "modify": 13
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Android Phase 18 uninstalled-app residue detection",
+        "description": "Builds on validated Phase 17 commit ffeecdf. Adds fixed multi-user package visibility, evidence-ranked uninstalled-app residue classification, conservative confidence gates, related-package downgrade, legacy alias de-duplication, persistent user path protection, deterministic search/filter/paging, and exact-path review-first permanent-deletion planning.",
+        "version": "1.0.0",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "CHANGELOG.md",
+              "action": "modify",
+              "sha256": "25f6e08bfd71bc82a9b1d33e44158e162604c966ca87593c999c314b3cf67d8d",
+              "size": 6513,
+              "source_sha256": "3e3201647ab9ebdefa799f198544a09a8d91cd9fa2db728b7c56411eb87abcc0"
+            },
+            {
+              "path": "README.md",
+              "action": "modify",
+              "sha256": "abeabd5f0927e69c740d483a91c0438685d2bb37f7e74ff4cc8a25b14d1b13a5",
+              "size": 5696,
+              "source_sha256": "19d676691c7e4bafb35a417e877a19c2b1c414e1ca24e712db0b9fe4995b7dd1"
+            },
+            {
+              "path": "RELEASE_CHECKLIST.md",
+              "action": "modify",
+              "sha256": "b3e2a804e789ea8debae5a6ba98695cd1184729850f36885e490652bbcc73482",
+              "size": 7747,
+              "source_sha256": "5d2dd05bdc6e86b484f108a4950d95a547ce4991768afe0e87e19009d5a0df35"
+            },
+            {
+              "path": "UI_UX_CONTRACT.md",
+              "action": "modify",
+              "sha256": "5303526d3bc02e54311243852aaffe31d0d9e93d15020efe73d11154b0db807a",
+              "size": 10027,
+              "source_sha256": "6599ed35d5d22dfa991b6826ffac64ef8541928245c718e912c38dfb3723c899"
+            },
+            {
+              "path": "android/app/src/main/aidl/com/mikeyphw/dustui/root/IDustRootService.aidl",
+              "action": "modify",
+              "sha256": "68e1f6cde7e02f455e081578e2cc0cbf2310f5fef5eb1de23923ee47af50910b",
+              "size": 645,
+              "source_sha256": "0d97ba344fdf91606b1f6bbf1b5e48cb7b66eed167c049fabb65612cfbc63ea5"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/AppResidue.kt",
+              "action": "add",
+              "sha256": "c9abf13fc8241e289c66bae640c9d30a61a451ab182ac969dbe5ae7857a71cf1",
+              "size": 16146
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ResidueProtectionStore.kt",
+              "action": "add",
+              "sha256": "d5617dfa469820cad3c2a0a879f3b7dacbd0028f8e7bbaaef7572f1050cba578",
+              "size": 792
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+              "action": "modify",
+              "sha256": "11a30ceb54fb2103b38cc69b78a5e0e2ccd34c02727c426d8ccc0785b7448123",
+              "size": 19073,
+              "source_sha256": "a9c9c625a30097809b8ad7adad92a8ce6b208c35d478211d4e820907565993ab"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt",
+              "action": "modify",
+              "sha256": "453a2b10c71de63c183bbc0233ef7b7a0926ccdc89eaa954f5f873a4f88ae7c1",
+              "size": 41789,
+              "source_sha256": "bbb64f7356e102c66f4b5e11587d9b975dcdd5e988d379fae4e1ab8d3fff3026"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/RootServiceClient.kt",
+              "action": "modify",
+              "sha256": "64b19e0caef9779e8833598668b7a9ba7303c03354f3dab43c95532de68a4815",
+              "size": 15777,
+              "source_sha256": "3c1ac8bc73340184b857971da0f6471e85ba9ee193f55dc204907f0fcb316507"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+              "action": "modify",
+              "sha256": "bb236dcf22198b95dc95c67dc493b423519f15345a9d2bc2f3fc9a4a97147422",
+              "size": 8727,
+              "source_sha256": "86aca7ac6fe00cc0212526f8098d962700a629d2be20badcaf05d9a639d11856"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "9a47eec9b9694437445f5ebb030df514064ceb6e714ae4927348ff8593dbed96",
+              "size": 116832,
+              "source_sha256": "d308443eeeb97be2f773da85b24c0b7b74b092e70d840255b0fa306a668832d9"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+              "action": "modify",
+              "sha256": "b796a52c7d13ffef9d2f7031148b872e63dea2235fef65c44ac9b23bbe657763",
+              "size": 37496,
+              "source_sha256": "e715e4becd217af2e6f13ed50f7b90dc18d1045582f8f3bf0a11f8e6231503fe"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/AppResidueTest.kt",
+              "action": "add",
+              "sha256": "d7362291080df309f7220eea362e78b2a75961929e7acc9ee041ede53ef40013",
+              "size": 5799
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+              "action": "modify",
+              "sha256": "719272510f1078ac76a84607e02dc81f908bc1f9cf14d5df50488f527b3502ce",
+              "size": 2856,
+              "source_sha256": "480b38650c9caf05f58f491ccedfd772eacc139fe553d08e48fd0350f8e93347"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+              "action": "modify",
+              "sha256": "b771a15605f0a27e065575bed26883f3d9d15bc1c1384be61da70991445f61d4",
+              "size": 15711,
+              "source_sha256": "a3c9e9c5de2b09168f1db1c55d2d7e3f0d8ab3b198856648a7c499521c36f8fc"
+            },
+            {
+              "path": "docs/ANDROID_PHASE18_APP_RESIDUE.md",
+              "action": "add",
+              "sha256": "c2f74032dd8eb9d475f7756bea846432dbeb4b3092eb6e8322e3f68f26f3d8a7",
+              "size": 2663
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Add Android Phase 18 app residue detection"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "2768d85bc573d7e4f51561e38c1954a45a3e54f58380a6c30ea47b3d3aa9b0a2",
+            "timeout_seconds": 2400
+          }
+        }
+      },
+      "history_id": "365177021ccd4c93a1719fc1e39d7984"
+    },
+    {
+      "applied_at": "2026-07-24T17:20:37.645505Z",
+      "artifact": "/home/mike/Downloads/dustui_android_phase18_app_residue_overlay.zip",
+      "artifact_name": "dustui_android_phase18_app_residue_overlay.zip",
+      "type": "overlay",
+      "sha256": "09ddcb6ce3cd4cf6979106362910fe6e1dbc2f01b4ebcf4d2307031d2e884400",
+      "status": "ok",
+      "validation_status": "ok",
+      "commit_message": "Add Android Phase 18 app residue detection",
+      "commit_hash": "",
+      "file_count": 17,
+      "change_counts": {
+        "add": 4,
+        "modify": 13
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Android Phase 18 uninstalled-app residue detection",
+        "description": "Builds on validated Phase 17 commit ffeecdf. Adds fixed multi-user package visibility, evidence-ranked uninstalled-app residue classification, conservative confidence gates, related-package downgrade, legacy alias de-duplication, persistent user path protection, deterministic search/filter/paging, and exact-path review-first permanent-deletion planning; revision 1.0.1 uses AndroidX KTX SharedPreferences edits to satisfy lint.",
+        "version": "1.0.1",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "CHANGELOG.md",
+              "action": "modify",
+              "sha256": "80425b91f943eb717baff85933b114c802554025e9a870fee6ce3853dfa87f8a",
+              "size": 6651,
+              "source_sha256": "3e3201647ab9ebdefa799f198544a09a8d91cd9fa2db728b7c56411eb87abcc0"
+            },
+            {
+              "path": "README.md",
+              "action": "modify",
+              "sha256": "abeabd5f0927e69c740d483a91c0438685d2bb37f7e74ff4cc8a25b14d1b13a5",
+              "size": 5696,
+              "source_sha256": "19d676691c7e4bafb35a417e877a19c2b1c414e1ca24e712db0b9fe4995b7dd1"
+            },
+            {
+              "path": "RELEASE_CHECKLIST.md",
+              "action": "modify",
+              "sha256": "b3e2a804e789ea8debae5a6ba98695cd1184729850f36885e490652bbcc73482",
+              "size": 7747,
+              "source_sha256": "5d2dd05bdc6e86b484f108a4950d95a547ce4991768afe0e87e19009d5a0df35"
+            },
+            {
+              "path": "UI_UX_CONTRACT.md",
+              "action": "modify",
+              "sha256": "5303526d3bc02e54311243852aaffe31d0d9e93d15020efe73d11154b0db807a",
+              "size": 10027,
+              "source_sha256": "6599ed35d5d22dfa991b6826ffac64ef8541928245c718e912c38dfb3723c899"
+            },
+            {
+              "path": "android/app/src/main/aidl/com/mikeyphw/dustui/root/IDustRootService.aidl",
+              "action": "modify",
+              "sha256": "68e1f6cde7e02f455e081578e2cc0cbf2310f5fef5eb1de23923ee47af50910b",
+              "size": 645,
+              "source_sha256": "0d97ba344fdf91606b1f6bbf1b5e48cb7b66eed167c049fabb65612cfbc63ea5"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/AppResidue.kt",
+              "action": "add",
+              "sha256": "c9abf13fc8241e289c66bae640c9d30a61a451ab182ac969dbe5ae7857a71cf1",
+              "size": 16146
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ResidueProtectionStore.kt",
+              "action": "add",
+              "sha256": "8894add4b362ded7484a409e3211ac5db1c831d08b7185a05a982320798d5e2c",
+              "size": 814
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+              "action": "modify",
+              "sha256": "11a30ceb54fb2103b38cc69b78a5e0e2ccd34c02727c426d8ccc0785b7448123",
+              "size": 19073,
+              "source_sha256": "a9c9c625a30097809b8ad7adad92a8ce6b208c35d478211d4e820907565993ab"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt",
+              "action": "modify",
+              "sha256": "453a2b10c71de63c183bbc0233ef7b7a0926ccdc89eaa954f5f873a4f88ae7c1",
+              "size": 41789,
+              "source_sha256": "bbb64f7356e102c66f4b5e11587d9b975dcdd5e988d379fae4e1ab8d3fff3026"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/RootServiceClient.kt",
+              "action": "modify",
+              "sha256": "64b19e0caef9779e8833598668b7a9ba7303c03354f3dab43c95532de68a4815",
+              "size": 15777,
+              "source_sha256": "3c1ac8bc73340184b857971da0f6471e85ba9ee193f55dc204907f0fcb316507"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+              "action": "modify",
+              "sha256": "bb236dcf22198b95dc95c67dc493b423519f15345a9d2bc2f3fc9a4a97147422",
+              "size": 8727,
+              "source_sha256": "86aca7ac6fe00cc0212526f8098d962700a629d2be20badcaf05d9a639d11856"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "9a47eec9b9694437445f5ebb030df514064ceb6e714ae4927348ff8593dbed96",
+              "size": 116832,
+              "source_sha256": "d308443eeeb97be2f773da85b24c0b7b74b092e70d840255b0fa306a668832d9"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+              "action": "modify",
+              "sha256": "b796a52c7d13ffef9d2f7031148b872e63dea2235fef65c44ac9b23bbe657763",
+              "size": 37496,
+              "source_sha256": "e715e4becd217af2e6f13ed50f7b90dc18d1045582f8f3bf0a11f8e6231503fe"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/AppResidueTest.kt",
+              "action": "add",
+              "sha256": "d7362291080df309f7220eea362e78b2a75961929e7acc9ee041ede53ef40013",
+              "size": 5799
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+              "action": "modify",
+              "sha256": "719272510f1078ac76a84607e02dc81f908bc1f9cf14d5df50488f527b3502ce",
+              "size": 2856,
+              "source_sha256": "480b38650c9caf05f58f491ccedfd772eacc139fe553d08e48fd0350f8e93347"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+              "action": "modify",
+              "sha256": "b771a15605f0a27e065575bed26883f3d9d15bc1c1384be61da70991445f61d4",
+              "size": 15711,
+              "source_sha256": "a3c9e9c5de2b09168f1db1c55d2d7e3f0d8ab3b198856648a7c499521c36f8fc"
+            },
+            {
+              "path": "docs/ANDROID_PHASE18_APP_RESIDUE.md",
+              "action": "add",
+              "sha256": "c2f74032dd8eb9d475f7756bea846432dbeb4b3092eb6e8322e3f68f26f3d8a7",
+              "size": 2663
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Add Android Phase 18 app residue detection"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "7022f5c90cb69494d3f8cb3d022e0332234dab03cd77f00a4dd8dd6a7e9f7add",
+            "timeout_seconds": 2400
+          }
+        }
+      },
+      "history_id": "d369db1806a64799884f8272b8a773ac"
     }
   ]
 }

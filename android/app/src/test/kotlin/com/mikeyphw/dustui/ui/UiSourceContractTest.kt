@@ -211,6 +211,36 @@ class UiSourceContractTest {
         assertFalse(service.contains("groupBy { it.sizeBytes to extensionOf"))
     }
 
+    @Test fun `app residue workbench is multi user evidence ranked and review bound`() {
+        val app = sourceFile("DustUiApp.kt")
+        val viewModel = sourceFile("MainViewModel.kt")
+        val design = sourceFile("DustDesign.kt")
+        val model = androidSource("src/main/kotlin/com/mikeyphw/dustui/data/AppResidue.kt")
+        val repository = androidSource("src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt")
+        val service = androidSource("src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt")
+        val aidl = androidSource("src/main/aidl/com/mikeyphw/dustui/root/IDustRootService.aidl")
+        assertTrue(design.contains("APP_RESIDUE"))
+        assertTrue(app.contains("private fun AppResidueWorkbenchScreen"))
+        assertTrue(app.contains("Package visibility is incomplete"))
+        assertTrue(app.contains("This group is never batch-selected"))
+        assertTrue(app.contains("Protect this folder"))
+        assertTrue(app.contains("Plan deletion"))
+        assertTrue(viewModel.contains("fun selectResiduePage"))
+        assertTrue(viewModel.contains("fun reviewResiduePage"))
+        assertTrue(viewModel.contains("reviewPaths(paths)"))
+        assertTrue(model.contains("PACKAGE_ABSENT_ALL_USERS"))
+        assertTrue(model.contains("AppResidueConfidence.UNCERTAIN"))
+        assertTrue(model.contains("confidence == AppResidueConfidence.HIGH"))
+        assertTrue(model.contains("dropLegacyPrivateAliases"))
+        assertTrue(repository.contains("suspend fun appResidueAnalysis"))
+        assertTrue(repository.contains("ResidueProtectionStore"))
+        assertTrue(service.contains("\"/system/bin/cmd\", \"user\", \"list\""))
+        assertTrue(service.contains("\"packages\""))
+        assertTrue(service.contains("\"--user\""))
+        assertTrue(aidl.contains("String installedPackages()"))
+        assertFalse(model.contains("confidence != AppResidueConfidence.UNCERTAIN"))
+    }
+
     @Test fun `permanent deletion replaces quarantine runtime behavior`() {
         val app = sourceFile("DustUiApp.kt")
         val rootService = androidSource("src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt")

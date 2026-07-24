@@ -24,6 +24,8 @@ class ScanRepository(
     private val authorization = CleanupAuthorization(context)
     private val intelligence = EntryIntelligenceResolver(context)
     private val duplicateStore = DuplicateAnalysisStore(context)
+    private val residueProtectionStore = ResidueProtectionStore(context)
+    @Volatile private var packageInventoryCache: Pair<Long, InstalledPackageInventory>? = null
     fun observeLatestSession(): Flow<ScanSessionEntity?> = dao.observeLatestSession()
     fun observeCleanupOperations(): Flow<List<CleanupOperationEntity>> = dao.observeCleanupOperations(50)
     fun observeEntries(scanId: String): Flow<List<ScanEntryEntity>> = dao.observeEntries(scanId, 10_000)
@@ -71,6 +73,52 @@ class ScanRepository(
     suspend fun appSummaries(scanId: String): List<AppStorageSummary> {
         val installed = context.packageManager.getInstalledPackages(0).mapTo(mutableSetOf()) { it.packageName }
         return SnapshotAnalyzer.appSummaries(dao.entriesOnce(scanId), installed)
+    }
+
+    suspend fun appResidueAnalysis(scanId: String): AppResidueAnalysis {
+        val inventory = installedPackageInventory()
+        val labels = context.packageManager.getInstalledApplications(0).associate { info ->
+            info.packageName to context.packageManager.getApplicationLabel(info).toString()
+        }
+        return AppResidueAnalyzer.analyze(
+            scanId = scanId,
+            entries = dao.entriesOnce(scanId),
+            inventory = inventory,
+            protectedPaths = residueProtectionStore.paths(),
+            appLabels = labels,
+        )
+    }
+
+    fun protectResiduePath(path: String) = residueProtectionStore.protect(path)
+    fun unprotectResiduePath(path: String) = residueProtectionStore.unprotect(path)
+
+    private suspend fun installedPackageInventory(): InstalledPackageInventory {
+        val now = System.currentTimeMillis()
+        packageInventoryCache?.takeIf { now - it.first < PACKAGE_INVENTORY_CACHE_MS }?.let { return it.second }
+        val currentPackages = context.packageManager.getInstalledPackages(0).mapTo(sortedSetOf()) { it.packageName }
+        val inventory = runCatching { rootClient.installedPackages() }
+            .getOrElse { error ->
+                InstalledPackageInventory.currentUserOnly(
+                    currentPackages,
+                    error.message ?: "Unable to query package visibility across Android users",
+                )
+            }
+            .let { rootInventory ->
+                if (rootInventory.packagesByUser.isEmpty()) {
+                    InstalledPackageInventory.currentUserOnly(
+                        currentPackages,
+                        rootInventory.message ?: "Package visibility across Android users is unavailable",
+                    )
+                } else {
+                    rootInventory.copy(
+                        packagesByUser = rootInventory.packagesByUser.toMutableMap().also { byUser ->
+                            byUser[0] = byUser[0].orEmpty() + currentPackages
+                        },
+                    )
+                }
+            }
+        packageInventoryCache = now to inventory
+        return inventory
     }
 
     suspend fun largeFileEntries(scanId: String, preset: LargeFilePreset): List<ScanEntryEntity> = when (preset) {
@@ -331,5 +379,6 @@ class ScanRepository(
 
     private companion object {
         const val MAX_DUPLICATE_BUCKET_PATHS = 2_000
+        const val PACKAGE_INVENTORY_CACHE_MS = 30_000L
     }
 }

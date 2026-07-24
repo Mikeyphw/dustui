@@ -9,6 +9,23 @@
 - [ ] Confirm release APK builds.
 - [ ] Confirm Room schemas are exported.
 
+## Phase 18 uninstalled-app residue validation
+
+- [ ] Confirm Android user discovery and package listing include every available user before any result reaches high confidence.
+- [ ] Confirm a package installed for a secondary user is excluded from residue results.
+- [ ] Confirm incomplete user/package visibility downgrades every candidate to Uncertain and disables batch recommendations.
+- [ ] Confirm managed `/data/user`, `/data/user_de`, `Android/data`, `Android/media`, and `Android/obb` roots can reach High confidence only when the package is absent across checked users.
+- [ ] Confirm known backup/export/log roots are at most Probable and package-shaped shared folders remain Uncertain.
+- [ ] Confirm related installed packages visibly reduce confidence and prevent automatic recommendation.
+- [ ] Confirm `/data/data/<package>` is not double-counted when `/data/user/0/<package>` is present.
+- [ ] Confirm probable and uncertain groups are never page- or group-selected automatically.
+- [ ] Confirm every location supports Details, Explorer, explicit selection, and reviewed permanent-deletion planning.
+- [ ] Protect a residue folder, relaunch, and confirm it remains protected and excluded from recommendations.
+- [ ] Remove protection and confirm analysis updates without changing the active scan.
+- [ ] Confirm stale scan data blocks residue selection and deletion planning while preserving inspection.
+- [ ] Confirm package query failures are visible rather than silently treated as package absence.
+- [ ] Confirm Phase 18 completes with 0 warnings and 0 errors.
+
 ## Phase 17 duplicate-detection validation
 
 - [ ] Confirm equal-size candidates are edge-hashed and only complete SHA-256 matches become duplicate groups.

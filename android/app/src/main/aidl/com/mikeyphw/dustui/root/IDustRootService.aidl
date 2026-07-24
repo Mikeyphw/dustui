@@ -12,5 +12,6 @@ interface IDustRootService {
     String executeCleanup(String planJson);
     String verifyDuplicates(String requestJson);
     String cancelDuplicateVerification(String scanId);
+    String installedPackages();
     String inspectPath(String path, int previewBytes);
 }

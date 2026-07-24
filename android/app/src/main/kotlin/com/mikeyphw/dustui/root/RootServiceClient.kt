@@ -17,6 +17,7 @@ import com.mikeyphw.dustui.data.CleanupReview
 import com.mikeyphw.dustui.data.DuplicateSkippedPath
 import com.mikeyphw.dustui.data.DuplicateVerificationReport
 import com.mikeyphw.dustui.data.DuplicateVerifiedPath
+import com.mikeyphw.dustui.data.InstalledPackageInventory
 import com.mikeyphw.dustui.data.VerifiedDuplicateGroup
 import com.mikeyphw.dustui.data.RootPathInspection
 import org.json.JSONArray
@@ -125,6 +126,26 @@ class RootServiceClient(private val context: Context) {
 
     suspend fun cancelDuplicateVerification(scanId: String): Boolean = withContext(Dispatchers.IO) {
         runCatching { JSONObject(service().cancelDuplicateVerification(scanId)).optBoolean("cancelled") }.getOrDefault(false)
+    }
+
+    suspend fun installedPackages(): InstalledPackageInventory = cleanupCall { it.installedPackages() }.let { raw ->
+        val json = JSONObject(raw)
+        val users = json.optJSONArray("users") ?: JSONArray()
+        val packagesByUser = buildMap {
+            for (index in 0 until users.length()) {
+                val user = users.getJSONObject(index)
+                val packages = user.optJSONArray("packages") ?: JSONArray()
+                put(
+                    user.getInt("id"),
+                    buildSet { for (packageIndex in 0 until packages.length()) add(packages.getString(packageIndex)) },
+                )
+            }
+        }
+        InstalledPackageInventory(
+            packagesByUser = packagesByUser,
+            complete = json.optBoolean("complete") && packagesByUser.isNotEmpty(),
+            message = json.optString("message").takeIf(String::isNotBlank),
+        )
     }
 
     suspend fun inspectPath(path: String, previewBytes: Int = 16 * 1024): RootPathInspection = cleanupCall { it.inspectPath(path, previewBytes) }.let(RootPathInspection::fromJson)

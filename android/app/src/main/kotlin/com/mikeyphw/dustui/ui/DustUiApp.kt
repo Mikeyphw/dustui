@@ -65,6 +65,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mikeyphw.dustui.data.AdvancedStorageAnalyzer
 import com.mikeyphw.dustui.data.AdvancedStorageReport
+import com.mikeyphw.dustui.data.AppResidueAnalysis
+import com.mikeyphw.dustui.data.AppResidueConfidence
+import com.mikeyphw.dustui.data.AppResidueGroup
+import com.mikeyphw.dustui.data.AppResidueLocation
+import com.mikeyphw.dustui.data.AppResiduePage
 import com.mikeyphw.dustui.data.AppStorageSummary
 import com.mikeyphw.dustui.data.CertificationStatus
 import com.mikeyphw.dustui.data.ChartSlice
@@ -118,6 +123,9 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         val largeFileLoading by viewModel.largeFileLoading.collectAsStateWithLifecycle()
         val duplicateAnalysis by viewModel.duplicateAnalysis.collectAsStateWithLifecycle()
         val duplicatePage by viewModel.duplicatePage.collectAsStateWithLifecycle()
+        val residueAnalysis by viewModel.residueAnalysis.collectAsStateWithLifecycle()
+        val residuePage by viewModel.residuePage.collectAsStateWithLifecycle()
+        val residueLoading by viewModel.residueLoading.collectAsStateWithLifecycle()
         val certification by viewModel.certification.collectAsStateWithLifecycle()
         val packageProfiles by viewModel.packageProfiles.collectAsStateWithLifecycle()
         val rootSearchResults by viewModel.rootSearchResults.collectAsStateWithLifecycle()
@@ -228,7 +236,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                             when {
                                 currentSession == null && DustNavigationModel.needsScanData(destination) -> EmptyState(
                                     title = "No scan yet",
-                                    detail = "Start a root scan before opening explorer, analytics, large-file cleanup, duplicate detection, search, packages, modules, certification, or deletion activity.",
+                                    detail = "Start a root scan before opening explorer, analytics, large-file cleanup, duplicate detection, app residue, search, packages, modules, certification, or deletion activity.",
                                 )
                                 destination == DustDestination.SCAN -> ScanLauncher(
                                     Modifier.fillMaxSize(),
@@ -278,6 +286,18 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     Modifier.fillMaxSize(),
                                     duplicateAnalysis,
                                     duplicatePage,
+                                    selectedPaths,
+                                    scanDataStale,
+                                    viewModel,
+                                ) { filePath ->
+                                    viewModel.revealPath(filePath)
+                                    selectDestination(DustDestination.EXPLORER)
+                                }
+                                destination == DustDestination.APP_RESIDUE && currentSession != null -> AppResidueWorkbenchScreen(
+                                    Modifier.fillMaxSize(),
+                                    residueAnalysis,
+                                    residuePage,
+                                    residueLoading,
                                     selectedPaths,
                                     scanDataStale,
                                     viewModel,
@@ -1406,6 +1426,274 @@ private fun duplicateStatusTitle(analysis: DuplicateAnalysisSnapshot?): String =
 }
 
 @Composable
+private fun AppResidueWorkbenchScreen(
+    modifier: Modifier,
+    analysis: AppResidueAnalysis?,
+    page: AppResiduePage,
+    loading: Boolean,
+    selectedPaths: Set<String>,
+    scanDataStale: Boolean,
+    vm: MainViewModel,
+    revealPath: (String) -> Unit,
+) {
+    LazyColumn(
+        modifier,
+        contentPadding = dustScreenPadding(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item {
+            DustSectionHeader(
+                "Uninstalled-app residue",
+                subtitle = "Evidence-ranked package folders that remain after an app is absent across checked Android users.",
+            )
+        }
+        item {
+            val checkedUsers = analysis?.checkedUsers?.sorted()?.joinToString().orEmpty().ifBlank { "Unknown" }
+            MetricGrid(
+                listOf(
+                    "Matches" to page.totalGroups.toString(),
+                    "Matched size" to formatBytes(page.totalBytes),
+                    "Recommended" to formatBytes(analysis?.recommendedBytes ?: 0L),
+                    "Checked users" to checkedUsers,
+                ),
+            )
+        }
+        if (loading) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
+        if (analysis != null && !analysis.inventoryComplete) {
+            item {
+                Surface(tonalElevation = 2.dp, shape = MaterialTheme.shapes.medium) {
+                    Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Package visibility is incomplete", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.error)
+                        Text(
+                            analysis.message ?: "DustUI could not prove package absence across every Android user. Results remain uncertain and are never batch-selected.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+        if (scanDataStale) {
+            item {
+                Surface(tonalElevation = 2.dp, shape = MaterialTheme.shapes.medium) {
+                    Text(
+                        "Results are stale after deletion. Inspection remains available, but selection and deletion planning require a fresh scan.",
+                        Modifier.fillMaxWidth().padding(12.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+        }
+        item {
+            OutlinedTextField(
+                value = page.filter.query,
+                onValueChange = vm::updateResidueQuery,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Find package or path") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            )
+        }
+        item {
+            Text("Confidence", style = MaterialTheme.typography.labelLarge)
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(end = 24.dp)) {
+                item {
+                    FilterChip(
+                        selected = page.filter.confidence == null,
+                        onClick = { vm.filterResidueConfidence(null) },
+                        label = { Text("All") },
+                    )
+                }
+                items(AppResidueConfidence.entries, key = { it.name }) { confidence ->
+                    FilterChip(
+                        selected = page.filter.confidence == confidence,
+                        onClick = { vm.filterResidueConfidence(confidence) },
+                        label = { Text(confidence.label) },
+                    )
+                }
+            }
+        }
+        item {
+            OutlinedButton(onClick = vm::cycleResidueSort, modifier = Modifier.fillMaxWidth()) {
+                Text("Sort: ${page.filter.sort.label}")
+            }
+        }
+        if (page.items.isNotEmpty()) {
+            item {
+                val recommendedBytes = page.items.sumOf { group ->
+                    group.locations.filter { it.path in group.recommendedDeletionPaths }.sumOf { it.sizeBytes }
+                }
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Current page", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "${page.items.size} package group(s) · ${page.recommendedPaths.size} high-confidence location(s) · ${formatBytes(recommendedBytes)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(
+                                onClick = vm::selectResiduePage,
+                                enabled = !scanDataStale && page.recommendedPaths.isNotEmpty(),
+                                modifier = Modifier.weight(1f),
+                            ) { Text("Select safe") }
+                            Button(
+                                onClick = vm::reviewResiduePage,
+                                enabled = !scanDataStale && page.recommendedPaths.isNotEmpty(),
+                                modifier = Modifier.weight(1f),
+                            ) { Text("Plan safe") }
+                        }
+                    }
+                }
+            }
+        }
+        if (page.items.isEmpty() && !loading) {
+            item {
+                EmptyState(
+                    "No residue matches",
+                    "Run a complete scan or change the confidence filter. Active packages are excluded, and name-only folders remain uncertain.",
+                )
+            }
+        }
+        items(page.items, key = { "residue:${it.packageName}" }) { group ->
+            AppResidueGroupCard(
+                group = group,
+                selectedPaths = selectedPaths,
+                deletionEnabled = !scanDataStale,
+                vm = vm,
+                revealPath = revealPath,
+            )
+        }
+        if (page.pageCount > 1) {
+            item {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedButton(onClick = vm::previousResiduePage, enabled = page.hasPrevious, modifier = Modifier.weight(1f)) { Text("Previous") }
+                    Text("${page.pageIndex + 1} / ${page.pageCount}", style = MaterialTheme.typography.labelLarge)
+                    OutlinedButton(onClick = vm::nextResiduePage, enabled = page.hasNext, modifier = Modifier.weight(1f)) { Text("Next") }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppResidueGroupCard(
+    group: AppResidueGroup,
+    selectedPaths: Set<String>,
+    deletionEnabled: Boolean,
+    vm: MainViewModel,
+    revealPath: (String) -> Unit,
+) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(group.appLabel ?: group.packageName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    if (group.appLabel != null) PathText(group.packageName, Modifier.fillMaxWidth(), maxLines = 2)
+                }
+                StatusPill(group.confidence.label, danger = group.confidence == AppResidueConfidence.UNCERTAIN)
+            }
+            MetricGrid(
+                listOf(
+                    "Total size" to formatBytes(group.totalBytes),
+                    "Locations" to group.locations.size.toString(),
+                    "Indexed files" to group.totalFiles.toString(),
+                    "Recommended" to group.recommendedDeletionPaths.size.toString(),
+                ),
+            )
+            if (group.relatedInstalledPackages.isNotEmpty()) {
+                Text(
+                    "Related installed package(s): ${group.relatedInstalledPackages.joinToString()}. Automatic confidence is reduced.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+            if (group.confidence != AppResidueConfidence.HIGH) {
+                Text(
+                    "This group is never batch-selected. Any deletion must be chosen path by path and will still receive the full permanent-deletion review.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            group.locations.forEach { location ->
+                AppResidueLocationCard(location, selectedPaths, deletionEnabled, vm, revealPath)
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = { vm.selectResidueGroup(group.packageName) },
+                    enabled = deletionEnabled && group.recommendedDeletionPaths.isNotEmpty(),
+                    modifier = Modifier.weight(1f),
+                ) { Text("Select safe") }
+                Button(
+                    onClick = { vm.reviewResidueGroup(group.packageName) },
+                    enabled = deletionEnabled && group.recommendedDeletionPaths.isNotEmpty(),
+                    modifier = Modifier.weight(1f),
+                ) { Text("Plan safe") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppResidueLocationCard(
+    location: AppResidueLocation,
+    selectedPaths: Set<String>,
+    deletionEnabled: Boolean,
+    vm: MainViewModel,
+    revealPath: (String) -> Unit,
+) {
+    Surface(tonalElevation = 1.dp, shape = MaterialTheme.shapes.medium) {
+        Column(Modifier.fillMaxWidth().padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(location.kind.label, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "${formatBytes(location.sizeBytes)} · ${location.fileCount} indexed file(s) · ${formatTimestamp(location.modifiedAt)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (location.path in selectedPaths) Text("Selected", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+            }
+            PathText(location.path, Modifier.fillMaxWidth(), maxLines = 3)
+            location.evidence.forEach { evidence ->
+                Text(
+                    "${evidence.label}: ${evidence.detail}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (evidence.code == "USER_PROTECTED") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = { vm.showPathDetails(location.path) }, modifier = Modifier.weight(1f)) { Text("Details") }
+                TextButton(onClick = { revealPath(location.path) }, modifier = Modifier.weight(1f)) { Text("Explorer") }
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = { vm.togglePathSelection(location.path) },
+                    enabled = deletionEnabled && location.deletionEligible,
+                    modifier = Modifier.weight(1f),
+                ) { Text(if (location.path in selectedPaths) "Unselect" else "Select") }
+                Button(
+                    onClick = { vm.reviewPaths(listOf(location.path)) },
+                    enabled = deletionEnabled && location.deletionEligible,
+                    modifier = Modifier.weight(1f),
+                ) { Text("Plan deletion") }
+            }
+            TextButton(
+                onClick = {
+                    if (location.userProtected) vm.unprotectResiduePath(location.path) else vm.protectResiduePath(location.path)
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(if (location.userProtected) "Remove protection" else "Protect this folder")
+            }
+        }
+    }
+}
+
+
+@Composable
 private fun InsightsOverview(
     modifier: Modifier,
     delta: SnapshotDelta?,
@@ -1893,6 +2181,7 @@ private fun MoreScreen(modifier: Modifier, navigate: (DustDestination) -> Unit) 
 private fun moreDestinationDescription(destination: DustDestination): String = when (destination) {
     DustDestination.LARGE_FILES -> "Filter, group, inspect, and batch-plan deletion for large files."
     DustDestination.DUPLICATES -> "Verify exact duplicate content and choose which physical copies to keep."
+    DustDestination.APP_RESIDUE -> "Review evidence-ranked folders left by packages that are no longer installed."
     DustDestination.PACKAGES -> "App-owned storage profiles and largest paths."
     DustDestination.MODULES -> "Root module footprint and overlay conflict analysis."
     DustDestination.CERTIFICATION -> "Root backend, notification, lock-state, and release checks."

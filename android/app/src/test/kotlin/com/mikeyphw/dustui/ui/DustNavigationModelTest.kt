@@ -10,6 +10,7 @@ class DustNavigationModelTest {
     @Test fun `compact navigation keeps specialized workbenches behind more`() {
         assertEquals(DustDestination.MORE, DustNavigationModel.compactSelection(DustDestination.LARGE_FILES))
         assertEquals(DustDestination.MORE, DustNavigationModel.compactSelection(DustDestination.DUPLICATES))
+        assertEquals(DustDestination.MORE, DustNavigationModel.compactSelection(DustDestination.APP_RESIDUE))
         assertEquals(DustDestination.MORE, DustNavigationModel.compactSelection(DustDestination.PACKAGES))
         assertEquals(DustDestination.MORE, DustNavigationModel.compactSelection(DustDestination.MODULES))
         assertEquals(DustDestination.SEARCH, DustNavigationModel.compactSelection(DustDestination.SEARCH))
@@ -18,6 +19,7 @@ class DustNavigationModelTest {
     @Test fun `wide navigation exposes every primary workbench`() {
         assertTrue(DustNavigationModel.wideDestinations.contains(DustDestination.LARGE_FILES))
         assertTrue(DustNavigationModel.wideDestinations.contains(DustDestination.DUPLICATES))
+        assertTrue(DustNavigationModel.wideDestinations.contains(DustDestination.APP_RESIDUE))
         assertTrue(DustNavigationModel.wideDestinations.contains(DustDestination.PACKAGES))
         assertTrue(DustNavigationModel.wideDestinations.contains(DustDestination.MODULES))
         assertTrue(DustNavigationModel.wideDestinations.contains(DustDestination.CERTIFICATION))
@@ -27,6 +29,7 @@ class DustNavigationModelTest {
     @Test fun `back returns compact specialized workbenches to more`() {
         assertEquals(DustDestination.MORE, DustNavigationModel.backTarget(DustDestination.LARGE_FILES, wide = false))
         assertEquals(DustDestination.MORE, DustNavigationModel.backTarget(DustDestination.DUPLICATES, wide = false))
+        assertEquals(DustDestination.MORE, DustNavigationModel.backTarget(DustDestination.APP_RESIDUE, wide = false))
         assertEquals(DustDestination.MORE, DustNavigationModel.backTarget(DustDestination.PACKAGES, wide = false))
         assertEquals(DustDestination.SCAN, DustNavigationModel.backTarget(DustDestination.PACKAGES, wide = true))
         assertEquals(DustDestination.SCAN, DustNavigationModel.backTarget(DustDestination.EXPLORER, wide = false))

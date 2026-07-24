@@ -4,6 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.mikeyphw.dustui.data.EntryIntelligence
+import com.mikeyphw.dustui.data.AppResidueAnalysis
+import com.mikeyphw.dustui.data.AppResidueConfidence
+import com.mikeyphw.dustui.data.AppResidueFilter
+import com.mikeyphw.dustui.data.AppResiduePage
+import com.mikeyphw.dustui.data.AppResidueSort
+import com.mikeyphw.dustui.data.AppResidueWorkbenchEngine
 import com.mikeyphw.dustui.data.ScanEntryEntity
 import com.mikeyphw.dustui.data.ScanRepository
 import com.mikeyphw.dustui.data.ScanSessionEntity
@@ -115,6 +121,15 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val certification: StateFlow<DeviceCertificationReport?> = _certification
     private val _packageProfiles = MutableStateFlow<List<PackageStorageProfile>>(emptyList())
     val packageProfiles: StateFlow<List<PackageStorageProfile>> = _packageProfiles
+    private val _residueAnalysis = MutableStateFlow<AppResidueAnalysis?>(null)
+    val residueAnalysis: StateFlow<AppResidueAnalysis?> = _residueAnalysis
+    private val _residueLoading = MutableStateFlow(false)
+    val residueLoading: StateFlow<Boolean> = _residueLoading
+    private val _residueFilter = MutableStateFlow(AppResidueFilter())
+    val residueFilter: StateFlow<AppResidueFilter> = _residueFilter
+    val residuePage: StateFlow<AppResiduePage> = combine(_residueAnalysis, _residueFilter) { analysis, filter ->
+        AppResidueWorkbenchEngine.evaluate(analysis, filter)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppResiduePage.empty())
     private val _rootSearchResults = MutableStateFlow<List<RootFileSearchResult>>(emptyList())
     val rootSearchResults: StateFlow<List<RootFileSearchResult>> = _rootSearchResults
     private val _categoryFiles = MutableStateFlow<CategoryFileSelection?>(null)
@@ -179,6 +194,9 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         _snapshotHistory.value = emptyList()
         _advancedReport.value = null
         _packageProfiles.value = emptyList()
+        _residueAnalysis.value = null
+        _residueLoading.value = false
+        _residueFilter.value = AppResidueFilter()
         _moduleReport.value = null
         _scanDataStale.value = false
     }
@@ -297,6 +315,98 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             return
         }
         reviewPaths(paths)
+    }
+
+    fun updateResidueQuery(value: String) {
+        _residueFilter.value = _residueFilter.value.copy(query = value, page = 0)
+    }
+
+    fun filterResidueConfidence(confidence: AppResidueConfidence?) {
+        _residueFilter.value = _residueFilter.value.copy(confidence = confidence, page = 0)
+    }
+
+    fun cycleResidueSort() {
+        val current = _residueFilter.value
+        val options = AppResidueSort.entries
+        _residueFilter.value = current.copy(sort = options[(current.sort.ordinal + 1) % options.size], page = 0)
+    }
+
+    fun previousResiduePage() {
+        val current = _residueFilter.value
+        _residueFilter.value = current.copy(page = (current.page - 1).coerceAtLeast(0))
+    }
+
+    fun nextResiduePage() {
+        val current = _residueFilter.value
+        val lastPage = (residuePage.value.pageCount - 1).coerceAtLeast(0)
+        _residueFilter.value = current.copy(page = (current.page + 1).coerceAtMost(lastPage))
+    }
+
+    fun selectResidueGroup(packageName: String) {
+        val paths = residuePage.value.items.firstOrNull { it.packageName == packageName }?.recommendedDeletionPaths.orEmpty()
+        selectResiduePaths(paths, "high-confidence residue for $packageName")
+    }
+
+    fun reviewResidueGroup(packageName: String) {
+        val paths = residuePage.value.items.firstOrNull { it.packageName == packageName }?.recommendedDeletionPaths.orEmpty()
+        if (paths.isEmpty()) {
+            _message.value = "This group has no high-confidence unprotected locations. Review individual paths instead."
+        } else {
+            reviewPaths(paths)
+        }
+    }
+
+    fun selectResiduePage() = selectResiduePaths(residuePage.value.recommendedPaths, "high-confidence residue on this page")
+
+    fun reviewResiduePage() {
+        val paths = residuePage.value.recommendedPaths
+        if (paths.isEmpty()) {
+            _message.value = "No high-confidence unprotected residue is visible on this page"
+        } else {
+            reviewPaths(paths)
+        }
+    }
+
+    private fun selectResiduePaths(paths: List<String>, label: String) {
+        if (_scanDataStale.value) {
+            _message.value = "Run a new scan before selecting files for deletion"
+            return
+        }
+        if (paths.isEmpty()) {
+            _message.value = "No $label is available"
+            return
+        }
+        _selectedPaths.value = paths.toCollection(linkedSetOf())
+        _selectedContentHashes.value = emptyMap()
+        _cleanupReview.value = null
+        _message.value = "Selected ${paths.size} residue location(s)"
+    }
+
+    fun protectResiduePath(path: String) {
+        repository.protectResiduePath(path)
+        _selectedPaths.value = _selectedPaths.value - path
+        _selectedContentHashes.value = _selectedContentHashes.value - path
+        _cleanupReview.value = null
+        reloadResidueAnalysis("Protected residue path")
+    }
+
+    fun unprotectResiduePath(path: String) {
+        repository.unprotectResiduePath(path)
+        reloadResidueAnalysis("Removed residue protection")
+    }
+
+    private fun reloadResidueAnalysis(message: String? = null) {
+        val scanId = latestSession.value?.id ?: return
+        _residueLoading.value = true
+        viewModelScope.launch {
+            val result = runCatching { repository.appResidueAnalysis(scanId) }
+            if (latestSession.value?.id == scanId) {
+                result.onSuccess { _residueAnalysis.value = it }
+                    .onFailure { _message.value = it.message ?: "Unable to analyze app residue" }
+                _residueLoading.value = false
+                if (result.isSuccess && message != null) _message.value = message
+            }
+        }
     }
 
     fun updateDuplicateQuery(value: String) {
@@ -463,16 +573,28 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             _message.value = "Run a new scan before selecting files for deletion"
             return
         }
-        val entry = allEntries.value.firstOrNull { it.path == path }
-        if (entry == null) {
-            _message.value = "This path is no longer part of the active scan"
+        allEntries.value.firstOrNull { it.path == path }?.let { entry ->
+            toggleResolvedPath(entry.path)
             return
         }
-        _selectedPaths.value = _selectedPaths.value.toMutableSet().also { selected ->
-            if (!selected.add(entry.path)) selected.remove(entry.path)
+        val scanId = latestSession.value?.id ?: return
+        viewModelScope.launch {
+            val entry = repository.entry(scanId, path)
+            if (latestSession.value?.id != scanId) return@launch
+            if (entry == null) {
+                _message.value = "This path is no longer part of the active scan"
+            } else {
+                toggleResolvedPath(entry.path)
+            }
         }
-        if (entry.path !in _selectedPaths.value) {
-            _selectedContentHashes.value = _selectedContentHashes.value - entry.path
+    }
+
+    private fun toggleResolvedPath(path: String) {
+        _selectedPaths.value = _selectedPaths.value.toMutableSet().also { selected ->
+            if (!selected.add(path)) selected.remove(path)
+        }
+        if (path !in _selectedPaths.value) {
+            _selectedContentHashes.value = _selectedContentHashes.value - path
         }
         _cleanupReview.value = null
     }
@@ -607,6 +729,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             val largeFilePreset = _largeFileFilter.value.preset
             _largeFileLoading.value = true
             val largeFileEntries = repository.largeFileEntries(scanId, largeFilePreset)
+            _residueLoading.value = true
+            val residueResult = runCatching { repository.appResidueAnalysis(scanId) }
             val packageProfiles = repository.packageProfiles(scanId)
             val moduleReport = repository.moduleAnalysis(scanId)
             if (latestSession.value?.id != scanId) return@launch
@@ -619,6 +743,9 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
                 _largeFileLoading.value = false
             }
             _packageProfiles.value = packageProfiles
+            residueResult.onSuccess { _residueAnalysis.value = it }
+                .onFailure { _message.value = it.message ?: "Unable to analyze app residue" }
+            _residueLoading.value = false
             _moduleReport.value = moduleReport
         }
     }
