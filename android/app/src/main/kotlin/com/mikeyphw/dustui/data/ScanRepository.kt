@@ -3,10 +3,12 @@ package com.mikeyphw.dustui.data
 import android.content.Context
 import android.app.KeyguardManager
 import android.content.Intent
+import android.os.Build
 import android.os.PowerManager
 import android.os.StatFs
 import androidx.core.app.NotificationManagerCompat
 import com.mikeyphw.dustui.scan.ScheduledScanWorker
+import com.mikeyphw.dustui.BuildConfig
 import com.mikeyphw.dustui.root.RootServiceClient
 import com.mikeyphw.dustui.scan.ScanForegroundService
 import com.mikeyphw.dustui.scan.ScanRequest
@@ -14,6 +16,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import java.util.Locale
 
 class ScanRepository(
@@ -26,6 +29,9 @@ class ScanRepository(
     private val duplicateStore = DuplicateAnalysisStore(context)
     private val residueProtectionStore = ResidueProtectionStore(context)
     private val recommendationPreferenceStore = RecommendationPreferenceStore(context)
+    private val cleanupRuleStore = CleanupRuleStore(context)
+    private val storageGrowthPreferenceStore = StorageGrowthPreferenceStore(context)
+    private val cleanupReportStore = CleanupReportStore(context)
     @Volatile private var packageInventoryCache: Pair<Long, InstalledPackageInventory>? = null
     fun observeLatestSession(): Flow<ScanSessionEntity?> = dao.observeLatestSession()
     fun observeCleanupOperations(): Flow<List<CleanupOperationEntity>> = dao.observeCleanupOperations(50)
@@ -179,6 +185,106 @@ class ScanRepository(
     fun restoreCleanupRecommendation(scanId: String, recommendationId: String) =
         recommendationPreferenceStore.restore(scanId, recommendationId)
 
+    fun cleanupRules(): List<CleanupRule> = cleanupRuleStore.rules()
+
+    fun saveCleanupRule(rule: CleanupRule) = cleanupRuleStore.save(rule)
+
+    fun deleteCleanupRule(ruleId: String) = cleanupRuleStore.delete(ruleId)
+
+    fun duplicateCleanupRule(ruleId: String): CleanupRule? = cleanupRuleStore.duplicate(ruleId)
+
+    fun setCleanupRuleEnabled(ruleId: String, enabled: Boolean): Result<CleanupRule> = cleanupRuleStore.setEnabled(ruleId, enabled)
+
+    fun importCleanupRules(raw: String): Result<List<CleanupRule>> = cleanupRuleStore.importJson(raw)
+
+    fun exportCleanupRules() {
+        val uri = cleanupRuleStore.writeExportFile(context)
+        context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+            type = "application/json"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+        }, "Export DustUI cleanup rules").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
+    suspend fun cleanupRulePreview(
+        scanId: String,
+        rules: List<CleanupRule> = cleanupRuleStore.rules(),
+        includeDisabled: Boolean = false,
+    ): CleanupRulePreview {
+        val session = requireNotNull(dao.session(scanId)) { "Cleanup-rule scan no longer exists" }
+        val entries = dao.entriesOnce(scanId)
+        val duplicateSnapshot = duplicateStore.load(scanId)
+        val duplicatePaths = duplicateSnapshot?.groups.orEmpty().flatMap { group ->
+            val threshold = DuplicateThreshold.entries.firstOrNull { it.minBytes == duplicateSnapshot?.minSizeBytes } ?: DuplicateThreshold.ONE_MIB
+            DuplicateWorkbenchEngine.groupItem(group, DuplicateFilter(threshold = threshold, keepStrategy = DuplicateKeepStrategy.NEWEST)).deletionPaths
+        }.toSet()
+        val residue = appResidueAnalysis(scanId)
+        val residueByPath = residue.groups.flatMap { group -> group.locations.map { it.path to group.confidence } }.toMap()
+        return CleanupRuleEngine.preview(scanId, session.rootPath, entries, rules, duplicatePaths, residueByPath, includeDisabled = includeDisabled)
+    }
+
+    suspend fun completedStorageGrowthSessions(): List<ScanSessionEntity> =
+        dao.completedSessions(storageGrowthPreferenceStore.retentionLimit())
+
+    suspend fun storageGrowth(currentOffset: Int = 0, previousOffset: Int = 1): StorageGrowthAnalysis? {
+        val retention = storageGrowthPreferenceStore.retentionLimit()
+        val sessions = dao.completedSessions(retention)
+        val currentIndex = currentOffset.coerceAtLeast(0)
+        val previousIndex = previousOffset.coerceAtLeast(currentIndex + 1)
+        val current = sessions.getOrNull(currentIndex) ?: return null
+        val previous = sessions.getOrNull(previousIndex) ?: return null
+        storageGrowthPreferenceStore.prune(sessions.mapTo(linkedSetOf()) { it.id })
+        return StorageGrowthEngine.compare(
+            current,
+            dao.entriesOnce(current.id),
+            previous,
+            dao.entriesOnce(previous.id),
+            timelineSessions = sessions,
+        )
+    }
+
+    fun storageGrowthUnderstood(): Set<String> = storageGrowthPreferenceStore.understood()
+    fun markStorageGrowthUnderstood(identity: String) = storageGrowthPreferenceStore.mark(identity)
+    fun restoreStorageGrowth(identity: String) = storageGrowthPreferenceStore.restore(identity)
+    fun storageGrowthRetentionLimit(): Int = storageGrowthPreferenceStore.retentionLimit()
+
+    suspend fun pruneStorageGrowthHistory(keep: Int): Int {
+        val bounded = keep.coerceIn(StorageGrowthPreferenceStore.MIN_RETENTION, StorageGrowthPreferenceStore.MAX_RETENTION)
+        dao.deleteEntriesBeyondCompletedRetention(bounded)
+        dao.deleteSessionsBeyondCompletedRetention(bounded)
+        storageGrowthPreferenceStore.setRetentionLimit(bounded)
+        val remaining = dao.completedSessions(bounded)
+        storageGrowthPreferenceStore.prune(remaining.mapTo(linkedSetOf()) { it.id })
+        return remaining.size
+    }
+
+    fun cleanupReportLoad(): CleanupReportLoadResult = cleanupReportStore.load()
+    fun cleanupReports(): List<CleanupVerificationReport> = cleanupReportStore.reports()
+
+    fun exportCleanupReport(report: CleanupVerificationReport, asJson: Boolean) {
+        val uri = if (asJson) cleanupReportStore.exportJson(report) else cleanupReportStore.exportText(report)
+        context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+            type = if (asJson) "application/json" else "text/plain"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+        }, "Export DustUI deletion report").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
+    suspend fun retryCleanupVerification(operationId: String): CleanupVerificationReport {
+        val original = requireNotNull(cleanupReportStore.report(operationId)) { "Deletion report was not found" }
+        val observations = inspectCleanupPaths(original.items.filter { it.status != CleanupVerificationStatus.BLOCKED }.map { it.path })
+        val rootInspection = runCatching { rootClient.inspectPath(original.rootPath, previewBytes = 0) }.getOrNull()
+        val updated = CleanupVerificationEngine.reverify(
+            original = original,
+            observationsByPath = observations,
+            verifiedAt = System.currentTimeMillis(),
+            freeBytesAfter = availableBytes(original.rootPath),
+            environment = environmentContext(rootInspection),
+        )
+        withContext(kotlinx.coroutines.Dispatchers.IO) { cleanupReportStore.save(updated) }
+        return updated
+    }
+
     suspend fun loadDuplicateAnalysis(scanId: String): DuplicateAnalysisSnapshot? = duplicateStore.load(scanId)
 
     suspend fun cancelDuplicateAnalysis(scanId: String): Boolean = rootClient.cancelDuplicateVerification(scanId)
@@ -305,61 +411,101 @@ class ScanRepository(
     }
 
     suspend fun executeCleanup(review: CleanupReview): CleanupExecutionResult {
+        val startedAt = System.currentTimeMillis()
+        val freeBytesBefore = availableBytes(review.rootPath)
         authorization.authorize().getOrElse { error ->
-            return CleanupExecutionResult(
+            val blocked = CleanupExecutionResult(
                 ok = false,
                 operationId = review.operationId,
                 status = "BLOCKED",
                 deletedBytes = 0,
                 failedCount = review.accepted.size,
-                items = review.accepted.map { item ->
-                    CleanupItemResult(item.path, item.plannedBytes, 0, "BLOCKED", error.message)
-                },
+                items = review.accepted.map { item -> CleanupItemResult(item.path, item.plannedBytes, 0, "BLOCKED", error.message) },
                 message = error.message,
             )
+            val saveFailure = runCatching { persistVerificationReport(review, blocked, startedAt, freeBytesBefore) }.exceptionOrNull()
+            return if (saveFailure == null) blocked else blocked.copy(
+                message = listOfNotNull(blocked.message, "Verification report could not be saved: ${saveFailure.message ?: saveFailure.javaClass.simpleName}").joinToString(" · "),
+            )
         }
-        val createdAt = System.currentTimeMillis()
         val plannedBytes = review.accepted.sumOf { it.plannedBytes }
         dao.upsertCleanupOperation(
             CleanupOperationEntity(
-                id = review.operationId,
-                scanId = review.scanId,
-                rootPath = review.rootPath,
-                status = "EXECUTING",
-                selectedCount = review.accepted.size,
-                plannedBytes = plannedBytes,
-                createdAt = createdAt,
+                id = review.operationId, scanId = review.scanId, rootPath = review.rootPath, status = "EXECUTING",
+                selectedCount = review.accepted.size, plannedBytes = plannedBytes, createdAt = startedAt,
             ),
         )
         val result = runCatching { rootClient.executeCleanup(review) }.getOrElse { error ->
             CleanupExecutionResult(
-                ok = false,
-                operationId = review.operationId,
-                status = "FAILED",
-                deletedBytes = 0,
-                failedCount = review.accepted.size,
-                items = review.accepted.map { item ->
-                    CleanupItemResult(item.path, item.plannedBytes, 0, "FAILED", error.message)
-                },
+                ok = false, operationId = review.operationId, status = "FAILED", deletedBytes = 0, failedCount = review.accepted.size,
+                items = review.accepted.map { item -> CleanupItemResult(item.path, item.plannedBytes, 0, "FAILED", error.message) },
                 message = error.message,
             )
         }
         val summary = deletionSummary(result)
         dao.upsertCleanupOperation(
             CleanupOperationEntity(
-                id = review.operationId,
-                scanId = review.scanId,
-                rootPath = review.rootPath,
-                status = result.status,
-                selectedCount = review.accepted.size,
-                plannedBytes = plannedBytes,
-                deletedBytes = result.deletedBytes,
-                createdAt = createdAt,
-                completedAt = System.currentTimeMillis(),
-                message = summary,
+                id = review.operationId, scanId = review.scanId, rootPath = review.rootPath, status = result.status,
+                selectedCount = review.accepted.size, plannedBytes = plannedBytes, deletedBytes = result.deletedBytes,
+                createdAt = startedAt, completedAt = System.currentTimeMillis(), message = summary,
             ),
         )
-        return result.copy(message = summary)
+        val saveFailure = runCatching { persistVerificationReport(review, result, startedAt, freeBytesBefore) }.exceptionOrNull()
+        val finalMessage = if (saveFailure == null) summary else "$summary · Verification report could not be saved: ${saveFailure.message ?: saveFailure.javaClass.simpleName}"
+        return result.copy(message = finalMessage)
+    }
+
+    private suspend fun persistVerificationReport(
+        review: CleanupReview,
+        result: CleanupExecutionResult,
+        startedAt: Long,
+        freeBytesBefore: Long?,
+    ) {
+        val observationsByPath = inspectCleanupPaths(review.accepted.map { it.path })
+        val rootInspection = runCatching { rootClient.inspectPath(review.rootPath, previewBytes = 0) }.getOrNull()
+        val report = CleanupVerificationEngine.build(
+            review = review,
+            result = result,
+            startedAt = startedAt,
+            completedAt = System.currentTimeMillis(),
+            observationsByPath = observationsByPath,
+            freeBytesBefore = freeBytesBefore,
+            freeBytesAfter = availableBytes(review.rootPath),
+            appVersion = BuildConfig.VERSION_NAME,
+            environment = environmentContext(rootInspection),
+        )
+        withContext(Dispatchers.IO) { cleanupReportStore.save(report) }
+    }
+
+    private suspend fun inspectCleanupPaths(paths: Collection<String>): Map<String, CleanupPathObservation> = paths.associateWith { path ->
+        runCatching { rootClient.inspectPath(path, previewBytes = 0) }
+            .fold(
+                onSuccess = { inspection ->
+                    when {
+                        inspection.ok -> CleanupPathObservation(CleanupPathPresence.PRESENT)
+                        inspection.message.isMissingPathMessage() -> CleanupPathObservation(CleanupPathPresence.MISSING)
+                        else -> CleanupPathObservation(CleanupPathPresence.UNKNOWN, inspection.message ?: "Root service could not verify the path")
+                    }
+                },
+                onFailure = { error -> CleanupPathObservation(CleanupPathPresence.UNKNOWN, error.message ?: error.javaClass.simpleName) },
+            )
+    }
+
+    private fun environmentContext(rootInspection: RootPathInspection?): CleanupEnvironmentContext = CleanupEnvironmentContext(
+        manufacturer = Build.MANUFACTURER,
+        model = Build.MODEL,
+        sdkInt = Build.VERSION.SDK_INT,
+        filesystem = rootInspection?.filesystem,
+        mountPoint = rootInspection?.mountPoint,
+        mountSource = rootInspection?.mountSource,
+        readOnly = rootInspection?.readOnly,
+    )
+
+    private fun availableBytes(path: String): Long? = runCatching { StatFs(path).availableBytes }.getOrNull()
+
+    private fun String?.isMissingPathMessage(): Boolean {
+        val value = this?.lowercase(Locale.ROOT) ?: return false
+        return "no such file" in value || "enoent" in value || "path no longer exists" in value
     }
 
     private fun deletionSummary(result: CleanupExecutionResult): String {

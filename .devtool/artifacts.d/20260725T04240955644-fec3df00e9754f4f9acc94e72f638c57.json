@@ -1,0 +1,214 @@
+{
+  "applied_at": "2026-07-25T04:24:09.556445Z",
+  "artifact": "/storage/emulated/0/Download/dustui_android_phase20_22_cleaning_workflows_overlay-1.zip",
+  "artifact_name": "dustui_android_phase20_22_cleaning_workflows_overlay-1.zip",
+  "type": "overlay",
+  "sha256": "da6c37d91eff026e8e3863ff44c9d1a1885b91bb502b796b967ced38292d1fbf",
+  "status": "failed",
+  "validation_status": "not-run",
+  "commit_message": "Complete Android Phases 20-22 cleaning workflows",
+  "commit_hash": "",
+  "file_count": 23,
+  "change_counts": {
+    "add": 12,
+    "modify": 11
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Android complete Phases 20-22 cleaning workflows",
+    "description": "Complete implementation of Phase 20 saved cleanup rules, Phase 21 storage growth/history, and Phase 22 deletion verification/reports on validated Phase 19 commit cfd46f7. Adds exact live rule previews and enforced import review; arbitrary scan endpoints, six growth groupings, timeline/accessibility parity, insights and retention; and retryable verification reports with explicit accounting, environment context, diagnostics, migration coverage, filters, and targeted rescans. Historical endpoints remain informational and all destructive actions use the existing fingerprinted permanent-deletion planner.",
+    "version": "1.1.0",
+    "repository": {
+      "name": "dustui"
+    },
+    "target": "dustui_android",
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "CHANGELOG.md",
+          "action": "modify",
+          "sha256": "ecd40a6d204adc1179db332f5bd353d7e9de5c7fb25ef76809a07db378fd951f",
+          "size": 8636,
+          "source_sha256": "4bd822d01f2ae1c9b3fd5accc7350c4ebbd452aff0e2875a481ec4842b242cfe"
+        },
+        {
+          "path": "README.md",
+          "action": "modify",
+          "sha256": "e33ec39ebed77d059723fe3ffe60654c1d5f348071eef08b04163af91573aa1c",
+          "size": 6802,
+          "source_sha256": "3183bd2be8c71de362628683e46c8d78286c085c9af9bb27646e4d577c550b2e"
+        },
+        {
+          "path": "RELEASE_CHECKLIST.md",
+          "action": "modify",
+          "sha256": "8fa27713e33f6b72bb0f06816c0997c1bae42d711f2c375939d5a9a5e8e1bd63",
+          "size": 13426,
+          "source_sha256": "40d46244a224c799fd520638e9b7ab37288039b9ff459f7d3ee263330541396d"
+        },
+        {
+          "path": "UI_UX_CONTRACT.md",
+          "action": "modify",
+          "sha256": "c3af0914b4f0ea3655099f8c3aa5d5b6a903857f56ecefd2d8692e42cf9d81ba",
+          "size": 15007,
+          "source_sha256": "2bd913f51e0f756105206c9ed1da8418a32de2ee59cbe401ab00dba73ec7fd54"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupReportStore.kt",
+          "action": "add",
+          "sha256": "204608d959ff3dfc15cecdeabf5944a859eee6a81e214fac164b5d79e0244455",
+          "size": 11664
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupRuleStore.kt",
+          "action": "add",
+          "sha256": "7830d30fa9a507b9f0b08ed9b92fcd066ddbdbdf63f88f689356304679e30fcf",
+          "size": 9181
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupRules.kt",
+          "action": "add",
+          "sha256": "b4509695d0709d8c1739e897544d64347e904553ea206a60a5da4414e77fb11c",
+          "size": 16595
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupVerification.kt",
+          "action": "add",
+          "sha256": "ce919095fd8dd61eb691ea4b91c0005bde280f16fa1ae1fd8c173818045b2f8f",
+          "size": 11144
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanDao.kt",
+          "action": "modify",
+          "sha256": "adcfd468a05cd4d3a59da7e78eb28f5194004594b36130fe1a96640a90e902f1",
+          "size": 4547,
+          "source_sha256": "b284c8544fc112092a6d3fbc794e4ebbbbeb10690215c87d937c6a543fa2bc98"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+          "action": "modify",
+          "sha256": "9f7b40d187736ceefabfb355382e5f53e4657fa3f6ca4bd1a2bf1c208a019e0c",
+          "size": 29324,
+          "source_sha256": "d030c3ffb2e03169e8b44b6a8b0b67ffa0e026898ac0995234ffa547e06219a2"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/StorageGrowth.kt",
+          "action": "add",
+          "sha256": "5cd3a3ce60feb78f4ff48e40f31be17806d4a513c0e7148e5bbb075e07cbb6d5",
+          "size": 13555
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/StorageGrowthPreferenceStore.kt",
+          "action": "add",
+          "sha256": "802154bfe3f9d7823252b08ba5443aafe9efa998f06c2f66aff9e6cff8ab18b3",
+          "size": 1357
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/CleaningIntelligenceScreens.kt",
+          "action": "add",
+          "sha256": "c3d012d6c22f8c32046045ae9aff8ae5c2576209ea28f3a2df7c04ac10afd42f",
+          "size": 50879
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/CleanupRecommendationsScreen.kt",
+          "action": "modify",
+          "sha256": "7db3eac88f2a35b754a346e3642f84b212234a679d32b68bb831231b2ba2e98c",
+          "size": 16525,
+          "source_sha256": "0018d9b365b58306a5035e1ead40790277bb470e105eeb841997fc23e52f9308"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+          "action": "modify",
+          "sha256": "0b5a1e8119e9fa55797c25325b1da158f2148b12d888eebbe7c0a193ca5d926b",
+          "size": 9261,
+          "source_sha256": "e20b668ee64d46a9f7acbe826452e07b757961bb405c058fb325b7803d21fd2e"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "action": "modify",
+          "sha256": "bbe59699dd9c3dbb89c2ac107fc74b316f636dd331b6d4e02241c8336a199e7e",
+          "size": 121156,
+          "source_sha256": "760973204efb94bc519c36f28547e8fd938327d52f4c5df8d37978f762336813"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+          "action": "modify",
+          "sha256": "f4ecd3fae9af1a43529ccb555d610bd071ad38207edc9a848bbae80d24a39a9e",
+          "size": 68868,
+          "source_sha256": "50be72761952c45f7b6ca7830e961e6b6eb8e68cb71bfc03f42db042f064914e"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleanupRulesTest.kt",
+          "action": "add",
+          "sha256": "c5fbb15c844b30a6857bdce9d9d55b080458375a6e4ffa27e70fd1df09aed9eb",
+          "size": 6700
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleanupVerificationTest.kt",
+          "action": "add",
+          "sha256": "5e6b30040d0ffadd20cd4efe869f5749b80d0621731e7356bc60b9c8f97fd572",
+          "size": 9163
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/StorageGrowthTest.kt",
+          "action": "add",
+          "sha256": "04aa551acac02bdc39deb4a5ec457e3ec3decc53131008ace7329541720ce0be",
+          "size": 6098
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+          "action": "modify",
+          "sha256": "cca237ac50baf42fe506264d00d8b89e9643c838b812fa85c45809bb6c0bba1b",
+          "size": 3884,
+          "source_sha256": "c259801bbdbbf7d7b64888747d07c6887736ce363d27608b714d3fc98e594916"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+          "action": "modify",
+          "sha256": "dc4762e2290fe63cb0c592ec68879f853c7520e1a5891534eaa04f2f6d3b8dd2",
+          "size": 21469,
+          "source_sha256": "8dacd92b1e8e3f9541d877259967aaa0f134dc65fec9dff8d4e79b80fc3592af"
+        },
+        {
+          "path": "docs/ANDROID_PHASE20_22_CLEANING_WORKFLOWS.md",
+          "action": "add",
+          "sha256": "c227e363daa8655ff94e7603f77e756142131f481351597e4717ed3072849498",
+          "size": 3574
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false,
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Complete Android Phases 20-22 cleaning workflows"
+      }
+    },
+    "validation": {
+      "required": true,
+      "restore": true,
+      "build": true,
+      "test": true,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "build": "pass",
+        "tests": "pass",
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "6a128cc3476925915286596b860767c81e29d98b00b0809694fb5ac39d4625be",
+        "timeout_seconds": 3600
+      }
+    }
+  },
+  "history_id": "fec3df00e9754f4f9acc94e72f638c57"
+}

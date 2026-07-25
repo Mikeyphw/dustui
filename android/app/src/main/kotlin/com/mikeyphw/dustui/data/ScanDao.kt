@@ -79,6 +79,28 @@ interface ScanDao {
     @Query("DELETE FROM scan_entries WHERE scanId = :scanId")
     suspend fun deleteEntries(scanId: String)
 
+    @Query("""
+        DELETE FROM scan_entries
+        WHERE scanId IN (
+            SELECT id FROM scan_sessions
+            WHERE status = 'COMPLETED'
+            ORDER BY completedAt DESC
+            LIMIT -1 OFFSET :keep
+        )
+    """)
+    suspend fun deleteEntriesBeyondCompletedRetention(keep: Int)
+
+    @Query("""
+        DELETE FROM scan_sessions
+        WHERE id IN (
+            SELECT id FROM scan_sessions
+            WHERE status = 'COMPLETED'
+            ORDER BY completedAt DESC
+            LIMIT -1 OFFSET :keep
+        )
+    """)
+    suspend fun deleteSessionsBeyondCompletedRetention(keep: Int)
+
     @Upsert
     suspend fun upsertCleanupOperation(operation: CleanupOperationEntity)
 

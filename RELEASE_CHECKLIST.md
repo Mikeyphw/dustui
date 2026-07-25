@@ -115,3 +115,68 @@
 ## Ship rule
 
 Ship only when `SHIP_STATUS.md` says `SHIP` or when every warning listed under `SHIP_WITH_WARNINGS` is intentionally accepted.
+
+
+## Phases 20–22 cleaning workflow validation
+
+### Saved cleanup rules
+
+- [ ] Create include/exclude, extension, size, age, category, package, regex, depth, file/directory, duplicate-only, and residue-confidence rules and verify exact draft-preview membership.
+- [ ] Confirm broad and directory rules show warnings and catastrophic regular expressions are rejected.
+- [ ] Export rules, import them, and confirm every imported rule starts disabled with a new local ID.
+- [ ] Delete every saved rule and confirm the library remains intentionally empty.
+- [ ] Confirm protected paths and scan roots appear blocked and cannot enter Select matches or Plan matches.
+- [ ] Confirm ancestor/child matches collapse before byte totals and deletion review.
+- [ ] Delete a file and confirm stale rule previews remain readable but cannot select or plan until a fresh scan.
+
+### Storage growth history
+
+- [ ] Compare two completed scans and verify new, grown, shrunk, and removed file deltas against source entries.
+- [ ] Confirm directory aggregate rows do not double-count growth totals.
+- [ ] Confirm category, directory, and package groups preserve exact path totals.
+- [ ] Confirm removed paths are Historical only and expose no selection or deletion actions.
+- [ ] Mark a row Understood, reveal understood rows, restore it, and confirm the state is comparison-specific.
+- [ ] Create disabled cleanup rules from both a current growth path and a ranked recommendation, then preview each before planning deletion.
+- [ ] Confirm older/newer comparison navigation never silently changes the latest scan.
+
+### Deletion verification and reports
+
+- [ ] Delete a file successfully and confirm the report records Verified deleted and confirmed bytes.
+- [ ] Force post-delete inspection to fail and confirm verification remains unavailable rather than counting the path as deleted.
+- [ ] Simulate a path that remains after a positive root-service result and confirm it becomes Partial, not Verified.
+- [ ] Change a path after review and confirm the report records Changed since review.
+- [ ] Confirm planned, reported, confirmed, and free-space-delta values remain distinct.
+- [ ] Export JSON and text reports and verify credential-like message fragments are redacted.
+- [ ] Relaunch the app and confirm reports persist and remain readable without an active scan.
+- [ ] Start Targeted rescan and confirm it chooses the smallest safe common parent inside the report root through the normal scan flow.
+- [ ] Confirm the combined overlay completes all tests and lint with 0 warnings and 0 errors.
+
+## Complete Phases 20–22 qualification
+
+### Saved rules
+- [ ] Edit every condition and confirm the draft preview refreshes and lists exact matched and blocked paths.
+- [ ] Confirm maximum depth is relative to the include root, not absolute path depth.
+- [ ] Confirm unsafe/unbounded expressions are rejected and bounded expressions match correctly.
+- [ ] Import rules and confirm they cannot be enabled before opening and saving them as reviewed.
+- [ ] Delete every rule and confirm the library remains empty.
+- [ ] Confirm recommendation and latest-scan growth conversions create disabled rules.
+
+### Storage history
+- [ ] Select arbitrary current and previous completed-scan endpoints.
+- [ ] Confirm category, directory, package, extension, module, and mount grouping totals.
+- [ ] Confirm timeline chart points and the accessible timeline list select the same scans.
+- [ ] Verify new-large, threshold-crossing, directory, log/cache, module, and mount insights.
+- [ ] Select a historical current endpoint and confirm all live-file, rule, deletion, Explorer, and rescan actions are disabled.
+- [ ] Apply snapshot retention and confirm old entries are pruned before sessions.
+
+### Verification reports
+- [ ] Verify planned, attempted, reported, confirmed, partial, and failed bytes independently.
+- [ ] Force inspection failure and confirm it remains verification unavailable with zero confirmed bytes.
+- [ ] Retry verification and confirm attempts/timestamps update without attributing unrelated external deletion.
+- [ ] Confirm device/filesystem/mount context is persisted and exported.
+- [ ] Corrupt a report file and confirm the UI surfaces a load diagnostic.
+- [ ] Confirm schema-1 migration and unsupported-schema rejection tests pass.
+- [ ] Exercise operation/path, root, date, and status filters.
+- [ ] Confirm report-save failure is surfaced in the cleanup result.
+- [ ] Confirm targeted rescans use the smallest safe common parent.
+- [ ] Complete Android build, unit tests, lint, and source audit with 0 warnings and 0 errors.

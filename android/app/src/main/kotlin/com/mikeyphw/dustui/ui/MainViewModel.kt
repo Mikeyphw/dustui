@@ -17,6 +17,19 @@ import com.mikeyphw.dustui.data.CleanupRecommendationPage
 import com.mikeyphw.dustui.data.CleanupRecommendationPreferences
 import com.mikeyphw.dustui.data.CleanupRecommendationSort
 import com.mikeyphw.dustui.data.CleanupRecommendationEngine
+import com.mikeyphw.dustui.data.CleanupRule
+import com.mikeyphw.dustui.data.CleanupRuleConditions
+import com.mikeyphw.dustui.data.CleanupRuleDraftPreview
+import com.mikeyphw.dustui.data.CleanupRuleEntryType
+import com.mikeyphw.dustui.data.CleanupRuleResidueConfidence
+import com.mikeyphw.dustui.data.CleanupRulePreview
+import com.mikeyphw.dustui.data.StorageGrowthAnalysis
+import com.mikeyphw.dustui.data.StorageGrowthEngine
+import com.mikeyphw.dustui.data.StorageGrowthFilter
+import com.mikeyphw.dustui.data.StorageGrowthGroup
+import com.mikeyphw.dustui.data.StorageGrowthPage
+import com.mikeyphw.dustui.data.StorageGrowthScope
+import com.mikeyphw.dustui.data.CleanupVerificationReport
 import com.mikeyphw.dustui.data.ScanEntryEntity
 import com.mikeyphw.dustui.data.ScanRepository
 import com.mikeyphw.dustui.data.ScanSessionEntity
@@ -151,6 +164,46 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     ) { analysis, filter, preferences ->
         CleanupRecommendationEngine.evaluate(analysis, filter, preferences)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CleanupRecommendationPage.empty())
+    private val _cleanupRules = MutableStateFlow(repository.cleanupRules())
+    val cleanupRules: StateFlow<List<CleanupRule>> = _cleanupRules
+    private val _cleanupRulePreview = MutableStateFlow<CleanupRulePreview?>(null)
+    val cleanupRulePreview: StateFlow<CleanupRulePreview?> = _cleanupRulePreview
+    private val _cleanupRuleLoading = MutableStateFlow(false)
+    val cleanupRuleLoading: StateFlow<Boolean> = _cleanupRuleLoading
+    private val _cleanupRuleDraftPreview = MutableStateFlow<CleanupRuleDraftPreview?>(null)
+    val cleanupRuleDraftPreview: StateFlow<CleanupRuleDraftPreview?> = _cleanupRuleDraftPreview
+    private val _cleanupRuleDraftLoading = MutableStateFlow(false)
+    val cleanupRuleDraftLoading: StateFlow<Boolean> = _cleanupRuleDraftLoading
+    private val _storageGrowthAnalysis = MutableStateFlow<StorageGrowthAnalysis?>(null)
+    val storageGrowthAnalysis: StateFlow<StorageGrowthAnalysis?> = _storageGrowthAnalysis
+    private val _storageGrowthFilter = MutableStateFlow(StorageGrowthFilter())
+    val storageGrowthFilter: StateFlow<StorageGrowthFilter> = _storageGrowthFilter
+    private val _storageGrowthUnderstood = MutableStateFlow(repository.storageGrowthUnderstood())
+    private val _storageGrowthCurrentOffset = MutableStateFlow(0)
+    private val _storageGrowthPreviousOffset = MutableStateFlow(1)
+    private val _storageGrowthRetentionLimit = MutableStateFlow(repository.storageGrowthRetentionLimit())
+    val storageGrowthRetentionLimit: StateFlow<Int> = _storageGrowthRetentionLimit
+    private val _storageGrowthSessionCount = MutableStateFlow(0)
+    val storageGrowthSessionCount: StateFlow<Int> = _storageGrowthSessionCount
+    val storageGrowthPage: StateFlow<StorageGrowthPage> = combine(
+        _storageGrowthAnalysis,
+        _storageGrowthFilter,
+        _storageGrowthUnderstood,
+    ) { analysis, filter, understood ->
+        StorageGrowthEngine.evaluate(analysis, filter, understood)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StorageGrowthPage.empty())
+    private val _storageGrowthLoading = MutableStateFlow(false)
+    val storageGrowthLoading: StateFlow<Boolean> = _storageGrowthLoading
+    private val initialCleanupReportLoad = repository.cleanupReportLoad()
+    private val _cleanupReports = MutableStateFlow(initialCleanupReportLoad.reports)
+    val cleanupReports: StateFlow<List<CleanupVerificationReport>> = _cleanupReports
+    private val _cleanupReportDiagnostics = MutableStateFlow(initialCleanupReportLoad.diagnostics)
+    val cleanupReportDiagnostics: StateFlow<List<String>> = _cleanupReportDiagnostics
+    private val _selectedCleanupReport = MutableStateFlow<CleanupVerificationReport?>(null)
+    private val _cleanupReportVerifying = MutableStateFlow<String?>(null)
+    val cleanupReportVerifying: StateFlow<String?> = _cleanupReportVerifying
+    val selectedCleanupReport: StateFlow<CleanupVerificationReport?> = _selectedCleanupReport
+
     private val _rootSearchResults = MutableStateFlow<List<RootFileSearchResult>>(emptyList())
     val rootSearchResults: StateFlow<List<RootFileSearchResult>> = _rootSearchResults
     private val _categoryFiles = MutableStateFlow<CategoryFileSelection?>(null)
@@ -222,6 +275,23 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         _recommendationLoading.value = false
         _recommendationFilter.value = CleanupRecommendationFilter()
         _recommendationPreferences.value = CleanupRecommendationPreferences()
+        _cleanupRules.value = repository.cleanupRules()
+        _cleanupRulePreview.value = null
+        _cleanupRuleLoading.value = false
+        _cleanupRuleDraftPreview.value = null
+        _cleanupRuleDraftLoading.value = false
+        _storageGrowthAnalysis.value = null
+        _storageGrowthFilter.value = StorageGrowthFilter()
+        _storageGrowthUnderstood.value = repository.storageGrowthUnderstood()
+        _storageGrowthCurrentOffset.value = 0
+        _storageGrowthPreviousOffset.value = 1
+        _storageGrowthSessionCount.value = 0
+        _storageGrowthLoading.value = false
+        _selectedCleanupReport.value = null
+        repository.cleanupReportLoad().also { load ->
+            _cleanupReports.value = load.reports
+            _cleanupReportDiagnostics.value = load.diagnostics
+        }
         _moduleReport.value = null
         _scanDataStale.value = false
     }
@@ -542,6 +612,36 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         }
     }
 
+    fun createRuleFromRecommendation(recommendationId: String) {
+        val item = _recommendationAnalysis.value?.items?.firstOrNull { it.id == recommendationId } ?: run {
+            _message.value = "Recommendation was not found"
+            return
+        }
+        val conditions = when (item.kind) {
+            CleanupRecommendationKind.EXACT_DUPLICATES -> CleanupRuleConditions(duplicateOnly = true)
+            CleanupRecommendationKind.APP_RESIDUE -> CleanupRuleConditions(
+                entryType = CleanupRuleEntryType.ALL,
+                residueConfidence = CleanupRuleResidueConfidence.HIGH,
+            )
+            CleanupRecommendationKind.STALE_INSTALLER -> CleanupRuleConditions(
+                extensions = listOf("apk", "apex"), minimumBytes = 10L * 1024L * 1024L, olderThanDays = 30,
+            )
+            CleanupRecommendationKind.OLD_ARCHIVE -> CleanupRuleConditions(
+                extensions = listOf("zip", "7z", "rar", "tar", "gz", "zst"), minimumBytes = 50L * 1024L * 1024L, olderThanDays = 180,
+            )
+            CleanupRecommendationKind.OVERSIZED_LOG -> CleanupRuleConditions(
+                extensions = listOf("log", "txt", "trace", "trc"), minimumBytes = 50L * 1024L * 1024L, olderThanDays = 30,
+            )
+            CleanupRecommendationKind.LARGE_OLD_FILE -> CleanupRuleConditions(
+                minimumBytes = 250L * 1024L * 1024L, olderThanDays = 180,
+            )
+        }
+        val rule = CleanupRule(name = item.kind.label, enabled = false, conditions = conditions)
+        repository.saveCleanupRule(rule)
+        _cleanupRules.value = repository.cleanupRules()
+        _message.value = "Created disabled rule ${rule.name}. Review it before enabling."
+    }
+
     private fun selectRecommendationPaths(paths: List<String>, hashes: Map<String, String>, label: String) {
         if (_scanDataStale.value) {
             _message.value = "Run a new scan before selecting files for deletion"
@@ -581,6 +681,342 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         _recommendationPreferences.value = repository.cleanupRecommendationPreferences(scanId)
         if (recommendationPage.value.items.isEmpty() && recommendationPage.value.pageIndex > 0) {
             previousRecommendationPage()
+        }
+    }
+
+    fun refreshCleanupRules(preview: Boolean = true) {
+        _cleanupRules.value = repository.cleanupRules()
+        if (!preview) return
+        val scanId = latestSession.value?.id ?: return
+        _cleanupRuleLoading.value = true
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = runCatching { repository.cleanupRulePreview(scanId) }
+            if (latestSession.value?.id == scanId) {
+                result.onSuccess { _cleanupRulePreview.value = it }
+                    .onFailure { _message.value = it.message ?: "Unable to preview cleanup rules" }
+                _cleanupRuleLoading.value = false
+            }
+        }
+    }
+
+    fun previewCleanupRuleDraft(rule: CleanupRule) {
+        val scanId = latestSession.value?.id ?: run {
+            _message.value = "Run a scan before previewing a cleanup rule"
+            return
+        }
+        val validation = com.mikeyphw.dustui.data.CleanupRuleEngine.validate(rule.copy(enabled = false))
+        if (!validation.valid) {
+            _cleanupRuleDraftPreview.value = null
+            _cleanupRuleDraftLoading.value = false
+            return
+        }
+        _cleanupRuleDraftLoading.value = true
+        viewModelScope.launch(Dispatchers.IO) {
+            val draft = rule.copy(enabled = false)
+            val result = runCatching { repository.cleanupRulePreview(scanId, listOf(draft), includeDisabled = true) }
+            if (latestSession.value?.id == scanId) {
+                result.onSuccess { preview ->
+                    _cleanupRuleDraftPreview.value = preview.matches.firstOrNull()?.let { CleanupRuleDraftPreview(draft, it) }
+                }.onFailure { _message.value = it.message ?: "Unable to preview this cleanup rule" }
+                _cleanupRuleDraftLoading.value = false
+            }
+        }
+    }
+
+    fun clearCleanupRuleDraftPreview() {
+        _cleanupRuleDraftPreview.value = null
+        _cleanupRuleDraftLoading.value = false
+    }
+
+    fun saveCleanupRule(rule: CleanupRule) {
+        val reviewed = if (rule.imported) rule.copy(reviewedAt = System.currentTimeMillis(), enabled = false) else rule
+        repository.saveCleanupRule(reviewed)
+        refreshCleanupRules()
+        _message.value = if (rule.imported) "Reviewed and saved ${rule.name}. It remains disabled until you enable it." else "Saved cleanup rule ${rule.name}"
+    }
+
+    fun toggleCleanupRule(ruleId: String, enabled: Boolean) {
+        repository.setCleanupRuleEnabled(ruleId, enabled)
+            .onSuccess { refreshCleanupRules() }
+            .onFailure { _message.value = it.message ?: "Unable to change cleanup rule" }
+    }
+
+    fun deleteCleanupRule(ruleId: String) {
+        repository.deleteCleanupRule(ruleId)
+        refreshCleanupRules()
+        _message.value = "Cleanup rule deleted"
+    }
+
+    fun duplicateCleanupRule(ruleId: String) {
+        val duplicate = repository.duplicateCleanupRule(ruleId)
+        refreshCleanupRules(preview = false)
+        _message.value = duplicate?.let { "Created disabled copy ${it.name}" } ?: "Cleanup rule was not found"
+    }
+
+    fun importCleanupRules(raw: String) {
+        repository.importCleanupRules(raw)
+            .onSuccess { imported ->
+                refreshCleanupRules(preview = false)
+                _message.value = "Imported ${imported.size} disabled cleanup rule(s). Review before enabling."
+            }
+            .onFailure { _message.value = it.message ?: "Unable to import cleanup rules" }
+    }
+
+    fun exportCleanupRules() = repository.exportCleanupRules()
+
+    fun selectCleanupRule(ruleId: String) {
+        val match = _cleanupRulePreview.value?.matches?.firstOrNull { it.ruleId == ruleId }
+        selectRulePaths(match?.actionableEntries.orEmpty().map { it.path }, "cleanup rule")
+    }
+
+    fun reviewCleanupRule(ruleId: String) {
+        val match = _cleanupRulePreview.value?.matches?.firstOrNull { it.ruleId == ruleId }
+        val paths = match?.actionableEntries.orEmpty().map { it.path }
+        if (paths.isEmpty()) _message.value = "This cleanup rule has no current actionable matches" else reviewPaths(paths)
+    }
+
+    fun selectAllCleanupRuleMatches() = selectRulePaths(_cleanupRulePreview.value?.exactPaths.orEmpty(), "enabled cleanup rules")
+
+    fun reviewAllCleanupRuleMatches() {
+        val paths = _cleanupRulePreview.value?.exactPaths.orEmpty()
+        if (paths.isEmpty()) _message.value = "Enabled cleanup rules have no current actionable matches" else reviewPaths(paths)
+    }
+
+    private fun selectRulePaths(paths: List<String>, label: String) {
+        if (_scanDataStale.value) {
+            _message.value = "Run a new scan before selecting files for deletion"
+            return
+        }
+        if (paths.isEmpty()) {
+            _message.value = "No $label matches are available"
+            return
+        }
+        _selectedPaths.value = paths.toCollection(linkedSetOf())
+        _selectedContentHashes.value = emptyMap()
+        _cleanupReview.value = null
+        _message.value = "Selected ${paths.size} exact rule match(es)"
+    }
+
+    fun reloadStorageGrowth(
+        currentOffset: Int = _storageGrowthCurrentOffset.value,
+        previousOffset: Int = _storageGrowthPreviousOffset.value,
+    ) {
+        val current = currentOffset.coerceAtLeast(0)
+        val previous = previousOffset.coerceAtLeast(current + 1)
+        _storageGrowthCurrentOffset.value = current
+        _storageGrowthPreviousOffset.value = previous
+        _storageGrowthLoading.value = true
+        viewModelScope.launch(Dispatchers.IO) {
+            val sessions = runCatching { repository.completedStorageGrowthSessions() }.getOrElse { emptyList() }
+            _storageGrowthSessionCount.value = sessions.size
+            val result = runCatching { repository.storageGrowth(current, previous) }
+            result.onSuccess { analysis ->
+                if (analysis == null) {
+                    _message.value = "No completed scans exist at that comparison range"
+                } else {
+                    _storageGrowthAnalysis.value = analysis
+                    _storageGrowthUnderstood.value = repository.storageGrowthUnderstood()
+                    _storageGrowthFilter.value = _storageGrowthFilter.value.copy(page = 0)
+                }
+            }.onFailure { _message.value = it.message ?: "Unable to compare scan history" }
+            _storageGrowthLoading.value = false
+        }
+    }
+
+    fun compareCurrentOlder() = reloadStorageGrowth(_storageGrowthCurrentOffset.value + 1, (_storageGrowthPreviousOffset.value + 1).coerceAtLeast(_storageGrowthCurrentOffset.value + 2))
+    fun compareCurrentNewer() = reloadStorageGrowth((_storageGrowthCurrentOffset.value - 1).coerceAtLeast(0), _storageGrowthPreviousOffset.value.coerceAtLeast(_storageGrowthCurrentOffset.value + 1))
+    fun comparePreviousOlder() = reloadStorageGrowth(_storageGrowthCurrentOffset.value, _storageGrowthPreviousOffset.value + 1)
+    fun comparePreviousNewer() = reloadStorageGrowth(_storageGrowthCurrentOffset.value, (_storageGrowthPreviousOffset.value - 1).coerceAtLeast(_storageGrowthCurrentOffset.value + 1))
+
+    fun selectStorageGrowthTimelineScan(sessionId: String) {
+        val analysis = _storageGrowthAnalysis.value ?: return
+        val newestFirst = analysis.timeline.sortedByDescending { it.completedAt }
+        val currentIndex = newestFirst.indexOfFirst { it.sessionId == sessionId }
+        if (currentIndex < 0 || currentIndex + 1 >= newestFirst.size) {
+            _message.value = "Choose a timeline point that has an older comparison scan"
+            return
+        }
+        reloadStorageGrowth(currentIndex, currentIndex + 1)
+    }
+
+    fun cycleStorageGrowthRetention() {
+        val options = listOf(6, 12, 24, 50)
+        val current = _storageGrowthRetentionLimit.value
+        _storageGrowthRetentionLimit.value = options[(options.indexOf(current).takeIf { it >= 0 } ?: 0).let { (it + 1) % options.size }]
+    }
+
+    fun applyStorageGrowthRetention() {
+        val keep = _storageGrowthRetentionLimit.value
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { repository.pruneStorageGrowthHistory(keep) }
+                .onSuccess { remaining ->
+                    _storageGrowthSessionCount.value = remaining
+                    _message.value = "Kept the newest $remaining completed scan snapshot(s)"
+                    reloadStorageGrowth(0, 1)
+                }
+                .onFailure { _message.value = it.message ?: "Unable to prune scan history" }
+        }
+    }
+
+    fun updateStorageGrowthQuery(value: String) {
+        _storageGrowthFilter.value = _storageGrowthFilter.value.copy(query = value, page = 0)
+    }
+
+    fun cycleStorageGrowthScope() {
+        val options = StorageGrowthScope.entries
+        val current = _storageGrowthFilter.value
+        _storageGrowthFilter.value = current.copy(scope = options[(current.scope.ordinal + 1) % options.size], page = 0)
+    }
+
+    fun cycleStorageGrowthGroup() {
+        val options = StorageGrowthGroup.entries
+        val current = _storageGrowthFilter.value
+        _storageGrowthFilter.value = current.copy(group = options[(current.group.ordinal + 1) % options.size], page = 0)
+    }
+
+    fun toggleUnderstoodStorageGrowth() {
+        val current = _storageGrowthFilter.value
+        _storageGrowthFilter.value = current.copy(showUnderstood = !current.showUnderstood, page = 0)
+    }
+
+    fun previousStorageGrowthPage() {
+        val current = _storageGrowthFilter.value
+        _storageGrowthFilter.value = current.copy(page = (current.page - 1).coerceAtLeast(0))
+    }
+
+    fun nextStorageGrowthPage() {
+        val current = _storageGrowthFilter.value
+        val last = (storageGrowthPage.value.pageCount - 1).coerceAtLeast(0)
+        _storageGrowthFilter.value = current.copy(page = (current.page + 1).coerceAtMost(last))
+    }
+
+    fun markStorageGrowthUnderstood(path: String) {
+        val analysis = _storageGrowthAnalysis.value ?: return
+        val item = analysis.items.firstOrNull { it.path == path } ?: return
+        repository.markStorageGrowthUnderstood(StorageGrowthEngine.identity(item, analysis))
+        _storageGrowthUnderstood.value = repository.storageGrowthUnderstood()
+    }
+
+    fun restoreStorageGrowth(path: String) {
+        val analysis = _storageGrowthAnalysis.value ?: return
+        val item = analysis.items.firstOrNull { it.path == path } ?: return
+        repository.restoreStorageGrowth(StorageGrowthEngine.identity(item, analysis))
+        _storageGrowthUnderstood.value = repository.storageGrowthUnderstood()
+    }
+
+    private fun latestActionableGrowthAnalysis(): StorageGrowthAnalysis? {
+        val analysis = _storageGrowthAnalysis.value
+        if (analysis == null) {
+            _message.value = "Load a storage comparison first"
+            return null
+        }
+        if (!analysis.currentIsLatest || analysis.currentSession.id != latestSession.value?.id) {
+            _message.value = "Historical comparisons are informational. Choose the newest scan before acting on files."
+            return null
+        }
+        if (_scanDataStale.value) {
+            _message.value = "Run a new scan before acting on storage-history files"
+            return null
+        }
+        return analysis
+    }
+
+    fun selectStorageGrowthPath(path: String) {
+        val analysis = latestActionableGrowthAnalysis() ?: return
+        val current = analysis.items.firstOrNull { it.path == path }?.currentEntry
+        if (current == null) _message.value = "Historical removed paths are informational only" else selectRulePaths(listOf(current.path), "growth path")
+    }
+
+    fun reviewStorageGrowthPath(path: String) {
+        val analysis = latestActionableGrowthAnalysis() ?: return
+        val current = analysis.items.firstOrNull { it.path == path }?.currentEntry
+        if (current == null) _message.value = "Historical removed paths cannot be deletion targets" else reviewPaths(listOf(current.path))
+    }
+
+    fun createRuleFromGrowthPath(path: String) {
+        val analysis = latestActionableGrowthAnalysis() ?: return
+        val current = analysis.items.firstOrNull { it.path == path }?.currentEntry
+        if (current == null) {
+            _message.value = "Only a current path can become a cleanup rule"
+            return
+        }
+        val include = if (current.isDirectory) current.path else current.parentPath
+        val rule = CleanupRule(
+            name = "Review growth under ${include.substringAfterLast('/').ifBlank { include }}",
+            enabled = false,
+            conditions = CleanupRuleConditions(includePaths = listOf(include)),
+        )
+        repository.saveCleanupRule(rule)
+        _cleanupRules.value = repository.cleanupRules()
+        _message.value = "Created a disabled cleanup rule from this growth path"
+    }
+
+    fun selectStorageGrowthInsight(insightId: String) {
+        val analysis = latestActionableGrowthAnalysis() ?: return
+        val paths = analysis.insights.firstOrNull { it.id == insightId }?.currentPaths.orEmpty()
+        selectRulePaths(paths, "growth insight")
+    }
+
+    fun reviewStorageGrowthInsight(insightId: String) {
+        val analysis = latestActionableGrowthAnalysis() ?: return
+        val paths = analysis.insights.firstOrNull { it.id == insightId }?.currentPaths.orEmpty()
+        if (paths.isEmpty()) _message.value = "This insight has no current deletion targets" else reviewPaths(paths)
+    }
+
+    fun rescanStorageGrowthPath(path: String) {
+        val analysis = latestActionableGrowthAnalysis() ?: return
+        val current = analysis.items.firstOrNull { it.path == path }?.currentEntry
+        if (current == null) _message.value = "Historical removed paths cannot be rescanned" else startCustom(if (current.isDirectory) current.path else current.parentPath)
+    }
+
+    fun rescanStorageGrowthInsight(insightId: String) {
+        val analysis = latestActionableGrowthAnalysis() ?: return
+        val paths = analysis.insights.firstOrNull { it.id == insightId }?.currentPaths.orEmpty()
+        if (paths.isEmpty()) {
+            _message.value = "This insight has no current path to rescan"
+        } else {
+            startCustom(com.mikeyphw.dustui.data.CleanupVerificationEngine.targetedRescanRoot(analysis.currentSession.rootPath, paths))
+        }
+    }
+
+    fun refreshCleanupReports() {
+        val load = repository.cleanupReportLoad()
+        _cleanupReports.value = load.reports
+        _cleanupReportDiagnostics.value = load.diagnostics
+        _selectedCleanupReport.value = _selectedCleanupReport.value?.operationId?.let { id -> load.reports.firstOrNull { it.operationId == id } }
+    }
+
+    fun openCleanupReport(operationId: String) {
+        _selectedCleanupReport.value = _cleanupReports.value.firstOrNull { it.operationId == operationId }
+    }
+
+    fun closeCleanupReport() { _selectedCleanupReport.value = null }
+
+    fun retryCleanupVerification(operationId: String) {
+        if (_cleanupReportVerifying.value != null) return
+        _cleanupReportVerifying.value = operationId
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { repository.retryCleanupVerification(operationId) }
+                .onSuccess { updated ->
+                    refreshCleanupReports()
+                    _selectedCleanupReport.value = updated
+                    _message.value = "Verification retried for ${updated.items.size} path(s)"
+                }
+                .onFailure { _message.value = it.message ?: "Unable to retry verification" }
+            _cleanupReportVerifying.value = null
+        }
+    }
+
+    fun exportCleanupReport(operationId: String, asJson: Boolean) {
+        _cleanupReports.value.firstOrNull { it.operationId == operationId }?.let { repository.exportCleanupReport(it, asJson) }
+    }
+
+    fun rescanCleanupReport(operationId: String) {
+        val report = _cleanupReports.value.firstOrNull { it.operationId == operationId }
+        if (report == null) {
+            _message.value = "Deletion report was not found"
+        } else {
+            startCustom(com.mikeyphw.dustui.data.CleanupVerificationEngine.targetedRescanRoot(report.rootPath, report.items.map { it.path }))
         }
     }
 
@@ -881,6 +1317,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
                 return@launch
             }
             val result = repository.executeCleanup(review)
+            refreshCleanupReports()
             _cleanupReview.value = null
             val filesystemChanged = result.items.any { it.status == "DELETED" || it.status == "PARTIAL" }
             if (filesystemChanged) {
@@ -929,6 +1366,9 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
                 _recommendationPreferences.value = repository.cleanupRecommendationPreferences(scanId)
             }.onFailure { _message.value = it.message ?: "Unable to rank cleanup recommendations" }
             _recommendationLoading.value = false
+            _cleanupRules.value = repository.cleanupRules()
+            _storageGrowthUnderstood.value = repository.storageGrowthUnderstood()
+            refreshCleanupReports()
             _moduleReport.value = moduleReport
         }
     }

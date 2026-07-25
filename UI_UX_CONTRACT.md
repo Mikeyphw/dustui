@@ -141,3 +141,44 @@ DustUI is a rooted Android storage workbench. The UI must remain readable on pho
 9. Recommendation analysis is bound to the active scan. After filesystem mutation, browsing may continue but selection and planning require a fresh scan.
 10. Ranking, filtering, paging, and preference changes must preserve exact membership and complete with 0 warnings and 0 errors.
 
+
+
+## Saved cleanup rule rules
+
+1. Rules produce current-scan candidates only and never execute deletion automatically or in the background.
+2. The editor must update a draft preview after condition changes and expose exact matched paths, bytes, and blocked reasons before saving.
+3. Conditions cover include/exclude roots, extensions, minimum/maximum size, age, category, package, safe bounded path expression, relative depth, type, verified duplicates, and residue confidence.
+4. Maximum depth is relative to the longest matching include root, or the scan root when no include exists.
+5. Path expressions reject unbounded repetition, groups, alternation, lookarounds, and backreferences; matching input and repetition bounds are capped.
+6. Imported rules receive new IDs, stay disabled, and cannot be enabled until explicitly opened and saved as reviewed.
+7. Broad and directory rules show warnings. Protected paths and the scan root cannot be overridden.
+8. Ancestor and descendant matches collapse before byte totals and deletion review.
+9. Rules can be duplicated, disabled, deleted, imported, explicitly exported, and created from recommendations or latest-scan growth results.
+10. Empty rule libraries remain empty, and stale previews cannot select or plan deletion.
+
+## Storage growth history rules
+
+1. History compares arbitrary completed-scan endpoints using leaf files, never aggregate directory rows.
+2. Added, grown, shrunk, and removed paths retain old size, current size, and signed delta.
+3. Timeline points show scan dates and totals and have an equivalent accessible action list.
+4. Grouping supports category, directory, package, extension, root module, and mount with deterministic totals.
+5. Insights include new large files, threshold crossings, fastest-growing directories, sudden log/cache growth, module growth, and mount growth.
+6. Understood state is reversible and scoped to the exact scan pair, path, and delta.
+7. Snapshot retention is configurable; pruning removes old entries before sessions and keeps the newest bounded set.
+8. Only a comparison ending at the newest active scan may expose Details, Explorer, selection, rule creation, deletion planning, or targeted rescans.
+9. All older endpoint combinations are informational, even when a row has a current-side entry in that historical snapshot.
+10. After deletion, history remains readable but all live-file actions require a fresh scan.
+
+## Deletion verification and report rules
+
+1. Root-service deletion status is not proof; every accepted top-level path is inspected after execution.
+2. Missing, present, and verification-unavailable observations remain distinct. Inspection failure never confirms deletion.
+3. Reports classify paths as Verified deleted, Partial, Failed, Blocked, or Changed since review.
+4. Reports retain planned, attempted, reported, confirmed, partial, and failed bytes separately.
+5. Reports retain operation/scan/root/timestamps, fingerprints, verification attempts, app version, device model, SDK, filesystem, mount point/source, and read-only state.
+6. Report-save failures are surfaced in the cleanup result. Malformed stored reports remain visible as diagnostics.
+7. Schema-1 reports migrate into the current schema and unsupported schemas are rejected.
+8. Search and filters cover operation/path, root, date window, and per-status attention states.
+9. Users can retry verification, explicitly export redacted JSON/text, and start a normal rescan at the smallest safe common parent.
+10. Reports are readable without an active scan, are capped at 100 with deterministic pruning, and cannot trigger deletion directly.
+

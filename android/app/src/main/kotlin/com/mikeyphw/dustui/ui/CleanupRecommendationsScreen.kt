@@ -277,6 +277,7 @@ private fun RecommendationCard(
                     ) { Text("Plan deletion") }
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = { vm.createRuleFromRecommendation(item.id) }, modifier = Modifier.weight(1f)) { Text("Create rule") }
                     TextButton(onClick = { vm.dismissCleanupRecommendation(item.id) }, modifier = Modifier.weight(1f)) { Text("Dismiss") }
                     TextButton(onClick = { vm.ignoreCleanupRecommendation(item.id) }, modifier = Modifier.weight(1f)) { Text("Ignore") }
                 }

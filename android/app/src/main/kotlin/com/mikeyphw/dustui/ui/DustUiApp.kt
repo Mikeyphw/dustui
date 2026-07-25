@@ -129,6 +129,14 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         val recommendationAnalysis by viewModel.recommendationAnalysis.collectAsStateWithLifecycle()
         val recommendationPage by viewModel.recommendationPage.collectAsStateWithLifecycle()
         val recommendationLoading by viewModel.recommendationLoading.collectAsStateWithLifecycle()
+        val cleanupRules by viewModel.cleanupRules.collectAsStateWithLifecycle()
+        val cleanupRulePreview by viewModel.cleanupRulePreview.collectAsStateWithLifecycle()
+        val cleanupRuleLoading by viewModel.cleanupRuleLoading.collectAsStateWithLifecycle()
+        val storageGrowthAnalysis by viewModel.storageGrowthAnalysis.collectAsStateWithLifecycle()
+        val storageGrowthPage by viewModel.storageGrowthPage.collectAsStateWithLifecycle()
+        val storageGrowthLoading by viewModel.storageGrowthLoading.collectAsStateWithLifecycle()
+        val cleanupReports by viewModel.cleanupReports.collectAsStateWithLifecycle()
+        val selectedCleanupReport by viewModel.selectedCleanupReport.collectAsStateWithLifecycle()
         val certification by viewModel.certification.collectAsStateWithLifecycle()
         val packageProfiles by viewModel.packageProfiles.collectAsStateWithLifecycle()
         val rootSearchResults by viewModel.rootSearchResults.collectAsStateWithLifecycle()
@@ -141,7 +149,12 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
 
         fun selectDestination(target: DustDestination) {
             destination = target
-            if (DustNavigationModel.refreshesInsights(target)) viewModel.refreshInsights()
+            when (target) {
+                DustDestination.RULES -> viewModel.refreshCleanupRules()
+                DustDestination.GROWTH -> viewModel.reloadStorageGrowth()
+                DustDestination.CLEANUP -> viewModel.refreshCleanupReports()
+                else -> if (DustNavigationModel.refreshesInsights(target)) viewModel.refreshInsights()
+            }
         }
 
         LaunchedEffect(session?.id) {
@@ -241,7 +254,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                             when {
                                 currentSession == null && DustNavigationModel.needsScanData(destination) -> EmptyState(
                                     title = "No scan yet",
-                                    detail = "Start a root scan before opening explorer, analytics, cleanup recommendations, large-file cleanup, duplicate detection, app residue, search, packages, modules, certification, or deletion activity.",
+                                    detail = "Start a root scan before opening explorer, analytics, cleanup recommendations, saved rules, growth history, large-file cleanup, duplicate detection, app residue, search, packages, modules, or certification.",
                                 )
                                 destination == DustDestination.SCAN -> ScanLauncher(
                                     Modifier.fillMaxSize(),
@@ -281,6 +294,30 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     recommendationAnalysis,
                                     recommendationPage,
                                     recommendationLoading,
+                                    selectedPaths,
+                                    scanDataStale,
+                                    viewModel,
+                                ) { filePath ->
+                                    viewModel.revealPath(filePath)
+                                    selectDestination(DustDestination.EXPLORER)
+                                }
+                                destination == DustDestination.RULES && currentSession != null -> CleanupRulesScreen(
+                                    Modifier.fillMaxSize(),
+                                    cleanupRules,
+                                    cleanupRulePreview,
+                                    cleanupRuleLoading,
+                                    selectedPaths,
+                                    scanDataStale,
+                                    viewModel,
+                                ) { filePath ->
+                                    viewModel.revealPath(filePath)
+                                    selectDestination(DustDestination.EXPLORER)
+                                }
+                                destination == DustDestination.GROWTH && currentSession != null -> StorageGrowthScreen(
+                                    Modifier.fillMaxSize(),
+                                    storageGrowthAnalysis,
+                                    storageGrowthPage,
+                                    storageGrowthLoading,
                                     selectedPaths,
                                     scanDataStale,
                                     viewModel,
@@ -356,7 +393,13 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     selectDestination(DustDestination.EXPLORER)
                                 }
                                 destination == DustDestination.CERTIFICATION -> CertificationScreen(Modifier.fillMaxSize(), certification, viewModel)
-                                destination == DustDestination.CLEANUP -> CleanupHistoryScreen(Modifier.fillMaxSize(), cleanupOperations)
+                                destination == DustDestination.CLEANUP -> CleanupReportsScreen(
+                                    Modifier.fillMaxSize(),
+                                    cleanupReports,
+                                    cleanupOperations,
+                                    selectedCleanupReport,
+                                    viewModel,
+                                )
                                 destination == DustDestination.MORE -> MoreScreen(Modifier.fillMaxSize(), ::selectDestination)
                             }
                             if (destination != DustDestination.EXPLORER && selectedPaths.isNotEmpty()) {
@@ -2197,13 +2240,15 @@ private fun MoreScreen(modifier: Modifier, navigate: (DustDestination) -> Unit) 
 
 private fun moreDestinationDescription(destination: DustDestination): String = when (destination) {
     DustDestination.RECOMMENDATIONS -> "Rank explainable cleanup candidates and review exact current-scan paths."
+    DustDestination.RULES -> "Build reusable current-scan searches that always open an exact deletion review."
+    DustDestination.GROWTH -> "Compare completed scans and open the files responsible for storage changes."
     DustDestination.LARGE_FILES -> "Filter, group, inspect, and batch-plan deletion for large files."
     DustDestination.DUPLICATES -> "Verify exact duplicate content and choose which physical copies to keep."
     DustDestination.APP_RESIDUE -> "Review evidence-ranked folders left by packages that are no longer installed."
     DustDestination.PACKAGES -> "App-owned storage profiles and largest paths."
     DustDestination.MODULES -> "Root module footprint and overlay conflict analysis."
     DustDestination.CERTIFICATION -> "Root backend, notification, lock-state, and release checks."
-    DustDestination.CLEANUP -> "Permanent deletion activity and partial-failure details."
+    DustDestination.CLEANUP -> "Verified deletion reports, per-path outcomes, exports, and targeted rescans."
     else -> destination.label
 }
 

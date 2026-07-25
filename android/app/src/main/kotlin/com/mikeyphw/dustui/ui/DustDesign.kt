@@ -28,6 +28,8 @@ enum class DustDestination(val label: String, val shortLabel: String, val symbol
     EXPLORER("Explorer", "Files", "▦", "Actions"),
     INSIGHTS("Overview", "Overview", "◌", "Export"),
     RECOMMENDATIONS("Recommendations", "Clean", "✦", "Actions"),
+    RULES("Cleanup rules", "Rules", "≡", "Actions"),
+    GROWTH("Growth history", "Growth", "↗", "Actions"),
     LARGE_FILES("Large files", "Large", "▤", "Actions"),
     DUPLICATES("Duplicates", "Dupes", "⧉", "Actions"),
     APP_RESIDUE("App residue", "Residue", "⌫", "Actions"),
@@ -35,7 +37,7 @@ enum class DustDestination(val label: String, val shortLabel: String, val symbol
     PACKAGES("Packages", "Apps", "▣", "Apps"),
     MODULES("Modules", "Modules", "▥", "Tools"),
     CERTIFICATION("Certification", "Cert", "✓", "Run"),
-    CLEANUP("Cleanup", "Cleanup", "↺", "Actions"),
+    CLEANUP("Deletion reports", "Reports", "↺", "Actions"),
     MORE("More", "More", "•••", "More"),
 }
 
@@ -53,6 +55,8 @@ object DustNavigationModel {
         DustDestination.EXPLORER,
         DustDestination.INSIGHTS,
         DustDestination.RECOMMENDATIONS,
+        DustDestination.RULES,
+        DustDestination.GROWTH,
         DustDestination.LARGE_FILES,
         DustDestination.DUPLICATES,
         DustDestination.APP_RESIDUE,
@@ -65,6 +69,8 @@ object DustNavigationModel {
 
     val moreDestinations = listOf(
         DustDestination.RECOMMENDATIONS,
+        DustDestination.RULES,
+        DustDestination.GROWTH,
         DustDestination.LARGE_FILES,
         DustDestination.DUPLICATES,
         DustDestination.APP_RESIDUE,
@@ -77,11 +83,13 @@ object DustNavigationModel {
     fun compactSelection(destination: DustDestination): DustDestination =
         if (destination in compactDestinations) destination else DustDestination.MORE
 
-    fun needsScanData(destination: DustDestination): Boolean = destination != DustDestination.SCAN
+    fun needsScanData(destination: DustDestination): Boolean = destination !in setOf(DustDestination.SCAN, DustDestination.CLEANUP)
 
     fun refreshesInsights(destination: DustDestination): Boolean = destination in setOf(
         DustDestination.INSIGHTS,
         DustDestination.RECOMMENDATIONS,
+        DustDestination.RULES,
+        DustDestination.GROWTH,
         DustDestination.LARGE_FILES,
         DustDestination.DUPLICATES,
         DustDestination.APP_RESIDUE,

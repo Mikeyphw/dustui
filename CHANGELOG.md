@@ -2,6 +2,16 @@
 
 ## 1.4.0-rc1
 
+### Phases 20–22 · Complete rules, history, and verified reports
+
+- Added automatically refreshed cleanup-rule draft previews with exact matched/blocked paths and complete condition explanations.
+- Enforced explicit review before imported rules can be enabled, relative-depth matching, bounded safe path expressions, and schema migration tests.
+- Expanded storage history to arbitrary endpoints, six grouping modes, a multi-scan timeline with accessible controls, specialized growth insights, targeted rescans, and configurable snapshot retention.
+- Made every comparison not ending at the newest active scan strictly informational so historical snapshots cannot masquerade as live deletion targets.
+- Expanded deletion reports with attempted/partial/failed accounting, device/filesystem context, persistence diagnostics, retryable verification, root/date/status filters, migration coverage, and smallest-safe-parent rescans.
+- Kept rules, history, and reports behind the existing scan-bound fingerprinted permanent-deletion planner, with zero automatic deletion.
+
+
 ### Phase 19 · Ranked cleanup recommendations
 
 - Added an explainable cleanup queue combining verified duplicates, high-confidence app residue, large old files, stale installers, old archives, and oversized logs.
