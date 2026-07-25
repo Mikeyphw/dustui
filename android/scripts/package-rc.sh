@@ -26,6 +26,14 @@ if [[ "${#apks[@]}" -eq 0 ]]; then
   exit 1
 fi
 
+cleaning_evidence="build/cleaning-intelligence/qualification.json"
+cleaning_summary="build/cleaning-intelligence/QUALIFICATION.md"
+cleaning_ready=false
+if [[ -s "$cleaning_evidence" ]] && grep -Eq '"ready"[[:space:]]*:[[:space:]]*true' "$cleaning_evidence"; then cleaning_ready=true; fi
+if [[ "${DUSTUI_REQUIRE_CLEANING_EVIDENCE:-0}" == "1" && "$cleaning_ready" != "true" ]]; then
+  echo "Cleaning intelligence qualification evidence is missing or failed" >&2; exit 1
+fi
+
 debug_found=0
 release_found=0
 signed_release_found=0
@@ -82,7 +90,8 @@ done
 printf '\n  ],\n' >> "$manifest"
 printf '  "debugApkPresent": %s,\n' "$([[ "$debug_found" -eq 1 ]] && echo true || echo false)" >> "$manifest"
 printf '  "releaseApkPresent": %s,\n' "$([[ "$release_found" -eq 1 ]] && echo true || echo false)" >> "$manifest"
-printf '  "signedReleasePresent": %s\n' "$([[ "$signed_release_found" -eq 1 ]] && echo true || echo false)" >> "$manifest"
+printf '  "signedReleasePresent": %s,\n' "$([[ "$signed_release_found" -eq 1 ]] && echo true || echo false)" >> "$manifest"
+printf '  "cleaningIntelligenceGatePassed": %s\n' "$cleaning_ready" >> "$manifest"
 printf '}\n' >> "$manifest"
 
 if [[ "$debug_found" -ne 1 ]]; then
@@ -97,13 +106,17 @@ if [[ "$signed_release_found" -ne 1 ]]; then
   echo "Release APK is unsigned; RC evidence was packaged, but distribution signing is still required." >&2
 fi
 
+if [[ -s "$cleaning_evidence" ]]; then cp "$cleaning_evidence" "$out/cleaning-intelligence-qualification.json"; fi
+if [[ -s "$cleaning_summary" ]]; then cp "$cleaning_summary" "$out/CLEANING_INTELLIGENCE_QUALIFICATION.md"; fi
+
 cat > "$out/README.txt" <<README
 DustUI $version_name release-candidate bundle
 
 Contents:
 - APK artifacts copied from Gradle outputs
 - SHA256SUMS for every copied APK
-- manifest.json with installability and signing state
+- manifest.json with installability, signing state, and cleaning-intelligence qualification
+- cleaning-intelligence qualification evidence when available
 
 Next:
 1. Install the preferred APK on a rooted Android device.

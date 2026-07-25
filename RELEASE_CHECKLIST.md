@@ -193,3 +193,23 @@ Ship only when `SHIP_STATUS.md` says `SHIP` or when every warning listed under `
 - [ ] Recommendation ignore/restore is persistent and reversible.
 - [ ] Recent growth compares the previous completed scan without making historical paths actionable.
 - [ ] Android build, tests, and lint complete with 0 warnings and 0 errors.
+
+
+## Phase 24 cleaning intelligence final gate
+
+- [ ] Run `android/scripts/cleaning-intelligence-gate.sh` and confirm `qualification.json` reports `ready: true`.
+- [ ] Confirm the full unit suite has zero failures and lint has zero warnings and zero errors.
+- [ ] Confirm Room schema version 2 is exported and migration 1→2 is explicit and non-destructive.
+- [ ] Confirm protected paths, scan roots, outside-root paths, symlinks, mount boundaries, replacement fingerprints, and changed SHA-256 content are refused.
+- [ ] Confirm hard links do not inflate reclaimable bytes or enter automatic duplicate selection.
+- [ ] Confirm incomplete multi-user package visibility and uncertain residue ownership never become safe-batch candidates.
+- [ ] Confirm imported rules require review, unsafe regular expressions are rejected, and previews show exact current-scan paths.
+- [ ] Confirm historical comparisons remain informational and current actions require the latest completed scan.
+- [ ] Confirm unknown verification remains failed/unconfirmed and report exports redact credentials.
+- [ ] Confirm interrupted duplicate analysis resumes from completed buckets and interrupted deletion becomes `INTERRUPTED`.
+- [ ] Confirm 360dp, large-font, TalkBack, switch, chart/list, and treemap accessibility contracts pass.
+- [ ] Confirm the 10,000-file qualification workload completes within the configured fifteen-second budget.
+- [ ] Confirm every surfaced current file remains actionable and no UI screen calls `executeCleanup` directly.
+- [ ] Confirm the active source audit reports zero quarantine runtime references.
+- [ ] Confirm RC packaging includes `cleaning-intelligence-qualification.json`.
+- [ ] Confirm `final-rc-gate.sh` returns `DO_NOT_SHIP` when cleaning evidence is missing or failed.

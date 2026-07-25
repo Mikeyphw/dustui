@@ -13715,6 +13715,214 @@
         }
       },
       "history_id": "1cb517b39a5a40abbd9912a954b74ea8"
+    },
+    {
+      "applied_at": "2026-07-25T17:34:09.280522Z",
+      "artifact": "/storage/emulated/0/Download/dustui_android_phase24_cleaning_intelligence_final_gate_overlay.zip",
+      "artifact_name": "dustui_android_phase24_cleaning_intelligence_final_gate_overlay.zip",
+      "type": "overlay",
+      "sha256": "d4513737961f77712451cd89e3e50604113097236116a5de328f29ad5c7992b4",
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "Add Android Phase 24 cleaning intelligence final gate",
+      "commit_hash": "",
+      "file_count": 22,
+      "change_counts": {
+        "add": 10,
+        "modify": 12
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Android Phase 24 cleaning intelligence final gate",
+        "description": "Implements the final DustUI Android cleaning-intelligence qualification gate on top of Phase 23. Adds machine-readable release evidence, zero-warning and zero-error enforcement, Room schema and migration checks, deletion-safety and fingerprint contracts, duplicate hard-link accounting, conservative multi-user residue handling, rule and history safeguards, report redaction and verification checks, process-recovery coverage, accessibility parity, 10,000-entry performance qualification, release-script integration, and final-RC blocking when any cleaning gate is incomplete.",
+        "version": "1.0.0",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "CHANGELOG.md",
+              "action": "modify",
+              "sha256": "98dfbfbb0d6f9c08a17295ad2caf42e26abdd9c83e79c5e6c1f5f85ef4232c88",
+              "size": 10444,
+              "source_sha256": "2c561d9694e21673c06d70a98ba1ff103424602185844132bc0981a5719b8a4f"
+            },
+            {
+              "path": "README.md",
+              "action": "modify",
+              "sha256": "d1687eec466382aaaa9057c03c9ce24dfc591cd216cf7cbf5677f460228a11ee",
+              "size": 7761,
+              "source_sha256": "09291519a9753e9115f83a36fecef945041eb4de87449d7ea3b881036a6a37c4"
+            },
+            {
+              "path": "RELEASE_CHECKLIST.md",
+              "action": "modify",
+              "sha256": "a5544858611648d11dd47f3e244ea1e582173c87ec667897a0fc244cf1c59df0",
+              "size": 15964,
+              "source_sha256": "6f39d943b1bd21c5998502e709c5c165d215e744523adf1952a0c120f37f0a7e"
+            },
+            {
+              "path": "UI_UX_CONTRACT.md",
+              "action": "modify",
+              "sha256": "a2b97b4846f5e316c35be786f5ddcf5e1b8443762f08758fe51b7f28015dd006",
+              "size": 16911,
+              "source_sha256": "3b5a6bcadc3f530663d902d789d5d4860cbab6a205070c3e8142f823c0b2730f"
+            },
+            {
+              "path": "VALIDATION.md",
+              "action": "modify",
+              "sha256": "8ee79648b02e27fc27793c15b02d90e35099e1d201fdfbf056dfadbc924f25a7",
+              "size": 857,
+              "source_sha256": "5f6d2f965bb21b32b88f59418f589188d0aeaebf16e79278901d14ead404ac63"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleaningIntelligenceQualification.kt",
+              "action": "add",
+              "sha256": "40ded778ba81288b1ac0d048c231bbfcf732593d79e2ccd93226639a692c4abc",
+              "size": 6358
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ReleaseReadiness.kt",
+              "action": "modify",
+              "sha256": "2a199220f9d3190631046ca9f3ff735cda574bd2ed7d4f6016ec398779162727",
+              "size": 4894,
+              "source_sha256": "15659470a033c3825c482076e331ad1ee77b259732b5f0969eab7effa58b265d"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleaningIntelligenceQualificationTest.kt",
+              "action": "add",
+              "sha256": "c1029fd938cdb9ff6246d9dc45a009ec1566119d6267143a173c9edeed5bcba9",
+              "size": 2406
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleaningIntelligenceRegressionTest.kt",
+              "action": "add",
+              "sha256": "e91ee690c8c74b1b9fcb03ec0bba304e1e8d5c63472e631f7d2163c9c53aef56",
+              "size": 6561
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleaningPerformanceContractTest.kt",
+              "action": "add",
+              "sha256": "a42c4bd0577422adb1b8258f4e0f6f61ceb898786770d6b924e742fa7fdaf931",
+              "size": 2115
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleaningRecoverySourceContractTest.kt",
+              "action": "add",
+              "sha256": "419ca7672fb89ca427ce0698eabd60aca2ce2d84900eb4b8c0a6aee2202bae41",
+              "size": 2528
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/DatabaseSchemaContractTest.kt",
+              "action": "add",
+              "sha256": "bbbb7acbc9b4e186f49b1c5d63415b05133c3431e48528b889a7917c2faee48a",
+              "size": 2756
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/FinalRcScriptContractTest.kt",
+              "action": "modify",
+              "sha256": "764af0e73c53e4a5f0c20c514a123183ddced4c54f582879412d30c51e867137",
+              "size": 1637,
+              "source_sha256": "50d0e1841d163db58b2b19d27f8e99414528d581c60af91f69c4f2a3cd245bf4"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleaseReadinessTest.kt",
+              "action": "modify",
+              "sha256": "532509dd5cc2f62e39ec42dbc11cbc906c2f162ec1adae50aefcfdd4e29f4603",
+              "size": 4688,
+              "source_sha256": "03fc04841b77c012fa87cdb019afea40dee43587713a7a2e9c122f9f7e2916b5"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleaseScriptContractTest.kt",
+              "action": "modify",
+              "sha256": "bdf2d5ca8147b39e1643051dc803f96ecbf834283e29f2e98dfa0952b5a2853a",
+              "size": 2514,
+              "source_sha256": "b890eca7c260c39d57fa66c4f76305bdf8e55208030f2a12827abd55c408d8cb"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/CleaningAccessibilityContractTest.kt",
+              "action": "add",
+              "sha256": "a34b27798468cedd82a60c89e22d6403145024563ba8795a150e663e6c006f91",
+              "size": 2435
+            },
+            {
+              "path": "android/scripts/cleaning-intelligence-audit.py",
+              "action": "add",
+              "sha256": "c6c40fc92440da904ab2f12002e21d54f058c752bb876bb6c3d978d91dad1ab2",
+              "size": 7951
+            },
+            {
+              "path": "android/scripts/cleaning-intelligence-gate.sh",
+              "action": "add",
+              "sha256": "8e9ba0045a3b1b2a777904498402efeda27cc90b20d8f969676c5a3fd3a335e4",
+              "size": 308
+            },
+            {
+              "path": "android/scripts/final-rc-gate.sh",
+              "action": "modify",
+              "sha256": "90eef8993416994120c69936e71ecf6128d4f3ad9f46ae83312bd5688401f739",
+              "size": 4006,
+              "source_sha256": "69f66bcfdb2e64939b74c8330b14a64414b6f5f62f85ade61ce0a607870d9aa5"
+            },
+            {
+              "path": "android/scripts/package-rc.sh",
+              "action": "modify",
+              "sha256": "60932eef43f65e7784578ed3a64f9540304ebd36f211d5590c26cf898fa93362",
+              "size": 4379,
+              "source_sha256": "976aa444e67f18675f2ae522baf82cb60871d31d400f9570bb7cbb78ef88544d"
+            },
+            {
+              "path": "android/scripts/release-gate.sh",
+              "action": "modify",
+              "sha256": "965f31be30e63b05dad967feb90afeab905ee1b7fd4c151cc1f40d3918f9cb30",
+              "size": 1344,
+              "source_sha256": "efed99285313659db8a34beb04ac70657c0b34a06ee8b99617493d1c02bb76f7"
+            },
+            {
+              "path": "docs/ANDROID_PHASE24_CLEANING_INTELLIGENCE_FINAL_GATE.md",
+              "action": "add",
+              "sha256": "f5b85b31ba82ff28f01f79f546f091c31fec1b7a21aa45255db0f212ea4fe20d",
+              "size": 2190
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Add Android Phase 24 cleaning intelligence final gate"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "d5b9ab3f10b2fac54739e91ea4a9ceb37daf6a8e45b5188e22698b653da88d72",
+            "timeout_seconds": 3600
+          }
+        }
+      },
+      "history_id": "a83728e2db244ed3b6d789189de740e4"
     }
   ]
 }

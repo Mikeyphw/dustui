@@ -19,6 +19,9 @@ bash -n scripts/device-certify.sh
 bash -n scripts/install-smoke.sh
 bash -n scripts/package-rc.sh
 bash -n scripts/final-rc-gate.sh
-DUSTUI_SKIP_BUILD=1 bash scripts/package-rc.sh
+bash -n scripts/cleaning-intelligence-gate.sh
+python3 -m py_compile scripts/cleaning-intelligence-audit.py
+DUSTUI_SKIP_BUILD=1 bash scripts/cleaning-intelligence-gate.sh
+DUSTUI_SKIP_BUILD=1 DUSTUI_REQUIRE_CLEANING_EVIDENCE=1 bash scripts/package-rc.sh
 printf 'DustUI release gate passed
 '

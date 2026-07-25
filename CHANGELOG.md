@@ -2,6 +2,15 @@
 
 ## 1.4.0-rc1
 
+### Phase 24 · Cleaning intelligence final gate
+
+- Added a cleaning-specific qualification model that blocks final RC readiness when safety, migration, recovery, accessibility, performance, or product contracts are not proven.
+- Added consolidated regressions for scan-bound reviews, protected paths, fingerprints, hard links, multi-user residue, imported rules, historical snapshots, interrupted deletion, and authoritative verification.
+- Added Room schema and non-destructive migration contracts, 10,000-file scale coverage, accessibility/source parity checks, and process-recovery contracts.
+- Added `cleaning-intelligence-gate.sh` and machine-readable qualification evidence collected from JUnit XML, lint SARIF, Room schemas, and source audits.
+- Made release packaging and the final-RC gate require passing cleaning qualification evidence, with a zero-warning and zero-active-quarantine-runtime policy.
+
+
 ### Phase 23 · App storage inspector
 
 - Replaced the shallow Packages summary with a package-centered storage inspector covering APK/split code, private data, databases, preferences, cache, OBB, shared media, logs, exports/backups, verified duplicates, residue, and recent growth.

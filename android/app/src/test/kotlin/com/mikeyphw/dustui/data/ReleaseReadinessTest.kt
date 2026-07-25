@@ -50,6 +50,16 @@ class ReleaseReadinessTest {
         assertTrue(report.statusLine().contains("ship-with-warnings"))
     }
 
+
+    @Test fun `missing cleaning qualification blocks final rc`() {
+        val report = FinalRcReadiness.evaluate(
+            "1.4.0-rc1",
+            evidence(cleaningQualificationReport = CleaningQualificationReport.notEvaluated()),
+        )
+        assertEquals(RcDecision.DO_NOT_SHIP, report.decision)
+        assertTrue(report.issues.any { it.id == "cleaning-intelligence" })
+    }
+
     private fun evidence(
         testsFailed: Int = 0,
         diagnosticsWarnings: Int = 0,
@@ -57,6 +67,7 @@ class ReleaseReadinessTest {
         installSmokePassed: Boolean = true,
         deviceCertificationPassed: Boolean = true,
         knownIssues: List<RcKnownIssue> = emptyList(),
+        cleaningQualificationReport: CleaningQualificationReport = passedCleaningQualification(),
     ) = FinalRcEvidence(
         releaseGatePassed = true,
         testsPassed = 59,
@@ -68,7 +79,20 @@ class ReleaseReadinessTest {
         changelogReady = true,
         checklistReady = true,
         knownIssuesReviewed = true,
+        cleaningQualificationReport = cleaningQualificationReport,
         knownIssues = knownIssues,
+    )
+
+
+    private fun passedCleaningQualification(): CleaningQualificationReport = CleaningIntelligenceQualification.evaluate(
+        CleaningQualificationEvidence(
+            testsPassed = 1, testsFailed = 0, lintErrors = 0, lintWarnings = 0, databaseSchemaPassed = true,
+            protectedPathSuitePassed = true, fingerprintSuitePassed = true, duplicateHardLinkSuitePassed = true,
+            residueOwnershipSuitePassed = true, cleanupRuleSuitePassed = true, historicalPathSuitePassed = true,
+            reportRedactionSuitePassed = true, interruptedOperationSuitePassed = true, accessibilitySuitePassed = true,
+            largeDatasetSuitePassed = true, surfacedPathsActionable = true, quarantineRuntimeReferences = 0,
+            sampleDatasetEntries = 10_000, sampleDurationMillis = 100,
+        ),
     )
 
     private fun signedPackagingReport() = ReleasePackaging.evaluate(

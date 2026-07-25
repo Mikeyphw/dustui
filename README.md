@@ -140,3 +140,8 @@ DustUI now supports reviewed saved cleanup rules with exact live previews, multi
 ## App storage inspector
 
 The Android App storage workbench separates package code, live internal state, cache, OBB, shared media, logs, exports/backups, exact duplicates, residue, and recent growth. Android app settings own active-cache clearing, uninstall requests use the platform package manager, and only deletion-eligible paths can enter DustUI's reviewed permanent-deletion planner.
+
+
+## Android Phase 24 cleaning qualification
+
+The final Android cleaning gate is `android/scripts/cleaning-intelligence-gate.sh`. It verifies the complete cleaning workflow, writes JSON and Markdown evidence under `android/build/cleaning-intelligence`, and is required by release packaging and the final-RC decision. The gate includes schema compatibility, deletion safety, duplicate hard links, multi-user residue, rules, history, report redaction, interruption recovery, accessibility, 10,000-file scale, actionable-path coverage, and a no-quarantine-runtime audit.

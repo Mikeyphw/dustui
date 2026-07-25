@@ -194,3 +194,14 @@ DustUI is a rooted Android storage workbench. The UI must remain readable on pho
 - Uninstall must use Android's package-manager flow.
 - Package-specific recommendation ignore state must be reversible and affect the ranked recommendation queue.
 - Filesystem mutation must keep app-storage selection and planning disabled until a fresh scan.
+
+
+## Phase 24 cleaning intelligence qualification contract
+
+- Every current file surfaced by Overview, Explorer, Large files, Duplicates, App residue, Recommendations, Rules, Growth, App storage, charts, or treemap must retain an inspect, reveal, select, or review-planning path.
+- No screen may execute permanent deletion directly. All destructive paths pass through the scan-bound reviewed planner.
+- Charts must retain a 48dp accessible action row or an equivalent list with button role, selection state, size, percentage, and file count.
+- Historical scan comparisons are informational unless the comparison endpoint is the latest active completed scan.
+- Active application code and private state remain non-deletable; cache and uninstall use Android-owned flows.
+- Missing or unavailable path verification never counts as confirmed deletion.
+- The final release gate requires zero warnings, zero errors, exported Room schemas, explicit migrations, process-recovery evidence, 10,000-file scale evidence, and zero active quarantine runtime references.

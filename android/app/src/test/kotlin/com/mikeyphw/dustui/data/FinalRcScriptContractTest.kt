@@ -21,11 +21,16 @@ class FinalRcScriptContractTest {
         assertTrue(script.contains("KNOWN_ISSUES.md"))
         assertTrue(script.contains("release-candidate"))
         assertTrue(script.contains("device-certification.tar.gz"))
+        assertTrue(script.contains("cleaning-intelligence/qualification.json"))
+        assertTrue(script.contains("cleaningIntelligenceGatePassed"))
+        assertTrue(script.contains("ANDROID_PHASE24_CLEANING_INTELLIGENCE_FINAL_GATE.md"))
     }
 
     @Test fun `final rc gate validates scripts by shell parsing`() {
         val releaseGate = File(root, "scripts/release-gate.sh").readText()
         assertTrue(releaseGate.contains("bash -n scripts/final-rc-gate.sh"))
+        assertTrue(releaseGate.contains("cleaning-intelligence-gate.sh"))
+        assertTrue(releaseGate.contains("cleaning-intelligence-audit.py"))
         assertFalse(releaseGate.contains("test -x scripts/final-rc-gate.sh"))
     }
 }

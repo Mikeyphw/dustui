@@ -31,6 +31,7 @@ data class FinalRcEvidence(
     val changelogReady: Boolean,
     val checklistReady: Boolean,
     val knownIssuesReviewed: Boolean,
+    val cleaningQualificationReport: CleaningQualificationReport = CleaningQualificationReport.notEvaluated(),
     val knownIssues: List<RcKnownIssue> = emptyList(),
 )
 
@@ -86,6 +87,13 @@ object FinalRcReadiness {
         }
         if (!evidence.knownIssuesReviewed) {
             issues += FinalRcIssue("known-issues-review", RcIssueSeverity.BLOCKER, "Known issues were not reviewed")
+        }
+        if (!evidence.cleaningQualificationReport.ready) {
+            issues += FinalRcIssue(
+                "cleaning-intelligence",
+                RcIssueSeverity.BLOCKER,
+                evidence.cleaningQualificationReport.summary(),
+            )
         }
         evidence.knownIssues.filter { it.severity == RcIssueSeverity.BLOCKER }.forEach { knownIssue ->
             issues += FinalRcIssue("known-issue-${knownIssue.id}", RcIssueSeverity.BLOCKER, knownIssue.title)

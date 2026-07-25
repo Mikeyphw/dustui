@@ -20,6 +20,7 @@ class ReleaseScriptContractTest {
         assertFalse(releaseGate.contains("test -x scripts/device-certify.sh"))
         assertTrue(releaseGate.contains("bash -n scripts/device-certify.sh"))
         assertTrue(releaseGate.contains("bash -n scripts/install-smoke.sh"))
+        assertTrue(releaseGate.contains("DUSTUI_SKIP_BUILD=1 bash scripts/cleaning-intelligence-gate.sh"))
     }
 
     @Test fun `package rc script writes manifest checksums and unsigned warning`() {
@@ -28,6 +29,8 @@ class ReleaseScriptContractTest {
         assertTrue(script.contains("SHA256SUMS"))
         assertTrue(script.contains("release-unsigned"))
         assertTrue(script.contains("distribution signing is still required"))
+        assertTrue(script.contains("cleaningIntelligenceGatePassed"))
+        assertTrue(script.contains("CLEANING_INTELLIGENCE_QUALIFICATION.md"))
     }
 
     @Test fun `install smoke collects launch and fatal exception evidence`() {
@@ -36,5 +39,16 @@ class ReleaseScriptContractTest {
         assertTrue(script.contains("install -r"))
         assertTrue(script.contains("monkey -p"))
         assertTrue(script.contains("FATAL EXCEPTION"))
+    }
+
+    @Test fun `cleaning intelligence gate generates machine readable evidence`() {
+        val shell = File(root, "scripts/cleaning-intelligence-gate.sh").readText()
+        val audit = File(root, "scripts/cleaning-intelligence-audit.py").readText()
+        assertTrue(shell.contains("testDebugUnitTest"))
+        assertTrue(shell.contains("lintDebug"))
+        assertTrue(audit.contains("qualification.json"))
+        assertTrue(audit.contains("quarantineRuntimeReferences"))
+        assertTrue(audit.contains("surfacedPathsActionable"))
+        assertTrue(audit.contains("CleaningPerformanceContractTest"))
     }
 }
