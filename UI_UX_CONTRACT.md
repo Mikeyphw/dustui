@@ -182,3 +182,15 @@ DustUI is a rooted Android storage workbench. The UI must remain readable on pho
 9. Users can retry verification, explicitly export redacted JSON/text, and start a normal rescan at the smallest safe common parent.
 10. Reports are readable without an active scan, are capped at 100 with deterministic pruning, and cannot trigger deletion directly.
 
+
+## Phase 23 app storage inspector contract
+
+- The App storage destination must show package-centered, leaf-file-only measurements.
+- APK/app code and active internal app state are informational and cannot enter direct deletion planning.
+- Active cache and code cache must route to Android app settings.
+- Every surfaced eligible file must support details, Explorer reveal, protection, selection, and reviewed permanent-deletion planning.
+- Verified duplicate paths must preserve expected SHA-256 values through review.
+- High-confidence residue must remain distinct from active app data.
+- Uninstall must use Android's package-manager flow.
+- Package-specific recommendation ignore state must be reversible and affect the ranked recommendation queue.
+- Filesystem mutation must keep app-storage selection and planning disabled until a fresh scan.

@@ -86,7 +86,6 @@ import com.mikeyphw.dustui.data.EntryIntelligence
 import com.mikeyphw.dustui.data.LargeFileItem
 import com.mikeyphw.dustui.data.LargeFilePage
 import com.mikeyphw.dustui.data.LargeFilePreset
-import com.mikeyphw.dustui.data.PackageStorageProfile
 import com.mikeyphw.dustui.data.RootFileSearchResult
 import com.mikeyphw.dustui.data.RootModuleReport
 import com.mikeyphw.dustui.data.RootPathInspection
@@ -138,7 +137,9 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         val cleanupReports by viewModel.cleanupReports.collectAsStateWithLifecycle()
         val selectedCleanupReport by viewModel.selectedCleanupReport.collectAsStateWithLifecycle()
         val certification by viewModel.certification.collectAsStateWithLifecycle()
-        val packageProfiles by viewModel.packageProfiles.collectAsStateWithLifecycle()
+        val appStorageInspector by viewModel.appStorageInspector.collectAsStateWithLifecycle()
+        val appStoragePage by viewModel.appStoragePage.collectAsStateWithLifecycle()
+        val appStorageLoading by viewModel.appStorageLoading.collectAsStateWithLifecycle()
         val rootSearchResults by viewModel.rootSearchResults.collectAsStateWithLifecycle()
         val moduleReport by viewModel.moduleReport.collectAsStateWithLifecycle()
         val scanDataStale by viewModel.scanDataStale.collectAsStateWithLifecycle()
@@ -369,19 +370,20 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     viewModel.revealPath(result.path)
                                     selectDestination(DustDestination.EXPLORER)
                                 }
-                                destination == DustDestination.PACKAGES && currentSession != null -> PackageIntelligenceScreen(
-                                    Modifier.fillMaxSize(),
-                                    currentSession.id,
-                                    packageProfiles,
-                                    apps,
-                                    selectedApp,
-                                    selectedPaths,
-                                    viewModel,
+                                destination == DustDestination.PACKAGES && currentSession != null -> AppStorageInspectorScreen(
+                                    modifier = Modifier.fillMaxSize(),
+                                    analysis = appStorageInspector,
+                                    page = appStoragePage,
+                                    loading = appStorageLoading,
+                                    selectedPackage = selectedApp,
+                                    selectedPaths = selectedPaths,
+                                    scanDataStale = scanDataStale,
+                                    vm = viewModel,
                                     revealPath = { filePath ->
                                         viewModel.revealPath(filePath)
                                         selectDestination(DustDestination.EXPLORER)
                                     },
-                                    onSelectApp = { selectedApp = it },
+                                    onSelectPackage = { selectedApp = it },
                                 )
                                 destination == DustDestination.MODULES -> ModuleAnalyzerScreen(
                                     Modifier.fillMaxSize(),
@@ -1958,120 +1960,6 @@ private fun RootSearchScreen(
 }
 
 @Composable
-private fun PackageIntelligenceScreen(
-    modifier: Modifier,
-    scanId: String,
-    packageProfiles: List<PackageStorageProfile>,
-    apps: List<AppStorageSummary>,
-    selectedApp: String?,
-    selectedPaths: Set<String>,
-    vm: MainViewModel,
-    revealPath: (String) -> Unit,
-    onSelectApp: (String) -> Unit,
-) {
-    var packageQuery by rememberSaveable(scanId) { mutableStateOf("") }
-    val matchingPackages = remember(packageProfiles, packageQuery) {
-        val needle = packageQuery.trim()
-        if (needle.isBlank()) packageProfiles else packageProfiles.filter {
-            it.packageName.contains(needle, ignoreCase = true) || it.appLabel?.contains(needle, ignoreCase = true) == true
-        }
-    }
-    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { DustSectionHeader("Package intelligence", subtitle = "One app-focused surface for ownership, cache risk, largest paths, and measured footprint.") }
-        if (packageProfiles.isEmpty()) {
-            item { EmptyState("No package-owned paths", "The scan did not identify Android package-owned storage in this scope.") }
-        } else {
-            item {
-                val profile = packageProfiles.firstOrNull { it.packageName == selectedApp } ?: packageProfiles.first()
-                val app = apps.firstOrNull { it.packageName == profile.packageName }
-                Card(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(profile.appLabel ?: profile.packageName, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        PathText(profile.packageName)
-                        val statuses = buildList {
-                            if (!profile.installed) add("orphaned" to true)
-                            if (profile.hasLargeCache) add("large cache" to false)
-                            if (profile.hasObb) add("OBB" to false)
-                            if (profile.hasDuplicateCandidates) add("duplicates" to false)
-                        }
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            statuses.chunked(2).forEach { row ->
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    row.forEach { (label, danger) -> StatusPill(label, danger = danger) }
-                                }
-                            }
-                        }
-                        Detail("Total", formatBytes(profile.totalBytes))
-                        Detail("Private", formatBytes(profile.privateBytes))
-                        Detail("Cache", formatBytes(profile.cacheBytes))
-                        Detail("External", formatBytes(profile.externalBytes))
-                        Detail("OBB", formatBytes(profile.obbBytes))
-                        Detail("Databases", formatBytes(profile.databaseBytes))
-                        Detail("Preferences", formatBytes(profile.preferencesBytes))
-                        Detail("Duplicate candidates", formatBytes(profile.duplicateCandidateBytes))
-                        app?.let { StorageDonut(VisualAnalytics.appSlices(it), Modifier.fillMaxWidth()) }
-                    }
-                }
-            }
-            item {
-                OutlinedTextField(
-                    packageQuery,
-                    { packageQuery = it },
-                    Modifier.fillMaxWidth(),
-                    label = { Text("Find package") },
-                    singleLine = true,
-                )
-                Text(
-                    "Showing ${matchingPackages.size} of ${packageProfiles.size} packages",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            item {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(end = 24.dp)) {
-                    items(matchingPackages, key = { it.packageName }) { candidate ->
-                        Card(
-                            onClick = { onSelectApp(candidate.packageName) },
-                            modifier = Modifier.width(220.dp),
-                        ) {
-                            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                Text(
-                                    candidate.appLabel ?: candidate.packageName.substringAfterLast('.'),
-                                    fontWeight = if (candidate.packageName == (selectedApp ?: packageProfiles.first().packageName)) FontWeight.Bold else FontWeight.Medium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                PathText(candidate.packageName, Modifier.fillMaxWidth(), maxLines = 2)
-                            }
-                        }
-                    }
-                }
-            }
-            val profile = packageProfiles.firstOrNull { it.packageName == selectedApp } ?: packageProfiles.first()
-            item {
-                DustSectionHeader(
-                    "Largest package-owned paths",
-                    subtitle = if (profile.largestPaths.size > 8) "Showing 8 of ${profile.largestPaths.size} paths." else null,
-                )
-            }
-            items(profile.largestPaths.take(8), key = { it.path }) { path ->
-                ActionablePathCard(
-                    path = path.path,
-                    name = path.path.substringAfterLast('/'),
-                    sizeBytes = path.sizeBytes,
-                    metadata = path.category,
-                    selected = path.path in selectedPaths,
-                    toggleSelection = { vm.togglePathSelection(path.path) },
-                    showDetails = { vm.showPathDetails(path.path) },
-                    reveal = { revealPath(path.path) },
-                    delete = { vm.reviewPaths(listOf(path.path)) },
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun ModuleAnalyzerScreen(
     modifier: Modifier,
     moduleReport: RootModuleReport?,
@@ -2245,7 +2133,7 @@ private fun moreDestinationDescription(destination: DustDestination): String = w
     DustDestination.LARGE_FILES -> "Filter, group, inspect, and batch-plan deletion for large files."
     DustDestination.DUPLICATES -> "Verify exact duplicate content and choose which physical copies to keep."
     DustDestination.APP_RESIDUE -> "Review evidence-ranked folders left by packages that are no longer installed."
-    DustDestination.PACKAGES -> "App-owned storage profiles and largest paths."
+    DustDestination.PACKAGES -> "Inspect app code, private state, cache, OBB, media, duplicates, residue, and growth."
     DustDestination.MODULES -> "Root module footprint and overlay conflict analysis."
     DustDestination.CERTIFICATION -> "Root backend, notification, lock-state, and release checks."
     DustDestination.CLEANUP -> "Verified deletion reports, per-path outcomes, exports, and targeted rescans."

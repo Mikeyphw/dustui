@@ -180,3 +180,16 @@ Ship only when `SHIP_STATUS.md` says `SHIP` or when every warning listed under `
 - [ ] Confirm report-save failure is surfaced in the cleanup result.
 - [ ] Confirm targeted rescans use the smallest safe common parent.
 - [ ] Complete Android build, unit tests, lint, and source audit with 0 warnings and 0 errors.
+
+## Phase 23 app storage inspector
+
+- [ ] Package totals use leaf files only and reconcile with bucket totals.
+- [ ] Active APK/code, databases, preferences, and private state cannot be planned for deletion.
+- [ ] Active cache actions open Android app settings.
+- [ ] Android owns uninstall confirmation.
+- [ ] Eligible shared paths retain details, reveal, protection, selection, and deletion review.
+- [ ] Duplicate package paths carry SHA-256 expectations.
+- [ ] Protected package paths are excluded.
+- [ ] Recommendation ignore/restore is persistent and reversible.
+- [ ] Recent growth compares the previous completed scan without making historical paths actionable.
+- [ ] Android build, tests, and lint complete with 0 warnings and 0 errors.

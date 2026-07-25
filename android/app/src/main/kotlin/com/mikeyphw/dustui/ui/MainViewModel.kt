@@ -51,7 +51,12 @@ import com.mikeyphw.dustui.data.RootPathInspection
 import com.mikeyphw.dustui.data.RootModuleReport
 import com.mikeyphw.dustui.data.RootFileSearchResult
 import com.mikeyphw.dustui.data.RootFileSearchRequest
-import com.mikeyphw.dustui.data.PackageStorageProfile
+import com.mikeyphw.dustui.data.AppStorageBucketKind
+import com.mikeyphw.dustui.data.AppStorageInspectorAnalysis
+import com.mikeyphw.dustui.data.AppStorageInspectorEngine
+import com.mikeyphw.dustui.data.AppStorageInspectorFilter
+import com.mikeyphw.dustui.data.AppStorageInspectorPage
+import com.mikeyphw.dustui.data.AppStorageSort
 import com.mikeyphw.dustui.data.LargeFileFilter
 import com.mikeyphw.dustui.data.LargeFileGroup
 import com.mikeyphw.dustui.data.LargeFilePage
@@ -139,8 +144,15 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     private var duplicateAnalysisJob: Job? = null
     private val _certification = MutableStateFlow<DeviceCertificationReport?>(null)
     val certification: StateFlow<DeviceCertificationReport?> = _certification
-    private val _packageProfiles = MutableStateFlow<List<PackageStorageProfile>>(emptyList())
-    val packageProfiles: StateFlow<List<PackageStorageProfile>> = _packageProfiles
+    private val _appStorageInspector = MutableStateFlow<AppStorageInspectorAnalysis?>(null)
+    val appStorageInspector: StateFlow<AppStorageInspectorAnalysis?> = _appStorageInspector
+    private val _appStorageLoading = MutableStateFlow(false)
+    val appStorageLoading: StateFlow<Boolean> = _appStorageLoading
+    private val _appStorageFilter = MutableStateFlow(AppStorageInspectorFilter())
+    val appStorageFilter: StateFlow<AppStorageInspectorFilter> = _appStorageFilter
+    val appStoragePage: StateFlow<AppStorageInspectorPage> = combine(_appStorageInspector, _appStorageFilter) { analysis, filter ->
+        AppStorageInspectorEngine.evaluate(analysis, filter)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppStorageInspectorPage.empty())
     private val _residueAnalysis = MutableStateFlow<AppResidueAnalysis?>(null)
     val residueAnalysis: StateFlow<AppResidueAnalysis?> = _residueAnalysis
     private val _residueLoading = MutableStateFlow(false)
@@ -267,7 +279,9 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         _snapshotDelta.value = null
         _snapshotHistory.value = emptyList()
         _advancedReport.value = null
-        _packageProfiles.value = emptyList()
+        _appStorageInspector.value = null
+        _appStorageLoading.value = false
+        _appStorageFilter.value = AppStorageInspectorFilter()
         _residueAnalysis.value = null
         _residueLoading.value = false
         _residueFilter.value = AppResidueFilter()
@@ -1344,9 +1358,11 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             val largeFileEntries = repository.largeFileEntries(scanId, largeFilePreset)
             _residueLoading.value = true
             val residueResult = runCatching { repository.appResidueAnalysis(scanId) }
+            val residueAnalysis = residueResult.getOrNull()
             _recommendationLoading.value = true
-            val recommendationResult = runCatching { repository.cleanupRecommendations(scanId) }
-            val packageProfiles = repository.packageProfiles(scanId)
+            val recommendationResult = runCatching { repository.cleanupRecommendations(scanId, residueAnalysis) }
+            _appStorageLoading.value = true
+            val appStorageResult = runCatching { repository.appStorageInspector(scanId, residueAnalysis) }
             val moduleReport = repository.moduleAnalysis(scanId)
             if (latestSession.value?.id != scanId) return@launch
             _appSummaries.value = appSummaries
@@ -1357,7 +1373,9 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
                 _largeFileSourceEntries.value = largeFileEntries
                 _largeFileLoading.value = false
             }
-            _packageProfiles.value = packageProfiles
+            appStorageResult.onSuccess { _appStorageInspector.value = it }
+                .onFailure { _message.value = it.message ?: "Unable to inspect app storage" }
+            _appStorageLoading.value = false
             residueResult.onSuccess { _residueAnalysis.value = it }
                 .onFailure { _message.value = it.message ?: "Unable to analyze app residue" }
             _residueLoading.value = false
@@ -1371,6 +1389,102 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             refreshCleanupReports()
             _moduleReport.value = moduleReport
         }
+    }
+
+    fun updateAppStorageQuery(value: String) {
+        _appStorageFilter.value = _appStorageFilter.value.copy(query = value, page = 0)
+    }
+
+    fun toggleInstalledAppStorageOnly() {
+        val current = _appStorageFilter.value
+        _appStorageFilter.value = current.copy(installedOnly = !current.installedOnly, page = 0)
+    }
+
+    fun cycleAppStorageSort() {
+        val current = _appStorageFilter.value
+        val options = AppStorageSort.entries
+        _appStorageFilter.value = current.copy(sort = options[(current.sort.ordinal + 1) % options.size], page = 0)
+    }
+
+    fun previousAppStoragePage() {
+        val current = _appStorageFilter.value
+        _appStorageFilter.value = current.copy(page = (current.page - 1).coerceAtLeast(0))
+    }
+
+    fun nextAppStoragePage() {
+        val current = _appStorageFilter.value
+        val last = (appStoragePage.value.pageCount - 1).coerceAtLeast(0)
+        _appStorageFilter.value = current.copy(page = (current.page + 1).coerceAtMost(last))
+    }
+
+    fun selectAppStorageBucket(packageName: String, kind: AppStorageBucketKind) {
+        val bucket = _appStorageInspector.value?.packages?.firstOrNull { it.packageName == packageName }?.buckets?.firstOrNull { it.kind == kind }
+        selectAppStoragePaths(bucket?.deletionPaths.orEmpty(), bucket?.expectedSha256ByPath.orEmpty(), "${kind.label} for $packageName")
+    }
+
+    fun reviewAppStorageBucket(packageName: String, kind: AppStorageBucketKind) {
+        val bucket = _appStorageInspector.value?.packages?.firstOrNull { it.packageName == packageName }?.buckets?.firstOrNull { it.kind == kind }
+        val paths = bucket?.deletionPaths.orEmpty()
+        if (paths.isEmpty()) {
+            _message.value = "This storage bucket has no paths eligible for direct deletion"
+        } else {
+            reviewPaths(paths, bucket?.expectedSha256ByPath.orEmpty())
+        }
+    }
+
+    fun selectAppStorageDuplicates(packageName: String) {
+        val report = _appStorageInspector.value?.packages?.firstOrNull { it.packageName == packageName }
+        val paths = report?.duplicatePaths.orEmpty()
+        selectAppStoragePaths(paths.map { it.path }, paths.mapNotNull { item -> item.expectedSha256?.let { item.path to it } }.toMap(), "verified duplicates for $packageName")
+    }
+
+    fun reviewAppStorageDuplicates(packageName: String) {
+        val report = _appStorageInspector.value?.packages?.firstOrNull { it.packageName == packageName }
+        val paths = report?.duplicatePaths.orEmpty()
+        reviewPaths(paths.map { it.path }, paths.mapNotNull { item -> item.expectedSha256?.let { item.path to it } }.toMap())
+    }
+
+    fun reviewAppStorageResidue(packageName: String) {
+        val paths = _appStorageInspector.value?.packages?.firstOrNull { it.packageName == packageName }?.residuePaths.orEmpty().filter { it.deletionEligible }.map { it.path }
+        if (paths.isEmpty()) _message.value = "No high-confidence unprotected residue is eligible" else reviewPaths(paths)
+    }
+
+    private fun selectAppStoragePaths(paths: List<String>, hashes: Map<String, String>, label: String) {
+        if (_scanDataStale.value) {
+            _message.value = "Run a new scan before selecting files for deletion"
+            return
+        }
+        if (paths.isEmpty()) {
+            _message.value = "No deletion-eligible paths are available in $label"
+            return
+        }
+        _selectedPaths.value = paths.toCollection(linkedSetOf())
+        _selectedContentHashes.value = hashes.filterKeys { it in _selectedPaths.value }
+        _cleanupReview.value = null
+        _message.value = "Selected ${paths.size} path(s) from $label"
+    }
+
+    fun openAppStorageSettings(packageName: String) {
+        repository.openAppSettings(packageName).onFailure { _message.value = it.message ?: "Unable to open Android app settings" }
+    }
+
+    fun requestAppUninstall(packageName: String) {
+        repository.requestAppUninstall(packageName).onFailure { _message.value = it.message ?: "Unable to open Android uninstall flow" }
+    }
+
+    fun setAppStorageRecommendationsIgnored(packageName: String, ignored: Boolean) {
+        repository.setAppStorageRecommendationsIgnored(packageName, ignored)
+        val current = _appStorageInspector.value ?: return
+        _appStorageInspector.value = current.copy(packages = current.packages.map { report ->
+            if (report.packageName == packageName) report.copy(recommendationsIgnored = ignored) else report
+        })
+        latestSession.value?.id?.let { reloadCleanupRecommendations(if (ignored) "Recommendations ignored for $packageName" else "Recommendations restored for $packageName") }
+    }
+
+    fun protectAppStoragePath(path: String, protect: Boolean) {
+        if (protect) repository.protectAppStoragePath(path) else repository.unprotectAppStoragePath(path)
+        latestSession.value?.id?.let(::refreshInsights)
+        _message.value = if (protect) "Protected $path" else "Removed protection from $path"
     }
 
     fun rootSearch(query: String) {

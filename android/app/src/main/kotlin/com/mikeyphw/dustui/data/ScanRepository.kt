@@ -3,6 +3,11 @@ package com.mikeyphw.dustui.data
 import android.content.Context
 import android.app.KeyguardManager
 import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import android.os.Build
 import android.os.PowerManager
 import android.os.StatFs
@@ -32,6 +37,7 @@ class ScanRepository(
     private val cleanupRuleStore = CleanupRuleStore(context)
     private val storageGrowthPreferenceStore = StorageGrowthPreferenceStore(context)
     private val cleanupReportStore = CleanupReportStore(context)
+    private val appStoragePreferenceStore = AppStoragePreferenceStore(context)
     @Volatile private var packageInventoryCache: Pair<Long, InstalledPackageInventory>? = null
     fun observeLatestSession(): Flow<ScanSessionEntity?> = dao.observeLatestSession()
     fun observeCleanupOperations(): Flow<List<CleanupOperationEntity>> = dao.observeCleanupOperations(50)
@@ -156,21 +162,104 @@ class ScanRepository(
         return PackageIntelligenceAnalyzer.profiles(entries, installed, labels, duplicates)
     }
 
+    suspend fun appStorageInspector(
+        scanId: String,
+        providedResidueAnalysis: AppResidueAnalysis? = null,
+    ): AppStorageInspectorAnalysis {
+        val currentEntries = dao.entriesOnce(scanId)
+        val sessions = dao.completedSessions(100)
+        val currentIndex = sessions.indexOfFirst { it.id == scanId }
+        val previousSession = if (currentIndex >= 0) sessions.getOrNull(currentIndex + 1) else sessions.firstOrNull { it.id != scanId }
+        val previousEntries = previousSession?.let { dao.entriesOnce(it.id) }.orEmpty()
+        val inventory = installedPackageInventory()
+        val packageMetadata = installedPackageMetadata().toMutableMap().also { metadata ->
+            inventory.allPackages.forEach { packageName ->
+                metadata.putIfAbsent(packageName, AppPackageMetadata(packageName, packageName, installed = true))
+            }
+        }
+        val residue = providedResidueAnalysis ?: runCatching { appResidueAnalysis(scanId) }.getOrNull()
+        return AppStorageInspectorEngine.analyze(
+            scanId = scanId,
+            currentEntries = currentEntries,
+            previousScanId = previousSession?.id,
+            previousEntries = previousEntries,
+            metadata = packageMetadata,
+            packageInventoryComplete = inventory.complete,
+            duplicateSnapshot = duplicateStore.load(scanId),
+            residueAnalysis = residue,
+            protectedPaths = residueProtectionStore.paths(),
+            ignoredPackages = appStoragePreferenceStore.ignoredPackages(),
+        )
+    }
+
+    fun setAppStorageRecommendationsIgnored(packageName: String, ignored: Boolean) =
+        appStoragePreferenceStore.setRecommendationsIgnored(packageName, ignored)
+
+    fun protectAppStoragePath(path: String) = residueProtectionStore.protect(path)
+    fun unprotectAppStoragePath(path: String) = residueProtectionStore.unprotect(path)
+
+    fun openAppSettings(packageName: String): Result<Unit> = runCatching {
+        context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        })
+    }
+
+    fun requestAppUninstall(packageName: String): Result<Unit> = runCatching {
+        context.startActivity(Intent(Intent.ACTION_UNINSTALL_PACKAGE, Uri.parse("package:$packageName")).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        })
+    }
+
+    private fun installedPackageMetadata(): Map<String, AppPackageMetadata> {
+        val packageManager = context.packageManager
+        val packages: List<PackageInfo> = if (Build.VERSION.SDK_INT >= 33) {
+            packageManager.getInstalledPackages(PackageManager.PackageInfoFlags.of(0))
+        } else {
+            @Suppress("DEPRECATION")
+            packageManager.getInstalledPackages(0)
+        }
+        return packages.associate { info ->
+            val applicationInfo = info.applicationInfo
+            val label = applicationInfo?.let(packageManager::getApplicationLabel)?.toString().orEmpty().ifBlank { info.packageName }
+            info.packageName to AppPackageMetadata(
+                packageName = info.packageName,
+                appLabel = label,
+                installed = true,
+                systemApp = ((applicationInfo?.flags ?: 0) and ApplicationInfo.FLAG_SYSTEM) != 0,
+                versionName = info.versionName,
+                versionCode = packageVersionCode(info),
+            )
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun packageVersionCode(info: PackageInfo): Long = if (Build.VERSION.SDK_INT >= 28) info.longVersionCode else info.versionCode.toLong()
+
     suspend fun rootSearch(scanId: String, request: RootFileSearchRequest): List<RootFileSearchResult> =
         RootFileSearchEngine.search(dao.entriesOnce(scanId), request)
 
     suspend fun moduleAnalysis(scanId: String): RootModuleReport = RootModuleAnalyzer.analyze(dao.entriesOnce(scanId))
 
-    suspend fun cleanupRecommendations(scanId: String): CleanupRecommendationAnalysis {
+    suspend fun cleanupRecommendations(
+        scanId: String,
+        providedResidueAnalysis: AppResidueAnalysis? = null,
+    ): CleanupRecommendationAnalysis {
         val duplicateAnalysis = duplicateStore.load(scanId)
-        val residueAnalysis = appResidueAnalysis(scanId)
+        val residueAnalysis = providedResidueAnalysis ?: appResidueAnalysis(scanId)
         recommendationPreferenceStore.pruneDismissedScans(scanId)
-        return CleanupRecommendationEngine.analyze(
+        val ignoredPackages = appStoragePreferenceStore.ignoredPackages()
+        val analysis = CleanupRecommendationEngine.analyze(
             scanId = scanId,
             entries = dao.entriesOnce(scanId),
             duplicateAnalysis = duplicateAnalysis,
             residueAnalysis = residueAnalysis,
         )
+        if (ignoredPackages.isEmpty()) return analysis
+        return analysis.copy(items = analysis.items.filterNot { recommendation ->
+            val residuePackage = recommendation.id.removePrefix("residue:").takeIf { recommendation.id.startsWith("residue:") }
+            val packages = recommendation.paths.mapNotNull(EntryIntelligenceResolver::packageFromPath).toSet()
+            residuePackage in ignoredPackages || (packages.size == 1 && packages.single() in ignoredPackages)
+        })
     }
 
     fun cleanupRecommendationPreferences(scanId: String): CleanupRecommendationPreferences =

@@ -34,7 +34,7 @@ enum class DustDestination(val label: String, val shortLabel: String, val symbol
     DUPLICATES("Duplicates", "Dupes", "⧉", "Actions"),
     APP_RESIDUE("App residue", "Residue", "⌫", "Actions"),
     SEARCH("Root search", "Search", "⌕", "Tools"),
-    PACKAGES("Packages", "Apps", "▣", "Apps"),
+    PACKAGES("App storage", "Apps", "▣", "Apps"),
     MODULES("Modules", "Modules", "▥", "Tools"),
     CERTIFICATION("Certification", "Cert", "✓", "Run"),
     CLEANUP("Deletion reports", "Reports", "↺", "Actions"),

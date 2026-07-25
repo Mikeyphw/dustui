@@ -2,6 +2,16 @@
 
 ## 1.4.0-rc1
 
+### Phase 23 · App storage inspector
+
+- Replaced the shallow Packages summary with a package-centered storage inspector covering APK/split code, private data, databases, preferences, cache, OBB, shared media, logs, exports/backups, verified duplicates, residue, and recent growth.
+- Switched package totals to leaf-file accounting so directory rows cannot double-count measured bytes.
+- Blocked direct deletion of active app code, databases, preferences, and private state; active cache routes to Android app settings.
+- Added exact bucket files, Explorer reveal, protection controls, selection, and fingerprinted deletion planning for eligible paths.
+- Added Android-owned app settings and uninstall flows, package-specific recommendation ignore/restore, search, sorting, paging, and stale-scan guards.
+- Added focused model and source-contract coverage with a zero-warning validation gate.
+
+
 ### Phases 20–22 · Complete rules, history, and verified reports
 
 - Added automatically refreshed cleanup-rule draft previews with exact matched/blocked paths and complete condition explanations.

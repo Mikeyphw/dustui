@@ -136,3 +136,7 @@ The Android UI safety rules include scan-bound deletion review, exact path finge
 ### Cleaning workflows: rules, history, and verification
 
 DustUI now supports reviewed saved cleanup rules with exact live previews, multi-scan storage growth history with timeline and insight drill-down, and persistent deletion-verification reports with retryable path inspection and redacted exports. Rules never delete automatically, historical snapshots are informational unless the comparison ends at the newest active scan, and only paths verified missing contribute confirmed deleted bytes.
+
+## App storage inspector
+
+The Android App storage workbench separates package code, live internal state, cache, OBB, shared media, logs, exports/backups, exact duplicates, residue, and recent growth. Android app settings own active-cache clearing, uninstall requests use the platform package manager, and only deletion-eligible paths can enter DustUI's reviewed permanent-deletion planner.

@@ -1,0 +1,157 @@
+{
+  "applied_at": "2026-07-25T13:28:10.688850Z",
+  "artifact": "/storage/emulated/0/Download/dustui_android_phase23_app_storage_inspector_overlay.zip",
+  "artifact_name": "dustui_android_phase23_app_storage_inspector_overlay.zip",
+  "type": "overlay",
+  "sha256": "37e9046824ea97ecbdf912650386d934cdf3593c7583ce93f26027cf3522621d",
+  "status": "ok",
+  "validation_status": "not-run",
+  "commit_message": "Add Android Phase 23 app storage inspector",
+  "commit_hash": "",
+  "file_count": 14,
+  "change_counts": {
+    "add": 5,
+    "modify": 9
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Android Phase 23 app storage inspector",
+    "description": "Implements the Phase 23 package-centered App Storage Inspector on the 2026-07-25 current snapshot. Separates base and split APKs, native code, live private state, cache, code cache, OBB, shared media, logs, exports/backups, verified duplicate copies, high-confidence residue, and recent growth. Active internal state and code remain non-deletable; cache and uninstall use Android-owned flows; eligible paths retain exact reviewed permanent-deletion planning, duplicate SHA-256 expectations, protected-folder controls, stale-scan guards, and conservative all-user package visibility.",
+    "version": "1.0.0",
+    "repository": {
+      "name": "dustui"
+    },
+    "target": "dustui_android",
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "CHANGELOG.md",
+          "action": "modify",
+          "sha256": "2c561d9694e21673c06d70a98ba1ff103424602185844132bc0981a5719b8a4f",
+          "size": 9531,
+          "source_sha256": "ecd40a6d204adc1179db332f5bd353d7e9de5c7fb25ef76809a07db378fd951f"
+        },
+        {
+          "path": "README.md",
+          "action": "modify",
+          "sha256": "09291519a9753e9115f83a36fecef945041eb4de87449d7ea3b881036a6a37c4",
+          "size": 7193,
+          "source_sha256": "e33ec39ebed77d059723fe3ffe60654c1d5f348071eef08b04163af91573aa1c"
+        },
+        {
+          "path": "RELEASE_CHECKLIST.md",
+          "action": "modify",
+          "sha256": "6f39d943b1bd21c5998502e709c5c165d215e744523adf1952a0c120f37f0a7e",
+          "size": 14172,
+          "source_sha256": "8fa27713e33f6b72bb0f06816c0997c1bae42d711f2c375939d5a9a5e8e1bd63"
+        },
+        {
+          "path": "UI_UX_CONTRACT.md",
+          "action": "modify",
+          "sha256": "3b5a6bcadc3f530663d902d789d5d4860cbab6a205070c3e8142f823c0b2730f",
+          "size": 15855,
+          "source_sha256": "c3af0914b4f0ea3655099f8c3aa5d5b6a903857f56ecefd2d8692e42cf9d81ba"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/AppStorageInspector.kt",
+          "action": "add",
+          "sha256": "0aa6a798aafe2caca1332fc395847de7e253c91ec921977a42ff789d1edfcc8e",
+          "size": 15025
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/AppStoragePreferenceStore.kt",
+          "action": "add",
+          "sha256": "7e5beefc668955074f47a3c879164c9409e418591c4dab56e902a416a8149885",
+          "size": 909
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+          "action": "modify",
+          "sha256": "a3062dd0d9d335b52e53088b92d010242ef738a31b491b29744b3a11feb23c76",
+          "size": 33925,
+          "source_sha256": "9f7b40d187736ceefabfb355382e5f53e4657fa3f6ca4bd1a2bf1c208a019e0c"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/AppStorageInspectorScreen.kt",
+          "action": "add",
+          "sha256": "0a3a2e12f869ed71ea88ed1b417e77e6a80b4366a1ef3daa9fecd47a0e9b32ef",
+          "size": 16695
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+          "action": "modify",
+          "sha256": "377f57ec3b9951263efa583d5458b79e107db4e7387f66de0075eba6163bf473",
+          "size": 9264,
+          "source_sha256": "0b5a1e8119e9fa55797c25325b1da158f2148b12d888eebbe7c0a193ca5d926b"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "action": "modify",
+          "sha256": "bfc9107b9ced121dabd6109a382de0ae92501268180fccf68b879fe17ae8f181",
+          "size": 115223,
+          "source_sha256": "bbe59699dd9c3dbb89c2ac107fc74b316f636dd331b6d4e02241c8336a199e7e"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+          "action": "modify",
+          "sha256": "c4fe27c0198a5a92830e75b77e7003a0bd402ab9b917f368e043efbd3f368467",
+          "size": 75152,
+          "source_sha256": "f4ecd3fae9af1a43529ccb555d610bd071ad38207edc9a848bbae80d24a39a9e"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/AppStorageInspectorTest.kt",
+          "action": "add",
+          "sha256": "e3f41a44dacadcc8906c0a69f3ddf6eebdefda60c705f1a324a7874be47192b8",
+          "size": 8552
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+          "action": "modify",
+          "sha256": "c559b7b8e1c564c2a96374eff0b57362d6d503101d5953937d560e6483e66ab2",
+          "size": 23230,
+          "source_sha256": "dc4762e2290fe63cb0c592ec68879f853c7520e1a5891534eaa04f2f6d3b8dd2"
+        },
+        {
+          "path": "docs/ANDROID_PHASE23_APP_STORAGE_INSPECTOR.md",
+          "action": "add",
+          "sha256": "0098bcb99e722cddb22fcd9d25c6a4ab17e854b3ffc750905da12c436d9d2272",
+          "size": 1634
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false,
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Add Android Phase 23 app storage inspector"
+      }
+    },
+    "validation": {
+      "required": true,
+      "restore": true,
+      "build": true,
+      "test": true,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "build": "pass",
+        "tests": "pass",
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "f704b02ba616be5abc07fb92dde52fa080b490a62acc072f6cfd305cc54c5721",
+        "timeout_seconds": 3600
+      }
+    }
+  },
+  "history_id": "1cb517b39a5a40abbd9912a954b74ea8"
+}
