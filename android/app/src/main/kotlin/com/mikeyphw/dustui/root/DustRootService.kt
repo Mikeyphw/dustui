@@ -3,7 +3,10 @@ package com.mikeyphw.dustui.root
 import android.content.Intent
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
+import android.os.Process
+import android.system.ErrnoException
 import android.system.Os
+import android.system.OsConstants
 import com.mikeyphw.dustui.scan.ScanRequest
 import com.mikeyphw.dustui.data.CleanupSafetyPolicy
 import com.topjohnwu.superuser.ipc.RootService
@@ -30,18 +33,44 @@ class DustRootService : RootService() {
     private val duplicateCancellations = ConcurrentHashMap<String, AtomicBoolean>()
 
     private val binder = object : IDustRootService.Stub() {
-        override fun serviceInfo(): String = JSONObject()
-            .put("ok", true)
-            .put("uid", android.os.Process.myUid())
-            .put("scanner", NativeDustScanner.version())
-            .put("backend", detectRootBackend())
-            .put("selinuxEnforcing", readSelinuxEnforcing())
-            .toString()
+        override fun serviceInfo(): String {
+            val uid = Process.myUid()
+            val scanner = runCatching { NativeDustScanner.version() }.getOrDefault("")
+            val ready = uid == 0 && scanner.isNotBlank()
+            return JSONObject()
+                .put("ok", ready)
+                .put("uid", uid)
+                .put("gid", runCatching { Os.getgid() }.getOrDefault(-1))
+                .put("pid", Process.myPid())
+                .put("scanner", scanner)
+                .put("backend", detectRootBackend())
+                .put("selinuxEnforcing", readSelinuxEnforcing())
+                .put("selinuxContext", readSelinuxContext())
+                .put("mountNamespace", readMountNamespace())
+                .put("message", when {
+                    uid != 0 -> "Root service is running as UID $uid instead of UID 0"
+                    scanner.isBlank() -> "Native scanner library did not report a version"
+                    else -> "Root service is ready"
+                })
+                .toString()
+        }
+
+        override fun preflightScan(requestJson: String): String {
+            val request = runCatching { ScanRequest.fromJson(requestJson) }.getOrElse { error ->
+                return preflightFailure("INVALID_REQUEST", "", error.message ?: "Invalid scan request").toString()
+            }
+            return preflightScanRoot(request.rootPath).toString()
+        }
 
         override fun startScan(requestJson: String, output: ParcelFileDescriptor): String {
             val request = runCatching { ScanRequest.fromJson(requestJson) }.getOrElse { error ->
                 output.close()
                 return failure(error.message ?: "Invalid scan request")
+            }
+            val preflight = preflightScanRoot(request.rootPath)
+            if (!preflight.optBoolean("ok")) {
+                output.close()
+                return preflight.toString()
             }
             if (scans.containsKey(request.scanId)) {
                 output.close()
@@ -439,6 +468,90 @@ class DustRootService : RootService() {
             .put("message", error.message ?: error.javaClass.simpleName)
             .toString()
     }
+
+    private fun preflightScanRoot(rawPath: String): JSONObject {
+        val requested = rawPath.trim()
+        val path = runCatching { Paths.get(requested).normalize() }.getOrElse { error ->
+            return preflightFailure("INVALID_PATH", requested, error.message ?: "Invalid scan-root path")
+        }
+        if (!path.isAbsolute) return preflightFailure("PATH_NOT_ABSOLUTE", requested, "Scan root must be an absolute path")
+        val metadata = try {
+            Os.lstat(path.toString())
+        } catch (error: ErrnoException) {
+            return preflightFailure(errnoCode("ROOT_LSTAT", error.errno), requested, error.message ?: "Unable to inspect scan root", error.errno)
+        } catch (error: Throwable) {
+            return preflightFailure("ROOT_LSTAT_FAILED", requested, error.message ?: error.javaClass.simpleName)
+        }
+        val symbolicLink = OsConstants.S_ISLNK(metadata.st_mode)
+        if (symbolicLink) {
+            val canonical = runCatching { path.toFile().canonicalPath }.getOrNull()
+            return preflightFailure(
+                "ROOT_SYMLINK",
+                requested,
+                "Scan root is a symbolic link${canonical?.let { "; use resolved path $it" }.orEmpty()}",
+            ).put("canonicalPath", canonical).put("exists", true).put("symbolicLink", true)
+        }
+        if (!OsConstants.S_ISDIR(metadata.st_mode)) {
+            return preflightFailure("ROOT_NOT_DIRECTORY", requested, "Scan root is not a directory")
+                .put("exists", true).put("directory", false)
+        }
+        val canonical = runCatching { path.toFile().canonicalPath }.getOrDefault(path.toString())
+        val descriptor = try {
+            Os.open(path.toString(), OsConstants.O_RDONLY, 0)
+        } catch (error: ErrnoException) {
+            return preflightFailure(errnoCode("ROOT_OPEN", error.errno), requested, error.message ?: "Unable to open scan root", error.errno)
+                .put("canonicalPath", canonical).put("exists", true).put("directory", true)
+        } catch (error: Throwable) {
+            return preflightFailure("ROOT_OPEN_FAILED", requested, error.message ?: error.javaClass.simpleName)
+                .put("canonicalPath", canonical).put("exists", true).put("directory", true)
+        }
+        runCatching { Os.close(descriptor) }
+        val hasChildren = runCatching {
+            Files.newDirectoryStream(path).use { stream -> stream.iterator().hasNext() }
+        }.getOrNull()
+        val mount = mountFor(canonical)
+        return JSONObject()
+            .put("ok", Process.myUid() == 0)
+            .put("code", if (Process.myUid() == 0) "READY" else "ROOT_UID_MISMATCH")
+            .put("requestedPath", requested)
+            .put("canonicalPath", canonical)
+            .put("exists", true)
+            .put("directory", true)
+            .put("symbolicLink", false)
+            .put("opened", true)
+            .put("hasChildren", hasChildren)
+            .put("uid", Process.myUid())
+            .put("selinuxContext", readSelinuxContext())
+            .put("mountPoint", mount?.optString("mountPoint"))
+            .put("filesystem", mount?.optString("filesystem"))
+            .put("mountOptions", mount?.optString("options"))
+            .put("message", if (Process.myUid() == 0) "Scan root opened successfully" else "Root service is not running as UID 0")
+    }
+
+    private fun preflightFailure(code: String, path: String, message: String, errno: Int? = null): JSONObject = JSONObject()
+        .put("ok", false)
+        .put("code", code)
+        .put("requestedPath", path)
+        .put("exists", false)
+        .put("directory", false)
+        .put("symbolicLink", false)
+        .put("opened", false)
+        .put("errno", errno)
+        .put("uid", Process.myUid())
+        .put("selinuxContext", readSelinuxContext())
+        .put("message", message)
+
+    private fun errnoCode(prefix: String, errno: Int): String = when (errno) {
+        OsConstants.EACCES, OsConstants.EPERM -> "${prefix}_PERMISSION_DENIED"
+        OsConstants.ENOENT -> "${prefix}_NOT_FOUND"
+        OsConstants.ENOTDIR -> "${prefix}_NOT_DIRECTORY"
+        OsConstants.ELOOP -> "${prefix}_SYMLINK_LOOP"
+        else -> "${prefix}_ERRNO_$errno"
+    }
+
+    private fun readSelinuxContext(): String? = runCatching { File("/proc/self/attr/current").readText().trim().takeIf { it.isNotBlank() } }.getOrNull()
+
+    private fun readMountNamespace(): String? = runCatching { Os.readlink("/proc/self/ns/mnt") }.getOrNull()
 
     private fun runFixedCommand(vararg command: String): FixedCommandResult {
         val process = ProcessBuilder(*command).redirectErrorStream(true).start()

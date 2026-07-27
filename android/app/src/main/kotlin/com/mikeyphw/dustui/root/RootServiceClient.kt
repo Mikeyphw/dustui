@@ -21,7 +21,6 @@ import com.mikeyphw.dustui.data.InstalledPackageInventory
 import com.mikeyphw.dustui.data.VerifiedDuplicateGroup
 import com.mikeyphw.dustui.data.RootPathInspection
 import org.json.JSONArray
-import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ipc.RootService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
@@ -41,18 +40,43 @@ class RootServiceClient(private val context: Context) {
     @Volatile private var remote: IDustRootService? = null
     @Volatile private var activeConnection: ServiceConnection? = null
 
-    suspend fun rootAvailable(): Boolean = withContext(Dispatchers.IO) {
-        withTimeoutOrNull(ROOT_TIMEOUT_MS) { runCatching { Shell.getShell().isRoot }.getOrDefault(false) } ?: false
-    }
+    suspend fun rootAvailable(): Boolean = withTimeoutOrNull(ROOT_TIMEOUT_MS) {
+        runCatching { serviceInfo().let { it.ok && it.uid == 0 } }.getOrDefault(false)
+    } ?: false
 
     suspend fun serviceInfo(): RootServiceInfo = cleanupCall { it.serviceInfo() }.let { raw ->
         val json = JSONObject(raw)
         RootServiceInfo(
             ok = json.optBoolean("ok"),
             uid = json.optInt("uid", -1),
+            gid = json.optInt("gid", -1),
+            pid = json.optInt("pid", -1),
             scanner = json.optString("scanner"),
             backend = json.optString("backend", "Unknown"),
             selinuxEnforcing = if (json.has("selinuxEnforcing") && !json.isNull("selinuxEnforcing")) json.getBoolean("selinuxEnforcing") else null,
+            selinuxContext = json.optString("selinuxContext").takeIf(String::isNotBlank),
+            mountNamespace = json.optString("mountNamespace").takeIf(String::isNotBlank),
+            message = json.optString("message").takeIf(String::isNotBlank),
+        )
+    }
+
+    suspend fun preflightScan(request: ScanRequest): ScanRootPreflight = cleanupCall { it.preflightScan(request.toJson()) }.let { raw ->
+        val json = JSONObject(raw)
+        ScanRootPreflight(
+            ok = json.optBoolean("ok"),
+            code = json.optString("code", if (json.optBoolean("ok")) "READY" else "PREFLIGHT_FAILED"),
+            requestedPath = json.optString("requestedPath", request.rootPath),
+            canonicalPath = json.optString("canonicalPath").takeIf(String::isNotBlank),
+            exists = json.optBoolean("exists"),
+            directory = json.optBoolean("directory"),
+            symbolicLink = json.optBoolean("symbolicLink"),
+            opened = json.optBoolean("opened"),
+            hasChildren = if (json.has("hasChildren") && !json.isNull("hasChildren")) json.getBoolean("hasChildren") else null,
+            errno = json.optInt("errno").takeIf { json.has("errno") && !json.isNull("errno") },
+            message = json.optString("message", "Scan-root preflight failed"),
+            mountPoint = json.optString("mountPoint").takeIf(String::isNotBlank),
+            filesystem = json.optString("filesystem").takeIf(String::isNotBlank),
+            mountOptions = json.optString("mountOptions").takeIf(String::isNotBlank),
         )
     }
 
@@ -291,9 +315,31 @@ class RootServiceClient(private val context: Context) {
     data class RootServiceInfo(
         val ok: Boolean,
         val uid: Int,
+        val gid: Int,
+        val pid: Int,
         val scanner: String,
         val backend: String,
         val selinuxEnforcing: Boolean?,
+        val selinuxContext: String?,
+        val mountNamespace: String?,
+        val message: String?,
+    )
+
+    data class ScanRootPreflight(
+        val ok: Boolean,
+        val code: String,
+        val requestedPath: String,
+        val canonicalPath: String?,
+        val exists: Boolean,
+        val directory: Boolean,
+        val symbolicLink: Boolean,
+        val opened: Boolean,
+        val hasChildren: Boolean?,
+        val errno: Int?,
+        val message: String,
+        val mountPoint: String?,
+        val filesystem: String?,
+        val mountOptions: String?,
     )
 
     data class RootScanState(
@@ -303,6 +349,9 @@ class RootServiceClient(private val context: Context) {
         val exitCode: Int? = null,
         val error: String? = null,
         val message: String? = null,
+        val code: String? = null,
+        val path: String? = null,
+        val errno: Int? = null,
     ) {
         val terminal: Boolean get() = status in setOf("completed", "cancelled", "failed")
 
@@ -316,6 +365,9 @@ class RootServiceClient(private val context: Context) {
                     exitCode = if (json.has("exitCode") && !json.isNull("exitCode")) json.getInt("exitCode") else null,
                     error = json.optString("error").takeIf(String::isNotBlank),
                     message = json.optString("message").takeIf(String::isNotBlank),
+                    code = json.optString("code").takeIf(String::isNotBlank),
+                    path = json.optString("path").ifBlank { json.optString("requestedPath") }.takeIf(String::isNotBlank),
+                    errno = json.optInt("errno").takeIf { json.has("errno") && !json.isNull("errno") },
                 )
             }
         }

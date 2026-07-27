@@ -60,7 +60,14 @@ struct ScanContext {
     std::uint64_t scannedItems = 0;
     std::uint64_t scannedBytes = 0;
     std::uint64_t emittedEntries = 0;
+    std::uint64_t emittedFiles = 0;
+    std::uint64_t emittedDirectories = 0;
     std::uint64_t warningCount = 0;
+    std::uint64_t depthLimitedDirectories = 0;
+    std::uint64_t skippedFilesystemEntries = 0;
+    bool truncated = false;
+    bool rootOpened = false;
+    bool fatal = false;
     std::unordered_set<InodeKey, InodeHash> seenInodes;
 };
 
@@ -131,14 +138,35 @@ bool excluded(const ScanContext& context, const std::string& path, const std::st
     return false;
 }
 
-void emitWarning(ScanContext& context, const std::string& path, const std::string& message) {
+void emitWarning(ScanContext& context, const std::string& code, const std::string& phase,
+                 const std::string& path, const std::string& message, int errorNumber = 0) {
     ++context.warningCount;
-    std::fputs("{\"type\":\"warning\",\"path\":", context.output);
+    std::fputs("{\"type\":\"warning\",\"code\":", context.output);
+    writeJsonString(context.output, code);
+    std::fputs(",\"phase\":", context.output);
+    writeJsonString(context.output, phase);
+    std::fputs(",\"path\":", context.output);
     writeJsonString(context.output, path);
     std::fputs(",\"message\":", context.output);
     writeJsonString(context.output, message);
+    if (errorNumber != 0) std::fprintf(context.output, ",\"errno\":%d", errorNumber);
     std::fputc('}', context.output);
     finishEvent(context.output);
+}
+
+void emitError(FILE* output, const std::string& code, const std::string& phase,
+               const std::string& path, const std::string& message, int errorNumber = 0) {
+    std::fputs("{\"type\":\"error\",\"code\":", output);
+    writeJsonString(output, code);
+    std::fputs(",\"phase\":", output);
+    writeJsonString(output, phase);
+    std::fputs(",\"path\":", output);
+    writeJsonString(output, path);
+    std::fputs(",\"message\":", output);
+    writeJsonString(output, message);
+    if (errorNumber != 0) std::fprintf(output, ",\"errno\":%d", errorNumber);
+    std::fputc('}', output);
+    finishEvent(output);
 }
 
 void emitProgress(ScanContext& context, const std::string& path) {
@@ -150,10 +178,14 @@ void emitProgress(ScanContext& context, const std::string& path) {
     finishEvent(context.output);
 }
 
-bool shouldEmit(const ScanContext& context, bool directory, int depth, std::uint64_t size) {
-    if (depth == 0 || size < context.minSize || context.emittedEntries >= context.maxEntries) return false;
+bool shouldEmit(ScanContext& context, bool directory, int depth, std::uint64_t size) {
+    if (depth == 0 || size < context.minSize) return false;
     if (context.mode == EntryMode::Directories && !directory) return false;
     if (context.mode == EntryMode::Files && directory) return false;
+    if (context.emittedEntries >= context.maxEntries) {
+        context.truncated = true;
+        return false;
+    }
     return true;
 }
 
@@ -172,6 +204,7 @@ void emitEntry(ScanContext& context, const std::string& path, const struct stat&
         static_cast<std::int64_t>(metadata.st_mtime), totals.files);
     finishEvent(context.output);
     ++context.emittedEntries;
+    if (directory) ++context.emittedDirectories; else ++context.emittedFiles;
 }
 
 Totals scanPath(ScanContext& context, const std::string& path, int depth) {
@@ -179,10 +212,14 @@ Totals scanPath(ScanContext& context, const std::string& path, int depth) {
 
     struct stat metadata {};
     if (lstat(path.c_str(), &metadata) != 0) {
-        emitWarning(context, path, std::strerror(errno));
+        const int errorNumber = errno;
+        emitWarning(context, "LSTAT_FAILED", "traversal", path, std::strerror(errorNumber), errorNumber);
         return {};
     }
-    if (context.sameFilesystem && metadata.st_dev != context.rootDevice) return {};
+    if (context.sameFilesystem && metadata.st_dev != context.rootDevice) {
+        ++context.skippedFilesystemEntries;
+        return {};
+    }
 
     ++context.scannedItems;
     const bool directory = S_ISDIR(metadata.st_mode);
@@ -195,16 +232,27 @@ Totals scanPath(ScanContext& context, const std::string& path, int depth) {
     }
 
     const bool mayDescend = directory && (context.maxDepth < 0 || depth < context.maxDepth);
+    if (directory && !mayDescend) ++context.depthLimitedDirectories;
     if (mayDescend) {
         DIR* handle = opendir(path.c_str());
         if (handle == nullptr) {
-            emitWarning(context, path, std::strerror(errno));
+            const int errorNumber = errno;
+            if (depth == 0) {
+                context.fatal = true;
+                emitError(context.output, "ROOT_OPEN_FAILED", "root-open", path, std::strerror(errorNumber), errorNumber);
+            } else {
+                emitWarning(context, "DIRECTORY_OPEN_FAILED", "traversal", path, std::strerror(errorNumber), errorNumber);
+            }
         } else {
+            if (depth == 0) context.rootOpened = true;
             while (!context.cancelled->load(std::memory_order_relaxed)) {
                 errno = 0;
                 dirent* entry = readdir(handle);
                 if (entry == nullptr) {
-                    if (errno != 0) emitWarning(context, path, std::strerror(errno));
+                    if (errno != 0) {
+                        const int errorNumber = errno;
+                        emitWarning(context, "DIRECTORY_READ_FAILED", "traversal", path, std::strerror(errorNumber), errorNumber);
+                    }
                     break;
                 }
                 const char* name = entry->d_name;
@@ -281,15 +329,37 @@ Java_com_mikeyphw_dustui_root_NativeDustScanner_scan(
 
     struct stat rootMetadata {};
     if (lstat(root.c_str(), &rootMetadata) != 0) {
-        std::fputs("{\"type\":\"error\",\"message\":", output);
-        writeJsonString(output, std::strerror(errno));
-        std::fputc('}', output);
-        finishEvent(output);
+        const int errorNumber = errno;
+        emitError(output, "ROOT_LSTAT_FAILED", "root-preflight", root, std::strerror(errorNumber), errorNumber);
         std::fclose(output);
         std::lock_guard<std::mutex> guard(gCancelMutex);
         gCancelFlags.erase(scanId);
         return 4;
     }
+    if (S_ISLNK(rootMetadata.st_mode)) {
+        emitError(output, "ROOT_SYMLINK", "root-preflight", root, "Scan root is a symbolic link");
+        std::fclose(output);
+        std::lock_guard<std::mutex> guard(gCancelMutex);
+        gCancelFlags.erase(scanId);
+        return 5;
+    }
+    if (!S_ISDIR(rootMetadata.st_mode)) {
+        emitError(output, "ROOT_NOT_DIRECTORY", "root-preflight", root, "Scan root is not a directory");
+        std::fclose(output);
+        std::lock_guard<std::mutex> guard(gCancelMutex);
+        gCancelFlags.erase(scanId);
+        return 6;
+    }
+    DIR* rootProbe = opendir(root.c_str());
+    if (rootProbe == nullptr) {
+        const int errorNumber = errno;
+        emitError(output, "ROOT_OPEN_FAILED", "root-preflight", root, std::strerror(errorNumber), errorNumber);
+        std::fclose(output);
+        std::lock_guard<std::mutex> guard(gCancelMutex);
+        gCancelFlags.erase(scanId);
+        return 7;
+    }
+    closedir(rootProbe);
 
     ScanContext context {
         output,
@@ -307,34 +377,52 @@ Java_com_mikeyphw_dustui_root_NativeDustScanner_scan(
         0,
         0,
         0,
+        0,
+        0,
+        0,
+        0,
+        false,
+        false,
+        false,
         {},
     };
 
-    std::fputs("{\"type\":\"start\",\"backend\":\"dustui-native-root-v2\",\"root\":", output);
+    std::fputs("{\"type\":\"start\",\"backend\":\"dustui-native-root-v3\",\"root\":", output);
     writeJsonString(output, root);
     std::fputc('}', output);
     finishEvent(output);
 
     const Totals totals = scanPath(context, root, 0);
     const bool wasCancelled = cancelled->load(std::memory_order_relaxed);
-    if (wasCancelled) {
-        std::fprintf(output,
-            "{\"type\":\"cancelled\",\"scannedItems\":%" PRIu64 ",\"scannedBytes\":%" PRIu64 "}",
-            context.scannedItems, context.scannedBytes);
+    if (context.fatal) {
+        std::fclose(output);
     } else {
-        std::fprintf(output,
-            "{\"type\":\"complete\",\"totalBytes\":%" PRIu64 ",\"scannedItems\":%" PRIu64
-            ",\"scannedBytes\":%" PRIu64 ",\"warnings\":%" PRIu64 ",\"emittedEntries\":%" PRIu64 "}",
-            totals.bytes, context.scannedItems, context.scannedBytes, context.warningCount, context.emittedEntries);
+        if (wasCancelled) {
+            std::fprintf(output,
+                "{\"type\":\"cancelled\",\"scannedItems\":%" PRIu64 ",\"scannedBytes\":%" PRIu64 "}",
+                context.scannedItems, context.scannedBytes);
+        } else {
+            std::fprintf(output,
+                "{\"type\":\"complete\",\"totalBytes\":%" PRIu64 ",\"scannedItems\":%" PRIu64
+                ",\"scannedBytes\":%" PRIu64 ",\"warnings\":%" PRIu64
+                ",\"emittedEntries\":%" PRIu64 ",\"emittedFiles\":%" PRIu64
+                ",\"emittedDirectories\":%" PRIu64 ",\"truncated\":%s"
+                ",\"depthLimitedDirectories\":%" PRIu64 ",\"skippedFilesystemEntries\":%" PRIu64
+                ",\"rootOpened\":%s}",
+                totals.bytes, context.scannedItems, context.scannedBytes, context.warningCount,
+                context.emittedEntries, context.emittedFiles, context.emittedDirectories,
+                context.truncated ? "true" : "false", context.depthLimitedDirectories,
+                context.skippedFilesystemEntries, context.rootOpened ? "true" : "false");
+        }
+        finishEvent(output);
+        std::fclose(output);
     }
-    finishEvent(output);
-    std::fclose(output);
 
     {
         std::lock_guard<std::mutex> guard(gCancelMutex);
         gCancelFlags.erase(scanId);
     }
-    return wasCancelled ? 130 : 0;
+    return context.fatal ? 8 : (wasCancelled ? 130 : 0);
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
@@ -349,5 +437,5 @@ Java_com_mikeyphw_dustui_root_NativeDustScanner_cancel(JNIEnv* env, jobject, jst
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_mikeyphw_dustui_root_NativeDustScanner_version(JNIEnv* env, jobject) {
-    return env->NewStringUTF("dustui-native-root/2");
+    return env->NewStringUTF("dustui-native-root/3");
 }

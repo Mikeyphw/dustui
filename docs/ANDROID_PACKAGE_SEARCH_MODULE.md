@@ -15,3 +15,7 @@ The search panel queries the persisted root scan index instead of starting anoth
 The module analyzer summarizes `/data/adb/modules` footprints, detects module metadata and boot scripts, identifies WebUI folders, flags disabled/update-pending modules, lists overlay targets, and reports overlay conflicts where multiple modules target the same system path.
 
 No arbitrary root shell endpoint is added. Cleanup remains gated by the Phase 4 review/quarantine workflow.
+
+## Module-source diagnostics
+
+Module analysis remains index-backed, but the UI no longer renders empty measurements without context. It identifies a wrong current scan root, inaccessible `/data/adb/modules`, failed or truncated module scans, and a genuine no-modules result separately. A dedicated module-directory scan action is available from the workbench.

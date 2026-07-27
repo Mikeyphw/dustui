@@ -2,9 +2,28 @@ package com.mikeyphw.dustui.data
 
 import java.util.Locale
 
+enum class ModuleDiagnosticStatus { READY, WRONG_SCAN_ROOT, ROOT_ACCESS_FAILED, SCAN_FAILED, NO_MODULES_FOUND, INCOMPLETE_RESULTS }
+
+data class ModuleAnalysisDiagnostic(
+    val status: ModuleDiagnosticStatus,
+    val message: String,
+    val currentScanRoot: String?,
+    val expectedRoot: String = "/data/adb/modules",
+    val scanIncludesModules: Boolean = false,
+    val modulePathAccessible: Boolean? = null,
+    val rootCode: String? = null,
+)
+
 data class RootModuleReport(
     val modules: List<RootModuleProfile>,
     val overlayConflicts: List<ModuleOverlayConflict>,
+    val diagnostic: ModuleAnalysisDiagnostic = ModuleAnalysisDiagnostic(
+        status = ModuleDiagnosticStatus.READY,
+        message = "Module analysis is ready",
+        currentScanRoot = null,
+        scanIncludesModules = true,
+        modulePathAccessible = true,
+    ),
 ) {
     val totalBytes: Long = modules.sumOf { it.totalBytes }
     val disabledCount: Int = modules.count { it.disabled }

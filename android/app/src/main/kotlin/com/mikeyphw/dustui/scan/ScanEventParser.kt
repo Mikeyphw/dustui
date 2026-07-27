@@ -16,10 +16,34 @@ sealed interface ScanEvent {
         val fileCount: Long,
     ) : ScanEvent
     data class Progress(val scannedItems: Long, val scannedBytes: Long, val currentPath: String) : ScanEvent
-    data class Warning(val path: String, val message: String) : ScanEvent
-    data class Complete(val totalBytes: Long, val scannedItems: Long, val scannedBytes: Long, val warnings: Long) : ScanEvent
+    data class Warning(
+        val code: String,
+        val phase: String,
+        val path: String,
+        val message: String,
+        val errno: Int?,
+    ) : ScanEvent
+    data class Complete(
+        val totalBytes: Long,
+        val scannedItems: Long,
+        val scannedBytes: Long,
+        val warnings: Long,
+        val emittedEntries: Long,
+        val emittedFiles: Long,
+        val emittedDirectories: Long,
+        val truncated: Boolean,
+        val depthLimitedDirectories: Long,
+        val skippedFilesystemEntries: Long,
+        val rootOpened: Boolean,
+    ) : ScanEvent
     data class Cancelled(val scannedItems: Long, val scannedBytes: Long) : ScanEvent
-    data class Error(val message: String) : ScanEvent
+    data class Error(
+        val code: String,
+        val phase: String,
+        val path: String,
+        val message: String,
+        val errno: Int?,
+    ) : ScanEvent
 }
 
 object ScanEventParser {
@@ -43,15 +67,34 @@ object ScanEventParser {
                 json.getLong("scannedBytes"),
                 json.optString("currentPath"),
             )
-            "warning" -> ScanEvent.Warning(json.optString("path"), json.optString("message"))
+            "warning" -> ScanEvent.Warning(
+                code = json.optString("code", "SCANNER_WARNING"),
+                phase = json.optString("phase", "traversal"),
+                path = json.optString("path"),
+                message = json.optString("message", "Native scanner warning"),
+                errno = json.optInt("errno").takeIf { json.has("errno") && !json.isNull("errno") },
+            )
             "complete" -> ScanEvent.Complete(
-                json.getLong("totalBytes"),
-                json.getLong("scannedItems"),
-                json.getLong("scannedBytes"),
-                json.optLong("warnings", 0),
+                totalBytes = json.getLong("totalBytes"),
+                scannedItems = json.getLong("scannedItems"),
+                scannedBytes = json.getLong("scannedBytes"),
+                warnings = json.optLong("warnings", 0),
+                emittedEntries = json.optLong("emittedEntries", 0),
+                emittedFiles = json.optLong("emittedFiles", 0),
+                emittedDirectories = json.optLong("emittedDirectories", 0),
+                truncated = json.optBoolean("truncated"),
+                depthLimitedDirectories = json.optLong("depthLimitedDirectories", 0),
+                skippedFilesystemEntries = json.optLong("skippedFilesystemEntries", 0),
+                rootOpened = json.optBoolean("rootOpened"),
             )
             "cancelled" -> ScanEvent.Cancelled(json.getLong("scannedItems"), json.getLong("scannedBytes"))
-            "error" -> ScanEvent.Error(json.optString("message", "Native scanner failed"))
+            "error" -> ScanEvent.Error(
+                code = json.optString("code", "NATIVE_SCANNER_FAILED"),
+                phase = json.optString("phase", "scanner"),
+                path = json.optString("path"),
+                message = json.optString("message", "Native scanner failed"),
+                errno = json.optInt("errno").takeIf { json.has("errno") && !json.isNull("errno") },
+            )
             else -> error("Unknown scan event type")
         }
     }

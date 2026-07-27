@@ -34,3 +34,7 @@ devtool --copy --auto-hud --hud-mode desktop-window --yes \
   -r "$HOME/Code/dustui" --target dustui_android \
   apply-overlay "$HOME/Downloads/dustui_root_phase1_overlay.zip" --validate
 ```
+
+## Root diagnostics repair
+
+Root readiness now verifies the actual privileged `RootService` identity rather than only an interactive shell grant. Every scan receives a root-process directory-open preflight, exact fatal error propagation, persistent warnings, emitted file/directory counts, and visible truncation/depth/filesystem-boundary notices. See `ANDROID_ROOT_SCAN_DIAGNOSTICS.md`.

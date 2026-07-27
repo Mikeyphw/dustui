@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -373,6 +372,7 @@ fun StorageGrowthScreen(
 ) {
     val retention by vm.storageGrowthRetentionLimit.collectAsStateWithLifecycle()
     val sessionCount by vm.storageGrowthSessionCount.collectAsStateWithLifecycle()
+    val growthFilter by vm.storageGrowthFilter.collectAsStateWithLifecycle()
     LazyColumn(
         modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 144.dp),
@@ -448,18 +448,18 @@ fun StorageGrowthScreen(
                 }
             }
             if (scanDataStale) item { Card { Text("Current scan data is stale after deletion. Historical comparison remains readable, but deletion actions require a new scan.", Modifier.padding(14.dp), color = MaterialTheme.colorScheme.error) } }
-            item { OutlinedTextField(vm.storageGrowthFilter.value.query, vm::updateStorageGrowthQuery, Modifier.fillMaxWidth(), label = { Text("Search changed paths") }, singleLine = true) }
+            item { OutlinedTextField(growthFilter.query, vm::updateStorageGrowthQuery, Modifier.fillMaxWidth(), label = { Text("Search changed paths") }, singleLine = true) }
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(end = 32.dp)) {
-                    item { AssistChip(onClick = vm::cycleStorageGrowthScope, label = { Text("Scope: ${vm.storageGrowthFilter.value.scope.label}") }) }
-                    item { AssistChip(onClick = vm::cycleStorageGrowthGroup, label = { Text("Group: ${vm.storageGrowthFilter.value.group.label}") }) }
-                    item { FilterChip(selected = vm.storageGrowthFilter.value.showUnderstood, onClick = vm::toggleUnderstoodStorageGrowth, label = { Text("Show understood (${page.hiddenUnderstood})") }) }
+                    item { AssistChip(onClick = vm::cycleStorageGrowthScope, label = { Text("Scope: ${growthFilter.scope.label}") }) }
+                    item { AssistChip(onClick = vm::cycleStorageGrowthGroup, label = { Text("Group: ${growthFilter.group.label}") }) }
+                    item { FilterChip(selected = growthFilter.showUnderstood, onClick = vm::toggleUnderstoodStorageGrowth, label = { Text("Show understood (${page.hiddenUnderstood})") }) }
                 }
             }
             if (page.groups.isNotEmpty()) item {
                 Card(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Largest contributors by ${vm.storageGrowthFilter.value.group.label.lowercase()}", fontWeight = FontWeight.SemiBold)
+                        Text("Largest contributors by ${growthFilter.group.label.lowercase()}", fontWeight = FontWeight.SemiBold)
                         page.groups.take(12).forEach { (label, delta) ->
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(label, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)

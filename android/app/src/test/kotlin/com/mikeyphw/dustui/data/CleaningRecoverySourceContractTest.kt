@@ -35,8 +35,8 @@ class CleaningRecoverySourceContractTest {
 
     @Test fun `scan replacement clears review and scan scoped selections`() {
         val viewModel = source("ui/MainViewModel.kt")
-        assertTrue(viewModel.contains("cleanupReview = null"))
-        assertTrue(viewModel.contains("selectedPaths = emptySet()"))
+        assertTrue(viewModel.contains("_cleanupReview.value = null"))
+        assertTrue(viewModel.contains("_selectedPaths.value = emptySet()"))
         assertTrue(viewModel.contains("_rootSearchResults.value = emptyList()"))
         assertTrue(viewModel.contains("duplicateAnalysisJob?.cancel()"))
     }

@@ -13,6 +13,9 @@ import androidx.core.content.ContextCompat
 import com.mikeyphw.dustui.DustUiApplication
 import com.mikeyphw.dustui.MainActivity
 import com.mikeyphw.dustui.R
+import com.mikeyphw.dustui.data.ScanDiagnosticIssue
+import com.mikeyphw.dustui.data.ScanDiagnosticSeverity
+import com.mikeyphw.dustui.data.ScanDiagnostics
 import com.mikeyphw.dustui.data.ScanEntryEntity
 import com.mikeyphw.dustui.data.ScanSessionEntity
 import kotlinx.coroutines.CancellationException
@@ -32,6 +35,7 @@ class ScanForegroundService : Service() {
     private val container by lazy { (application as DustUiApplication).container }
     private val dao by lazy { container.database.scanDao() }
     private val rootClient by lazy { container.rootServiceClient }
+    private val diagnosticStore by lazy { container.scanDiagnosticStore }
     private val notifications by lazy { getSystemService(NotificationManager::class.java) }
 
     override fun onCreate() {
@@ -75,13 +79,77 @@ class ScanForegroundService : Service() {
             status = ScanStatus.STARTING.name,
             startedAt = System.currentTimeMillis(),
         )
+        var diagnostics = ScanDiagnostics(
+            scanId = request.scanId,
+            rootPath = request.rootPath,
+            startedAt = session.startedAt,
+        )
         var foregroundStarted = false
+
+        fun saveDiagnostics() = runCatching { diagnosticStore.save(diagnostics) }
+        fun issue(
+            code: String,
+            severity: ScanDiagnosticSeverity,
+            phase: String,
+            message: String,
+            path: String? = request.rootPath,
+            errno: Int? = null,
+        ) {
+            diagnostics = diagnostics.append(
+                ScanDiagnosticIssue(
+                    code = code,
+                    severity = severity,
+                    phase = phase,
+                    message = message,
+                    path = path,
+                    errno = errno,
+                ),
+            )
+            saveDiagnostics()
+        }
 
         try {
             dao.deleteEntries(request.scanId)
             dao.upsertSession(session)
+            saveDiagnostics()
             startForeground(NOTIFICATION_ID, notification(session, running = true))
             foregroundStarted = true
+
+            val serviceInfo = rootClient.serviceInfo()
+            diagnostics = diagnostics.copy(
+                rootServiceOk = serviceInfo.ok && serviceInfo.uid == 0,
+                rootUid = serviceInfo.uid,
+                rootGid = serviceInfo.gid,
+                rootPid = serviceInfo.pid,
+                rootBackend = serviceInfo.backend,
+                scannerVersion = serviceInfo.scanner,
+                selinuxEnforcing = serviceInfo.selinuxEnforcing,
+                selinuxContext = serviceInfo.selinuxContext,
+                mountNamespace = serviceInfo.mountNamespace,
+            )
+            saveDiagnostics()
+            if (!serviceInfo.ok || serviceInfo.uid != 0) {
+                throw ScanStartFailure(
+                    code = "ROOT_SERVICE_NOT_PRIVILEGED",
+                    path = request.rootPath,
+                    message = serviceInfo.message ?: "Root service is not running as UID 0",
+                )
+            }
+
+            val preflight = rootClient.preflightScan(request)
+            diagnostics = diagnostics.copy(
+                preflightOk = preflight.ok,
+                canonicalRoot = preflight.canonicalPath,
+                rootOpened = preflight.opened,
+                rootHasChildren = preflight.hasChildren,
+                mountPoint = preflight.mountPoint,
+                filesystem = preflight.filesystem,
+                mountOptions = preflight.mountOptions,
+            )
+            saveDiagnostics()
+            if (!preflight.ok) {
+                throw ScanStartFailure(preflight.code, preflight.requestedPath, preflight.message, preflight.errno)
+            }
 
             val streamDirectory = File(filesDir, "scan-streams")
             check(streamDirectory.exists() || streamDirectory.mkdirs()) { "Unable to create scanner stream directory" }
@@ -93,8 +161,13 @@ class ScanForegroundService : Service() {
                 stream,
                 ParcelFileDescriptor.MODE_WRITE_ONLY or ParcelFileDescriptor.MODE_TRUNCATE,
             ).use { descriptor -> rootClient.startScan(request, descriptor) }
-            check(rootState.ok) {
-                rootState.message ?: rootState.error ?: "Root scanner rejected the request"
+            if (!rootState.ok) {
+                throw ScanStartFailure(
+                    code = rootState.code ?: "ROOT_SCANNER_REJECTED",
+                    path = rootState.path ?: request.rootPath,
+                    message = rootState.message ?: rootState.error ?: "Root scanner rejected the request",
+                    errno = rootState.errno,
+                )
             }
 
             session = session.copy(status = ScanStatus.RUNNING.name)
@@ -111,6 +184,13 @@ class ScanForegroundService : Service() {
                         val event = eventResult.getOrNull()
                         if (event == null) {
                             session = session.copy(warningCount = session.warningCount + 1)
+                            issue(
+                                code = "MALFORMED_SCANNER_EVENT",
+                                severity = ScanDiagnosticSeverity.WARNING,
+                                phase = "event-parser",
+                                message = eventResult.exceptionOrNull()?.message ?: "Unable to parse scanner event",
+                                path = null,
+                            )
                             continue
                         }
                         when (event) {
@@ -138,15 +218,69 @@ class ScanForegroundService : Service() {
                                 scannedBytes = event.scannedBytes,
                                 currentPath = event.currentPath,
                             )
-                            is ScanEvent.Warning -> session = session.copy(
-                                warningCount = session.warningCount + 1,
-                                currentPath = event.path,
-                            )
+                            is ScanEvent.Warning -> {
+                                session = session.copy(
+                                    warningCount = session.warningCount + 1,
+                                    currentPath = event.path,
+                                )
+                                issue(
+                                    code = event.code,
+                                    severity = ScanDiagnosticSeverity.WARNING,
+                                    phase = event.phase,
+                                    message = event.message,
+                                    path = event.path,
+                                    errno = event.errno,
+                                )
+                            }
                             is ScanEvent.Complete -> {
                                 terminalEvent = true
+                                diagnostics = diagnostics.copy(
+                                    rootOpened = event.rootOpened,
+                                    emittedEntries = event.emittedEntries,
+                                    emittedFiles = event.emittedFiles,
+                                    emittedDirectories = event.emittedDirectories,
+                                    truncated = event.truncated,
+                                    depthLimitedDirectories = event.depthLimitedDirectories,
+                                    skippedFilesystemEntries = event.skippedFilesystemEntries,
+                                    completedAt = System.currentTimeMillis(),
+                                )
+                                if (event.truncated) issue(
+                                    code = "RESULT_LIMIT_REACHED",
+                                    severity = ScanDiagnosticSeverity.WARNING,
+                                    phase = "completion",
+                                    message = "The scanner reached the ${request.maxEntries}-entry result limit; some entries were not indexed.",
+                                )
+                                if (event.depthLimitedDirectories > 0) issue(
+                                    code = "DEPTH_LIMIT_REACHED",
+                                    severity = ScanDiagnosticSeverity.INFO,
+                                    phase = "completion",
+                                    message = "${event.depthLimitedDirectories} director${if (event.depthLimitedDirectories == 1L) "y" else "ies"} reached the configured depth limit.",
+                                )
+                                if (event.skippedFilesystemEntries > 0) issue(
+                                    code = "FILESYSTEM_BOUNDARIES_SKIPPED",
+                                    severity = ScanDiagnosticSeverity.INFO,
+                                    phase = "completion",
+                                    message = "${event.skippedFilesystemEntries} entr${if (event.skippedFilesystemEntries == 1L) "y was" else "ies were"} skipped at filesystem boundaries.",
+                                )
+                                if (event.emittedFiles == 0L) {
+                                    val reason = when {
+                                        diagnostics.rootHasChildren == false -> "The scan root opened successfully and appears empty."
+                                        request.mode == EntryMode.DIRECTORIES -> "This scan was configured to emit directories only, so the file count is zero."
+                                        request.minSize > 0L -> "The root opened successfully, but no files matched the minimum-size filter."
+                                        request.maxDepth == 0 -> "The root opened successfully, but maximum depth is zero."
+                                        else -> "The root opened successfully, but no file records were emitted. Review hidden-file, depth, exclusion, and result-limit settings."
+                                    }
+                                    issue(
+                                        code = "ZERO_FILES_EMITTED",
+                                        severity = if (diagnostics.rootHasChildren == true) ScanDiagnosticSeverity.WARNING else ScanDiagnosticSeverity.INFO,
+                                        phase = "completion",
+                                        message = reason,
+                                    )
+                                }
+                                saveDiagnostics()
                                 session = session.copy(
                                     status = ScanStatus.COMPLETED.name,
-                                    completedAt = System.currentTimeMillis(),
+                                    completedAt = diagnostics.completedAt,
                                     totalBytes = event.totalBytes,
                                     scannedItems = event.scannedItems,
                                     scannedBytes = event.scannedBytes,
@@ -156,19 +290,30 @@ class ScanForegroundService : Service() {
                             }
                             is ScanEvent.Cancelled -> {
                                 terminalEvent = true
+                                diagnostics = diagnostics.copy(completedAt = System.currentTimeMillis())
+                                saveDiagnostics()
                                 session = session.copy(
                                     status = ScanStatus.CANCELLED.name,
-                                    completedAt = System.currentTimeMillis(),
+                                    completedAt = diagnostics.completedAt,
                                     scannedItems = event.scannedItems,
                                     scannedBytes = event.scannedBytes,
                                 )
                             }
                             is ScanEvent.Error -> {
                                 terminalEvent = true
+                                diagnostics = diagnostics.copy(completedAt = System.currentTimeMillis())
+                                issue(
+                                    code = event.code,
+                                    severity = ScanDiagnosticSeverity.ERROR,
+                                    phase = event.phase,
+                                    message = event.message,
+                                    path = event.path.ifBlank { request.rootPath },
+                                    errno = event.errno,
+                                )
                                 session = session.copy(
                                     status = ScanStatus.FAILED.name,
-                                    completedAt = System.currentTimeMillis(),
-                                    errorMessage = event.message,
+                                    completedAt = diagnostics.completedAt,
+                                    errorMessage = diagnosticMessage(event.code, event.message, event.path, event.errno),
                                 )
                             }
                         }
@@ -182,16 +327,30 @@ class ScanForegroundService : Service() {
                         emptyAfterTerminal = if (lines.isEmpty()) emptyAfterTerminal + 1 else 0
                         if (emptyAfterTerminal >= 2) {
                             if (!terminalEvent) {
+                                diagnostics = diagnostics.copy(completedAt = System.currentTimeMillis())
+                                val status = if (remote.status == "cancelled") ScanStatus.CANCELLED else ScanStatus.FAILED
+                                if (status == ScanStatus.FAILED) issue(
+                                    code = remote.code ?: "MISSING_TERMINAL_EVENT",
+                                    severity = ScanDiagnosticSeverity.ERROR,
+                                    phase = "root-service",
+                                    message = remote.error ?: remote.message ?: "Root scanner ended without a terminal event",
+                                    path = remote.path ?: request.rootPath,
+                                    errno = remote.errno,
+                                )
                                 session = session.copy(
-                                    status = when (remote.status) {
-                                        "cancelled" -> ScanStatus.CANCELLED.name
-                                        "completed" -> ScanStatus.COMPLETED.name
-                                        else -> ScanStatus.FAILED.name
-                                    },
-                                    completedAt = System.currentTimeMillis(),
-                                    errorMessage = remote.error ?: remote.message,
+                                    status = status.name,
+                                    completedAt = diagnostics.completedAt,
+                                    errorMessage = if (status == ScanStatus.FAILED) {
+                                        diagnosticMessage(
+                                            remote.code ?: "MISSING_TERMINAL_EVENT",
+                                            remote.error ?: remote.message ?: "Root scanner ended without a terminal event",
+                                            remote.path ?: request.rootPath,
+                                            remote.errno,
+                                        )
+                                    } else null,
                                 )
                                 dao.upsertSession(session)
+                                saveDiagnostics()
                             }
                             break
                         }
@@ -201,26 +360,52 @@ class ScanForegroundService : Service() {
             }
         } catch (cancelled: CancellationException) {
             runCatching { rootClient.cancelScan(request.scanId) }
+            diagnostics = diagnostics.copy(completedAt = System.currentTimeMillis())
+            saveDiagnostics()
             session = session.copy(
                 status = ScanStatus.CANCELLED.name,
-                completedAt = System.currentTimeMillis(),
+                completedAt = diagnostics.completedAt,
             )
             runCatching { dao.upsertSession(session) }
             throw cancelled
         } catch (error: Throwable) {
             runCatching { rootClient.cancelScan(request.scanId) }
+            diagnostics = diagnostics.copy(completedAt = System.currentTimeMillis())
+            val failure = error as? ScanStartFailure
+            issue(
+                code = failure?.code ?: "SCAN_PIPELINE_FAILED",
+                severity = ScanDiagnosticSeverity.ERROR,
+                phase = if (failure != null) "preflight" else "scan-service",
+                message = error.message ?: error.javaClass.simpleName,
+                path = failure?.path ?: request.rootPath,
+                errno = failure?.errno,
+            )
             session = session.copy(
                 status = ScanStatus.FAILED.name,
-                completedAt = System.currentTimeMillis(),
-                errorMessage = error.message ?: error.javaClass.simpleName,
+                completedAt = diagnostics.completedAt,
+                errorMessage = diagnosticMessage(
+                    failure?.code ?: "SCAN_PIPELINE_FAILED",
+                    error.message ?: error.javaClass.simpleName,
+                    failure?.path ?: request.rootPath,
+                    failure?.errno,
+                ),
             )
             runCatching { dao.upsertSession(session) }
+            saveDiagnostics()
         } finally {
             activeScanId = null
             if (session.status == ScanStatus.COMPLETED.name) runCatching { StorageAlertNotifier.evaluate(this@ScanForegroundService, dao) }
             if (foregroundStarted) finishNotification(session)
             stopSelf()
         }
+    }
+
+    private fun diagnosticMessage(code: String, message: String, path: String?, errno: Int?): String = buildString {
+        append(code)
+        append(": ")
+        append(message)
+        path?.takeIf(String::isNotBlank)?.let { append(" · ").append(it) }
+        errno?.let { append(" · errno ").append(it) }
     }
 
     private suspend fun flush(entries: MutableList<ScanEntryEntity>) {
@@ -240,7 +425,13 @@ class ScanForegroundService : Service() {
                 else -> "${session.scannedItems} items"
             },
         )
-        .setStyle(NotificationCompat.BigTextStyle().bigText(session.currentPath.ifBlank { session.rootPath }))
+        .setStyle(
+            NotificationCompat.BigTextStyle().bigText(
+                session.errorMessage ?: session.currentPath.ifBlank {
+                    if (session.warningCount > 0) "${session.rootPath} · ${session.warningCount} warning(s)" else session.rootPath
+                },
+            ),
+        )
         .setOngoing(running)
         .setOnlyAlertOnce(true)
         .setProgress(0, 0, running)
@@ -282,6 +473,13 @@ class ScanForegroundService : Service() {
         scope.cancel()
         super.onDestroy()
     }
+
+    private class ScanStartFailure(
+        val code: String,
+        val path: String?,
+        message: String,
+        val errno: Int? = null,
+    ) : IllegalStateException(message)
 
     companion object {
         private const val CHANNEL_ID = "dustui_scans"

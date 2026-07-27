@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.mikeyphw.dustui.data.DustDatabase
+import com.mikeyphw.dustui.data.ScanDiagnosticStore
 import com.mikeyphw.dustui.data.ScanRepository
 import com.mikeyphw.dustui.root.RootServiceClient
 
@@ -18,7 +19,8 @@ class AppContainer(context: Context) {
     ).addMigrations(MIGRATION_1_2).build()
 
     val rootServiceClient = RootServiceClient(appContext)
-    val scanRepository = ScanRepository(appContext, database.scanDao(), rootServiceClient)
+    val scanDiagnosticStore = ScanDiagnosticStore(appContext)
+    val scanRepository = ScanRepository(appContext, database.scanDao(), rootServiceClient, scanDiagnosticStore)
 
     private companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {

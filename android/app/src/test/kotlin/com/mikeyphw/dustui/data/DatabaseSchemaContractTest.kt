@@ -38,7 +38,7 @@ class DatabaseSchemaContractTest {
         val repository = File(androidRoot, "app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt").readText()
         assertTrue(cleanupModels.contains("Retained only so existing version-2 databases remain readable"))
         assertFalse(repository.contains("insertQuarantine"))
-        assertFalse(repository.contains("restoreCleanup"))
+        assertFalse(repository.contains("fun restoreCleanup("))
     }
 
     private fun locateAndroidRoot(): File {

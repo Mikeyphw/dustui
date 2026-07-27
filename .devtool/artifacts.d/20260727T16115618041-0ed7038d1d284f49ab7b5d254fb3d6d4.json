@@ -1,0 +1,220 @@
+{
+  "applied_at": "2026-07-27T16:11:56.180411Z",
+  "artifact": "/home/mike/Downloads/dustui_android_root_scan_diagnostics_overlay.zip",
+  "artifact_name": "dustui_android_root_scan_diagnostics_overlay.zip",
+  "type": "overlay",
+  "sha256": "ced7da6d72e2278abad459ee203778bcf25d601078dc9aad8b2c20d5de4ecd08",
+  "status": "rolled-back",
+  "validation_status": "failed",
+  "commit_message": "Add root scan diagnostics and failure notices",
+  "commit_hash": "",
+  "file_count": 23,
+  "change_counts": {
+    "add": 5,
+    "modify": 18
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Android root scan diagnostics and failure notices",
+    "description": "Adds truthful root-service identity and scan-root preflight, fatal root-open handling, retained scanner warnings and errno context, explicit zero-file/truncation/depth/mount notices, and module-source diagnostics with a dedicated modules scan action. Revision 1.0.4 preserves the green 173-test tree, fixes the minSdk 26 lint failure by avoiding API-27 O_CLOEXEC, and removes generated Python bytecode from the artifact.",
+    "version": "1.0.4",
+    "repository": {
+      "name": "dustui"
+    },
+    "target": "dustui_android",
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "android/app/src/main/aidl/com/mikeyphw/dustui/root/IDustRootService.aidl",
+          "action": "modify",
+          "sha256": "a1097000349c246499b6ecd1821f2093e2b85c35890eb0678bd19380575fd8df",
+          "size": 691,
+          "source_sha256": "68e1f6cde7e02f455e081578e2cc0cbf2310f5fef5eb1de23923ee47af50910b"
+        },
+        {
+          "path": "android/app/src/main/cpp/dustui_scanner.cpp",
+          "action": "modify",
+          "sha256": "afcc7a2b72258e9b92d1ddf54d9ee29862c92d810172e3d65e0f86a9ece89dba",
+          "size": 16830,
+          "source_sha256": "d553b51750113ad3e49b951c2786bdc217c62e6a81ad636f5fcd14d738d52404"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/AppContainer.kt",
+          "action": "modify",
+          "sha256": "6b1ac43aea687b6a99c5b1e9fafd3c9bcc051f7727704dfe538803f1b3ce98a5",
+          "size": 1945,
+          "source_sha256": "c2e376115d677c3d6f3ee59dbe2dea27f350b60a8d4fddb99b938f9f73032ef9"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ModuleAnalyzer.kt",
+          "action": "modify",
+          "sha256": "30f0f3332f73016090112b664e825f697f75f51274ab6e61b1feaa25a21f1fe8",
+          "size": 5350,
+          "source_sha256": "9ba21df678f5f0fc72a765107d2cd1f5ad6e5d0da8165a14ddbd8b6eb4e78633"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanDiagnostics.kt",
+          "action": "add",
+          "sha256": "61ebede94f851b0a5450d5546f8fa9e3b3f8854ffce40ea37b9f2f3d833e61e0",
+          "size": 7781
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+          "action": "modify",
+          "sha256": "24b60863115ffbd26b4115822749e2769a06d4ab151fc407cc077710b42c87f1",
+          "size": 38545,
+          "source_sha256": "a3062dd0d9d335b52e53088b92d010242ef738a31b491b29744b3a11feb23c76"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt",
+          "action": "modify",
+          "sha256": "ccc995bf086efd786d53f0ea1aa1ddd3071e62a0e09ab4c0db2fec6fe64f2dc7",
+          "size": 47673,
+          "source_sha256": "453a2b10c71de63c183bbc0233ef7b7a0926ccdc89eaa954f5f873a4f88ae7c1"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/RootServiceClient.kt",
+          "action": "modify",
+          "sha256": "5dd95ff868e320681ee3a2cee41c7e79c17674ca4f8cb92db4e1bfcc84c56fea",
+          "size": 18386,
+          "source_sha256": "64b19e0caef9779e8833598668b7a9ba7303c03354f3dab43c95532de68a4815"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/scan/ScanEventParser.kt",
+          "action": "modify",
+          "sha256": "cfbb63f9121c32655d78c381a365e43534cde2e304721d7c219e588d3ae1a95f",
+          "size": 4241,
+          "source_sha256": "3e962357486b8de82b0e8d936816cbe3db9f9c7719efcec9234258d58b6c3b9a"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/scan/ScanForegroundService.kt",
+          "action": "modify",
+          "sha256": "cb9a846d8d350754ce95323d35a634fd29de7931b97c7e4a69d81002cefebf3f",
+          "size": 25154,
+          "source_sha256": "cd57e4e0a4a8937791deb7f7449a1de00fc9cf48ba676a097f008aad8fcae8cf"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/AppStorageInspectorScreen.kt",
+          "action": "modify",
+          "sha256": "097e2a26e1a7633d6b55953316e315ad86de1f4e55f2ea46724669bc27079dab",
+          "size": 16646,
+          "source_sha256": "0a3a2e12f869ed71ea88ed1b417e77e6a80b4366a1ef3daa9fecd47a0e9b32ef"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/CleaningIntelligenceScreens.kt",
+          "action": "modify",
+          "sha256": "40046a19fb3cdeeab54c4e6fc4296ab51cb24374c6607e2c14e6c45afb91e039",
+          "size": 50830,
+          "source_sha256": "c3d012d6c22f8c32046045ae9aff8ae5c2576209ea28f3a2df7c04ac10afd42f"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "action": "modify",
+          "sha256": "ca9bdde293626fd7b2540aa2a6186bea341d605a3b2f4096801e9a589900109c",
+          "size": 125641,
+          "source_sha256": "bfc9107b9ced121dabd6109a382de0ae92501268180fccf68b879fe17ae8f181"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+          "action": "modify",
+          "sha256": "f01895449c389cb28fb07a9e03b28e82b8bcdd68a090ac137a1de184fc430e37",
+          "size": 77620,
+          "source_sha256": "c4fe27c0198a5a92830e75b77e7003a0bd402ab9b917f368e043efbd3f368467"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleaningRecoverySourceContractTest.kt",
+          "action": "modify",
+          "sha256": "dadf6b3b70c6b6298de77ee9a19e314db5d32a35af95e52167d606ba999b67f7",
+          "size": 2542,
+          "source_sha256": "419ca7672fb89ca427ce0698eabd60aca2ce2d84900eb4b8c0a6aee2202bae41"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/DatabaseSchemaContractTest.kt",
+          "action": "modify",
+          "sha256": "9c084cc0301a778d87aa378eb1bde05869461d991c015499682f8a81a3db0303",
+          "size": 2761,
+          "source_sha256": "bbbb7acbc9b4e186f49b1c5d63415b05133c3431e48528b889a7917c2faee48a"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootDiagnosticsSourceContractTest.kt",
+          "action": "add",
+          "sha256": "57e14f733041ce757c36d33e9ff401510c48799d35665df71361af3db08af0b5",
+          "size": 4035
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/scan/ScanDiagnosticsTest.kt",
+          "action": "add",
+          "sha256": "3dfd5711b7f13e61dccb6a09a8fd7df7249956681f4eaa6d42eef1229770716e",
+          "size": 1911
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/scan/ScanEventParserTest.kt",
+          "action": "modify",
+          "sha256": "9570cac6bb4d4f9b495cdfe468c506a30c875e0c37fbbbdd619c5f4fcb4086bc",
+          "size": 1709,
+          "source_sha256": "0df02dc6ec750cea0c875c4181349e011bce006fa7fe67e0caa83763b59c86ea"
+        },
+        {
+          "path": "android/scripts/validate-root-scan-diagnostics.py",
+          "action": "add",
+          "sha256": "ba0ae21c41b98d2ddb79dcc6fcb711b15ea66b8e2925dffb14b59e3882aee836",
+          "size": 10382
+        },
+        {
+          "path": "docs/ANDROID_PACKAGE_SEARCH_MODULE.md",
+          "action": "modify",
+          "sha256": "06a9b88a1c8d9c842065d4619c3ff70736d85f2426779bade4dbdf2aebd9d587",
+          "size": 1655,
+          "source_sha256": "142829de2127026a58ff7fd8fbfe9c2f816e605de04bbcd542ca1fbc96b3cf63"
+        },
+        {
+          "path": "docs/ANDROID_PHASE1.md",
+          "action": "modify",
+          "sha256": "c6dd3852ce6aeccf9b0e5b18326fe9bdb63f41df5e94ebffc3f8c90afa6c9c37",
+          "size": 2185,
+          "source_sha256": "1ac15d2bf53f090d065050b4df3fc0693280c28825397a74d092593feccf08fd"
+        },
+        {
+          "path": "docs/ANDROID_ROOT_SCAN_DIAGNOSTICS.md",
+          "action": "add",
+          "sha256": "37fe43ac029498b6e259d39f02bf6b6f24e0956d2699f928153d06ce9e56d6be",
+          "size": 2527
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false,
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Add root scan diagnostics and failure notices"
+      }
+    },
+    "validation": {
+      "required": true,
+      "restore": true,
+      "build": true,
+      "test": true,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "build": "pass",
+        "tests": "pass",
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "a5a42001c2e8aac4f1a50d9cee5199627ae2e534e4de3a895b609404e0ebace6",
+        "timeout_seconds": 3600
+      }
+    }
+  },
+  "history_id": "0ed7038d1d284f49ab7b5d254fb3d6d4"
+}

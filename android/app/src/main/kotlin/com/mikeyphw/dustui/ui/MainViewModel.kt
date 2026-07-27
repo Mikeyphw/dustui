@@ -30,6 +30,7 @@ import com.mikeyphw.dustui.data.StorageGrowthGroup
 import com.mikeyphw.dustui.data.StorageGrowthPage
 import com.mikeyphw.dustui.data.StorageGrowthScope
 import com.mikeyphw.dustui.data.CleanupVerificationReport
+import com.mikeyphw.dustui.data.ScanDiagnostics
 import com.mikeyphw.dustui.data.ScanEntryEntity
 import com.mikeyphw.dustui.data.ScanRepository
 import com.mikeyphw.dustui.data.ScanSessionEntity
@@ -65,6 +66,7 @@ import com.mikeyphw.dustui.data.LargeFileSort
 import com.mikeyphw.dustui.data.LargeFileWorkbenchEngine
 import com.mikeyphw.dustui.scan.ScanPreset
 import com.mikeyphw.dustui.scan.ScanRequest
+import com.mikeyphw.dustui.root.RootServiceClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -122,6 +124,14 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
 
     private val _rootState = MutableStateFlow<RootUiState>(RootUiState.Checking)
     val rootState: StateFlow<RootUiState> = _rootState
+    private val _rootServiceInfo = MutableStateFlow<RootServiceClient.RootServiceInfo?>(null)
+    val rootServiceInfo: StateFlow<RootServiceClient.RootServiceInfo?> = _rootServiceInfo
+    private val _rootFailureMessage = MutableStateFlow<String?>(null)
+    val rootFailureMessage: StateFlow<String?> = _rootFailureMessage
+    private val _scanDiagnostics = MutableStateFlow<ScanDiagnostics?>(null)
+    val scanDiagnostics: StateFlow<ScanDiagnostics?> = _scanDiagnostics
+    private val _pathPreflight = MutableStateFlow<RootServiceClient.ScanRootPreflight?>(null)
+    val pathPreflight: StateFlow<RootServiceClient.ScanRootPreflight?> = _pathPreflight
     private val _message = MutableStateFlow<String?>(null)
     private val _scanDataStale = MutableStateFlow(false)
     val scanDataStale: StateFlow<Boolean> = _scanDataStale
@@ -235,11 +245,17 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     init {
         refreshRoot()
         viewModelScope.launch { latestSession.collect { session ->
+            _scanDiagnostics.value = session?.let { repository.scanDiagnostics(it.id) }
             if (session?.id != activeSessionId) {
                 activeSessionId = session?.id
                 resetScanScopedState(session)
             }
-            if (session?.status == "COMPLETED") refreshInsights(session.id)
+            when (session?.status) {
+                "COMPLETED" -> refreshInsights(session.id)
+                "FAILED", "CANCELLED" -> viewModelScope.launch {
+                    _moduleReport.value = repository.moduleAnalysis(session.id)
+                }
+            }
         } }
     }
 
@@ -312,13 +328,49 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
 
     fun refreshRoot() {
         _rootState.value = RootUiState.Checking
-        viewModelScope.launch { _rootState.value = if (repository.rootAvailable()) RootUiState.Available else RootUiState.Unavailable }
+        _rootFailureMessage.value = null
+        viewModelScope.launch {
+            runCatching { repository.rootServiceInfo() }
+                .onSuccess { info ->
+                    _rootServiceInfo.value = info
+                    val ready = info.ok && info.uid == 0
+                    _rootState.value = if (ready) RootUiState.Available else RootUiState.Unavailable
+                    if (!ready) _rootFailureMessage.value = info.message ?: "Root service is not running as UID 0"
+                }
+                .onFailure { error ->
+                    _rootServiceInfo.value = null
+                    _rootState.value = RootUiState.Unavailable
+                    _rootFailureMessage.value = error.message ?: "Unable to bind the root service"
+                }
+        }
     }
     fun startPreset(preset: ScanPreset) = startRequest(runCatching(preset::request))
+    fun diagnoseScanPath(path: String) {
+        _pathPreflight.value = null
+        viewModelScope.launch {
+            runCatching { ScanRequest(rootPath = path.trim()).validated() }
+                .mapCatching { repository.preflightScan(it) }
+                .onSuccess { _pathPreflight.value = it }
+                .onFailure { error -> _message.value = error.message ?: "Unable to test scan-root access" }
+        }
+    }
     fun startCustom(path: String) = startRequest(runCatching { ScanRequest(rootPath = path.trim()).validated() })
+    fun startModuleScan() = startRequest(runCatching {
+        ScanRequest(
+            presetId = "root-modules",
+            rootPath = "/data/adb/modules",
+            maxDepth = 16,
+            maxEntries = 200_000,
+            includeHidden = true,
+        ).validated()
+    })
     private fun startRequest(result: Result<ScanRequest>) {
         if (_rootState.value != RootUiState.Available) { _message.value = "Root access is required"; return }
-        result.onSuccess { _explorerPath.value = it.rootPath; repository.startScan(it) }.onFailure { _message.value = it.message }
+        result.onSuccess {
+            _pathPreflight.value = null
+            _explorerPath.value = it.rootPath
+            repository.startScan(it)
+        }.onFailure { _message.value = it.message }
     }
     fun cancelActive() { latestSession.value?.id?.let(repository::cancelScan) }
     fun open(entry: ScanEntryEntity) {

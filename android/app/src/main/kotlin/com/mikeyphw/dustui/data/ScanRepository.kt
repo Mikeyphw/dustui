@@ -6,18 +6,19 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.provider.Settings
 import android.os.Build
 import android.os.PowerManager
 import android.os.StatFs
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.net.toUri
 import com.mikeyphw.dustui.scan.ScheduledScanWorker
 import com.mikeyphw.dustui.BuildConfig
 import com.mikeyphw.dustui.root.RootServiceClient
 import com.mikeyphw.dustui.scan.ScanForegroundService
 import com.mikeyphw.dustui.scan.ScanRequest
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -28,6 +29,7 @@ class ScanRepository(
     private val context: Context,
     private val dao: ScanDao,
     private val rootClient: RootServiceClient,
+    private val scanDiagnosticStore: ScanDiagnosticStore,
 ) {
     private val authorization = CleanupAuthorization(context)
     private val intelligence = EntryIntelligenceResolver(context)
@@ -42,15 +44,22 @@ class ScanRepository(
     fun observeLatestSession(): Flow<ScanSessionEntity?> = dao.observeLatestSession()
     fun observeCleanupOperations(): Flow<List<CleanupOperationEntity>> = dao.observeCleanupOperations(50)
     fun observeEntries(scanId: String): Flow<List<ScanEntryEntity>> = dao.observeEntries(scanId, 10_000)
-    suspend fun rootAvailable(): Boolean = rootClient.rootAvailable()
+    suspend fun rootAvailable(): Boolean = runCatching {
+        val info = rootClient.serviceInfo()
+        info.ok && info.uid == 0
+    }.getOrDefault(false)
+
+    suspend fun rootServiceInfo(): RootServiceClient.RootServiceInfo = rootClient.serviceInfo()
+    suspend fun preflightScan(request: ScanRequest): RootServiceClient.ScanRootPreflight = rootClient.preflightScan(request)
+    fun scanDiagnostics(scanId: String): ScanDiagnostics? = scanDiagnosticStore.load(scanId)
     suspend fun entry(scanId: String, path: String): ScanEntryEntity? = dao.entryOnce(scanId, path)
     suspend fun entriesByPaths(scanId: String, paths: Collection<String>): List<ScanEntryEntity> =
         if (paths.isEmpty()) emptyList() else dao.entriesByPathsOnce(scanId, paths.distinct())
 
 
     suspend fun deviceCertification(): DeviceCertificationReport {
-        val rootConnected = rootClient.rootAvailable()
-        val info = if (rootConnected) runCatching { rootClient.serviceInfo() }.getOrNull() else null
+        val info = runCatching { rootClient.serviceInfo() }.getOrNull()
+        val rootConnected = info?.ok == true && info.uid == 0
         val keyguard = context.getSystemService(KeyguardManager::class.java)
         val power = context.getSystemService(PowerManager::class.java)
         val freeBytes = runCatching { StatFs(context.filesDir.path).availableBytes }.getOrDefault(0L)
@@ -199,13 +208,13 @@ class ScanRepository(
     fun unprotectAppStoragePath(path: String) = residueProtectionStore.unprotect(path)
 
     fun openAppSettings(packageName: String): Result<Unit> = runCatching {
-        context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")).apply {
+        context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri()).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         })
     }
 
     fun requestAppUninstall(packageName: String): Result<Unit> = runCatching {
-        context.startActivity(Intent(Intent.ACTION_UNINSTALL_PACKAGE, Uri.parse("package:$packageName")).apply {
+        context.startActivity(Intent(Intent.ACTION_UNINSTALL_PACKAGE, "package:$packageName".toUri()).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         })
     }
@@ -238,7 +247,80 @@ class ScanRepository(
     suspend fun rootSearch(scanId: String, request: RootFileSearchRequest): List<RootFileSearchResult> =
         RootFileSearchEngine.search(dao.entriesOnce(scanId), request)
 
-    suspend fun moduleAnalysis(scanId: String): RootModuleReport = RootModuleAnalyzer.analyze(dao.entriesOnce(scanId))
+    suspend fun moduleAnalysis(scanId: String): RootModuleReport {
+        val session = dao.session(scanId)
+        val entries = dao.entriesOnce(scanId)
+        val analyzed = RootModuleAnalyzer.analyze(entries)
+        val moduleRoot = "/data/adb/modules"
+        val scanRoot = session?.rootPath
+        val scanIncludesModules = scanRoot?.let { root ->
+            val normalized = root.trimEnd('/').ifBlank { "/" }
+            normalized == "/" || moduleRoot == normalized || moduleRoot.startsWith("$normalized/")
+        } == true
+        val preflight = runCatching {
+            rootClient.preflightScan(ScanRequest(rootPath = moduleRoot, maxDepth = 1, maxEntries = 64))
+        }.getOrNull()
+        val storedDiagnostics = scanDiagnosticStore.load(scanId)
+        val diagnostic = when {
+            session == null -> ModuleAnalysisDiagnostic(
+                status = ModuleDiagnosticStatus.SCAN_FAILED,
+                message = "No scan session is available for module analysis.",
+                currentScanRoot = null,
+                modulePathAccessible = preflight?.ok,
+                rootCode = preflight?.code,
+            )
+            !scanIncludesModules -> ModuleAnalysisDiagnostic(
+                status = if (preflight?.ok == false) ModuleDiagnosticStatus.ROOT_ACCESS_FAILED else ModuleDiagnosticStatus.WRONG_SCAN_ROOT,
+                message = if (preflight?.ok == false) {
+                    "The current scan does not include /data/adb/modules, and the root service cannot open it: ${preflight.message}"
+                } else {
+                    "Module values come from the current scan. ${session.rootPath} does not include /data/adb/modules."
+                },
+                currentScanRoot = session.rootPath,
+                scanIncludesModules = false,
+                modulePathAccessible = preflight?.ok,
+                rootCode = preflight?.code,
+            )
+            session.status == "FAILED" || storedDiagnostics?.hasFailure == true -> ModuleAnalysisDiagnostic(
+                status = ModuleDiagnosticStatus.SCAN_FAILED,
+                message = session.errorMessage ?: storedDiagnostics?.issues?.lastOrNull { it.severity == ScanDiagnosticSeverity.ERROR }?.message
+                    ?: "The module scan failed before usable entries were indexed.",
+                currentScanRoot = session.rootPath,
+                scanIncludesModules = true,
+                modulePathAccessible = preflight?.ok,
+                rootCode = preflight?.code,
+            )
+            storedDiagnostics?.truncated == true -> ModuleAnalysisDiagnostic(
+                status = ModuleDiagnosticStatus.INCOMPLETE_RESULTS,
+                message = "The module scan reached its result limit. Module totals and conflicts may be incomplete.",
+                currentScanRoot = session.rootPath,
+                scanIncludesModules = true,
+                modulePathAccessible = preflight?.ok,
+                rootCode = "RESULT_LIMIT_REACHED",
+            )
+            analyzed.modules.isEmpty() -> ModuleAnalysisDiagnostic(
+                status = ModuleDiagnosticStatus.NO_MODULES_FOUND,
+                message = if (preflight?.ok == true) {
+                    "The root service can open /data/adb/modules, but the current scan indexed no module files. Review scan warnings, depth, hidden-file, and result-limit settings."
+                } else {
+                    "No module files were indexed, and root access to /data/adb/modules could not be confirmed${preflight?.message?.let { ": $it" }.orEmpty()}."
+                },
+                currentScanRoot = session.rootPath,
+                scanIncludesModules = true,
+                modulePathAccessible = preflight?.ok,
+                rootCode = preflight?.code,
+            )
+            else -> ModuleAnalysisDiagnostic(
+                status = ModuleDiagnosticStatus.READY,
+                message = "Indexed ${analyzed.modules.size} module(s) from ${session.rootPath}.",
+                currentScanRoot = session.rootPath,
+                scanIncludesModules = true,
+                modulePathAccessible = preflight?.ok,
+                rootCode = preflight?.code,
+            )
+        }
+        return analyzed.copy(diagnostic = diagnostic)
+    }
 
     suspend fun cleanupRecommendations(
         scanId: String,

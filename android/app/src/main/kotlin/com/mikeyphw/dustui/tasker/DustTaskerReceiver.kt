@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import androidx.core.os.bundleOf
 import com.mikeyphw.dustui.scan.ScanForegroundService
 import com.mikeyphw.dustui.scan.ScanRequest
 
@@ -24,14 +25,14 @@ class DustTaskerReceiver : BroadcastReceiver() {
                 ScanForegroundService.start(context, request)
                 if (isOrderedBroadcast) {
                     setResultCode(android.app.Activity.RESULT_OK)
-                    setResultExtras(Bundle().apply { putString(RESULT_STATUS, "accepted"); putString(RESULT_SCAN_ID, request.scanId); putString(RESULT_PATH, request.rootPath) })
+                    setResultExtras(bundleOf(RESULT_STATUS to "accepted", RESULT_SCAN_ID to request.scanId, RESULT_PATH to request.rootPath))
                 }
             }
             ACTION_CANCEL -> plugin.getString(KEY_SCAN_ID)?.takeIf(String::isNotBlank)?.let {
                 ScanForegroundService.cancel(context, it)
                 if (isOrderedBroadcast) {
                     setResultCode(android.app.Activity.RESULT_OK)
-                    setResultExtras(Bundle().apply { putString(RESULT_STATUS, "cancel_requested"); putString(RESULT_SCAN_ID, it) })
+                    setResultExtras(bundleOf(RESULT_STATUS to "cancel_requested", RESULT_SCAN_ID to it))
                 }
             }
         }

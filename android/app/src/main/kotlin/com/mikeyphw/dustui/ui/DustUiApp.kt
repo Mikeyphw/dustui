@@ -87,8 +87,11 @@ import com.mikeyphw.dustui.data.LargeFileItem
 import com.mikeyphw.dustui.data.LargeFilePage
 import com.mikeyphw.dustui.data.LargeFilePreset
 import com.mikeyphw.dustui.data.RootFileSearchResult
+import com.mikeyphw.dustui.data.ModuleDiagnosticStatus
 import com.mikeyphw.dustui.data.RootModuleReport
 import com.mikeyphw.dustui.data.RootPathInspection
+import com.mikeyphw.dustui.data.ScanDiagnosticSeverity
+import com.mikeyphw.dustui.data.ScanDiagnostics
 import com.mikeyphw.dustui.data.ScanEntryEntity
 import com.mikeyphw.dustui.data.ScanSessionEntity
 import com.mikeyphw.dustui.data.SnapshotDelta
@@ -96,12 +99,17 @@ import com.mikeyphw.dustui.data.SnapshotPoint
 import com.mikeyphw.dustui.data.StorageBucket
 import com.mikeyphw.dustui.data.VisualAnalytics
 import com.mikeyphw.dustui.scan.ScanStatus
+import com.mikeyphw.dustui.root.RootServiceClient
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Unit = {}) {
     DustTheme {
         val rootState by viewModel.rootState.collectAsStateWithLifecycle()
+        val rootServiceInfo by viewModel.rootServiceInfo.collectAsStateWithLifecycle()
+        val rootFailureMessage by viewModel.rootFailureMessage.collectAsStateWithLifecycle()
+        val scanDiagnostics by viewModel.scanDiagnostics.collectAsStateWithLifecycle()
+        val pathPreflight by viewModel.pathPreflight.collectAsStateWithLifecycle()
         val session by viewModel.latestSession.collectAsStateWithLifecycle()
         val entries by viewModel.entries.collectAsStateWithLifecycle()
         val path by viewModel.explorerPath.collectAsStateWithLifecycle()
@@ -260,13 +268,18 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                 destination == DustDestination.SCAN -> ScanLauncher(
                                     Modifier.fillMaxSize(),
                                     rootState,
+                                    rootServiceInfo,
+                                    rootFailureMessage,
                                     currentSession,
+                                    scanDiagnostics,
+                                    pathPreflight,
                                     viewModel,
                                     requestNotificationPermission,
                                 ) { selectDestination(DustDestination.EXPLORER) }
                                 destination == DustDestination.EXPLORER && currentSession != null -> Explorer(
                                     Modifier.fillMaxSize(),
                                     currentSession,
+                                    scanDiagnostics,
                                     path ?: currentSession.rootPath,
                                     entries,
                                     filter,
@@ -469,7 +482,11 @@ private fun dustSheetPadding(): PaddingValues = PaddingValues(
 private fun ScanLauncher(
     modifier: Modifier,
     root: RootUiState,
+    rootInfo: RootServiceClient.RootServiceInfo?,
+    rootFailure: String?,
     session: ScanSessionEntity?,
+    diagnostics: ScanDiagnostics?,
+    pathPreflight: RootServiceClient.ScanRootPreflight?,
     vm: MainViewModel,
     requestNotificationPermission: () -> Unit,
     openExplorer: () -> Unit,
@@ -479,11 +496,18 @@ private fun ScanLauncher(
         item {
             Card {
                 Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                         Text("Root service", fontWeight = FontWeight.SemiBold)
-                        Text(when (root) { RootUiState.Checking -> "Checking"; RootUiState.Available -> "Ready"; RootUiState.Unavailable -> "Unavailable" })
+                        Text(when (root) { RootUiState.Checking -> "Checking privileged service…"; RootUiState.Available -> "Ready · UID 0 via ${rootInfo?.backend ?: "root"}"; RootUiState.Unavailable -> rootFailure ?: "Unavailable" })
+                        rootInfo?.let { info ->
+                            Text(
+                                "Scanner ${info.scanner.ifBlank { "unavailable" }} · SELinux ${when (info.selinuxEnforcing) { true -> "enforcing"; false -> "permissive"; null -> "unknown" }}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
-                    if (root == RootUiState.Unavailable) OutlinedButton(onClick = vm::refreshRoot) { Text("Retry") }
+                    if (root != RootUiState.Available) OutlinedButton(onClick = vm::refreshRoot) { Text("Retry") }
                 }
             }
         }
@@ -508,14 +532,43 @@ private fun ScanLauncher(
         item {
             Card {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(custom, { custom = it }, Modifier.fillMaxWidth(), label = { Text("Absolute path") }, singleLine = true)
-                    Button(onClick = { requestNotificationPermission(); vm.startCustom(custom); openExplorer() }, enabled = root == RootUiState.Available) { Text("Scan") }
+                    OutlinedTextField(
+                        custom,
+                        { custom = it },
+                        Modifier.fillMaxWidth(),
+                        label = { Text("Absolute path") },
+                        singleLine = true,
+                    )
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = { vm.diagnoseScanPath(custom) },
+                            enabled = root == RootUiState.Available,
+                            modifier = Modifier.weight(1f),
+                        ) { Text("Check access") }
+                        Button(
+                            onClick = { requestNotificationPermission(); vm.startCustom(custom); openExplorer() },
+                            enabled = root == RootUiState.Available,
+                            modifier = Modifier.weight(1f),
+                        ) { Text("Scan") }
+                    }
+                    pathPreflight?.let { preflight ->
+                        HorizontalDivider()
+                        Text(
+                            if (preflight.ok) "Path is ready" else "Path access failed",
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (preflight.ok) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
+                        )
+                        Text(preflight.message, style = MaterialTheme.typography.bodySmall)
+                        Detail("Diagnostic code", preflight.code + (preflight.errno?.let { " · errno $it" }.orEmpty()))
+                        preflight.canonicalPath?.let { Detail("Canonical path", it) }
+                        preflight.mountPoint?.let { Detail("Mount", "$it · ${preflight.filesystem ?: "unknown"} · ${preflight.mountOptions ?: "options unavailable"}") }
+                    }
                 }
             }
         }
         session?.let {
             item {
-                SessionCard(it, vm::cancelActive)
+                SessionCard(it, diagnostics, vm::cancelActive)
                 OutlinedButton(onClick = openExplorer, Modifier.fillMaxWidth()) { Text("Open latest scan") }
             }
         }
@@ -526,6 +579,7 @@ private fun ScanLauncher(
 private fun Explorer(
     modifier: Modifier,
     session: ScanSessionEntity,
+    diagnostics: ScanDiagnostics?,
     path: String,
     entries: List<ScanEntryEntity>,
     filter: ExplorerFilter,
@@ -544,7 +598,7 @@ private fun Explorer(
             contentPadding = dustScreenPadding(horizontal = 0, bottom = if (selectionMode) 208 else 128),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-        item { SessionCard(session, vm::cancelActive) }
+        item { SessionCard(session, diagnostics, vm::cancelActive) }
         item {
             Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = vm::up) { Text("Up") }
@@ -707,21 +761,97 @@ private fun EntryRow(
 }
 
 @Composable
-private fun SessionCard(session: ScanSessionEntity, cancel: () -> Unit) {
+private fun SessionCard(session: ScanSessionEntity, diagnostics: ScanDiagnostics?, cancel: () -> Unit) {
     val running = session.status in setOf(ScanStatus.STARTING.name, ScanStatus.RUNNING.name)
+    val latestProblem = diagnostics?.issues?.lastOrNull { it.severity == ScanDiagnosticSeverity.ERROR }
+        ?: diagnostics?.issues?.lastOrNull { it.severity == ScanDiagnosticSeverity.WARNING }
+    var expanded by rememberSaveable(session.id) { mutableStateOf(false) }
     Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)) {
-        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     PathText(session.rootPath)
+                    val countSummary = diagnostics?.let {
+                        "${it.emittedFiles} files · ${it.emittedDirectories} directories · ${formatBytes(session.scannedBytes)}"
+                    } ?: "${session.scannedItems} scanned items · ${formatBytes(session.scannedBytes)}"
                     Text(
-                        "${session.status.lowercase()} · ${session.scannedItems} items · ${formatBytes(session.scannedBytes)}",
+                        "${session.status.lowercase()} · $countSummary",
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
                 if (running) OutlinedButton(onClick = cancel) { Text("Cancel") }
             }
             if (running) LinearProgressIndicator(Modifier.fillMaxWidth())
+            session.errorMessage?.let { message ->
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text("Scan failed", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.error)
+                        Text(message, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+            latestProblem?.let { problem ->
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text(
+                            if (problem.severity == ScanDiagnosticSeverity.ERROR) "Failure diagnostic" else "Scan warning",
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (problem.severity == ScanDiagnosticSeverity.ERROR) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(problem.message, style = MaterialTheme.typography.bodySmall)
+                        problem.path?.let { PathText(it, maxLines = 2) }
+                        Text(
+                            buildString {
+                                append(problem.code)
+                                append(" · ").append(problem.phase)
+                                problem.errno?.let { append(" · errno ").append(it) }
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+            diagnostics?.let { details ->
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        buildString {
+                            append(session.warningCount).append(" warnings")
+                            if (details.truncated) append(" · results truncated")
+                            if (details.depthLimitedDirectories > 0) append(" · depth-limited")
+                        },
+                        Modifier.weight(1f),
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                    TextButton(onClick = { expanded = !expanded }) { Text(if (expanded) "Hide diagnostics" else "Diagnostics") }
+                }
+                if (expanded) {
+                    HorizontalDivider()
+                    Detail("Root identity", "UID ${details.rootUid}, GID ${details.rootGid}, PID ${details.rootPid}")
+                    Detail("Backend", details.rootBackend)
+                    Detail("Scanner", details.scannerVersion.ifBlank { "Unavailable" })
+                    Detail("SELinux", buildString {
+                        append(when (details.selinuxEnforcing) { true -> "Enforcing"; false -> "Permissive"; null -> "Unknown" })
+                        details.selinuxContext?.let { append(" · ").append(it) }
+                    })
+                    Detail("Mount namespace", details.mountNamespace ?: "Unavailable")
+                    Detail("Root preflight", if (details.preflightOk && details.rootOpened) "Opened successfully" else "Failed")
+                    details.canonicalRoot?.let { Detail("Canonical root", it) }
+                    details.mountPoint?.let { mount -> Detail("Mount", "$mount · ${details.filesystem ?: "unknown"} · ${details.mountOptions ?: "options unavailable"}") }
+                    Detail("Emitted", "${details.emittedFiles} files · ${details.emittedDirectories} directories")
+                    Detail("Traversal limits", "${details.depthLimitedDirectories} depth-limited · ${details.skippedFilesystemEntries} filesystem skips")
+                    if (details.issues.isNotEmpty()) {
+                        DustSectionHeader("Recorded notices", subtitle = "Exact scanner and root-service diagnostics retained for this scan.")
+                        details.issues.takeLast(8).forEach { issue ->
+                            Column(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
+                                Text("${issue.severity.name.lowercase()} · ${issue.code}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                                Text(issue.message, style = MaterialTheme.typography.bodySmall)
+                                issue.path?.let { PathText(it, maxLines = 2) }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -1972,16 +2102,37 @@ private fun ModuleAnalyzerScreen(
         item { DustSectionHeader("Root module analyzer", subtitle = "KernelSU, Magisk, APatch, and generic module footprints from /data/adb/modules.") }
         item {
             Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (report == null) {
                         Text("Module analysis is preparing…")
                     } else {
-                        Detail("Modules", report.modules.size.toString())
-                        Detail("Total footprint", formatBytes(report.totalBytes))
-                        Detail("Disabled", report.disabledCount.toString())
-                        Detail("WebUI", report.webUiCount.toString())
-                        Detail("Overlay conflicts", report.conflictCount.toString())
-                        if (report.conflictCount > 0) Text("Multiple modules target the same overlay path. Review the module-owned source files before deleting anything.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                        val diagnostic = report.diagnostic
+                        Text(
+                            when (diagnostic.status) {
+                                ModuleDiagnosticStatus.READY -> "Module data ready"
+                                ModuleDiagnosticStatus.WRONG_SCAN_ROOT -> "Current scan does not include modules"
+                                ModuleDiagnosticStatus.ROOT_ACCESS_FAILED -> "Root access to modules failed"
+                                ModuleDiagnosticStatus.SCAN_FAILED -> "Module source scan failed"
+                                ModuleDiagnosticStatus.NO_MODULES_FOUND -> "No module files were indexed"
+                                ModuleDiagnosticStatus.INCOMPLETE_RESULTS -> "Module results are incomplete"
+                            },
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (diagnostic.status in setOf(ModuleDiagnosticStatus.ROOT_ACCESS_FAILED, ModuleDiagnosticStatus.SCAN_FAILED)) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(diagnostic.message, style = MaterialTheme.typography.bodySmall)
+                        diagnostic.currentScanRoot?.let { Detail("Current scan root", it) }
+                        Detail("Required module root", diagnostic.expectedRoot)
+                        Detail("Root preflight", when (diagnostic.modulePathAccessible) { true -> "Accessible"; false -> "Failed${diagnostic.rootCode?.let { " · $it" }.orEmpty()}"; null -> "Not available" })
+                        Button(onClick = vm::startModuleScan, Modifier.fillMaxWidth()) { Text("Scan /data/adb/modules") }
+                        if (report.modules.isNotEmpty()) {
+                            HorizontalDivider()
+                            Detail("Modules", report.modules.size.toString())
+                            Detail("Total footprint", formatBytes(report.totalBytes))
+                            Detail("Disabled", report.disabledCount.toString())
+                            Detail("WebUI", report.webUiCount.toString())
+                            Detail("Overlay conflicts", report.conflictCount.toString())
+                            if (report.conflictCount > 0) Text("Multiple modules target the same overlay path. Review the module-owned source files before deleting anything.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                 }
             }
