@@ -279,3 +279,19 @@ Required behavior:
 - Safe batch selection must be limited to active verified or high-confidence candidates.
 - Manual-review candidates must remain labeled as manual review before deletion planning.
 - Exact paths must stay in a bottom sheet with Details, Files reveal, Select, and Review actions only; no direct deletion occurs from the recommendation card.
+
+## Phase 7 — Tools hub and module diagnostics contract
+
+The compact Tools route must group advanced surfaces by task while preserving existing internal destinations.
+
+Required behavior:
+
+- Tools must include **Storage intelligence** and **Operations** groups.
+- Storage intelligence must include App storage, Root modules, Storage growth, and Whole-scan search.
+- Cleanup workbenches must include Cleanup rules, Large files, Duplicates, and App residue.
+- Operations must include Deletion reports, Device certification, and Scan diagnostics.
+- Whole-scan search remains the internal `SEARCH` destination and compact selection continues to highlight Files.
+- Scan diagnostics may open the compact scan/evidence sheet instead of adding a new route.
+- Root modules must never show silent empty values for the wrong scan root.
+- A wrong-scope module state must show the current scan root, expected `/data/adb/modules` root, root preflight state, source status, and a **Scan /data/adb/modules** action.
+- Module overlay conflicts are evidence about mounted targets, but actions apply only to module-owned source files under `/data/adb/modules`.

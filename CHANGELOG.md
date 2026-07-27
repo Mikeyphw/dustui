@@ -1,5 +1,13 @@
 # DustUI changelog
 
+## Android modern dark portrait UI phase 7
+
+- Replaced the generic More list with a grouped Tools hub for Storage intelligence, Cleanup workbenches, and Operations.
+- Kept existing advanced workbench routes intact while surfacing App storage, Root modules, Growth, Whole-scan search, Deletion reports, Device certification, and Scan diagnostics as task cards.
+- Linked Scan diagnostics to the compact scan/evidence sheet and Whole-scan search to the internal Search route.
+- Restyled Root modules with a module-source diagnostic summary that shows current root, required `/data/adb/modules` root, preflight state, source status, and focused module-scan action.
+- Kept module overlay conflicts source-safe: protected mounted targets remain evidence, while actions apply only to module-owned files under `/data/adb/modules`.
+
 ## Android modern dark portrait UI phase 6
 
 - Promoted Cleanup recommendations into a task-first Clean cockpit with recoverable-bytes hero, active/hidden/safe-batch/selected metrics, and explicit stale-data locking.

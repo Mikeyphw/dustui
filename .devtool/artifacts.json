@@ -16256,6 +16256,101 @@
         }
       },
       "history_id": "2b268296fcaf4e88a13baf131bee6e12"
+    },
+    {
+      "applied_at": "2026-07-27T18:40:16.361218Z",
+      "artifact": "/home/mike/Downloads/dustui_android_modern_ui_phase7_tools_modules_diagnostics_overlay.zip",
+      "artifact_name": "dustui_android_modern_ui_phase7_tools_modules_diagnostics_overlay.zip",
+      "type": "overlay",
+      "sha256": "62dde955cf1663ff159384e61ba7041655832df584cd5091ad60f020adabcb46",
+      "status": "ok",
+      "validation_status": "ok",
+      "commit_message": "Modernize tools hub and module diagnostics",
+      "commit_hash": "",
+      "file_count": 5,
+      "change_counts": {
+        "modify": 5
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Android modern dark portrait tools hub and module diagnostics",
+        "description": "Phase 7 of the modern portrait UX revamp. Replaces the generic More list with a grouped Tools hub, keeps advanced workbench routes reachable, and restyles root module diagnostics so wrong-scope scans show evidence and a focused /data/adb/modules scan action instead of silent empty values.",
+        "version": "1.0.0",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "6d1f6f008ebc3eb497769f86e7c0abad4d6d96f68150b16011aa31314b7d0bae",
+              "size": 158033,
+              "source_sha256": "25ca88e57f668679d3b9c9a13bacb034ff7badd3891e81825949c004cbdef861"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+              "action": "modify",
+              "sha256": "6c67442a5340868c5ef97a85886f7bef4372bfa9f1b77fd4378a506dfc14a43f",
+              "size": 33023,
+              "source_sha256": "d139c20fee097700ccae4d088dccb599d1f67fd624e256f4cbad1e7a06da9be5"
+            },
+            {
+              "path": "docs/ANDROID_MODERN_DARK_PORTRAIT_UI.md",
+              "action": "modify",
+              "sha256": "6d0bcfa0e4269e338ebb58ee7e0fa8a98bff0887c7834281a2e635a4de86d6ff",
+              "size": 6144,
+              "source_sha256": "64275f21b10f55ed53a72a57255ddd370d5f08e568ffeeb25ef76f12679e4088"
+            },
+            {
+              "path": "UI_UX_CONTRACT.md",
+              "action": "modify",
+              "sha256": "49de5589622eedb665c4972d8cf0849a705ec5877fb10aded8d897737ac804c4",
+              "size": 23847,
+              "source_sha256": "47189d320c8f740f23b34a512ee6c078e1b13e8d563cf185724dedbad021118a"
+            },
+            {
+              "path": "CHANGELOG.md",
+              "action": "modify",
+              "sha256": "182b5657569c1cd296f5cd291e7cb56a74678ae0863f6aedb7f356d0b1aa598b",
+              "size": 15162,
+              "source_sha256": "a9413457da9ac9a4bbcd9b985a3a3a02d11be47a2306f97cf87ca7117c792e67"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Modernize tools hub and module diagnostics"
+          }
+        },
+        "validation": {
+          "required": false,
+          "restore": false,
+          "build": false,
+          "test": false,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "705d7f28a7737e621f7ca5556a1ddc8a812c679f3b5048d7fb5b8ed750df53cc",
+            "timeout_seconds": 600
+          }
+        }
+      },
+      "history_id": "010d430f873d4dbfb52d23487d9ef5c5"
     }
   ]
 }

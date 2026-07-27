@@ -55,3 +55,15 @@ Whole-scan search remains the internal `SEARCH` route for compatibility, but com
 Phase 6 promotes Cleanup into a primary task cockpit rather than a plain ranked-list screen. The Clean tab now opens with a recoverable-bytes hero, active/hidden/safe-batch/selected metrics, explicit stale-data locking, and a review-first permanent deletion notice.
 
 The cockpit keeps recommendations route-preserving while linking specialized chips to their existing workbenches: Duplicates, Large files, App residue, and Rules. Batch actions remain limited to visible active verified or high-confidence candidates, and manual-review recommendations keep explicit badges before deletion planning.
+
+## Phase 7 — Tools hub and module diagnostics
+
+Phase 7 turns the old More list into a grouped **Tools** hub. Advanced surfaces are organized by task instead of by historical route name:
+
+- Storage intelligence: App storage, Root modules, Storage growth, and Whole-scan search.
+- Cleanup workbenches: Cleanup rules, Large files, Duplicates, and App residue.
+- Operations: Deletion reports, Device certification, and Scan diagnostics.
+
+The Tools hub preserves existing workbench routes while making diagnostics easier to discover. Scan diagnostics open the compact scan/evidence sheet, whole-scan search keeps the internal Search route, and module actions stay source-safe.
+
+The Root modules surface now starts with a module-source diagnostic summary. When the active scan root is not `/data/adb/modules`, the UI says **Current scan excludes modules**, shows the current root, expected module root, preflight state, and source status, then offers a direct **Scan /data/adb/modules** action. Empty module values are never treated as a successful zero unless the diagnostic explicitly says no modules were found.

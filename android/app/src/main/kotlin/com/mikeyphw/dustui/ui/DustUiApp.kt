@@ -88,6 +88,7 @@ import com.mikeyphw.dustui.data.LargeFileItem
 import com.mikeyphw.dustui.data.LargeFilePage
 import com.mikeyphw.dustui.data.LargeFilePreset
 import com.mikeyphw.dustui.data.RootFileSearchResult
+import com.mikeyphw.dustui.data.ModuleAnalysisDiagnostic
 import com.mikeyphw.dustui.data.ModuleDiagnosticStatus
 import com.mikeyphw.dustui.data.RootModuleReport
 import com.mikeyphw.dustui.data.RootPathInspection
@@ -431,7 +432,12 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     selectedCleanupReport,
                                     viewModel,
                                 )
-                                destination == DustDestination.MORE -> MoreScreen(Modifier.fillMaxSize(), ::selectDestination)
+                                destination == DustDestination.MORE -> ToolsHubScreen(
+                                    modifier = Modifier.fillMaxSize(),
+                                    navigate = ::selectDestination,
+                                    openWholeScanSearch = { selectDestination(DustDestination.SEARCH) },
+                                    openScanDiagnostics = { openScanLauncher() },
+                                )
                             }
                             if (destination != DustDestination.EXPLORER && selectedPaths.isNotEmpty()) {
                                 SelectionActionBar(
@@ -2603,43 +2609,7 @@ private fun ModuleAnalyzerScreen(
     val report = moduleReport
     LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { DustSectionHeader("Root module analyzer", subtitle = "KernelSU, Magisk, APatch, and generic module footprints from /data/adb/modules.") }
-        item {
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (report == null) {
-                        Text("Module analysis is preparing…")
-                    } else {
-                        val diagnostic = report.diagnostic
-                        Text(
-                            when (diagnostic.status) {
-                                ModuleDiagnosticStatus.READY -> "Module data ready"
-                                ModuleDiagnosticStatus.WRONG_SCAN_ROOT -> "Current scan does not include modules"
-                                ModuleDiagnosticStatus.ROOT_ACCESS_FAILED -> "Root access to modules failed"
-                                ModuleDiagnosticStatus.SCAN_FAILED -> "Module source scan failed"
-                                ModuleDiagnosticStatus.NO_MODULES_FOUND -> "No module files were indexed"
-                                ModuleDiagnosticStatus.INCOMPLETE_RESULTS -> "Module results are incomplete"
-                            },
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (diagnostic.status in setOf(ModuleDiagnosticStatus.ROOT_ACCESS_FAILED, ModuleDiagnosticStatus.SCAN_FAILED)) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-                        )
-                        Text(diagnostic.message, style = MaterialTheme.typography.bodySmall)
-                        diagnostic.currentScanRoot?.let { Detail("Current scan root", it) }
-                        Detail("Required module root", diagnostic.expectedRoot)
-                        Detail("Root preflight", when (diagnostic.modulePathAccessible) { true -> "Accessible"; false -> "Failed${diagnostic.rootCode?.let { " · $it" }.orEmpty()}"; null -> "Not available" })
-                        Button(onClick = vm::startModuleScan, Modifier.fillMaxWidth()) { Text("Scan /data/adb/modules") }
-                        if (report.modules.isNotEmpty()) {
-                            HorizontalDivider()
-                            Detail("Modules", report.modules.size.toString())
-                            Detail("Total footprint", formatBytes(report.totalBytes))
-                            Detail("Disabled", report.disabledCount.toString())
-                            Detail("WebUI", report.webUiCount.toString())
-                            Detail("Overlay conflicts", report.conflictCount.toString())
-                            if (report.conflictCount > 0) Text("Multiple modules target the same overlay path. Review the module-owned source files before deleting anything.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                }
-            }
-        }
+        item { ModuleDiagnosticSummary(report = report, onScanModules = vm::startModuleScan) }
         if (report != null) {
             val modules = report.modules.take(20)
             if (modules.isNotEmpty()) item {
@@ -2763,35 +2733,212 @@ private fun CleanupHistoryScreen(modifier: Modifier, operations: List<CleanupOpe
 }
 
 @Composable
-private fun MoreScreen(modifier: Modifier, navigate: (DustDestination) -> Unit) {
-    Column(modifier.verticalScroll(rememberScrollState()).padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 128.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        DustSectionHeader("Tools", subtitle = "Advanced analysis, module diagnostics, reports, and operational utilities.")
-        DustNavigationModel.moreDestinations.forEach { destination ->
-            Card(onClick = { navigate(destination) }, modifier = Modifier.fillMaxWidth()) {
-                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(destination.symbol, style = MaterialTheme.typography.titleLarge)
-                    Column {
-                        Text(destination.label, fontWeight = FontWeight.SemiBold)
-                        Text(moreDestinationDescription(destination), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
+private fun ToolsHubScreen(
+    modifier: Modifier,
+    navigate: (DustDestination) -> Unit,
+    openWholeScanSearch: () -> Unit,
+    openScanDiagnostics: () -> Unit,
+) {
+    Column(
+        modifier.verticalScroll(rememberScrollState()).padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 128.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        DustHeroCard(
+            title = "Tools",
+            detail = "Advanced analysis, module diagnostics, reports, and operational utilities grouped by task.",
+            eyebrow = "Advanced",
+        ) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                DustMetricTile("Groups", "3", Modifier.weight(1f), detail = "Analyze + Clean + Ops")
+                DustMetricTile("Safety", "On", Modifier.weight(1f), detail = "Source files only")
             }
         }
+        ToolsGroupHeader("Storage intelligence", "Inspect what is growing, duplicated, or owned by apps and modules.")
+        DustTaskCard(
+            title = "App storage",
+            detail = "Code, private state, cache, media, residue, duplicates, and growth.",
+            value = "Apps",
+            leading = { Text("▣", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+            onClick = { navigate(DustDestination.PACKAGES) },
+        )
+        DustTaskCard(
+            title = "Root modules",
+            detail = "Module footprints, WebUI/script badges, disabled state, and overlay conflict diagnostics.",
+            value = "/data/adb/modules",
+            leading = { Text("▥", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+            onClick = { navigate(DustDestination.MODULES) },
+        )
+        DustTaskCard(
+            title = "Storage growth",
+            detail = "Compare completed scans and open the exact paths responsible for changes.",
+            value = "Growth",
+            leading = { Text("↗", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+            onClick = { navigate(DustDestination.GROWTH) },
+        )
+        DustTaskCard(
+            title = "Whole-scan search",
+            detail = "Search outside the current folder while preserving the Files navigation model.",
+            value = "Search",
+            leading = { Text("⌕", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+            onClick = openWholeScanSearch,
+        )
+        ToolsGroupHeader("Cleanup workbenches", "Specialized review surfaces stay reachable without crowding the bottom bar.")
+        DustTaskCard(
+            title = "Cleanup rules",
+            detail = "Preview reusable current-scan searches before opening exact deletion review.",
+            value = "Rules",
+            leading = { Text("≡", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+            onClick = { navigate(DustDestination.RULES) },
+        )
+        DustTaskCard(
+            title = "Large files",
+            detail = "Filter, group, inspect, and batch-plan deletion for large files.",
+            value = "Large",
+            leading = { Text("▤", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+            onClick = { navigate(DustDestination.LARGE_FILES) },
+        )
+        DustTaskCard(
+            title = "Duplicates",
+            detail = "Verify exact duplicate content and choose which physical copies to keep.",
+            value = "Dupes",
+            leading = { Text("⧉", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+            onClick = { navigate(DustDestination.DUPLICATES) },
+        )
+        DustTaskCard(
+            title = "App residue",
+            detail = "Review evidence-ranked folders left by packages that are no longer installed.",
+            value = "Residue",
+            leading = { Text("⌫", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+            onClick = { navigate(DustDestination.APP_RESIDUE) },
+        )
+        ToolsGroupHeader("Operations", "Review outcomes, device readiness, and persisted scan evidence.")
+        DustTaskCard(
+            title = "Deletion reports",
+            detail = "Permanent deletion reports, per-path outcomes, exports, and targeted rescans.",
+            value = "Reports",
+            leading = { Text("↺", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+            onClick = { navigate(DustDestination.CLEANUP) },
+        )
+        DustTaskCard(
+            title = "Device certification",
+            detail = "Root backend, notification, lock-state, and release-gate checks.",
+            value = "Ready",
+            leading = { Text("✓", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+            onClick = { navigate(DustDestination.CERTIFICATION) },
+        )
+        DustTaskCard(
+            title = "Scan diagnostics",
+            detail = "Root identity, preflight evidence, zero-file warnings, truncation, and depth-limit notices.",
+            value = "Evidence",
+            leading = { Text("!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+            onClick = openScanDiagnostics,
+        )
+        DustStatusNotice(
+            title = "Advanced tools stay source-safe",
+            detail = "Module and overlay-conflict actions apply to module-owned source files, never protected mounted system targets.",
+            tone = DustNoticeTone.Success,
+        )
     }
 }
 
-private fun moreDestinationDescription(destination: DustDestination): String = when (destination) {
-    DustDestination.RECOMMENDATIONS -> "Rank explainable cleanup candidates and review exact current-scan paths."
-    DustDestination.RULES -> "Build reusable current-scan searches that always open an exact deletion review."
-    DustDestination.GROWTH -> "Compare completed scans and open the files responsible for storage changes."
-    DustDestination.LARGE_FILES -> "Filter, group, inspect, and batch-plan deletion for large files."
-    DustDestination.DUPLICATES -> "Verify exact duplicate content and choose which physical copies to keep."
-    DustDestination.APP_RESIDUE -> "Review evidence-ranked folders left by packages that are no longer installed."
-    DustDestination.PACKAGES -> "Inspect app code, private state, cache, OBB, media, duplicates, residue, and growth."
-    DustDestination.MODULES -> "Root module footprint and overlay conflict analysis."
-    DustDestination.CERTIFICATION -> "Root backend, notification, lock-state, and release checks."
-    DustDestination.CLEANUP -> "Verified deletion reports, per-path outcomes, exports, and targeted rescans."
-    else -> destination.label
+@Composable
+private fun ToolsGroupHeader(title: String, detail: String) {
+    DustSectionHeader(title, subtitle = detail)
+}
+
+@Composable
+private fun ModuleDiagnosticSummary(report: RootModuleReport?, onScanModules: () -> Unit) {
+    val diagnostic = report?.diagnostic
+    val tone = moduleDiagnosticTone(diagnostic?.status)
+    DustHeroCard(
+        title = moduleDiagnosticTitle(diagnostic?.status),
+        detail = diagnostic?.message ?: "Module analysis has not produced evidence yet. Scan /data/adb/modules to populate module-source values.",
+        eyebrow = "Module-source diagnostics",
+    ) {
+        DustStatusNotice(
+            title = moduleDiagnosticNoticeTitle(diagnostic?.status),
+            detail = moduleDiagnosticNoticeDetail(diagnostic),
+            tone = tone,
+            actionLabel = "Scan /data/adb/modules",
+            onAction = onScanModules,
+        )
+        MetricGrid(
+            listOf(
+                "Current scan root" to (diagnostic?.currentScanRoot ?: "No active module scan"),
+                "Required module root" to (diagnostic?.expectedRoot ?: "/data/adb/modules"),
+                "Root preflight" to modulePreflightLabel(diagnostic),
+                "Source status" to moduleSourceStatusLabel(diagnostic?.status),
+            ),
+        )
+        if (report != null && report.modules.isNotEmpty()) {
+            MetricGrid(
+                listOf(
+                    "Modules" to report.modules.size.toString(),
+                    "Total footprint" to formatBytes(report.totalBytes),
+                    "Disabled" to report.disabledCount.toString(),
+                    "WebUI" to report.webUiCount.toString(),
+                    "Overlay conflicts" to report.conflictCount.toString(),
+                ),
+            )
+        }
+        DustStatusNotice(
+            title = "Module actions are source-only",
+            detail = "DustUI can review module-owned files under /data/adb/modules. Protected mounted targets remain evidence, not deletion targets.",
+            tone = DustNoticeTone.Success,
+        )
+    }
+}
+
+private fun moduleDiagnosticTitle(status: ModuleDiagnosticStatus?): String = when (status) {
+    ModuleDiagnosticStatus.READY -> "Module data ready"
+    ModuleDiagnosticStatus.WRONG_SCAN_ROOT -> "Current scan excludes modules"
+    ModuleDiagnosticStatus.ROOT_ACCESS_FAILED -> "Root access to modules failed"
+    ModuleDiagnosticStatus.SCAN_FAILED -> "Module source scan failed"
+    ModuleDiagnosticStatus.NO_MODULES_FOUND -> "No module files were indexed"
+    ModuleDiagnosticStatus.INCOMPLETE_RESULTS -> "Module results are incomplete"
+    null -> "Module analysis is preparing"
+}
+
+private fun moduleDiagnosticNoticeTitle(status: ModuleDiagnosticStatus?): String = when (status) {
+    ModuleDiagnosticStatus.READY -> "Module source evidence available"
+    ModuleDiagnosticStatus.WRONG_SCAN_ROOT -> "Scan /data/adb/modules to fill module values"
+    ModuleDiagnosticStatus.ROOT_ACCESS_FAILED -> "Module root preflight failed"
+    ModuleDiagnosticStatus.SCAN_FAILED -> "Module source scan failed"
+    ModuleDiagnosticStatus.NO_MODULES_FOUND -> "No module files found"
+    ModuleDiagnosticStatus.INCOMPLETE_RESULTS -> "Module source results are incomplete"
+    null -> "Module scan needed"
+}
+
+private fun moduleDiagnosticNoticeDetail(diagnostic: ModuleAnalysisDiagnostic?): String = when (diagnostic?.status) {
+    ModuleDiagnosticStatus.READY -> "Footprints, disabled state, WebUI/script badges, and overlay conflicts come from indexed module source files."
+    ModuleDiagnosticStatus.WRONG_SCAN_ROOT -> "The current scan root is ${diagnostic.currentScanRoot ?: "not available"}; module values require ${diagnostic.expectedRoot}."
+    ModuleDiagnosticStatus.ROOT_ACCESS_FAILED -> "DustUI could not read ${diagnostic.expectedRoot}${diagnostic.rootCode?.let { " · $it" }.orEmpty()}."
+    ModuleDiagnosticStatus.SCAN_FAILED -> "The module source scan failed before reliable module values could be produced."
+    ModuleDiagnosticStatus.NO_MODULES_FOUND -> "The module root was readable, but no module source files were indexed."
+    ModuleDiagnosticStatus.INCOMPLETE_RESULTS -> "Some module paths could not be indexed; keep conflict and footprint values marked as partial."
+    null -> "Open a focused module scan so empty module cards never masquerade as successful zeroes."
+}
+
+private fun moduleDiagnosticTone(status: ModuleDiagnosticStatus?): DustNoticeTone = when (status) {
+    ModuleDiagnosticStatus.READY -> DustNoticeTone.Success
+    ModuleDiagnosticStatus.ROOT_ACCESS_FAILED, ModuleDiagnosticStatus.SCAN_FAILED -> DustNoticeTone.Error
+    else -> DustNoticeTone.Warning
+}
+
+private fun modulePreflightLabel(diagnostic: ModuleAnalysisDiagnostic?): String = when (diagnostic?.modulePathAccessible) {
+    true -> "Accessible"
+    false -> "Failed${diagnostic.rootCode?.let { " · $it" }.orEmpty()}"
+    null -> "Not run"
+}
+
+private fun moduleSourceStatusLabel(status: ModuleDiagnosticStatus?): String = when (status) {
+    ModuleDiagnosticStatus.READY -> "Ready"
+    ModuleDiagnosticStatus.WRONG_SCAN_ROOT -> "Wrong scope"
+    ModuleDiagnosticStatus.ROOT_ACCESS_FAILED -> "Access failed"
+    ModuleDiagnosticStatus.SCAN_FAILED -> "Scan failed"
+    ModuleDiagnosticStatus.NO_MODULES_FOUND -> "No modules"
+    ModuleDiagnosticStatus.INCOMPLETE_RESULTS -> "Partial"
+    null -> "Pending"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

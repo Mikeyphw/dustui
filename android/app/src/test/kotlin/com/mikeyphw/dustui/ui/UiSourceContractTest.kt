@@ -485,8 +485,8 @@ class UiSourceContractTest {
         assertTrue(app.contains("compactNavigationTarget(item, session != null)"))
         assertTrue(app.contains("DustNavigationModel.backTarget(destination, wide) != null"))
         assertTrue(app.contains("destination = DustDestination.INSIGHTS"))
-        assertTrue(app.contains("DustSectionHeader(\"Tools\""))
-        assertTrue(app.contains("Advanced analysis, module diagnostics, reports, and operational utilities."))
+        assertTrue(app.contains("private fun ToolsHubScreen"))
+        assertTrue(app.contains("Advanced analysis, module diagnostics, reports, and operational utilities grouped by task."))
     }
 
     @Test fun `cleanup reports date filter uses primitive int state`() {
@@ -514,6 +514,39 @@ class UiSourceContractTest {
         assertTrue(screen.contains("Exact current-scan paths. Each action still uses the shared permanent-deletion safety pipeline."))
         assertTrue(screen.contains("Changed, missing, protected, or hash-mismatched entries are skipped"))
         assertFalse(screen.contains("Plan deletion"))
+    }
+
+    @Test fun `tools hub groups advanced workbenches and preserves diagnostics evidence`() {
+        val app = sourceFile("DustUiApp.kt")
+        assertTrue(app.contains("private fun ToolsHubScreen"))
+        assertTrue(app.contains("ToolsGroupHeader(\"Storage intelligence\""))
+        assertTrue(app.contains("ToolsGroupHeader(\"Cleanup workbenches\""))
+        assertTrue(app.contains("ToolsGroupHeader(\"Operations\""))
+        assertTrue(app.contains("title = \"Root modules\""))
+        assertTrue(app.contains("title = \"Scan diagnostics\""))
+        assertTrue(app.contains("navigate(DustDestination.RULES)"))
+        assertTrue(app.contains("navigate(DustDestination.LARGE_FILES)"))
+        assertTrue(app.contains("navigate(DustDestination.DUPLICATES)"))
+        assertTrue(app.contains("navigate(DustDestination.APP_RESIDUE)"))
+        assertTrue(app.contains("openWholeScanSearch = { selectDestination(DustDestination.SEARCH) }"))
+        assertTrue(app.contains("openScanDiagnostics = { openScanLauncher() }"))
+        assertTrue(app.contains("Advanced tools stay source-safe"))
+        assertTrue(app.contains("never protected mounted system targets"))
+        assertFalse(app.contains("private fun MoreScreen"))
+    }
+
+    @Test fun `module diagnostics never collapse wrong scope into empty values`() {
+        val app = sourceFile("DustUiApp.kt")
+        assertTrue(app.contains("private fun ModuleDiagnosticSummary"))
+        assertTrue(app.contains("Current scan excludes modules"))
+        assertTrue(app.contains("Scan /data/adb/modules to fill module values"))
+        assertTrue(app.contains("Current scan root"))
+        assertTrue(app.contains("Required module root"))
+        assertTrue(app.contains("Root preflight"))
+        assertTrue(app.contains("Source status"))
+        assertTrue(app.contains("Module actions are source-only"))
+        assertTrue(app.contains("Protected mounted targets remain evidence, not deletion targets."))
+        assertTrue(app.contains("Open a focused module scan so empty module cards never masquerade as successful zeroes."))
     }
 
 }
