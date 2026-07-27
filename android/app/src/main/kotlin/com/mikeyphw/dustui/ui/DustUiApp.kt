@@ -74,6 +74,7 @@ import com.mikeyphw.dustui.data.AppStorageSummary
 import com.mikeyphw.dustui.data.CertificationStatus
 import com.mikeyphw.dustui.data.ChartSlice
 import com.mikeyphw.dustui.data.CleanupOperationEntity
+import com.mikeyphw.dustui.data.CleanupRecommendationAnalysis
 import com.mikeyphw.dustui.data.CleanupReview
 import com.mikeyphw.dustui.data.DeviceCertificationReport
 import com.mikeyphw.dustui.data.DuplicateAnalysisSnapshot
@@ -293,21 +294,29 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     viewModel,
                                     openRootSearch = { selectDestination(DustDestination.SEARCH) },
                                 )
-                                destination == DustDestination.INSIGHTS -> InsightsOverview(
-                                    Modifier.fillMaxSize(),
-                                    delta,
-                                    snapshotHistory,
-                                    advancedReport,
-                                    apps,
-                                    selectedPaths,
-                                    scanDataStale,
-                                    viewModel,
-                                    requestNotificationPermission,
+                                destination == DustDestination.INSIGHTS -> HomeDashboardScreen(
+                                    modifier = Modifier.fillMaxSize(),
+                                    session = currentSession,
+                                    diagnostics = scanDiagnostics,
+                                    delta = delta,
+                                    history = snapshotHistory,
+                                    advanced = advancedReport,
+                                    apps = apps,
+                                    recommendationAnalysis = recommendationAnalysis,
+                                    selectedPaths = selectedPaths,
+                                    scanDataStale = scanDataStale,
+                                    vm = viewModel,
+                                    requestNotificationPermission = requestNotificationPermission,
+                                    onStartScan = { openScanLauncher() },
                                     revealPath = { filePath ->
                                         viewModel.revealPath(filePath)
                                         selectDestination(DustDestination.EXPLORER)
                                     },
+                                    openClean = { selectDestination(DustDestination.RECOMMENDATIONS) },
                                     openDuplicates = { selectDestination(DustDestination.DUPLICATES) },
+                                    openLargeFiles = { selectDestination(DustDestination.LARGE_FILES) },
+                                    openResidue = { selectDestination(DustDestination.APP_RESIDUE) },
+                                    openDiagnostics = { openScanLauncher() },
                                 )
                                 destination == DustDestination.RECOMMENDATIONS && currentSession != null -> CleanupRecommendationsScreen(
                                     Modifier.fillMaxSize(),
@@ -2108,47 +2117,149 @@ private fun AppResidueLocationCard(
 }
 
 
+
 @Composable
-private fun InsightsOverview(
+private fun HomeDashboardScreen(
     modifier: Modifier,
+    session: ScanSessionEntity?,
+    diagnostics: ScanDiagnostics?,
     delta: SnapshotDelta?,
     history: List<SnapshotPoint>,
     advanced: AdvancedStorageReport?,
     apps: List<AppStorageSummary>,
+    recommendationAnalysis: CleanupRecommendationAnalysis?,
     selectedPaths: Set<String>,
     scanDataStale: Boolean,
     vm: MainViewModel,
     requestNotificationPermission: () -> Unit,
+    onStartScan: () -> Unit,
     revealPath: (String) -> Unit,
+    openClean: () -> Unit,
     openDuplicates: () -> Unit,
+    openLargeFiles: () -> Unit,
+    openResidue: () -> Unit,
+    openDiagnostics: () -> Unit,
 ) {
     var selectedType by rememberSaveable(advanced?.typeBuckets?.hashCode()) { mutableStateOf<String?>(null) }
+    val potentialCleanupBytes = homePotentialCleanupBytes(recommendationAnalysis, advanced)
     LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        if (session == null) {
+            item {
+                DustHeroCard(
+                    title = "Start your first scan",
+                    detail = "Pick a root-aware scope before opening files, cleanup, analytics, rules, growth history, duplicates, app residue, search, packages, modules, or certification.",
+                    eyebrow = "Storage health",
+                    trailing = { DustPathPill("root-aware") },
+                ) {
+                    DustStatusNotice(
+                        title = "Root diagnostics run before indexing",
+                        detail = "DustUI checks root identity, path access, scanner backend, zero-file warnings, and fatal preflight failures before it treats a scan as usable.",
+                        tone = DustNoticeTone.Warning,
+                    )
+                    Button(onClick = onStartScan, modifier = Modifier.fillMaxWidth()) { Text("Start scan") }
+                }
+            }
+            item {
+                DustTaskCard(
+                    title = "Termux workspace",
+                    detail = "Suggested first scope for verifying private app storage and the /data/data/com.termux zero-file diagnostic path.",
+                    value = "/data/data/com.termux",
+                    onClick = onStartScan,
+                    leading = { Text("T", fontWeight = FontWeight.Bold) },
+                )
+            }
+            item {
+                DustTaskCard(
+                    title = "Root modules",
+                    detail = "Scan /data/adb/modules when module values are unavailable instead of showing silent zeroes.",
+                    value = "/data/adb/modules",
+                    onClick = onStartScan,
+                    leading = { Text("M", fontWeight = FontWeight.Bold) },
+                )
+            }
+        } else {
+
         item {
-            DustSectionHeader("Overview", subtitle = "Storage trends, composition, and cleanup signals.")
-        }
-        item {
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    DustSectionHeader("Storage snapshots")
-                    SnapshotLineChart(history, Modifier.fillMaxWidth())
-                    if (delta == null) {
-                        Text("Complete two scans of the same scope to compare growth.")
-                    } else {
-                        Detail("Net change", signedBytes(delta.totalDeltaBytes))
-                        Detail("Added", formatBytes(delta.addedBytes))
-                        Detail("Removed", formatBytes(delta.removedBytes))
-                        Detail("Changed", delta.changedEntries.toString())
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = { requestNotificationPermission(); vm.scheduleLatest(24) }) { Text("Daily scans") }
-                        OutlinedButton(onClick = vm::cancelSchedule) { Text("Disable") }
-                    }
+            DustHeroCard(
+                title = "${formatBytes(session.scannedBytes.coerceAtLeast(session.totalBytes))} analyzed",
+                detail = homeScanSummary(session, diagnostics, scanDataStale),
+                eyebrow = if (scanDataStale) "Rescan needed" else "Latest scan",
+                trailing = { DustPathPill(session.rootPath) },
+            ) {
+                MetricGrid(
+                    listOf(
+                        "Files indexed" to session.scannedItems.toString(),
+                        "Potential cleanup" to formatBytes(potentialCleanupBytes),
+                        "Warnings" to ((diagnostics?.warningCount ?: session.warningCount).toString()),
+                        "Errors" to ((diagnostics?.errorCount ?: 0).toString()),
+                    ),
+                )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = onStartScan, modifier = Modifier.weight(1f)) { Text(if (scanDataStale) "Rescan now" else "Scan again") }
+                    OutlinedButton(onClick = openClean, enabled = !scanDataStale, modifier = Modifier.weight(1f)) { Text("Open cleanup") }
                 }
             }
         }
+
+        item {
+            HomeDiagnosticsNotice(
+                session = session,
+                diagnostics = diagnostics,
+                scanDataStale = scanDataStale,
+                onReview = openDiagnostics,
+            )
+        }
+
+        item {
+            DustSectionHeader("Best next actions", subtitle = "Task-first shortcuts ranked by confidence and safety.")
+        }
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                DustTaskCard(
+                    title = "Recommended cleanup",
+                    detail = if (scanDataStale) "Locked until a fresh scan confirms paths and fingerprints." else "Review verified duplicates and high-confidence residue before permanent deletion.",
+                    value = formatBytes(potentialCleanupBytes),
+                    selected = false,
+                    onClick = openClean,
+                    leading = { Text("✦", fontWeight = FontWeight.Bold) },
+                )
+                DustTaskCard(
+                    title = "Exact duplicates",
+                    detail = "Open the duplicate workbench with hash-backed keep strategies and protected-copy anchoring.",
+                    value = formatBytes(advanced?.duplicateCandidates?.sumOf { it.estimatedSavingsBytes } ?: 0L),
+                    selected = false,
+                    onClick = openDuplicates,
+                    leading = { Text("⧉", fontWeight = FontWeight.Bold) },
+                )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    DustTaskCard(
+                        title = "Large files",
+                        detail = "Find aged archives, build outputs, and oversized logs.",
+                        value = (advanced?.largeOldFiles?.size ?: 0).toString(),
+                        onClick = openLargeFiles,
+                        leading = { Text("▤", fontWeight = FontWeight.Bold) },
+                        modifier = Modifier.weight(1f),
+                    )
+                    DustTaskCard(
+                        title = "App residue",
+                        detail = "Review uninstalled-package residue with evidence-ranked confidence.",
+                        value = (advanced?.orphanedPackages?.size ?: 0).toString(),
+                        onClick = openResidue,
+                        leading = { Text("⌫", fontWeight = FontWeight.Bold) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+
         if (advanced == null) {
-            item { EmptyState("Visual analysis is preparing…", "Open this page again after the latest scan finishes indexing.") }
+            item {
+                DustStatusNotice(
+                    title = "Visual analysis is preparing",
+                    detail = "Open this page again after the latest scan finishes indexing to see composition, cleanup potential, and trend cards.",
+                    tone = DustNoticeTone.Warning,
+                )
+            }
         } else {
             item {
                 Card(Modifier.fillMaxWidth()) {
@@ -2186,6 +2297,30 @@ private fun InsightsOverview(
                                 planDeletion = { vm.reviewCategoryPaths(slice.sourceLabels) },
                                 viewCategory = { bucket -> vm.openCategoryFiles(bucket.label, setOf(bucket.label)) },
                             )
+                        }
+                    }
+                }
+            }
+            item {
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        DustSectionHeader("Storage snapshots", subtitle = "Growth stays secondary to the main scan → understand → clean flow.")
+                        SnapshotLineChart(history, Modifier.fillMaxWidth())
+                        if (delta == null) {
+                            Text("Complete two scans of the same scope to compare growth.")
+                        } else {
+                            MetricGrid(
+                                listOf(
+                                    "Net change" to signedBytes(delta.totalDeltaBytes),
+                                    "Added" to formatBytes(delta.addedBytes),
+                                    "Removed" to formatBytes(delta.removedBytes),
+                                    "Changed" to delta.changedEntries.toString(),
+                                ),
+                            )
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(onClick = { requestNotificationPermission(); vm.scheduleLatest(24) }) { Text("Daily scans") }
+                            OutlinedButton(onClick = vm::cancelSchedule) { Text("Disable") }
                         }
                     }
                 }
@@ -2244,7 +2379,80 @@ private fun InsightsOverview(
                 }
             }
         }
+        }
     }
+}
+
+@Composable
+private fun HomeDiagnosticsNotice(
+    session: ScanSessionEntity,
+    diagnostics: ScanDiagnostics?,
+    scanDataStale: Boolean,
+    onReview: () -> Unit,
+) {
+    val zeroFiles = diagnostics?.let { it.completedAt != null && it.emittedFiles == 0L } ?: (session.scannedItems == 0L && session.completedAt != null)
+    when {
+        scanDataStale -> DustStatusNotice(
+            title = "Cleanup changed this scope",
+            detail = "Run a new scan before trusting counts, recommendations, or module-source diagnostics.",
+            tone = DustNoticeTone.Warning,
+            actionLabel = "Rescan",
+            onAction = onReview,
+        )
+        diagnostics?.hasFailure == true -> DustStatusNotice(
+            title = "Latest scan has failure evidence",
+            detail = "Root identity, path access, or scanner preflight failed. DustUI keeps stale numbers hidden and exposes persisted evidence.",
+            tone = DustNoticeTone.Error,
+            actionLabel = "Review",
+            onAction = onReview,
+        )
+        zeroFiles -> DustStatusNotice(
+            title = "Zero-file scan is suspicious",
+            detail = "The path completed with zero indexed files. Check root identity, path access, scanner output, and truncation evidence before acting.",
+            tone = DustNoticeTone.Warning,
+            actionLabel = "Review",
+            onAction = onReview,
+        )
+        diagnostics?.truncated == true -> DustStatusNotice(
+            title = "Latest scan was truncated",
+            detail = "Results are usable for browsing, but cleanup planning should inspect the persisted truncation evidence first.",
+            tone = DustNoticeTone.Warning,
+            actionLabel = "Review",
+            onAction = onReview,
+        )
+        (diagnostics?.depthLimitedDirectories ?: 0L) > 0L -> DustStatusNotice(
+            title = "Latest scan hit a depth limit",
+            detail = "One or more directories exceeded the configured traversal depth. Evidence stays available after navigation.",
+            tone = DustNoticeTone.Warning,
+            actionLabel = "Review",
+            onAction = onReview,
+        )
+        (diagnostics?.warningCount ?: session.warningCount.toInt()) > 0 -> DustStatusNotice(
+            title = "Latest scan has persisted warnings",
+            detail = "${diagnostics?.warningCount ?: session.warningCount} warning(s) were preserved with the scan instead of disappearing into a snackbar.",
+            tone = DustNoticeTone.Warning,
+            actionLabel = "Review",
+            onAction = onReview,
+        )
+        else -> DustStatusNotice(
+            title = "Scan diagnostics are clean",
+            detail = "Root identity and preflight passed. No fatal failure, zero-file warning, truncation, or depth-limit evidence is active.",
+            tone = DustNoticeTone.Success,
+        )
+    }
+}
+
+private fun homePotentialCleanupBytes(recommendationAnalysis: CleanupRecommendationAnalysis?, advanced: AdvancedStorageReport?): Long {
+    val recommended = recommendationAnalysis?.highConfidenceBytes ?: 0L
+    if (recommended > 0L) return recommended
+    return advanced?.duplicateCandidates?.sumOf { it.estimatedSavingsBytes } ?: 0L
+}
+
+private fun homeScanSummary(session: ScanSessionEntity, diagnostics: ScanDiagnostics?, scanDataStale: Boolean): String = when {
+    scanDataStale -> "Results are stale after deletion. A targeted rescan will refresh counts and cleanup recommendations."
+    diagnostics?.hasFailure == true -> "Root or scanner diagnostics reported failure evidence for ${session.rootPath}."
+    diagnostics?.let { it.completedAt != null && it.emittedFiles == 0L } == true -> "Zero files were indexed; review root identity and path access evidence before acting."
+    else -> "Root access verified. ${session.scannedItems} entries indexed from ${session.rootPath}."
 }
 
 @Composable

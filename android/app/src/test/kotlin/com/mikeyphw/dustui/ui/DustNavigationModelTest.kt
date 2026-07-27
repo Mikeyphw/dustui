@@ -89,8 +89,9 @@ class DustNavigationModelTest {
         assertNull(DustNavigationModel.backTarget(DustDestination.INSIGHTS, wide = false))
     }
 
-    @Test fun `only scan and reports work without scan data`() {
+    @Test fun `home scan and reports work without scan data`() {
         assertFalse(DustNavigationModel.needsScanData(DustDestination.SCAN))
+        assertFalse(DustNavigationModel.needsScanData(DustDestination.INSIGHTS))
         assertFalse(DustNavigationModel.needsScanData(DustDestination.CLEANUP))
         assertTrue(DustNavigationModel.needsScanData(DustDestination.EXPLORER))
         assertTrue(DustNavigationModel.needsScanData(DustDestination.SEARCH))

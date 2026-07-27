@@ -156,3 +156,11 @@ Final release-candidate hardening for the rooted Android storage workbench.
 ## 1.0.0-rc1
 
 - Added root explorer metadata, bounded previews, and treemap visualization.
+
+## Android modern dark portrait UI — Phase 4 home dashboard
+
+- Converts the compact Home route into a task-first Storage health dashboard.
+- Keeps Home available before the first scan with a large Start scan CTA instead of bouncing users to another tab.
+- Surfaces scan diagnostics, zero-file warnings, stale-scan state, and cleanup locks directly on Home.
+- Adds best-next-action cards for recommended cleanup, duplicates, large files, and app residue while preserving the existing workbenches.
+- Keeps storage composition, snapshot history, file age, and actionable large-old-file cards reachable from the Home flow.

@@ -245,3 +245,9 @@ The compact shell must not weaken cleanup safety, root diagnostics, module-sourc
 - Custom path checks must surface fatal preflight failures inline with diagnostic code, requested path, canonical path when available, access booleans, and mount information when available.
 - Latest scan evidence must preserve zero-file warnings, truncation, depth-limit notices, persisted warnings, and persisted errors.
 - `/data/adb/modules` must be available as an explicit module-source scan path so the Modules screen never needs to show silent empty values for a wrong-scope scan.
+
+## Phase 4 — Home dashboard contract
+
+The compact Home route is now the task-first **Storage health** surface. It must remain available before the first scan and present a Start scan action instead of redirecting to another destination. After a scan, Home must show analyzed bytes, indexed entries, cleanup potential, warning/error counts, diagnostic evidence, best next actions, and storage composition.
+
+Home diagnostics must stay loud: fatal root/preflight failures, suspicious zero-file scans, truncation, depth-limit notices, and stale-after-deletion state cannot collapse into empty values or snackbars. Stale scan state must explicitly lock unsafe cleanup recommendations until a rescan refreshes fingerprints and counts.

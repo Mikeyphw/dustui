@@ -82,7 +82,7 @@ class UiSourceContractTest {
         assertTrue(app.contains("showScanSheet"))
         assertTrue(app.contains("ScanLauncherSheet("))
         assertTrue(app.contains("DustBottomSheetHeader("))
-        assertTrue(app.contains("Text("Scan")"))
+        assertTrue(app.contains("Text(\"Scan\")"))
         assertTrue(app.contains("ScanRequiredEmptyState("))
         assertTrue(design.contains("compactNavigationTarget(destination: DustDestination, hasScanData: Boolean)"))
         assertFalse(design.contains("DustDestination.INSIGHTS -> if (hasScanData) DustDestination.INSIGHTS else DustDestination.SCAN"))
@@ -97,6 +97,24 @@ class UiSourceContractTest {
         assertTrue(app.contains("Latest scan hit a depth limit"))
         assertTrue(app.contains("/data/adb/modules"))
         assertTrue(app.contains("Wrong-scope module values must be shown as unavailable, never silent zeroes."))
+    }
+
+
+
+    @Test fun `home dashboard is task first and keeps diagnostics visible`() {
+        val app = sourceFile("DustUiApp.kt")
+        val design = sourceFile("DustDesign.kt")
+        assertTrue(app.contains("HomeDashboardScreen("))
+        assertTrue(app.contains("Start your first scan"))
+        assertTrue(app.contains("Best next actions"))
+        assertTrue(app.contains("Potential cleanup"))
+        assertTrue(app.contains("Storage composition"))
+        assertTrue(app.contains("HomeDiagnosticsNotice("))
+        assertTrue(app.contains("Zero-file scan is suspicious"))
+        assertTrue(app.contains("Cleanup changed this scope"))
+        assertTrue(app.contains("Run a new scan before trusting counts, recommendations, or module-source diagnostics."))
+        assertTrue(design.contains("DustDestination.INSIGHTS"))
+        assertTrue(design.contains("DustDestination.INSIGHTS, DustDestination.CLEANUP"))
     }
 
     @Test fun `android navigation compact charts and package selection follow the audit contract`() {
@@ -439,15 +457,15 @@ class UiSourceContractTest {
         val app = sourceFile("DustUiApp.kt")
         val design = sourceFile("DustDesign.kt")
         assertTrue(design.contains("DustDestination.INSIGHTS,\n        DustDestination.EXPLORER,\n        DustDestination.RECOMMENDATIONS,\n        DustDestination.MORE"))
-        assertTrue(design.contains("INSIGHTS("Storage health", "Home""))
-        assertTrue(design.contains("MORE("Tools", "Tools""))
+        assertTrue(design.contains("INSIGHTS(\"Storage health\", \"Home\""))
+        assertTrue(design.contains("MORE(\"Tools\", \"Tools\""))
         assertTrue(design.contains("DustDestination.SCAN -> DustDestination.INSIGHTS"))
         assertTrue(design.contains("DustDestination.SEARCH -> DustDestination.EXPLORER"))
         assertTrue(design.contains("fun compactNavigationTarget"))
         assertTrue(app.contains("compactNavigationTarget(item, session != null)"))
         assertTrue(app.contains("DustNavigationModel.backTarget(destination, wide) != null"))
         assertTrue(app.contains("destination = DustDestination.INSIGHTS"))
-        assertTrue(app.contains("DustSectionHeader("Tools""))
+        assertTrue(app.contains("DustSectionHeader(\"Tools\""))
         assertTrue(app.contains("Advanced analysis, module diagnostics, reports, and operational utilities."))
     }
 

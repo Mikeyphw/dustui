@@ -1,0 +1,15 @@
+{
+  "applied_at": "2026-07-27T18:31:47.888864Z",
+  "artifact": "/home/mike/Downloads/dustui_android_modern_ui_phase4_home_dashboard_overlay.zip",
+  "artifact_name": "dustui_android_modern_ui_phase4_home_dashboard_overlay.zip",
+  "type": "overlay",
+  "sha256": "",
+  "status": "failed",
+  "validation_status": "not-run",
+  "commit_message": "",
+  "commit_hash": "",
+  "file_count": 0,
+  "change_counts": {},
+  "manifest": {},
+  "history_id": "c8897da128eb441280e137a99c7be757"
+}
