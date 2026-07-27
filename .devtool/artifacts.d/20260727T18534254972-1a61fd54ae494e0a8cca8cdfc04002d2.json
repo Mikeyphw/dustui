@@ -1,0 +1,81 @@
+{
+  "applied_at": "2026-07-27T18:53:42.549724Z",
+  "artifact": "/home/mike/Downloads/dustui_android_modern_ui_phase7_validation_hotfix_overlay.zip",
+  "artifact_name": "dustui_android_modern_ui_phase7_validation_hotfix_overlay.zip",
+  "type": "overlay",
+  "sha256": "8c8d14317da0945d4a0ba479b3d51908a7b0efd0a5a800fa04d863d4c987ed43",
+  "status": "ok",
+  "validation_status": "ok",
+  "commit_message": "Fix modern UI phase 7 validation contract",
+  "commit_hash": "",
+  "file_count": 3,
+  "change_counts": {
+    "modify": 3
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Android phase 7 validation hotfix",
+    "description": "Repair the Phase 7 modern portrait UI chain after assembleDebug passes but RootDiagnosticsSourceContractTest fails. Restores the expected wrong-scope module diagnostic wording and cleans Kotlin warning surfaces observed in the validation log.",
+    "version": "1.0.0",
+    "repository": {
+      "name": "dustui"
+    },
+    "target": "dustui_android",
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "action": "modify",
+          "sha256": "3685a26cf7f1198f6cfd8b0b75441f59c739f3e611ab23bfa90154e96949d4d1",
+          "size": 158081,
+          "source_sha256": "9e6ccc6d4a55cda5e1bc9ca972560726a2021eebbe624a4f814c96dd9b36392b"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+          "action": "modify",
+          "sha256": "1e6703a62691147b115c063d675efd12e73fc58abbd869c758137b61dfff4420",
+          "size": 38556,
+          "source_sha256": "4270b3c64154087584413d70cb08b13fbee274292c13b2a2b691db5fb9435186"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "action": "modify",
+          "sha256": "9765266ae3c1758eeee408f1b2e3e7c0eac5efcf44c59c2c2619bf3bb5373f37",
+          "size": 15970,
+          "source_sha256": "e9bb13cf033fb77b04f71cc1b4f394728201122c1c75a91cd0be1b94b0161ae2"
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false,
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Fix modern UI phase 7 validation contract"
+      }
+    },
+    "validation": {
+      "required": false,
+      "restore": false,
+      "build": false,
+      "test": false,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "b8149c8f99baa4e500a082f445dfbc291592948fc6d51c58667e379d7572361f",
+        "timeout_seconds": 600
+      }
+    }
+  },
+  "history_id": "1a61fd54ae494e0a8cca8cdfc04002d2"
+}

@@ -2892,7 +2892,7 @@ private fun ModuleDiagnosticSummary(report: RootModuleReport?, onScanModules: ()
 
 private fun moduleDiagnosticTitle(status: ModuleDiagnosticStatus?): String = when (status) {
     ModuleDiagnosticStatus.READY -> "Module data ready"
-    ModuleDiagnosticStatus.WRONG_SCAN_ROOT -> "Current scan excludes modules"
+    ModuleDiagnosticStatus.WRONG_SCAN_ROOT -> "Current scan does not include modules"
     ModuleDiagnosticStatus.ROOT_ACCESS_FAILED -> "Root access to modules failed"
     ModuleDiagnosticStatus.SCAN_FAILED -> "Module source scan failed"
     ModuleDiagnosticStatus.NO_MODULES_FOUND -> "No module files were indexed"

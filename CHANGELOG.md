@@ -1,4 +1,10 @@
 
+### Android modern dark portrait UI phase 7 validation hotfix
+
+- Restored the root-diagnostics contract phrase `Current scan does not include modules` in the modern module diagnostics title so wrong-scope module scans remain explicit and the existing source contract passes.
+- Cleaned two Kotlin warning surfaces seen during Phase 7 validation: simplified device-certification root connection reporting and suppressed the intentional `ACTION_UNINSTALL_PACKAGE` compatibility intent use.
+
+
 ### Android modern dark portrait UI phase 7 compile hotfix
 
 - Added the explicit `ExperimentalMaterial3Api` opt-in for the compact scan launcher bottom sheet so Phase 7 compiles cleanly under Kotlin/Compose warning-as-error builds.

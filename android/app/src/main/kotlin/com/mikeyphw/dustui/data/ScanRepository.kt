@@ -64,7 +64,7 @@ class ScanRepository(
         val power = context.getSystemService(PowerManager::class.java)
         val freeBytes = runCatching { StatFs(context.filesDir.path).availableBytes }.getOrDefault(0L)
         return DeviceCertification.evaluate(
-            rootConnected = rootConnected && info?.ok == true,
+            rootConnected = rootConnected,
             rootUid = info?.uid ?: -1,
             backend = info?.backend ?: "Unavailable",
             scannerVersion = info?.scanner.orEmpty(),
@@ -213,6 +213,7 @@ class ScanRepository(
         })
     }
 
+    @Suppress("DEPRECATION")
     fun requestAppUninstall(packageName: String): Result<Unit> = runCatching {
         context.startActivity(Intent(Intent.ACTION_UNINSTALL_PACKAGE, "package:$packageName".toUri()).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
