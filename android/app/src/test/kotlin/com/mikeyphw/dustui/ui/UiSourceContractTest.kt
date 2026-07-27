@@ -544,7 +544,7 @@ class UiSourceContractTest {
     @Test fun `module diagnostics never collapse wrong scope into empty values`() {
         val app = sourceFile("DustUiApp.kt")
         assertTrue(app.contains("private fun ModuleDiagnosticSummary"))
-        assertTrue(app.contains("Current scan excludes modules"))
+        assertTrue(app.contains("Current scan does not include modules"))
         assertTrue(app.contains("Scan /data/adb/modules to fill module values"))
         assertTrue(app.contains("Current scan root"))
         assertTrue(app.contains("Required module root"))

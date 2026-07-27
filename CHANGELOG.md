@@ -1,4 +1,9 @@
 
+### Android modern dark portrait UI phase 7 source contract hotfix
+
+- Aligned the modern module diagnostics source contract with the root diagnostics contract-required wrong-scope wording so module scans continue to expose actionable `/data/adb/modules` guidance without failing the final unit-test gate.
+
+
 ### Android modern dark portrait UI phase 7 validation hotfix
 
 - Restored the root-diagnostics contract phrase `Current scan does not include modules` in the modern module diagnostics title so wrong-scope module scans remain explicit and the existing source contract passes.
