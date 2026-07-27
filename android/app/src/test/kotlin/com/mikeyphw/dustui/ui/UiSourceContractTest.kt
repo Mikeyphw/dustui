@@ -496,4 +496,24 @@ class UiSourceContractTest {
         assertFalse(source.contains("rememberSaveable { mutableStateOf(0) }"))
     }
 
+    @Test fun `clean cockpit is review first and links specialized workbenches`() {
+        val app = sourceFile("DustUiApp.kt")
+        val screen = sourceFile("CleanupRecommendationsScreen.kt")
+        assertTrue(app.contains("openWorkbench = { selectDestination(it) }"))
+        assertTrue(screen.contains("Cleanup cockpit"))
+        assertTrue(screen.contains("Recover up to"))
+        assertTrue(screen.contains("Permanent deletion stays review-first"))
+        assertTrue(screen.contains("Stale cleanup locked"))
+        assertTrue(screen.contains("DustActionDock("))
+        assertTrue(screen.contains("Safe to batch"))
+        assertTrue(screen.contains("Manual review"))
+        assertTrue(screen.contains("openWorkbench(DustDestination.DUPLICATES)"))
+        assertTrue(screen.contains("openWorkbench(DustDestination.LARGE_FILES)"))
+        assertTrue(screen.contains("openWorkbench(DustDestination.APP_RESIDUE)"))
+        assertTrue(screen.contains("openWorkbench(DustDestination.RULES)"))
+        assertTrue(screen.contains("Exact current-scan paths. Each action still uses the shared permanent-deletion safety pipeline."))
+        assertTrue(screen.contains("Changed, missing, protected, or hash-mismatched entries are skipped"))
+        assertFalse(screen.contains("Plan deletion"))
+    }
+
 }

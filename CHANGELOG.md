@@ -1,5 +1,14 @@
 # DustUI changelog
 
+## Android modern dark portrait UI phase 6
+
+- Promoted Cleanup recommendations into a task-first Clean cockpit with recoverable-bytes hero, active/hidden/safe-batch/selected metrics, and explicit stale-data locking.
+- Added cockpit chips that keep Recommended cleanup in the Clean route while opening Duplicates, Large files, App residue, and Rules in their specialized workbenches.
+- Restyled recommendation cards with safe-batch/manual-review badges, flat metric tiles, and clearer review-first deletion actions.
+- Restyled exact-path review sheets with bottom-sheet headers, permanent-deletion safety evidence, Files reveal, selection, and Review actions.
+- Preserved scan-bound, fingerprinted, permanent-deletion semantics and disabled destructive planning while scan data is stale.
+
+
 ## Android modern dark portrait UI phase 2
 
 - Changed compact portrait navigation to the task shell: Home, Files, Clean, and Tools.

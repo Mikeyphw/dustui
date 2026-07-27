@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearProgressIndicator
@@ -31,7 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.mikeyphw.dustui.data.CleanupRecommendation
 import com.mikeyphw.dustui.data.CleanupRecommendationAnalysis
@@ -49,10 +48,15 @@ fun CleanupRecommendationsScreen(
     selectedPaths: Set<String>,
     scanDataStale: Boolean,
     vm: MainViewModel,
+    openWorkbench: (DustDestination) -> Unit,
     revealPath: (String) -> Unit,
 ) {
     var openRecommendationId by rememberSaveable { mutableStateOf<String?>(null) }
     val openRecommendation = analysis?.items?.firstOrNull { it.id == openRecommendationId }
+    val totalBytes = analysis?.totalBytes ?: page.totalBytes
+    val batchSafeBytes = analysis?.highConfidenceBytes ?: 0L
+    val selectedVisiblePaths = page.items.sumOf { recommendation -> recommendation.paths.count { it in selectedPaths } }
+
     LazyColumn(
         modifier,
         contentPadding = PaddingValues(
@@ -64,43 +68,44 @@ fun CleanupRecommendationsScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            DustSectionHeader(
-                "Cleanup recommendations",
-                subtitle = "Explainable candidates ranked by reclaimable size, evidence confidence, deletion risk, and age.",
-            )
-        }
-        item {
-            MetricGrid(
-                listOf(
-                    "Active" to page.activeCount.toString(),
-                    "Hidden" to page.hiddenCount.toString(),
-                    "Matched size" to formatBytes(page.totalBytes),
-                    "Batch-safe" to formatBytes(analysis?.highConfidenceBytes ?: 0L),
-                ),
-            )
+            DustHeroCard(
+                eyebrow = "Cleanup cockpit",
+                title = "Recover up to ${formatBytes(totalBytes)}",
+                detail = "Review-first cleanup cockpit for recommendations, duplicates, large files, app residue, and reusable rules.",
+            ) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DustMetricTile("Active", page.activeCount.toString(), Modifier.weight(1f), detail = "visible candidates")
+                    DustMetricTile("Safe batch", formatBytes(batchSafeBytes), Modifier.weight(1f), detail = "verified or high-confidence")
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DustMetricTile("Selected", selectedVisiblePaths.toString(), Modifier.weight(1f), detail = "current paths")
+                    DustMetricTile("Hidden", page.hiddenCount.toString(), Modifier.weight(1f), detail = "dismissed or ignored")
+                }
+            }
         }
         if (loading) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
         if (scanDataStale) {
             item {
-                Surface(tonalElevation = 2.dp, shape = MaterialTheme.shapes.medium) {
-                    Text(
-                        "Results are stale after deletion. Browse and inspect freely, but selection and deletion planning require a fresh scan.",
-                        Modifier.fillMaxWidth().padding(12.dp),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
+                DustStatusNotice(
+                    title = "Stale cleanup locked",
+                    detail = "Results are stale after deletion. Browse and inspect freely, but selection and deletion planning require a fresh scan.",
+                    tone = DustNoticeTone.Warning,
+                )
             }
         }
         item {
-            Surface(tonalElevation = 1.dp, shape = MaterialTheme.shapes.medium) {
-                Text(
-                    "Recommendations never delete automatically. Exact paths still pass through the scan-bound, fingerprinted permanent-deletion review.",
-                    Modifier.fillMaxWidth().padding(12.dp),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            DustStatusNotice(
+                title = "Permanent deletion stays review-first",
+                detail = "Recommendations never delete automatically. Exact paths still pass through the scan-bound, fingerprinted permanent-deletion review.",
+                tone = DustNoticeTone.Success,
+            )
+        }
+        item {
+            CleanupCockpitChips(
+                page = page,
+                openWorkbench = openWorkbench,
+                filterKind = vm::filterRecommendationKind,
+            )
         }
         item {
             OutlinedTextField(
@@ -111,28 +116,6 @@ fun CleanupRecommendationsScreen(
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             )
-        }
-        item {
-            Text("Category", style = MaterialTheme.typography.labelLarge)
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(end = 24.dp),
-            ) {
-                item {
-                    FilterChip(
-                        selected = page.filter.kind == null,
-                        onClick = { vm.filterRecommendationKind(null) },
-                        label = { Text("All") },
-                    )
-                }
-                items(CleanupRecommendationKind.entries, key = { it.name }) { kind ->
-                    FilterChip(
-                        selected = page.filter.kind == kind,
-                        onClick = { vm.filterRecommendationKind(kind) },
-                        label = { Text(kind.label) },
-                    )
-                }
-            }
         }
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -147,30 +130,18 @@ fun CleanupRecommendationsScreen(
                 )
             }
         }
-        if (page.items.isNotEmpty() && page.batchPaths.isNotEmpty()) {
+        if (page.items.isNotEmpty() && page.batchPaths.isNotEmpty() && !scanDataStale) {
             item {
-                Card(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Current page", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                        Text(
-                            "${page.batchPaths.size} path(s) from active verified or high-confidence recommendations qualify for batch review.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(
-                                onClick = vm::selectRecommendationPage,
-                                enabled = !scanDataStale,
-                                modifier = Modifier.weight(1f),
-                            ) { Text("Select safe") }
-                            Button(
-                                onClick = vm::reviewRecommendationPage,
-                                enabled = !scanDataStale,
-                                modifier = Modifier.weight(1f),
-                            ) { Text("Plan safe") }
-                        }
-                    }
-                }
+                DustActionDock(
+                    title = "${page.batchPaths.size} safe path(s) on this page",
+                    detail = "Only active verified or high-confidence recommendations qualify for batch review.",
+                    actionLabel = "Plan safe",
+                    onAction = vm::reviewRecommendationPage,
+                    modifier = Modifier.fillMaxWidth(),
+                    secondaryAction = {
+                        TextButton(onClick = vm::selectRecommendationPage, enabled = !scanDataStale) { Text("Select safe") }
+                    },
+                )
             }
         }
         if (page.items.isEmpty() && !loading) {
@@ -180,7 +151,7 @@ fun CleanupRecommendationsScreen(
                     if (page.hiddenCount > 0 && !page.filter.showHidden) {
                         "Change the filters or enable Show hidden to review dismissed and ignored recommendations."
                     } else {
-                        "Run the duplicate analyzer, complete package visibility, or change the category and search filters."
+                        "Run the duplicate analyzer, complete package visibility, or change the cleanup cockpit filter."
                     },
                 )
             }
@@ -221,6 +192,68 @@ fun CleanupRecommendationsScreen(
 }
 
 @Composable
+private fun CleanupCockpitChips(
+    page: CleanupRecommendationPage,
+    openWorkbench: (DustDestination) -> Unit,
+    filterKind: (CleanupRecommendationKind?) -> Unit,
+) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Cleanup cockpit", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(end = 24.dp)) {
+            item {
+                FilterChip(
+                    selected = page.filter.kind == null,
+                    onClick = { filterKind(null) },
+                    label = { Text("Recommended") },
+                )
+            }
+            item {
+                FilterChip(
+                    selected = page.filter.kind == CleanupRecommendationKind.EXACT_DUPLICATES,
+                    onClick = { openWorkbench(DustDestination.DUPLICATES) },
+                    label = { Text("Duplicates") },
+                )
+            }
+            item {
+                FilterChip(
+                    selected = page.filter.kind == CleanupRecommendationKind.LARGE_OLD_FILE,
+                    onClick = { openWorkbench(DustDestination.LARGE_FILES) },
+                    label = { Text("Large files") },
+                )
+            }
+            item {
+                FilterChip(
+                    selected = page.filter.kind == CleanupRecommendationKind.APP_RESIDUE,
+                    onClick = { openWorkbench(DustDestination.APP_RESIDUE) },
+                    label = { Text("App residue") },
+                )
+            }
+            item {
+                FilterChip(
+                    selected = false,
+                    onClick = { openWorkbench(DustDestination.RULES) },
+                    label = { Text("Rules") },
+                )
+            }
+            items(CleanupRecommendationKind.entries, key = { it.name }) { kind ->
+                if (kind !in setOf(CleanupRecommendationKind.EXACT_DUPLICATES, CleanupRecommendationKind.LARGE_OLD_FILE, CleanupRecommendationKind.APP_RESIDUE)) {
+                    FilterChip(
+                        selected = page.filter.kind == kind,
+                        onClick = { filterKind(kind) },
+                        label = { Text(kind.label) },
+                    )
+                }
+            }
+        }
+        Text(
+            "Recommended stays in this cockpit; Duplicates, Large files, App residue, and Rules open their specialized workbenches without bypassing review.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
 private fun RecommendationCard(
     item: CleanupRecommendation,
     disposition: CleanupRecommendationDisposition,
@@ -230,8 +263,14 @@ private fun RecommendationCard(
     openPaths: () -> Unit,
 ) {
     val active = disposition == CleanupRecommendationDisposition.ACTIVE
-    Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    val safeBatch = item.batchEligible && active
+    Surface(
+        Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = if (selectedCount > 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+        tonalElevation = 0.dp,
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
@@ -241,19 +280,16 @@ private fun RecommendationCard(
             }
             Text(item.summary, style = MaterialTheme.typography.bodyMedium)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(end = 16.dp)) {
+                item { StatusPill(if (safeBatch) "Safe to batch" else "Manual review", danger = !safeBatch) }
                 item { StatusPill(item.confidence.label) }
                 item { StatusPill(item.risk.label, danger = item.risk.name == "HIGH") }
                 if (!active) item { StatusPill(disposition.label, danger = disposition == CleanupRecommendationDisposition.IGNORED) }
             }
-            MetricGrid(
-                listOf(
-                    "Reclaimable" to formatBytes(item.reclaimableBytes),
-                    "Paths" to item.paths.size.toString(),
-                    "Selected" to selectedCount.toString(),
-                    "Batch eligible" to if (item.batchEligible) "Yes" else "No",
-                ),
-            )
-            item.evidence.forEach { evidence ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                DustMetricTile("Reclaimable", formatBytes(item.reclaimableBytes), Modifier.weight(1f))
+                DustMetricTile("Paths", item.paths.size.toString(), Modifier.weight(1f), detail = "${selectedCount} selected")
+            }
+            item.evidence.take(3).forEach { evidence ->
                 Text(
                     "${evidence.label}: ${evidence.detail}",
                     style = MaterialTheme.typography.bodySmall,
@@ -269,12 +305,12 @@ private fun RecommendationCard(
                         onClick = { vm.selectCleanupRecommendation(item.id) },
                         enabled = deletionEnabled,
                         modifier = Modifier.weight(1f),
-                    ) { Text("Select") }
+                    ) { Text(if (safeBatch) "Select safe" else "Select") }
                     Button(
                         onClick = { vm.reviewCleanupRecommendation(item.id) },
                         enabled = deletionEnabled,
                         modifier = Modifier.weight(1f),
-                    ) { Text("Plan deletion") }
+                    ) { Text("Review deletion") }
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton(onClick = { vm.createRuleFromRecommendation(item.id) }, modifier = Modifier.weight(1f)) { Text("Create rule") }
@@ -300,9 +336,15 @@ private fun RecommendationPathsSheet(
 ) {
     ModalBottomSheet(onDismissRequest = close) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            DustSectionHeader(
-                recommendation.title,
-                subtitle = "Exact current-scan paths. Each action still uses the shared permanent-deletion safety pipeline.",
+            DustBottomSheetHeader(
+                title = recommendation.title,
+                detail = "Exact current-scan paths. Each action still uses the shared permanent-deletion safety pipeline.",
+                onClose = close,
+            )
+            DustStatusNotice(
+                title = "Path review required",
+                detail = "Changed, missing, protected, or hash-mismatched entries are skipped by the permanent deletion planner.",
+                tone = DustNoticeTone.Success,
             )
             LazyColumn(
                 Modifier.fillMaxWidth().heightIn(max = 560.dp),
@@ -310,13 +352,13 @@ private fun RecommendationPathsSheet(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(recommendation.paths, key = { "recommendation-path:$it" }) { path ->
-                    Surface(tonalElevation = 1.dp, shape = MaterialTheme.shapes.medium) {
+                    Surface(Modifier.fillMaxWidth(), tonalElevation = 0.dp, shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceVariant) {
                         Column(Modifier.fillMaxWidth().padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             PathText(path, Modifier.fillMaxWidth(), maxLines = 4)
                             if (path in selectedPaths) Text("Selected", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 TextButton(onClick = { vm.showPathDetails(path) }, modifier = Modifier.weight(1f)) { Text("Details") }
-                                TextButton(onClick = { revealPath(path) }, modifier = Modifier.weight(1f)) { Text("Explorer") }
+                                TextButton(onClick = { revealPath(path) }, modifier = Modifier.weight(1f)) { Text("Files") }
                             }
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 OutlinedButton(
@@ -328,7 +370,7 @@ private fun RecommendationPathsSheet(
                                     onClick = { vm.reviewCleanupRecommendationPath(recommendation.id, path) },
                                     enabled = deletionEnabled,
                                     modifier = Modifier.weight(1f),
-                                ) { Text("Plan") }
+                                ) { Text("Review") }
                             }
                         }
                     }

@@ -49,3 +49,9 @@ Home diagnostics must stay loud: fatal root/preflight failures, suspicious zero-
 Phase 5 modernizes the Files task zone without changing indexed-search or deletion semantics. Explorer now uses a flat, task-first search card with a clear **This folder** search field, a **Whole-scan search** entry point, horizontally scrollable type chips, route-preserving sort/chart/treemap controls, and flatter file rows with larger touch targets.
 
 Whole-scan search remains the internal `SEARCH` route for compatibility, but compact navigation highlights Files whenever search is active. Results explain that they search the persisted scan index and can jump back into Files or enter deletion review. Selection mode uses the shared `DustActionDock` so every destructive path still flows through review-first, fingerprinted deletion.
+
+## Phase 6 — Clean cockpit
+
+Phase 6 promotes Cleanup into a primary task cockpit rather than a plain ranked-list screen. The Clean tab now opens with a recoverable-bytes hero, active/hidden/safe-batch/selected metrics, explicit stale-data locking, and a review-first permanent deletion notice.
+
+The cockpit keeps recommendations route-preserving while linking specialized chips to their existing workbenches: Duplicates, Large files, App residue, and Rules. Batch actions remain limited to visible active verified or high-confidence candidates, and manual-review recommendations keep explicit badges before deletion planning.

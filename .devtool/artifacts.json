@@ -16154,6 +16154,108 @@
         }
       },
       "history_id": "f1eaf9dd21fc473b8eda57d5ad506600"
+    },
+    {
+      "applied_at": "2026-07-27T18:33:19.653713Z",
+      "artifact": "/home/mike/Downloads/dustui_android_modern_ui_phase6_cleanup_cockpit_overlay.zip",
+      "artifact_name": "dustui_android_modern_ui_phase6_cleanup_cockpit_overlay.zip",
+      "type": "overlay",
+      "sha256": "7ea6d476283e50267e754f2a48eadcf05c499a54f54a287f3970d639104d125a",
+      "status": "ok",
+      "validation_status": "ok",
+      "commit_message": "Modernize cleanup cockpit UX",
+      "commit_hash": "",
+      "file_count": 6,
+      "change_counts": {
+        "modify": 6
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Android modern dark portrait cleanup cockpit",
+        "description": "Phase 6 of the modern portrait UX revamp. Promotes the Clean tab into a review-first cleanup cockpit with recoverable bytes, safe-batch/manual-review badges, workbench chips, stale-state locking, and flat recommendation/path review surfaces while preserving fingerprinted permanent-deletion semantics.",
+        "version": "1.0.0",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/CleanupRecommendationsScreen.kt",
+              "action": "modify",
+              "sha256": "8e97c5a848ca7da37809d778ce21240d0517a2a91541e0d9a14b2c5e1b780b52",
+              "size": 18913,
+              "source_sha256": "7db3eac88f2a35b754a346e3642f84b212234a679d32b68bb831231b2ba2e98c"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "25ca88e57f668679d3b9c9a13bacb034ff7badd3891e81825949c004cbdef861",
+              "size": 151748,
+              "source_sha256": "bfa72bfe90594abc772205bb3efe3e47e490efecce6deb4fb4f710deae8072dd"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+              "action": "modify",
+              "sha256": "d139c20fee097700ccae4d088dccb599d1f67fd624e256f4cbad1e7a06da9be5",
+              "size": 30915,
+              "source_sha256": "79607a5d26f6d565cea5094bc274189181c0781ce521cf84ad8154dc6d884555"
+            },
+            {
+              "path": "docs/ANDROID_MODERN_DARK_PORTRAIT_UI.md",
+              "action": "modify",
+              "sha256": "64275f21b10f55ed53a72a57255ddd370d5f08e568ffeeb25ef76f12679e4088",
+              "size": 5032,
+              "source_sha256": "4926dfe27d3d84e7400a6443706d0cf766ec2774fc1a34d665ae0e4ba7fc6837"
+            },
+            {
+              "path": "UI_UX_CONTRACT.md",
+              "action": "modify",
+              "sha256": "47189d320c8f740f23b34a512ee6c078e1b13e8d563cf185724dedbad021118a",
+              "size": 22704,
+              "source_sha256": "35f8ec2de2f3cdf7bf6aedf08fb2d3589b6060f9c278cb23a0b2c88c3157fc62"
+            },
+            {
+              "path": "CHANGELOG.md",
+              "action": "modify",
+              "sha256": "a9413457da9ac9a4bbcd9b985a3a3a02d11be47a2306f97cf87ca7117c792e67",
+              "size": 14338,
+              "source_sha256": "635699a13adb45e91a0f032ffff7f662bd46b3b3d1808482ee1ab54a23cfd8de"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Modernize cleanup cockpit UX"
+          }
+        },
+        "validation": {
+          "required": false,
+          "restore": false,
+          "build": false,
+          "test": false,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "81b2acb15e87877211aa288bf2bc89b0500d0f540f0e0b754cfe1dc06f2a176f",
+            "timeout_seconds": 600
+          }
+        }
+      },
+      "history_id": "2b268296fcaf4e88a13baf131bee6e12"
     }
   ]
 }

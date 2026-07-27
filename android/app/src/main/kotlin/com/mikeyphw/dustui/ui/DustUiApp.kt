@@ -326,6 +326,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     selectedPaths,
                                     scanDataStale,
                                     viewModel,
+                                    openWorkbench = { selectDestination(it) },
                                 ) { filePath ->
                                     viewModel.revealPath(filePath)
                                     selectDestination(DustDestination.EXPLORER)

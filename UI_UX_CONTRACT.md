@@ -265,3 +265,17 @@ Required behavior:
 - File rows must keep size, modified time, file count, details, selection, and reveal behavior.
 - Selection mode must use the shared action dock and must still route to fingerprinted deletion review.
 - Search results must reveal back into Files and must not offer direct destructive action without the deletion review sheet.
+
+## Phase 6 — Clean cockpit contract
+
+The compact Clean route must be a review-first cleanup cockpit, not a destructive shortcut.
+
+Required behavior:
+
+- Clean starts with recoverable bytes, active candidate count, hidden count, selected current paths, and safe-batch bytes.
+- A visible notice must state that permanent deletion remains review-first and fingerprinted.
+- Stale scan state must lock selection and deletion planning while still allowing browsing and inspection.
+- Recommended cleanup remains in the Clean route, while Duplicates, Large files, App residue, and Rules chips open their specialized workbenches without changing safety semantics.
+- Safe batch selection must be limited to active verified or high-confidence candidates.
+- Manual-review candidates must remain labeled as manual review before deletion planning.
+- Exact paths must stay in a bottom sheet with Details, Files reveal, Select, and Review actions only; no direct deletion occurs from the recommendation card.
