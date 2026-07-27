@@ -29,6 +29,17 @@ DustUI is a rooted Android storage workbench. The UI must remain readable on pho
 4. Large summaries should use metric grids instead of tall label/value stacks.
 5. Warning and blocker states must not rely on color alone.
 
+
+## Modern dark portrait primitive rules
+
+1. The modern portrait shell must use the shared dark-first `DustModernColors` tokens rather than ad-hoc per-screen colors.
+2. Primary actions use lime accent containers; informational file/storage affordances use cyan; warnings use amber; fatal root or deletion blockers use error colors.
+3. Modern cards are flat surfaces with rounded shapes and no decorative borders.
+4. Scan, cleanup, diagnostics, files, and tools surfaces must reuse `DustHeroCard`, `DustTaskCard`, `DustStatusNotice`, `DustMetricTile`, `DustActionDock`, `DustFlatIconButton`, `DustBottomSheetHeader`, `DustFilterChips`, or `DustPathPill` where those primitives fit.
+5. Warning and blocker states must remain textual and evidence-backed; color is only a secondary cue.
+6. Chip rows must remain horizontally scrollable instead of clipped.
+7. Selection and destructive flows must use the action dock only after review-bound selections exist; the dock must not execute deletion directly.
+
 ## Navigation rules
 
 1. Compact screens use bottom navigation for the five core destinations.

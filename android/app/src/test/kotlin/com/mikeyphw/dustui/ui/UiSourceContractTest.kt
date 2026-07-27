@@ -384,4 +384,30 @@ class UiSourceContractTest {
         assertTrue(repository.contains("Intent.ACTION_UNINSTALL_PACKAGE"))
     }
 
+    @Test fun `modern dark design primitives are available before navigation revamp`() {
+        val theme = sourceFile("Theme.kt")
+        val modern = sourceFile("ModernDustComponents.kt")
+        assertTrue(theme.contains("object DustModernColors"))
+        assertTrue(theme.contains("DustDarkColorScheme"))
+        assertTrue(theme.contains("Color(0xFF080A0C)"))
+        assertTrue(theme.contains("primary = DustModernColors.Accent"))
+        assertTrue(theme.contains("shapes = DustShapes"))
+        assertTrue(modern.contains("enum class DustNoticeTone"))
+        assertTrue(modern.contains("DustNoticeTone.Success"))
+        assertTrue(modern.contains("DustNoticeTone.Warning"))
+        assertTrue(modern.contains("DustNoticeTone.Error"))
+        assertTrue(modern.contains("fun DustHeroCard"))
+        assertTrue(modern.contains("fun DustTaskCard"))
+        assertTrue(modern.contains("fun DustStatusNotice"))
+        assertTrue(modern.contains("fun DustMetricTile"))
+        assertTrue(modern.contains("fun DustActionDock"))
+        assertTrue(modern.contains("fun DustFlatIconButton"))
+        assertTrue(modern.contains("fun DustBottomSheetHeader"))
+        assertTrue(modern.contains("fun DustFilterChips"))
+        assertTrue(modern.contains("fun DustPathPill"))
+        assertTrue(modern.contains("role = Role.Button"))
+        assertTrue(modern.contains("heightIn(min = 96.dp)"))
+        assertTrue(modern.contains("horizontalScroll(rememberScrollState())"))
+    }
+
 }

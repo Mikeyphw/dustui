@@ -2,6 +2,13 @@
 
 ## 1.4.0-rc1
 
+
+### Modern dark portrait UX · Phase 1 design primitives
+
+- Added dark-first Material 3 color tokens, rounded flat shapes, and a lime/cyan/amber/error state vocabulary for the upcoming portrait shell revamp.
+- Added reusable modern Compose primitives for hero cards, task cards, evidence notices, metric tiles, action docks, flat icon buttons, bottom-sheet headers, scrollable filter chips, and path pills.
+- Added UI source-contract coverage so later navigation, scan-sheet, Home, Files, Clean, and Tools overlays reuse shared components rather than inventing one-off surfaces.
+
 ### Phase 24 · Cleaning intelligence final gate
 
 - Added a cleaning-specific qualification model that blocks final RC readiness when safety, migration, recovery, accessibility, performance, or product contracts are not proven.

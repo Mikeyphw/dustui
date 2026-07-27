@@ -1,0 +1,104 @@
+{
+  "applied_at": "2026-07-27T17:52:47.968228Z",
+  "artifact": "/home/mike/Downloads/dustui_android_modern_ui_phase1_design_primitives_overlay.zip",
+  "artifact_name": "dustui_android_modern_ui_phase1_design_primitives_overlay.zip",
+  "type": "overlay",
+  "sha256": "19c378d76e294abb9d7bac0e376bed0c2e6b8e5d42240b887d634830a76a5ff0",
+  "status": "ok",
+  "validation_status": "ok",
+  "commit_message": "Add modern dark portrait design primitives",
+  "commit_hash": "",
+  "file_count": 6,
+  "change_counts": {
+    "add": 2,
+    "modify": 4
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Android modern dark portrait design primitives",
+    "description": "Phase 1 of the modern portrait UX revamp. Adds dark-first Material 3 color tokens, flat rounded shapes, and reusable Compose primitives for hero cards, task cards, status/evidence notices, metric tiles, action docks, flat icon buttons, bottom-sheet headers, scrollable filter chips, and path pills. This phase intentionally preserves existing navigation and runtime behavior while adding Android UI documentation and source-contract coverage for later shell, scan-sheet, Home, Files, Clean, and Tools overlays.",
+    "version": "1.0.0",
+    "repository": {
+      "name": "dustui"
+    },
+    "target": "dustui_android",
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Theme.kt",
+          "action": "modify",
+          "sha256": "38e7f20c32cb1c0bd24f7313dff7fccd107ce032d6e3b7bac96556fe127e2351",
+          "size": 4969,
+          "source_sha256": "6daf1615ccc7e156b7af5388abd2378989f6ce7bd111ed807f305ef539ee6411"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/ModernDustComponents.kt",
+          "action": "add",
+          "sha256": "c7daa4599632b45ce0cc543da4b88600c90736abfa4f6d521b62a0cbd82bcb97",
+          "size": 11633
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+          "action": "modify",
+          "sha256": "2cf635827273974afbb05c5dbd08a91fcbcb76984f5feb07ee40d1e024dedf44",
+          "size": 24711,
+          "source_sha256": "c559b7b8e1c564c2a96374eff0b57362d6d503101d5953937d560e6483e66ab2"
+        },
+        {
+          "path": "UI_UX_CONTRACT.md",
+          "action": "modify",
+          "sha256": "d315a059b23e18343949556fa3512f140b3288a2a69f8c5d5148a3be69901755",
+          "size": 17911,
+          "source_sha256": "a2b97b4846f5e316c35be786f5ddcf5e1b8443762f08758fe51b7f28015dd006"
+        },
+        {
+          "path": "docs/ANDROID_MODERN_DARK_PORTRAIT_UI.md",
+          "action": "add",
+          "sha256": "30b7faab7887eb9566e43b210464f8ffe41158a9e480c352b6f77dbb77e40a8a",
+          "size": 1480
+        },
+        {
+          "path": "CHANGELOG.md",
+          "action": "modify",
+          "sha256": "dac299bb9212c8612f511bd73accc9ef926aa93f2202ad5e8e0664070f2aa2e2",
+          "size": 11025,
+          "source_sha256": "98dfbfbb0d6f9c08a17295ad2caf42e26abdd9c83e79c5e6c1f5f85ef4232c88"
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false,
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Add modern dark portrait design primitives"
+      }
+    },
+    "validation": {
+      "required": true,
+      "restore": true,
+      "build": true,
+      "test": true,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "build": "pass",
+        "tests": "pass",
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "6e616a644e54d3a9273803f7b6013305146b7681faf0c28f09afc18e9269a6fb",
+        "timeout_seconds": 3600
+      }
+    }
+  },
+  "history_id": "567eeaac6df94c0280820126c53fc04c"
+}
