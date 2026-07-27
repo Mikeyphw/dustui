@@ -152,8 +152,9 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         val moduleReport by viewModel.moduleReport.collectAsStateWithLifecycle()
         val scanDataStale by viewModel.scanDataStale.collectAsStateWithLifecycle()
         val snackbar = remember { SnackbarHostState() }
-        var destination by rememberSaveable { mutableStateOf(DustDestination.SCAN) }
+        var destination by rememberSaveable { mutableStateOf(DustDestination.INSIGHTS) }
         var menuOpen by remember { mutableStateOf(false) }
+        var showScanSheet by rememberSaveable { mutableStateOf(false) }
         var selectedApp by rememberSaveable { mutableStateOf<String?>(null) }
 
         fun selectDestination(target: DustDestination) {
@@ -175,6 +176,9 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         BoxWithConstraints {
             val wide = maxWidth >= 840.dp && maxHeight >= 520.dp
             val currentPath = path ?: session?.rootPath
+            fun openScanLauncher() {
+                if (wide) selectDestination(DustDestination.SCAN) else showScanSheet = true
+            }
             BackHandler(
                 enabled = cleanupReview != null || categoryFiles != null || selected != null || selectedPaths.isNotEmpty() ||
                     (destination == DustDestination.EXPLORER && session != null && currentPath != session?.rootPath) ||
@@ -194,6 +198,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                     TopAppBar(
                         title = { Text(destination.label) },
                         actions = {
+                            TextButton(onClick = { openScanLauncher() }) { Text("Scan") }
                             TextButton(onClick = { menuOpen = true }) { Text(destination.actionLabel) }
                             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                                 DropdownMenuItem(
@@ -203,7 +208,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                 )
                                 DropdownMenuItem(
                                     text = { Text("New scan") },
-                                    onClick = { menuOpen = false; selectDestination(DustDestination.SCAN) },
+                                    onClick = { menuOpen = false; openScanLauncher() },
                                 )
                                 DropdownMenuItem(
                                     text = { Text("Run certification") },
@@ -254,16 +259,17 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
                                     Text("Files were deleted. Scan results are now stale.", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-                                    TextButton(onClick = { selectDestination(DustDestination.SCAN) }) { Text("New scan") }
+                                    TextButton(onClick = { openScanLauncher() }) { Text("New scan") }
                                 }
                             }
                         }
                         Box(Modifier.weight(1f).fillMaxSize()) {
                             val currentSession = session
                             when {
-                                currentSession == null && DustNavigationModel.needsScanData(destination) -> EmptyState(
-                                    title = "No scan yet",
-                                    detail = "Start a root scan before opening explorer, analytics, cleanup recommendations, saved rules, growth history, large-file cleanup, duplicate detection, app residue, search, packages, modules, or certification.",
+                                currentSession == null && DustNavigationModel.needsScanData(destination) -> ScanRequiredEmptyState(
+                                    Modifier.fillMaxSize(),
+                                    detail = "Start a root scan before opening files, cleanup, analytics, rules, growth history, duplicates, app residue, search, packages, modules, or certification.",
+                                    onStartScan = { openScanLauncher() },
                                 )
                                 destination == DustDestination.SCAN -> ScanLauncher(
                                     Modifier.fillMaxSize(),
@@ -275,7 +281,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     pathPreflight,
                                     viewModel,
                                     requestNotificationPermission,
-                                ) { selectDestination(DustDestination.EXPLORER) }
+                                ) { selectDestination(DustDestination.INSIGHTS) }
                                 destination == DustDestination.EXPLORER && currentSession != null -> Explorer(
                                     Modifier.fillMaxSize(),
                                     currentSession,
@@ -460,6 +466,20 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
             },
         )
         if (cleanupReview != null) CleanupReviewSheet(cleanupReview, viewModel::dismissCleanupReview, viewModel::executeCleanup)
+        if (showScanSheet) {
+            ScanLauncherSheet(
+                root = rootState,
+                rootInfo = rootServiceInfo,
+                rootFailure = rootFailureMessage,
+                session = session,
+                diagnostics = scanDiagnostics,
+                pathPreflight = pathPreflight,
+                vm = viewModel,
+                requestNotificationPermission = requestNotificationPermission,
+                close = { showScanSheet = false },
+                openHome = { selectDestination(DustDestination.INSIGHTS) },
+            )
+        }
     }
 }
 
@@ -477,6 +497,209 @@ private fun dustSheetPadding(): PaddingValues = PaddingValues(
     end = 20.dp,
     bottom = 96.dp,
 )
+
+
+@Composable
+private fun ScanRequiredEmptyState(modifier: Modifier = Modifier, detail: String, onStartScan: () -> Unit) {
+    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item {
+            DustHeroCard(
+                title = "Start a scan",
+                detail = detail,
+                eyebrow = "No scan yet",
+                trailing = { DustPathPill("root-aware") },
+            ) {
+                DustStatusNotice(
+                    title = "Root diagnostics run before indexing",
+                    detail = "DustUI checks root identity, path access, scanner backend, and fatal preflight failures before it treats a scan as usable.",
+                    tone = DustNoticeTone.Warning,
+                )
+                Button(onClick = onStartScan, modifier = Modifier.fillMaxWidth()) { Text("Start scan") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ScanLauncherSheet(
+    root: RootUiState,
+    rootInfo: RootServiceClient.RootServiceInfo?,
+    rootFailure: String?,
+    session: ScanSessionEntity?,
+    diagnostics: ScanDiagnostics?,
+    pathPreflight: RootServiceClient.ScanRootPreflight?,
+    vm: MainViewModel,
+    requestNotificationPermission: () -> Unit,
+    close: () -> Unit,
+    openHome: () -> Unit,
+) {
+    var custom by rememberSaveable(session?.rootPath) { mutableStateOf(session?.rootPath ?: "/data/data/com.termux") }
+    val rootReady = root == RootUiState.Available
+    ModalBottomSheet(onDismissRequest = close) {
+        LazyColumn(
+            Modifier.fillMaxWidth().heightIn(max = 720.dp),
+            contentPadding = dustSheetPadding(),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                DustBottomSheetHeader(
+                    title = "Start a scan",
+                    detail = "Choose a root-aware scope. Fatal preflight failures, zero-file warnings, truncation, and depth notices stay visible as diagnostics evidence.",
+                    onClose = close,
+                )
+            }
+            item { ScanRootStatusCard(root, rootInfo, rootFailure, vm::refreshRoot) }
+            item {
+                DustSectionHeader("Scan presets", subtitle = "Common Android scopes with explicit root/access diagnostics.")
+            }
+            items(vm.presets) { preset ->
+                DustTaskCard(
+                    title = preset.title,
+                    detail = preset.description,
+                    value = preset.path,
+                    onClick = {
+                        requestNotificationPermission()
+                        vm.startPreset(preset)
+                        close()
+                        openHome()
+                    },
+                    selected = custom == preset.path,
+                    leading = { Text(preset.title.take(1).ifBlank { "•" }, fontWeight = FontWeight.Bold) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            item {
+                Card {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Custom root", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        OutlinedTextField(
+                            custom,
+                            { custom = it },
+                            Modifier.fillMaxWidth(),
+                            label = { Text("Absolute path") },
+                            singleLine = true,
+                        )
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(
+                                onClick = { vm.diagnoseScanPath(custom) },
+                                enabled = rootReady,
+                                modifier = Modifier.weight(1f),
+                            ) { Text("Check access") }
+                            Button(
+                                onClick = {
+                                    requestNotificationPermission()
+                                    vm.startCustom(custom)
+                                    close()
+                                    openHome()
+                                },
+                                enabled = rootReady,
+                                modifier = Modifier.weight(1f),
+                            ) { Text("Start scan") }
+                        }
+                    }
+                }
+            }
+            pathPreflight?.let { preflight ->
+                item { ScanPreflightEvidence(preflight) }
+            }
+            diagnostics?.let { details ->
+                item { ScanLatestDiagnosticsNotice(details) }
+            }
+            session?.let { latest ->
+                item {
+                    SessionCard(latest, diagnostics, vm::cancelActive)
+                    OutlinedButton(onClick = { close(); openHome() }, modifier = Modifier.fillMaxWidth()) { Text("Open latest scan") }
+                }
+            }
+            item {
+                DustStatusNotice(
+                    title = "Module-source diagnostics",
+                    detail = "To populate Root modules, scan /data/adb/modules. Wrong-scope module values must be shown as unavailable, never silent zeroes.",
+                    tone = DustNoticeTone.Warning,
+                    actionLabel = "Use modules path",
+                    onAction = { custom = "/data/adb/modules" },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ScanRootStatusCard(
+    root: RootUiState,
+    rootInfo: RootServiceClient.RootServiceInfo?,
+    rootFailure: String?,
+    retry: () -> Unit,
+) {
+    val ready = root == RootUiState.Available
+    val title = when (root) {
+        RootUiState.Checking -> "Checking root identity"
+        RootUiState.Available -> "Root identity verified"
+        RootUiState.Unavailable -> "Root access unavailable"
+    }
+    val detail = when (root) {
+        RootUiState.Checking -> "Waiting for the privileged service before scanning."
+        RootUiState.Available -> "UID ${rootInfo?.uid ?: 0} via ${rootInfo?.backend ?: "root"}. Scanner ${rootInfo?.scanner?.ifBlank { "unavailable" } ?: "unavailable"}."
+        RootUiState.Unavailable -> rootFailure ?: "The privileged service is unavailable. Scans cannot start until this is fixed."
+    }
+    DustStatusNotice(
+        title = title,
+        detail = detail,
+        tone = if (ready) DustNoticeTone.Success else DustNoticeTone.Error,
+        actionLabel = if (ready) null else "Retry",
+        onAction = if (ready) null else retry,
+    )
+    rootInfo?.let { info ->
+        MetricGrid(
+            listOf(
+                "Root identity" to "UID ${info.uid}, GID ${info.gid}",
+                "Backend" to info.backend,
+                "Scanner" to info.scanner.ifBlank { "Unavailable" },
+                "SELinux" to when (info.selinuxEnforcing) { true -> "Enforcing"; false -> "Permissive"; null -> "Unknown" },
+            ),
+        )
+    }
+}
+
+@Composable
+private fun ScanPreflightEvidence(preflight: RootServiceClient.ScanRootPreflight) {
+    Card {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            DustStatusNotice(
+                title = if (preflight.ok) "Path is ready" else "Fatal preflight failure",
+                detail = preflight.message,
+                tone = if (preflight.ok) DustNoticeTone.Success else DustNoticeTone.Error,
+            )
+            Detail("Diagnostic code", preflight.code + (preflight.errno?.let { " · errno $it" }.orEmpty()))
+            Detail("Requested path", preflight.requestedPath)
+            preflight.canonicalPath?.let { Detail("Canonical path", it) }
+            Detail("Path access", "exists=${preflight.exists} · directory=${preflight.directory} · opened=${preflight.opened}")
+            preflight.mountPoint?.let { Detail("Mount", "$it · ${preflight.filesystem ?: "unknown"} · ${preflight.mountOptions ?: "options unavailable"}") }
+        }
+    }
+}
+
+@Composable
+private fun ScanLatestDiagnosticsNotice(diagnostics: ScanDiagnostics) {
+    val zeroFiles = diagnostics.completedAt != null && diagnostics.emittedFiles == 0L
+    val tone = when {
+        diagnostics.hasFailure -> DustNoticeTone.Error
+        zeroFiles || diagnostics.truncated || diagnostics.depthLimitedDirectories > 0 || diagnostics.warningCount > 0 -> DustNoticeTone.Warning
+        else -> DustNoticeTone.Success
+    }
+    DustStatusNotice(
+        title = when {
+            diagnostics.hasFailure -> "Latest scan has failure evidence"
+            zeroFiles -> "Zero-file scan warning"
+            diagnostics.truncated -> "Latest scan was truncated"
+            diagnostics.depthLimitedDirectories > 0 -> "Latest scan hit a depth limit"
+            diagnostics.warningCount > 0 -> "Latest scan has persisted warnings"
+            else -> "Latest scan diagnostics are clean"
+        },
+        detail = "${diagnostics.emittedFiles} files · ${diagnostics.emittedDirectories} directories · ${diagnostics.warningCount} warnings · ${diagnostics.errorCount} errors",
+        tone = tone,
+    )
+}
 
 @Composable
 private fun ScanLauncher(

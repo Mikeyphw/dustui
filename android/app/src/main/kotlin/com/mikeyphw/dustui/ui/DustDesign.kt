@@ -85,8 +85,8 @@ object DustNavigationModel {
         else -> DustDestination.MORE
     }
 
-    fun compactNavigationTarget(destination: DustDestination, hasScanData: Boolean): DustDestination = when (destination) {
-        DustDestination.INSIGHTS -> if (hasScanData) DustDestination.INSIGHTS else DustDestination.SCAN
+    fun compactNavigationTarget(destination: DustDestination, hasScanData: Boolean): DustDestination = when {
+        !hasScanData && destination == DustDestination.INSIGHTS -> DustDestination.INSIGHTS
         else -> destination
     }
 

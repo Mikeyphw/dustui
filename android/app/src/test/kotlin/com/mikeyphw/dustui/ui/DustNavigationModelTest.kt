@@ -40,8 +40,8 @@ class DustNavigationModelTest {
         assertEquals(DustDestination.MORE, DustNavigationModel.compactSelection(DustDestination.CLEANUP))
     }
 
-    @Test fun `compact home opens scan until scan data exists`() {
-        assertEquals(DustDestination.SCAN, DustNavigationModel.compactNavigationTarget(DustDestination.INSIGHTS, hasScanData = false))
+    @Test fun `compact home stays home while scan opens from top sheet`() {
+        assertEquals(DustDestination.INSIGHTS, DustNavigationModel.compactNavigationTarget(DustDestination.INSIGHTS, hasScanData = false))
         assertEquals(DustDestination.INSIGHTS, DustNavigationModel.compactNavigationTarget(DustDestination.INSIGHTS, hasScanData = true))
         assertEquals(DustDestination.EXPLORER, DustNavigationModel.compactNavigationTarget(DustDestination.EXPLORER, hasScanData = false))
         assertEquals(DustDestination.RECOMMENDATIONS, DustNavigationModel.compactNavigationTarget(DustDestination.RECOMMENDATIONS, hasScanData = true))

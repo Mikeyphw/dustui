@@ -227,10 +227,21 @@ Required compact behavior:
 - `EXPLORER` is presented as Files.
 - `RECOMMENDATIONS` is presented as Clean.
 - `MORE` is presented as Tools.
-- `SCAN` is not a compact bottom navigation item; until the scan sheet phase lands, the Home tab routes to the existing scan screen when no scan data exists.
+- `SCAN` is not a compact bottom navigation item; compact scan entry is a persistent top action and modal bottom sheet.
 - `SEARCH` is not a compact bottom navigation item; it highlights Files when active.
 - Specialized workbenches such as rules, growth, large files, duplicates, app residue, package storage, modules, certification, and deletion reports remain reachable through Tools.
 - Wide navigation may continue to expose the full workbench list directly.
 
 The compact shell must not weaken cleanup safety, root diagnostics, module-source diagnostics, or stale-scan blocking.
 
+
+
+## Modern compact scan sheet contract
+
+- Compact portrait mode must expose Scan as a persistent top-bar action, not a bottom navigation destination.
+- Wide mode may continue to expose the full Scan route directly.
+- Home with no scan data must remain Home and present a Start scan call to action.
+- The scan sheet must show root identity, root backend, scanner availability, SELinux state, and a retry affordance when root is unavailable.
+- Custom path checks must surface fatal preflight failures inline with diagnostic code, requested path, canonical path when available, access booleans, and mount information when available.
+- Latest scan evidence must preserve zero-file warnings, truncation, depth-limit notices, persisted warnings, and persisted errors.
+- `/data/adb/modules` must be available as an explicit module-source scan path so the Modules screen never needs to show silent empty values for a wrong-scope scan.

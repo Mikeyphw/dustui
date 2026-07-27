@@ -13,6 +13,14 @@
 ## 1.4.0-rc1
 
 
+### Android modern dark portrait scan sheet
+
+- Added Phase 3 compact scan launcher: portrait mode now opens scans from a persistent top-bar Scan action and modal bottom sheet instead of using Scan as a compact bottom-tab path.
+- Kept the full Scan route available for wide layouts and compatibility.
+- Added a Home no-scan state with a Start scan CTA instead of silently routing Home to Scan.
+- Surfaced root identity, scanner backend, SELinux state, fatal preflight failures, latest zero-file/truncation/depth diagnostics, and `/data/adb/modules` module-source scanning inside the scan sheet.
+- Updated navigation/source contracts for the scan-sheet behavior.
+
 ### Modern dark portrait UX · Phase 1 design primitives
 
 - Added dark-first Material 3 color tokens, rounded flat shapes, and a lime/cyan/amber/error state vocabulary for the upcoming portrait shell revamp.

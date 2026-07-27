@@ -75,6 +75,30 @@ class UiSourceContractTest {
         assertTrue(app.contains("Delete permanently"))
     }
 
+
+    @Test fun `modern compact scan launches from a bottom sheet`() {
+        val app = sourceFile("DustUiApp.kt")
+        val design = sourceFile("DustDesign.kt")
+        assertTrue(app.contains("showScanSheet"))
+        assertTrue(app.contains("ScanLauncherSheet("))
+        assertTrue(app.contains("DustBottomSheetHeader("))
+        assertTrue(app.contains("Text("Scan")"))
+        assertTrue(app.contains("ScanRequiredEmptyState("))
+        assertTrue(design.contains("compactNavigationTarget(destination: DustDestination, hasScanData: Boolean)"))
+        assertFalse(design.contains("DustDestination.INSIGHTS -> if (hasScanData) DustDestination.INSIGHTS else DustDestination.SCAN"))
+    }
+
+    @Test fun `scan sheet surfaces root preflight and zero file evidence`() {
+        val app = sourceFile("DustUiApp.kt")
+        assertTrue(app.contains("Root identity verified"))
+        assertTrue(app.contains("Fatal preflight failure"))
+        assertTrue(app.contains("Zero-file scan warning"))
+        assertTrue(app.contains("Latest scan was truncated"))
+        assertTrue(app.contains("Latest scan hit a depth limit"))
+        assertTrue(app.contains("/data/adb/modules"))
+        assertTrue(app.contains("Wrong-scope module values must be shown as unavailable, never silent zeroes."))
+    }
+
     @Test fun `android navigation compact charts and package selection follow the audit contract`() {
         val app = sourceFile("DustUiApp.kt")
         val charts = sourceFile("StorageCharts.kt")

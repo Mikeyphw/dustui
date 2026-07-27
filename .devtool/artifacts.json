@@ -15819,6 +15819,115 @@
         }
       },
       "history_id": "3cdd7079356643ea806b69f94c6f019b"
+    },
+    {
+      "applied_at": "2026-07-27T18:14:54.368855Z",
+      "artifact": "/home/mike/Downloads/dustui_android_modern_ui_phase3_scan_sheet_overlay.zip",
+      "artifact_name": "dustui_android_modern_ui_phase3_scan_sheet_overlay.zip",
+      "type": "overlay",
+      "sha256": "709e72eabad9ffd0df6a5e366dc48a0a52a9b3f32e58a7fd5d32d76bc7fadb91",
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "Add modern compact scan sheet",
+      "commit_hash": "",
+      "file_count": 7,
+      "change_counts": {
+        "modify": 7
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Android modern dark portrait scan sheet",
+        "description": "Phase 3 of the modern portrait UX revamp. Adds a compact top-bar Scan action and modal scan sheet with root identity/access status, root preflight evidence, latest zero-file/truncation/depth diagnostics, and explicit /data/adb/modules module-source scanning. Wide layouts keep the existing full Scan route. Home now stays Home when no scan data exists and presents a scan CTA instead of silently routing to Scan.",
+        "version": "1.0.0",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "8b661e3a2617bbe1019fdfcfca3249701f5ea7da28f7bf296cb99680ce42791b",
+              "size": 135866,
+              "source_sha256": "5f143cdc548fcc82a195724649e790a13a7cd98d407a3a01df0d6156ec66bdf2"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+              "action": "modify",
+              "sha256": "24dde15d436f5cdf9a0c598f901cc9924fd4aa1450100030cc212060ce3475a0",
+              "size": 9871,
+              "source_sha256": "ea6d54ab00e5293fc1474ee8e17b422f2327f1b0982fea49695fa7850220054b"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+              "action": "modify",
+              "sha256": "227d8e77e3a1befda5591ae970d56dffb23a2768058defee790660d14ecf55b3",
+              "size": 7018,
+              "source_sha256": "4de030dfffc985b65a961b9e3e6a1248f48e331c64cd01addb6cbb147195ded1"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+              "action": "modify",
+              "sha256": "6b946ff86c42535a98c9a1e69c3e4a7a80b309b644b4cc69efe2977003c199e3",
+              "size": 27553,
+              "source_sha256": "0f90b53b5d2464820aabdd40c4bcfdf106f388a82a0ecdc181a82830262b32fc"
+            },
+            {
+              "path": "UI_UX_CONTRACT.md",
+              "action": "modify",
+              "sha256": "a2f7e77535c42cf70d078b2348d5e1b8d5c6a6118b2d4c8e107613d5f808d438",
+              "size": 19904,
+              "source_sha256": "520f2bd2e310856a897793c32613519e2c0b57aba2917b87691ea1df0c59dd00"
+            },
+            {
+              "path": "docs/ANDROID_MODERN_DARK_PORTRAIT_UI.md",
+              "action": "modify",
+              "sha256": "836c68c9fd848720c54ac11a78a04af942439cf64276162814f09764bbeef7ba",
+              "size": 2886,
+              "source_sha256": "1bcc4889262a668a6be20bc9c60825369ff4eed569056625583330b7f200cb51"
+            },
+            {
+              "path": "CHANGELOG.md",
+              "action": "modify",
+              "sha256": "68fe0d5a9d6dffb9d1bd9fec63f69c24ce3e7e9f657db51f6c101cfc7c32d13a",
+              "size": 12267,
+              "source_sha256": "3433bad47b66e8ef43d301a998eb69253c52d835835d93107bb207a4d7e22662"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Add modern compact scan sheet"
+          }
+        },
+        "validation": {
+          "required": false,
+          "restore": false,
+          "build": false,
+          "test": false,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "ef97922bf7387ed7d9919abfce58109cdfbf915d04bc124bb91d8fbe17ae055b",
+            "timeout_seconds": 600
+          }
+        }
+      },
+      "history_id": "fd63b3e2b7714500ae734956185904ed"
     }
   ]
 }

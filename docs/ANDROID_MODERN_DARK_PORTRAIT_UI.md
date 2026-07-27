@@ -29,3 +29,11 @@ Phase 2 changes the compact portrait navigation to Home / Files / Clean / Tools 
 
 The phase also fixes the Cleanup Reports date-window state to use `mutableIntStateOf`, removing the Compose autoboxing warning reported after Phase 1 validation.
 
+
+## Phase 3: Compact scan sheet
+
+Phase 3 moves scanning out of the compact bottom navigation path and into a persistent top-bar Scan action backed by a modal bottom sheet. Wide layouts continue to keep the full Scan route available, preserving the existing scanner screen and validation surface.
+
+The compact scan sheet must show root identity/access status, scanner backend, SELinux state, common presets, custom absolute-path scanning, path preflight evidence, latest scan warnings, zero-file warnings, truncation/depth notices, and a direct `/data/adb/modules` module-source scan affordance. Fatal preflight failures are evidence notices, not snackbar-only events.
+
+When no scan exists, Home remains Home and displays a scan-required empty state with a Start scan CTA rather than silently selecting the internal Scan route.
