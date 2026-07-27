@@ -117,6 +117,26 @@ class UiSourceContractTest {
         assertTrue(design.contains("DustDestination.INSIGHTS, DustDestination.CLEANUP"))
     }
 
+
+    @Test fun `files screen distinguishes folder filtering from whole scan search`() {
+        val app = sourceFile("DustUiApp.kt")
+        val vm = sourceFile("MainViewModel.kt")
+        val design = sourceFile("DustDesign.kt")
+        assertTrue(app.contains("Current folder search"))
+        assertTrue(app.contains("This folder filters only direct children"))
+        assertTrue(app.contains("Whole-scan search opens the persisted scan index"))
+        assertTrue(app.contains("Whole-scan search"))
+        assertTrue(app.contains("entryTypeLabel(filter.type)"))
+        assertTrue(app.contains("DustFilterChips("))
+        assertTrue(app.contains("DustActionDock("))
+        assertTrue(app.contains("Search whole scan"))
+        assertTrue(app.contains("jump matching files back into Files"))
+        assertTrue(vm.contains("fun selectEntryType(type: EntryTypeFilter)"))
+        assertTrue(vm.contains("fun selectEntrySort(sort: EntrySort)"))
+        assertTrue(design.contains("DustDestination.SEARCH -> DustDestination.EXPLORER"))
+        assertFalse(app.contains("label = { Text(\"Whole scan search\") }"))
+    }
+
     @Test fun `android navigation compact charts and package selection follow the audit contract`() {
         val app = sourceFile("DustUiApp.kt")
         val charts = sourceFile("StorageCharts.kt")

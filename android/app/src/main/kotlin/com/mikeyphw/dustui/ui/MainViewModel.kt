@@ -392,6 +392,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     }
     fun updateQuery(value: String) { _filter.value = _filter.value.copy(query = value) }
     fun filterCategory(value: String?) { _filter.value = _filter.value.copy(category = value) }
+    fun selectEntryType(type: EntryTypeFilter) { _filter.value = _filter.value.copy(type = type) }
+    fun selectEntrySort(sort: EntrySort) { _filter.value = _filter.value.copy(sort = sort) }
 
     fun openCategoryFiles(label: String, categories: Set<String>) {
         val matching = CategoryPathSelector.matchingEntries(allEntries.value, categories)

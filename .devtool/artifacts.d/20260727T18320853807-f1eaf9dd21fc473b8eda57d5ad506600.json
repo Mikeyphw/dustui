@@ -1,0 +1,102 @@
+{
+  "applied_at": "2026-07-27T18:32:08.538075Z",
+  "artifact": "/home/mike/Downloads/dustui_android_modern_ui_phase5_files_search_overlay.zip",
+  "artifact_name": "dustui_android_modern_ui_phase5_files_search_overlay.zip",
+  "type": "overlay",
+  "sha256": "7cb25fba6f94638b343a40b8e10c5c37fb1817a6ec2e7d3def4c78c357228d3c",
+  "status": "ok",
+  "validation_status": "ok",
+  "commit_message": "Modernize Files and search UX",
+  "commit_hash": "",
+  "file_count": 6,
+  "change_counts": {
+    "modify": 6
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Android modern dark portrait files and whole-scan search",
+    "description": "Phase 5 of the modern portrait UX revamp. Modernizes the Files task zone with explicit current-folder filtering, whole-scan search entry, type chips, flatter file rows, path/breadcrumb clarity, and shared selection dock while preserving Explorer/Search routes and deletion review semantics.",
+    "version": "1.0.0",
+    "repository": {
+      "name": "dustui"
+    },
+    "target": "dustui_android",
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "action": "modify",
+          "sha256": "bfa72bfe90594abc772205bb3efe3e47e490efecce6deb4fb4f710deae8072dd",
+          "size": 151669,
+          "source_sha256": "45363ecd8ec22156eb82f4f2a14b415c75ba087f27b6c63a53577a371b7cc996"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+          "action": "modify",
+          "sha256": "48cdbaa9627c2951edea0fbd8a8d61511fe89bccb11ab44c5584cf7a595b335e",
+          "size": 77812,
+          "source_sha256": "f01895449c389cb28fb07a9e03b28e82b8bcdd68a090ac137a1de184fc430e37"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+          "action": "modify",
+          "sha256": "79607a5d26f6d565cea5094bc274189181c0781ce521cf84ad8154dc6d884555",
+          "size": 29611,
+          "source_sha256": "7510d4b897a3e380e3702fd06421e2492f6b2575993f3c719b14c18bf8a66cea"
+        },
+        {
+          "path": "UI_UX_CONTRACT.md",
+          "action": "modify",
+          "sha256": "35f8ec2de2f3cdf7bf6aedf08fb2d3589b6060f9c278cb23a0b2c88c3157fc62",
+          "size": 21709,
+          "source_sha256": "e58f940af73b106a2c03534161eb7fa30546f2184617bbffaa9ad4d8ef0a1262"
+        },
+        {
+          "path": "docs/ANDROID_MODERN_DARK_PORTRAIT_UI.md",
+          "action": "modify",
+          "sha256": "4926dfe27d3d84e7400a6443706d0cf766ec2774fc1a34d665ae0e4ba7fc6837",
+          "size": 4403,
+          "source_sha256": "a5deb7b7eb40b8778d3c847dc63cfe1049a9fc0de901a2a58aa2d2b25664721c"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "action": "modify",
+          "sha256": "635699a13adb45e91a0f032ffff7f662bd46b3b3d1808482ee1ab54a23cfd8de",
+          "size": 13549,
+          "source_sha256": "f2f5c71b1c7aef5ffacb25c1369fb9d216d4c95fdf072d49caa4252b1159b021"
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false,
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Modernize Files and search UX"
+      }
+    },
+    "validation": {
+      "required": false,
+      "restore": false,
+      "build": false,
+      "test": false,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "96fa159e86b552ce5b2413a9adb369c5733c314371450386e7d35b251c7bdbdb",
+        "timeout_seconds": 600
+      }
+    }
+  },
+  "history_id": "f1eaf9dd21fc473b8eda57d5ad506600"
+}

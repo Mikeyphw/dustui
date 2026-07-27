@@ -821,8 +821,10 @@ private fun Explorer(
 ) {
     var treemapMode by rememberSaveable(path) { mutableStateOf(false) }
     var showLargestChart by rememberSaveable(path) { mutableStateOf(false) }
+    var wholeScanHint by rememberSaveable(session.id, path) { mutableStateOf(false) }
     val selectionMode = selectedPaths.isNotEmpty()
     val chartEntries = entries.filter { it.isDirectory }.ifEmpty { entries }.take(6)
+    val typeOptions = listOf("All", "Folders", "Files")
 
     Box(modifier.fillMaxSize()) {
         LazyColumn(
@@ -830,79 +832,108 @@ private fun Explorer(
             contentPadding = dustScreenPadding(horizontal = 0, bottom = if (selectionMode) 208 else 128),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-        item { SessionCard(session, diagnostics, vm::cancelActive) }
-        item {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = vm::up) { Text("Up") }
-                PathText(path, Modifier.weight(1f))
-            }
-        }
-        item { Breadcrumbs(session.rootPath, path, vm::navigate) }
-        if (showLargestChart && chartEntries.isNotEmpty()) {
+            item { SessionCard(session, diagnostics, vm::cancelActive) }
             item {
-                Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)) {
-                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Largest children", style = MaterialTheme.typography.titleSmall)
-                        StorageBars(chartEntries.map { ChartSlice(it.name, it.sizeBytes, it.fileCount.toInt()) }) { label ->
-                            chartEntries.firstOrNull { it.name == label }?.let(vm::open)
+                Surface(Modifier.fillMaxWidth().padding(horizontal = 12.dp), shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surface) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(onClick = vm::up) { Text("Up") }
+                            PathText(path, Modifier.weight(1f))
+                        }
+                        Breadcrumbs(session.rootPath, path, vm::navigate)
+                    }
+                }
+            }
+            item {
+                Surface(Modifier.fillMaxWidth().padding(horizontal = 12.dp), shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surface) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            OutlinedTextField(
+                                filter.query,
+                                vm::updateQuery,
+                                Modifier.weight(1f),
+                                label = { Text("Current folder search") },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            )
+                            OutlinedButton(onClick = { wholeScanHint = !wholeScanHint; if (wholeScanHint) openRootSearch() }) {
+                                Text(if (wholeScanHint) "Whole scan" else "This folder")
+                            }
+                        }
+                        Text(
+                            if (wholeScanHint) "Whole-scan search opens the persisted scan index and jumps results back into Files." else "This folder filters only direct children. Use Whole scan for indexed paths outside this folder.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        DustFilterChips(
+                            options = typeOptions,
+                            selected = entryTypeLabel(filter.type),
+                            onSelected = { selected ->
+                                vm.selectEntryType(
+                                    when (selected) {
+                                        "Folders" -> EntryTypeFilter.DIRECTORIES
+                                        "Files" -> EntryTypeFilter.FILES
+                                        else -> EntryTypeFilter.ALL
+                                    },
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        LazyRow(
+                            Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(end = 56.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            item { AssistChip(onClick = vm::cycleSort, label = { Text("Sort: ${entrySortLabel(filter.sort)}") }) }
+                            item { SegmentedChoice("List", "Treemap", treemapMode, onFirst = { treemapMode = false }, onSecond = { treemapMode = true }) }
+                            item { FilterChip(selected = showLargestChart, onClick = { showLargestChart = !showLargestChart }, label = { Text("Chart") }) }
+                            item { AssistChip(onClick = openRootSearch, label = { Text("Whole-scan search") }) }
+                            filter.category?.let { category -> item { AssistChip(onClick = { vm.filterCategory(null) }, label = { Text(category) }, trailingIcon = { Text("×") }) } }
+                            item { Text("${entries.size} items", style = MaterialTheme.typography.labelMedium) }
                         }
                     }
                 }
             }
-        }
-        item {
-            OutlinedTextField(
-                filter.query,
-                vm::updateQuery,
-                Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-                label = { Text("Current folder search") },
-                singleLine = true,
-                supportingText = null,
-            )
-        }
-        item {
-            LazyRow(
-                Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-                contentPadding = PaddingValues(end = 56.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                item { AssistChip(onClick = vm::cycleSort, label = { Text("Sort: ${filter.sort.name.lowercase()}") }) }
-                item { AssistChip(onClick = vm::cycleType, label = { Text("Type: ${filter.type.name.lowercase()}") }) }
-                item { SegmentedChoice("List", "Treemap", treemapMode, onFirst = { treemapMode = false }, onSecond = { treemapMode = true }) }
-                item { FilterChip(selected = showLargestChart, onClick = { showLargestChart = !showLargestChart }, label = { Text("Chart") }) }
-                item { AssistChip(onClick = openRootSearch, label = { Text("Whole scan") }) }
-                filter.category?.let { category -> item { AssistChip(onClick = { vm.filterCategory(null) }, label = { Text(category) }, trailingIcon = { Text("×") }) } }
-                item { Text("${entries.size} entries", style = MaterialTheme.typography.labelMedium) }
-            }
-        }
-        if (treemapMode && entries.isNotEmpty()) {
-            item {
-                Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)) {
-                    Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Treemap · tap a block to open", style = MaterialTheme.typography.titleSmall)
-                        StorageTreemap(entries, vm::open)
-                        Text("Labels appear on large blocks. Exact sizes remain available in the list and details sheet.", style = MaterialTheme.typography.labelSmall)
+            if (showLargestChart && chartEntries.isNotEmpty()) {
+                item {
+                    Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)) {
+                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Largest children", style = MaterialTheme.typography.titleSmall)
+                            StorageBars(chartEntries.map { ChartSlice(it.name, it.sizeBytes, it.fileCount.toInt()) }) { label ->
+                                chartEntries.firstOrNull { it.name == label }?.let(vm::open)
+                            }
+                        }
                     }
                 }
             }
-        } else {
-            if (entries.isEmpty()) {
-                item { EmptyState("No matching direct children", "Change filters or scan a broader folder.", Modifier.padding(horizontal = 12.dp)) }
+            if (treemapMode && entries.isNotEmpty()) {
+                item {
+                    Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)) {
+                        Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Treemap · tap a block to open", style = MaterialTheme.typography.titleSmall)
+                            StorageTreemap(entries, vm::open)
+                            Text("Every visual block keeps a matching accessible row. Exact sizes remain available in the list and details sheet.", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
             } else {
-                items(entries, key = { it.path }) { entry ->
-                    EntryRow(
-                        entry = entry,
-                        total = session.totalBytes,
-                        selectionMode = selectionMode,
-                        selected = entry.path in selectedPaths,
-                        open = { vm.open(entry) },
-                        details = { vm.select(entry) },
-                        toggle = { vm.toggleSelection(entry) },
-                    )
+                if (entries.isEmpty()) {
+                    item { EmptyState("No matching direct children", "Change filters, clear the category chip, or search the whole scan index.", Modifier.padding(horizontal = 12.dp)) }
+                } else {
+                    items(entries, key = { it.path }) { entry ->
+                        EntryRow(
+                            entry = entry,
+                            total = session.totalBytes,
+                            selectionMode = selectionMode,
+                            selected = entry.path in selectedPaths,
+                            open = { vm.open(entry) },
+                            details = { vm.select(entry) },
+                            toggle = { vm.toggleSelection(entry) },
+                        )
+                    }
                 }
             }
-        }
         }
         if (selectionMode) {
             SelectionActionBar(
@@ -915,6 +946,17 @@ private fun Explorer(
     }
 }
 
+private fun entryTypeLabel(type: EntryTypeFilter): String = when (type) {
+    EntryTypeFilter.ALL -> "All"
+    EntryTypeFilter.DIRECTORIES -> "Folders"
+    EntryTypeFilter.FILES -> "Files"
+}
+
+private fun entrySortLabel(sort: EntrySort): String = when (sort) {
+    EntrySort.SIZE -> "Size ↓"
+    EntrySort.NAME -> "Name A–Z"
+    EntrySort.MODIFIED -> "Modified ↓"
+}
 
 @Composable
 private fun SelectionActionBar(
@@ -923,35 +965,35 @@ private fun SelectionActionBar(
     review: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-        tonalElevation = 6.dp,
-        shadowElevation = 6.dp,
-        shape = MaterialTheme.shapes.large,
-    ) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text("$selectedCount selected", Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
-            TextButton(onClick = clear) { Text("Clear") }
-            Button(onClick = review) { Text("Review deletion") }
-        }
-    }
+    DustActionDock(
+        title = "$selectedCount selected",
+        detail = "Current-scan fingerprints will be rechecked before deletion.",
+        actionLabel = "Review",
+        onAction = review,
+        modifier = modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+        secondaryAction = { TextButton(onClick = clear) { Text("Clear") } },
+    )
 }
 
 @Composable
 private fun Breadcrumbs(root: String, path: String, navigate: (String) -> Unit) {
     val relative = path.removePrefix(root).trim('/')
     val parts = if (relative.isBlank()) emptyList() else relative.split('/')
-    LazyRow(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        item { AssistChip(onClick = { navigate(root) }, label = { Text(if (relative.isBlank()) "Scan root" else root.substringAfterLast('/').ifBlank { "/" }) }) }
+    LazyRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+        item {
+            AssistChip(
+                onClick = { navigate(root) },
+                label = { Text(if (relative.isBlank()) "Scan root" else root.substringAfterLast('/').ifBlank { "/" }, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+            )
+        }
         parts.forEachIndexed { index, part ->
             item(key = "$index:$part") {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("/")
-                    AssistChip(onClick = { navigate(root.trimEnd('/') + "/" + parts.take(index + 1).joinToString("/")) }, label = { Text(part) })
+                    Text("/", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    AssistChip(
+                        onClick = { navigate(root.trimEnd('/') + "/" + parts.take(index + 1).joinToString("/")) },
+                        label = { Text(part, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    )
                 }
             }
         }
@@ -969,22 +1011,41 @@ private fun EntryRow(
     toggle: () -> Unit,
 ) {
     val share = if (total > 0) (entry.sizeBytes.toFloat() / total).coerceIn(0f, 1f) else 0f
-    Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp).clickable(onClick = open)) {
-        Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+    val container = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+    val content = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+    Surface(
+        Modifier.fillMaxWidth().padding(horizontal = 12.dp).clickable(onClick = open),
+        shape = MaterialTheme.shapes.large,
+        color = container,
+        contentColor = content,
+        tonalElevation = 0.dp,
+    ) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 11.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (selectionMode) Checkbox(checked = selected, onCheckedChange = { toggle() })
-                Column(Modifier.weight(1f)) {
-                    Text((if (entry.isDirectory) "▸ " else "") + entry.name, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Medium)
-                    PathText(entry.path)
+                Text(if (entry.isDirectory) "▦" else "▧", color = if (entry.isDirectory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(entry.name, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        buildString {
+                            append(if (entry.isDirectory) "Folder" else "File")
+                            append(" · ").append(entry.fileCount).append(" files")
+                            append(" · ").append(formatTimestamp(entry.modifiedAt))
+                        },
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(formatBytes(entry.sizeBytes), fontWeight = FontWeight.SemiBold)
-                    Text("${entry.fileCount} files", style = MaterialTheme.typography.labelSmall)
+                    Text("${(share * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             LinearProgressIndicator({ share }, Modifier.fillMaxWidth())
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(formatTimestamp(entry.modifiedAt), Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            PathText(entry.path, Modifier.fillMaxWidth(), maxLines = 1)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = toggle) { Text(if (selected) "Unselect" else "Select") }
                 TextButton(onClick = details) { Text("Details") }
             }
@@ -2469,28 +2530,38 @@ private fun RootSearchScreen(
     fun submitSearch() { searched = true; vm.rootSearch(query) }
     LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DustSectionHeader("Root file search", subtitle = "Search the whole persisted scan index, not just the current folder.")
-                    OutlinedTextField(
-                        query,
-                        { query = it },
-                        Modifier.fillMaxWidth(),
-                        label = { Text("Whole scan query") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(onSearch = { submitSearch() }),
-                    )
-                    Text("Examples: media, *.apk, ext:log, package:com.app, >100m, >1g", style = MaterialTheme.typography.bodySmall)
-                    Button(onClick = { submitSearch() }, Modifier.fillMaxWidth()) { Text("Search") }
+            DustHeroCard(
+                title = "Whole-scan search",
+                detail = "Search the persisted scan index across every indexed path, then jump matching files back into Files.",
+                eyebrow = "Files",
+                trailing = { DustPathPill("indexed scope") },
+            ) {
+                OutlinedTextField(
+                    query,
+                    { query = it },
+                    Modifier.fillMaxWidth(),
+                    label = { Text("Whole scan query") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { submitSearch() }),
+                )
+                LazyRow(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(end = 56.dp),
+                ) {
+                    listOf("media", "*.apk", "ext:log", ">100m", ">1g").forEach { example ->
+                        item { AssistChip(onClick = { query = example; submitSearch() }, label = { Text(example) }) }
+                    }
                 }
+                Button(onClick = { submitSearch() }, Modifier.fillMaxWidth()) { Text("Search whole scan") }
             }
         }
         if (results.isEmpty()) {
             item {
                 EmptyState(
-                    if (searched) "No matches" else "No root search results yet",
-                    if (searched) "No indexed paths matched this query. Try a broader name, extension, package, or size filter." else "Run a query to search the indexed scan. Results jump back into Explorer.",
+                    if (searched) "No matches" else "No whole-scan results yet",
+                    if (searched) "No indexed paths matched this query. Try a broader name, extension, package, or size filter." else "Run a query to search every indexed path. Results can be revealed in Files or added to deletion review.",
                 )
             }
         } else {

@@ -43,3 +43,9 @@ When no scan exists, Home remains Home and displays a scan-required empty state 
 The compact Home route is now the task-first **Storage health** surface. It must remain available before the first scan and present a Start scan action instead of redirecting to another destination. After a scan, Home must show analyzed bytes, indexed entries, cleanup potential, warning/error counts, diagnostic evidence, best next actions, and storage composition.
 
 Home diagnostics must stay loud: fatal root/preflight failures, suspicious zero-file scans, truncation, depth-limit notices, and stale-after-deletion state cannot collapse into empty values or snackbars. Stale scan state must explicitly lock unsafe cleanup recommendations until a rescan refreshes fingerprints and counts.
+
+## Phase 5 — Files and whole-scan search
+
+Phase 5 modernizes the Files task zone without changing indexed-search or deletion semantics. Explorer now uses a flat, task-first search card with a clear **This folder** search field, a **Whole-scan search** entry point, horizontally scrollable type chips, route-preserving sort/chart/treemap controls, and flatter file rows with larger touch targets.
+
+Whole-scan search remains the internal `SEARCH` route for compatibility, but compact navigation highlights Files whenever search is active. Results explain that they search the persisted scan index and can jump back into Files or enter deletion review. Selection mode uses the shared `DustActionDock` so every destructive path still flows through review-first, fingerprinted deletion.

@@ -251,3 +251,17 @@ The compact shell must not weaken cleanup safety, root diagnostics, module-sourc
 The compact Home route is now the task-first **Storage health** surface. It must remain available before the first scan and present a Start scan action instead of redirecting to another destination. After a scan, Home must show analyzed bytes, indexed entries, cleanup potential, warning/error counts, diagnostic evidence, best next actions, and storage composition.
 
 Home diagnostics must stay loud: fatal root/preflight failures, suspicious zero-file scans, truncation, depth-limit notices, and stale-after-deletion state cannot collapse into empty values or snackbars. Stale scan state must explicitly lock unsafe cleanup recommendations until a rescan refreshes fingerprints and counts.
+
+## Phase 5 — Files and whole-scan search contract
+
+The compact Files route must be the primary place for local folder filtering and whole-scan indexed search. `EXPLORER` remains the file browser, and `SEARCH` remains the internal whole-scan route, but compact selection for `SEARCH` must continue to highlight Files.
+
+Required behavior:
+
+- Files must visibly distinguish **This folder** filtering from **Whole-scan search**.
+- Whole-scan search must explain that it queries the persisted scan index, not only the current folder.
+- Folder/type chips must be horizontally scrollable and must not replace route-safe sort, chart, or treemap controls.
+- Breadcrumbs must remain tappable and left-to-right path text must remain selectable/ellipsized.
+- File rows must keep size, modified time, file count, details, selection, and reveal behavior.
+- Selection mode must use the shared action dock and must still route to fingerprinted deletion review.
+- Search results must reveal back into Files and must not offer direct destructive action without the deletion review sheet.

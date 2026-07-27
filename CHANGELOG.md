@@ -164,3 +164,11 @@ Final release-candidate hardening for the rooted Android storage workbench.
 - Surfaces scan diagnostics, zero-file warnings, stale-scan state, and cleanup locks directly on Home.
 - Adds best-next-action cards for recommended cleanup, duplicates, large files, and app residue while preserving the existing workbenches.
 - Keeps storage composition, snapshot history, file age, and actionable large-old-file cards reachable from the Home flow.
+
+## Android modern dark portrait UI — Phase 5 files and search
+
+- Modernizes the Files task zone with a flat search card, explicit This folder versus Whole-scan search copy, type chips, and cleaner route-preserving controls.
+- Keeps whole-scan search as the internal Search route while compact navigation continues to highlight Files.
+- Restyles file rows around larger touch targets, clear metadata, path visibility, details, and selection.
+- Moves Explorer selection mode onto the shared `DustActionDock` while preserving review-first, fingerprinted deletion.
+- Adds whole-scan search examples and clearer result copy that reveals matches back into Files.
