@@ -216,3 +216,21 @@ DustUI is a rooted Android storage workbench. The UI must remain readable on pho
 - Active application code and private state remain non-deletable; cache and uninstall use Android-owned flows.
 - Missing or unavailable path verification never counts as confirmed deletion.
 - The final release gate requires zero warnings, zero errors, exported Room schemas, explicit migrations, process-recovery evidence, 10,000-file scale evidence, and zero active quarantine runtime references.
+
+## Modern dark portrait task shell
+
+The compact portrait shell uses four primary task zones: Home, Files, Clean, and Tools. The route model keeps the existing workbench destinations intact, but compact navigation presents them by user task rather than by historical implementation buckets.
+
+Required compact behavior:
+
+- `INSIGHTS` is presented as Home / Storage health.
+- `EXPLORER` is presented as Files.
+- `RECOMMENDATIONS` is presented as Clean.
+- `MORE` is presented as Tools.
+- `SCAN` is not a compact bottom navigation item; until the scan sheet phase lands, the Home tab routes to the existing scan screen when no scan data exists.
+- `SEARCH` is not a compact bottom navigation item; it highlights Files when active.
+- Specialized workbenches such as rules, growth, large files, duplicates, app residue, package storage, modules, certification, and deletion reports remain reachable through Tools.
+- Wide navigation may continue to expose the full workbench list directly.
+
+The compact shell must not weaken cleanup safety, root diagnostics, module-source diagnostics, or stale-scan blocking.
+

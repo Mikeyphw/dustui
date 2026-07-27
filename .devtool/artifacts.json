@@ -15700,6 +15700,125 @@
         }
       },
       "history_id": "567eeaac6df94c0280820126c53fc04c"
+    },
+    {
+      "applied_at": "2026-07-27T18:01:59.901664Z",
+      "artifact": "/home/mike/Downloads/dustui_android_modern_ui_phase2_task_navigation_shell_overlay.zip",
+      "artifact_name": "dustui_android_modern_ui_phase2_task_navigation_shell_overlay.zip",
+      "type": "overlay",
+      "sha256": "54ba5d505e49e7f5fe80a111de9094103174f466a25056a69daf10b5d3374e99",
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "Add modern portrait task navigation shell",
+      "commit_hash": "",
+      "file_count": 8,
+      "change_counts": {
+        "modify": 8
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Android modern dark portrait task navigation shell",
+        "description": "Phase 2 of the modern portrait UX revamp. Changes compact portrait navigation to Home, Files, Clean, and Tools while preserving existing workbench routes internally. Scan remains available as an internal route and Home opens it until scan data exists; whole-scan search highlights Files; advanced workbenches map to Tools. Also fixes the Cleanup Reports date-window Compose autoboxing warning by switching to mutableIntStateOf.",
+        "version": "1.0.0",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+              "action": "modify",
+              "sha256": "ea6d54ab00e5293fc1474ee8e17b422f2327f1b0982fea49695fa7850220054b",
+              "size": 9897,
+              "source_sha256": "377f57ec3b9951263efa583d5458b79e107db4e7387f66de0075eba6163bf473"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "5f143cdc548fcc82a195724649e790a13a7cd98d407a3a01df0d6156ec66bdf2",
+              "size": 125739,
+              "source_sha256": "ca9bdde293626fd7b2540aa2a6186bea341d605a3b2f4096801e9a589900109c"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/CleaningIntelligenceScreens.kt",
+              "action": "modify",
+              "sha256": "bdeea3d5996c3e7ec1a63e66c14a761c3fd9ecde7415dd00ef39f67c6297481e",
+              "size": 50880,
+              "source_sha256": "e441c1171d2889a63d6525627cee085175cae7d4971ff27adf8e33549aca4eb3"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+              "action": "modify",
+              "sha256": "4de030dfffc985b65a961b9e3e6a1248f48e331c64cd01addb6cbb147195ded1",
+              "size": 7005,
+              "source_sha256": "cca237ac50baf42fe506264d00d8b89e9643c838b812fa85c45809bb6c0bba1b"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+              "action": "modify",
+              "sha256": "0f90b53b5d2464820aabdd40c4bcfdf106f388a82a0ecdc181a82830262b32fc",
+              "size": 26255,
+              "source_sha256": "2cf635827273974afbb05c5dbd08a91fcbcb76984f5feb07ee40d1e024dedf44"
+            },
+            {
+              "path": "UI_UX_CONTRACT.md",
+              "action": "modify",
+              "sha256": "520f2bd2e310856a897793c32613519e2c0b57aba2917b87691ea1df0c59dd00",
+              "size": 19014,
+              "source_sha256": "d315a059b23e18343949556fa3512f140b3288a2a69f8c5d5148a3be69901755"
+            },
+            {
+              "path": "docs/ANDROID_MODERN_DARK_PORTRAIT_UI.md",
+              "action": "modify",
+              "sha256": "1bcc4889262a668a6be20bc9c60825369ff4eed569056625583330b7f200cb51",
+              "size": 2059,
+              "source_sha256": "30b7faab7887eb9566e43b210464f8ffe41158a9e480c352b6f77dbb77e40a8a"
+            },
+            {
+              "path": "CHANGELOG.md",
+              "action": "modify",
+              "sha256": "3433bad47b66e8ef43d301a998eb69253c52d835835d93107bb207a4d7e22662",
+              "size": 11605,
+              "source_sha256": "dac299bb9212c8612f511bd73accc9ef926aa93f2202ad5e8e0664070f2aa2e2"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Add modern portrait task navigation shell"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": true,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "build": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "6fac020613ae5646c03f263f9e7f1fbd2cdb9a4bd50f316e2bf759f9d70a7b53",
+            "timeout_seconds": 3600
+          }
+        }
+      },
+      "history_id": "3cdd7079356643ea806b69f94c6f019b"
     }
   ]
 }

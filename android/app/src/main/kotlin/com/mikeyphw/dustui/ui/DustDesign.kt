@@ -25,9 +25,9 @@ import androidx.compose.ui.unit.dp
 
 enum class DustDestination(val label: String, val shortLabel: String, val symbol: String, val actionLabel: String) {
     SCAN("Scan", "Scan", "↯", "Options"),
-    EXPLORER("Explorer", "Files", "▦", "Actions"),
-    INSIGHTS("Overview", "Overview", "◌", "Export"),
-    RECOMMENDATIONS("Recommendations", "Clean", "✦", "Actions"),
+    EXPLORER("Files", "Files", "▦", "Actions"),
+    INSIGHTS("Storage health", "Home", "◌", "Export"),
+    RECOMMENDATIONS("Cleanup", "Clean", "✦", "Actions"),
     RULES("Cleanup rules", "Rules", "≡", "Actions"),
     GROWTH("Growth history", "Growth", "↗", "Actions"),
     LARGE_FILES("Large files", "Large", "▤", "Actions"),
@@ -38,15 +38,14 @@ enum class DustDestination(val label: String, val shortLabel: String, val symbol
     MODULES("Modules", "Modules", "▥", "Tools"),
     CERTIFICATION("Certification", "Cert", "✓", "Run"),
     CLEANUP("Deletion reports", "Reports", "↺", "Actions"),
-    MORE("More", "More", "•••", "More"),
+    MORE("Tools", "Tools", "•••", "Tools"),
 }
 
 object DustNavigationModel {
     val compactDestinations = listOf(
-        DustDestination.SCAN,
-        DustDestination.EXPLORER,
         DustDestination.INSIGHTS,
-        DustDestination.SEARCH,
+        DustDestination.EXPLORER,
+        DustDestination.RECOMMENDATIONS,
         DustDestination.MORE,
     )
 
@@ -68,7 +67,6 @@ object DustNavigationModel {
     )
 
     val moreDestinations = listOf(
-        DustDestination.RECOMMENDATIONS,
         DustDestination.RULES,
         DustDestination.GROWTH,
         DustDestination.LARGE_FILES,
@@ -80,8 +78,17 @@ object DustNavigationModel {
         DustDestination.CLEANUP,
     )
 
-    fun compactSelection(destination: DustDestination): DustDestination =
-        if (destination in compactDestinations) destination else DustDestination.MORE
+    fun compactSelection(destination: DustDestination): DustDestination = when (destination) {
+        DustDestination.SCAN -> DustDestination.INSIGHTS
+        DustDestination.SEARCH -> DustDestination.EXPLORER
+        in compactDestinations -> destination
+        else -> DustDestination.MORE
+    }
+
+    fun compactNavigationTarget(destination: DustDestination, hasScanData: Boolean): DustDestination = when (destination) {
+        DustDestination.INSIGHTS -> if (hasScanData) DustDestination.INSIGHTS else DustDestination.SCAN
+        else -> destination
+    }
 
     fun needsScanData(destination: DustDestination): Boolean = destination !in setOf(DustDestination.SCAN, DustDestination.CLEANUP)
 
@@ -103,7 +110,10 @@ object DustNavigationModel {
 
     fun backTarget(destination: DustDestination, wide: Boolean): DustDestination? = when {
         !wide && destination in moreDestinations -> DustDestination.MORE
-        destination != DustDestination.SCAN -> DustDestination.SCAN
+        !wide && destination == DustDestination.SEARCH -> DustDestination.EXPLORER
+        !wide && destination == DustDestination.RECOMMENDATIONS -> DustDestination.INSIGHTS
+        !wide && destination !in setOf(DustDestination.SCAN, DustDestination.INSIGHTS) -> DustDestination.INSIGHTS
+        wide && destination != DustDestination.SCAN -> DustDestination.SCAN
         else -> null
     }
 }

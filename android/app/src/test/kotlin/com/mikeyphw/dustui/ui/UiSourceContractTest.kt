@@ -410,4 +410,28 @@ class UiSourceContractTest {
         assertTrue(modern.contains("horizontalScroll(rememberScrollState())"))
     }
 
+
+    @Test fun `compact portrait shell uses home files clean tools`() {
+        val app = sourceFile("DustUiApp.kt")
+        val design = sourceFile("DustDesign.kt")
+        assertTrue(design.contains("DustDestination.INSIGHTS,\n        DustDestination.EXPLORER,\n        DustDestination.RECOMMENDATIONS,\n        DustDestination.MORE"))
+        assertTrue(design.contains("INSIGHTS("Storage health", "Home""))
+        assertTrue(design.contains("MORE("Tools", "Tools""))
+        assertTrue(design.contains("DustDestination.SCAN -> DustDestination.INSIGHTS"))
+        assertTrue(design.contains("DustDestination.SEARCH -> DustDestination.EXPLORER"))
+        assertTrue(design.contains("fun compactNavigationTarget"))
+        assertTrue(app.contains("compactNavigationTarget(item, session != null)"))
+        assertTrue(app.contains("DustNavigationModel.backTarget(destination, wide) != null"))
+        assertTrue(app.contains("destination = DustDestination.INSIGHTS"))
+        assertTrue(app.contains("DustSectionHeader("Tools""))
+        assertTrue(app.contains("Advanced analysis, module diagnostics, reports, and operational utilities."))
+    }
+
+    @Test fun `cleanup reports date filter uses primitive int state`() {
+        val source = sourceFile("CleaningIntelligenceScreens.kt")
+        assertTrue(source.contains("import androidx.compose.runtime.mutableIntStateOf"))
+        assertTrue(source.contains("rememberSaveable { mutableIntStateOf(0) }"))
+        assertFalse(source.contains("rememberSaveable { mutableStateOf(0) }"))
+    }
+
 }

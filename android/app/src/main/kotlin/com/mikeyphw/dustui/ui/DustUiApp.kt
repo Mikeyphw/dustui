@@ -168,7 +168,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
 
         LaunchedEffect(session?.id) {
             selectedApp = null
-            if (session != null && destination == DustDestination.SCAN) destination = DustDestination.EXPLORER
+            if (session != null && destination == DustDestination.SCAN) destination = DustDestination.INSIGHTS
         }
         LaunchedEffect(message) { message?.let { snackbar.showSnackbar(it); viewModel.clearMessage() } }
 
@@ -178,7 +178,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
             BackHandler(
                 enabled = cleanupReview != null || categoryFiles != null || selected != null || selectedPaths.isNotEmpty() ||
                     (destination == DustDestination.EXPLORER && session != null && currentPath != session?.rootPath) ||
-                    destination != DustDestination.SCAN,
+                    DustNavigationModel.backTarget(destination, wide) != null,
             ) {
                 when {
                     cleanupReview != null -> viewModel.dismissCleanupReview()
@@ -220,7 +220,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                             DustNavigationModel.compactDestinations.forEach { item ->
                                 NavigationBarItem(
                                     selected = DustNavigationModel.compactSelection(destination) == item,
-                                    onClick = { selectDestination(item) },
+                                    onClick = { selectDestination(DustNavigationModel.compactNavigationTarget(item, session != null)) },
                                     icon = { Text(item.symbol, style = MaterialTheme.typography.titleMedium) },
                                     label = { Text(item.shortLabel) },
                                 )
@@ -2262,7 +2262,7 @@ private fun CleanupHistoryScreen(modifier: Modifier, operations: List<CleanupOpe
 @Composable
 private fun MoreScreen(modifier: Modifier, navigate: (DustDestination) -> Unit) {
     Column(modifier.verticalScroll(rememberScrollState()).padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 128.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        DustSectionHeader("More", subtitle = "Specialized workbenches split out from the old Insights page.")
+        DustSectionHeader("Tools", subtitle = "Advanced analysis, module diagnostics, reports, and operational utilities.")
         DustNavigationModel.moreDestinations.forEach { destination ->
             Card(onClick = { navigate(destination) }, modifier = Modifier.fillMaxWidth()) {
                 Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {

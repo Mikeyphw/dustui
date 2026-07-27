@@ -1,5 +1,15 @@
 # DustUI changelog
 
+## Android modern dark portrait UI phase 2
+
+- Changed compact portrait navigation to the task shell: Home, Files, Clean, and Tools.
+- Kept the Scan route available internally while selecting the Home tab in compact mode; Home opens the scan route until scan data exists.
+- Mapped whole-scan search to the Files tab and advanced workbenches to Tools.
+- Promoted Cleanup recommendations to a primary compact tab.
+- Renamed the More hub to Tools while preserving all advanced destinations.
+- Fixed the Cleanup Reports date-window Compose lint warning by using `mutableIntStateOf`.
+
+
 ## 1.4.0-rc1
 
 

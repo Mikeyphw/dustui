@@ -22,3 +22,10 @@ Phase 1 adds the shared design primitives for the portrait-mode revamp without c
 - Phase 1 must not hide root scan diagnostics or replace them with snackbars.
 - Later phases should reuse these primitives rather than creating one-off card, chip, status, or dock styles.
 - Warning, zero-file, truncation, depth, and fatal-root states must keep explanatory text and evidence paths visible.
+
+## Phase 2: Compact task shell
+
+Phase 2 changes the compact portrait navigation to Home / Files / Clean / Tools while preserving the existing route names internally. Scan remains an internal route and is selected from Home while no scan data exists. Search remains an internal route and highlights Files when active. Advanced destinations are grouped through Tools instead of appearing as additional compact tabs.
+
+The phase also fixes the Cleanup Reports date-window state to use `mutableIntStateOf`, removing the Compose autoboxing warning reported after Phase 1 validation.
+

@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -579,7 +580,7 @@ fun CleanupReportsScreen(
     var query by rememberSaveable { mutableStateOf("") }
     var rootFilter by rememberSaveable { mutableStateOf("") }
     var statusFilter by rememberSaveable { mutableStateOf(CleanupReportStatusFilter.ALL) }
-    var dateWindowDays by rememberSaveable { mutableStateOf(0) }
+    var dateWindowDays by rememberSaveable { mutableIntStateOf(0) }
     val diagnostics by vm.cleanupReportDiagnostics.collectAsStateWithLifecycle()
     val verifyingOperation by vm.cleanupReportVerifying.collectAsStateWithLifecycle()
     val cutoff = if (dateWindowDays == 0) Long.MIN_VALUE else System.currentTimeMillis() - dateWindowDays * 86_400_000L
