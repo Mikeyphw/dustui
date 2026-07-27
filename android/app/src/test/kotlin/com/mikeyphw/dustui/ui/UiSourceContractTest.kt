@@ -88,6 +88,12 @@ class UiSourceContractTest {
         assertFalse(design.contains("DustDestination.INSIGHTS -> if (hasScanData) DustDestination.INSIGHTS else DustDestination.SCAN"))
     }
 
+    @Test fun `scan launcher sheet opts into experimental Material bottom sheet`() {
+        val app = sourceFile("DustUiApp.kt")
+        assertTrue(app.contains("@OptIn(ExperimentalMaterial3Api::class)\n@Composable\nprivate fun ScanLauncherSheet"))
+        assertTrue(app.contains("ModalBottomSheet(onDismissRequest = close)"))
+    }
+
     @Test fun `scan sheet surfaces root preflight and zero file evidence`() {
         val app = sourceFile("DustUiApp.kt")
         assertTrue(app.contains("Root identity verified"))

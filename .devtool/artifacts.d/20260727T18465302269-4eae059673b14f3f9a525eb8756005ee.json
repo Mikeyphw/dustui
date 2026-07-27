@@ -1,0 +1,81 @@
+{
+  "applied_at": "2026-07-27T18:46:53.022698Z",
+  "artifact": "/home/mike/Downloads/dustui_android_modern_ui_phase7_compile_hotfix_overlay.zip",
+  "artifact_name": "dustui_android_modern_ui_phase7_compile_hotfix_overlay.zip",
+  "type": "overlay",
+  "sha256": "bb3255aaf517aaf004a8a10f9a1e472030a1dbbf0dcf6c0ca3e40df774e831bc",
+  "status": "ok",
+  "validation_status": "ok",
+  "commit_message": "Fix modern scan sheet Material opt-in",
+  "commit_hash": "",
+  "file_count": 3,
+  "change_counts": {
+    "modify": 3
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Android phase 7 compile hotfix",
+    "description": "Hotfix for the Phase 7 modern portrait UI chain. Adds the explicit ExperimentalMaterial3Api opt-in to the compact ScanLauncherSheet using ModalBottomSheet and adds source-contract coverage so assembleDebug can pass warning-as-error Kotlin compilation.",
+    "version": "1.0.0",
+    "repository": {
+      "name": "dustui"
+    },
+    "target": "dustui_android",
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "action": "modify",
+          "sha256": "9e6ccc6d4a55cda5e1bc9ca972560726a2021eebbe624a4f814c96dd9b36392b",
+          "size": 158073,
+          "source_sha256": "6d1f6f008ebc3eb497769f86e7c0abad4d6d96f68150b16011aa31314b7d0bae"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+          "action": "modify",
+          "sha256": "b48b0956a6a22f2f6cf741efa1fc48c9b33727735d1f18117f313da3822a99ac",
+          "size": 33359,
+          "source_sha256": "6c67442a5340868c5ef97a85886f7bef4372bfa9f1b77fd4378a506dfc14a43f"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "action": "modify",
+          "sha256": "e9bb13cf033fb77b04f71cc1b4f394728201122c1c75a91cd0be1b94b0161ae2",
+          "size": 15481,
+          "source_sha256": "182b5657569c1cd296f5cd291e7cb56a74678ae0863f6aedb7f356d0b1aa598b"
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false,
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Fix modern scan sheet Material opt-in"
+      }
+    },
+    "validation": {
+      "required": false,
+      "restore": false,
+      "build": false,
+      "test": false,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "9765c873d70e7b8c76ca866cc0e6bc7babaae3fa568195d743ef7828c0d965fa",
+        "timeout_seconds": 600
+      }
+    }
+  },
+  "history_id": "4eae059673b14f3f9a525eb8756005ee"
+}

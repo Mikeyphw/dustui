@@ -1,3 +1,9 @@
+
+### Android modern dark portrait UI phase 7 compile hotfix
+
+- Added the explicit `ExperimentalMaterial3Api` opt-in for the compact scan launcher bottom sheet so Phase 7 compiles cleanly under Kotlin/Compose warning-as-error builds.
+- Added source-contract coverage to keep the opt-in attached to `ScanLauncherSheet`.
+
 # DustUI changelog
 
 ## Android modern dark portrait UI phase 7

@@ -536,6 +536,7 @@ private fun ScanRequiredEmptyState(modifier: Modifier = Modifier, detail: String
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ScanLauncherSheet(
     root: RootUiState,
