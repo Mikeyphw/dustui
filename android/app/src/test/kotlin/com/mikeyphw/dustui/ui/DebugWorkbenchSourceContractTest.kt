@@ -2,6 +2,8 @@ package com.mikeyphw.dustui.ui
 
 import com.mikeyphw.dustui.data.DebugCategory
 import com.mikeyphw.dustui.data.DebugEventStore
+import com.mikeyphw.dustui.data.DebugExportBundleWriter
+import com.mikeyphw.dustui.data.DebugExportMode
 import com.mikeyphw.dustui.data.DebugSeverity
 import com.mikeyphw.dustui.data.DebugProbeTarget
 import com.mikeyphw.dustui.data.DebugProbeStatus
@@ -92,6 +94,46 @@ class DebugWorkbenchSourceContractTest {
         assertTrue(app.contains("Run all probes"))
         assertTrue(app.contains("DebugProbeCard("))
         assertFalse(app.contains("executeCleanup(review)"))
+    }
+
+
+    @Test fun `phase 12 defines safe path aware and full debug export modes`() {
+        assertEquals("Safe", DebugExportMode.Safe.title)
+        assertEquals("Path-aware", DebugExportMode.PathAware.title)
+        assertEquals("Full diagnostic", DebugExportMode.FullDiagnostic.title)
+        assertEquals("/data/…", DebugExportBundleWriter.valueForMode("/data/user/0/private", DebugExportMode.Safe))
+        assertEquals("/data/adb/modules/…", DebugExportBundleWriter.valueForMode("/data/adb/modules/example/module.prop", DebugExportMode.Safe))
+        assertEquals("/data/user/0/private", DebugExportBundleWriter.valueForMode("/data/user/0/private", DebugExportMode.PathAware))
+        assertEquals("<redacted>", DebugExportBundleWriter.valueForMode("secret-token", DebugExportMode.FullDiagnostic))
+    }
+
+    @Test fun `phase 12 debug workbench exports a redacted support bundle`() {
+        val app = source("src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt")
+        val vm = source("src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt")
+        val repo = source("src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt")
+        val writer = source("src/main/kotlin/com/mikeyphw/dustui/data/DebugExportBundle.kt")
+
+        assertTrue(writer.contains("enum class DebugExportMode"))
+        assertTrue(writer.contains("data class DebugExportRequest"))
+        assertTrue(writer.contains("object DebugExportBundleWriter"))
+        assertTrue(writer.contains("dustui-debug-report.json"))
+        assertTrue(writer.contains("trace-events.jsonl"))
+        assertTrue(writer.contains("probe-results.jsonl"))
+        assertTrue(writer.contains("scan-summary.json"))
+        assertTrue(writer.contains("root-diagnostics.json"))
+        assertTrue(writer.contains("cleanup-state.json"))
+        assertTrue(writer.contains("recommendation-summary.json"))
+        assertTrue(writer.contains("module-diagnostics.json"))
+        assertTrue(writer.contains("noFileContents"))
+        assertTrue(writer.contains("ZipOutputStream"))
+        assertTrue(vm.contains("val debugExportResult: StateFlow<DebugExportResult?>"))
+        assertTrue(vm.contains("fun exportDebugBundle(mode: DebugExportMode"))
+        assertTrue(vm.contains("DebugExportRequest("))
+        assertTrue(repo.contains("fun exportDebugBundle(request: DebugExportRequest): DebugExportResult"))
+        assertTrue(app.contains("Export debug bundle"))
+        assertTrue(app.contains("DebugExportMode.entries"))
+        assertTrue(app.contains("Export \${exportMode.title}"))
+        assertTrue(app.contains("Raw paths are omitted"))
     }
 
     private fun source(relative: String): String = File(projectRoot(), "android/app/$relative").readText()

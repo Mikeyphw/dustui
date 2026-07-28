@@ -41,3 +41,34 @@ Probe targets:
 
 Every probe result is shown in the workbench and recorded back into the structured debug timeline. Probe evidence is redacted by the same debug-event store rules. Probes must not call cleanup execution or bypass protected-path, stale-scan, fingerprint, or review-first deletion safeguards.
 
+
+## Phase 12 · Debug export bundle
+
+The Debug workbench now includes an **Export debug bundle** section. The export is a shareable ZIP created under the app cache and sent through Android's normal share sheet. It is diagnostic-only and never executes deletion, starts scans, changes cleanup gates, or reads file contents.
+
+Export modes:
+
+- **Safe**: default support bundle with counts, states, warnings, probe results, scan/root summaries, and redacted roots. Raw paths are omitted.
+- **Path-aware**: includes diagnostic paths so scan scope, module scope, and cleanup readiness can be debugged. File contents are never exported.
+- **Full diagnostic**: includes bounded path samples and detailed metadata for deep debugging. File contents are still never exported.
+
+Bundle entries:
+
+- `dustui-debug-report.json`
+- `trace-events.jsonl`
+- `probe-results.jsonl`
+- `scan-summary.json`
+- `root-diagnostics.json`
+- `navigation-state.json`
+- `cleanup-state.json`
+- `recommendation-summary.json`
+- `module-diagnostics.json`
+- `app-info.json`
+
+Privacy contract:
+
+1. Safe mode must not include raw file paths.
+2. Path-aware and full diagnostic modes may include paths, but never file contents.
+3. Secret-like evidence values are redacted in every mode.
+4. Export creation must record a structured debug timeline event.
+5. Export failure must record a structured error event and surface a user-visible message.

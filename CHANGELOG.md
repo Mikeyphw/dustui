@@ -1,4 +1,13 @@
 
+### Debug Workbench · Phase 12 export bundle
+
+- Added Safe, Path-aware, and Full diagnostic debug export modes.
+- Added a ZIP debug bundle writer with report, trace timeline, probe results, scan summary, root diagnostics, navigation state, cleanup state, recommendation summary, module diagnostics, and app info entries.
+- Added Tools → Debug workbench export UI with mode chips, privacy copy, and last-export metrics.
+- Preserved the diagnostic-only contract: exports never execute deletion, mutate scans, bypass stale-scan locks, or include file contents.
+- Added source-contract coverage for export modes, redaction, bundle entries, ViewModel wiring, repository sharing, and UI copy.
+
+
 ## Android modern dark portrait UI — Phase 8 warning cleanup
 
 - Cleans the final contract test helper by resolving `user.dir` with `requireNotNull` before constructing the project root `File`.

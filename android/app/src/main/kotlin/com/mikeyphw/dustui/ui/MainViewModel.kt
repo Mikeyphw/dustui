@@ -51,6 +51,9 @@ import com.mikeyphw.dustui.data.DeviceCertificationReport
 import com.mikeyphw.dustui.data.DebugCategory
 import com.mikeyphw.dustui.data.DebugEvent
 import com.mikeyphw.dustui.data.DebugEventStore
+import com.mikeyphw.dustui.data.DebugExportMode
+import com.mikeyphw.dustui.data.DebugExportRequest
+import com.mikeyphw.dustui.data.DebugExportResult
 import com.mikeyphw.dustui.data.ModuleDiagnosticStatus
 import com.mikeyphw.dustui.data.DebugProbeTarget
 import com.mikeyphw.dustui.data.DebugProbeStatus
@@ -101,6 +104,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val debugEvents: StateFlow<List<DebugEvent>> = debugEventStore.events
     private val _debugProbeResults = MutableStateFlow<List<DebugProbeResult>>(emptyList())
     val debugProbeResults: StateFlow<List<DebugProbeResult>> = _debugProbeResults
+    private val _debugExportResult = MutableStateFlow<DebugExportResult?>(null)
+    val debugExportResult: StateFlow<DebugExportResult?> = _debugExportResult
 
     private fun recordDebugEvent(
         category: DebugCategory,
@@ -135,6 +140,59 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     fun clearDebugEvents() {
         debugEventStore.clear()
         recordDebugEvent(DebugCategory.App, DebugSeverity.Info, "debug_timeline_cleared", "Debug timeline cleared")
+    }
+
+
+    fun exportDebugBundle(mode: DebugExportMode, destination: DustDestination, wide: Boolean) {
+        val request = DebugExportRequest(
+            mode = mode,
+            destination = destination.name,
+            destinationLabel = destination.label,
+            layout = if (wide) "wide" else "compact",
+            session = latestSession.value,
+            entries = allEntries.value,
+            events = debugEvents.value,
+            probeResults = debugProbeResults.value,
+            rootServiceInfo = rootServiceInfo.value,
+            rootFailureMessage = rootFailureMessage.value,
+            pathPreflight = pathPreflight.value,
+            diagnostics = scanDiagnostics.value,
+            moduleReport = moduleReport.value,
+            recommendationAnalysis = recommendationAnalysis.value,
+            selectedPaths = selectedPaths.value,
+            cleanupReview = cleanupReview.value,
+            cleanupReports = cleanupReports.value,
+            scanDataStale = scanDataStale.value,
+        )
+        runCatching { repository.exportDebugBundle(request) }
+            .onSuccess { result ->
+                _debugExportResult.value = result
+                _message.value = "Debug bundle exported: ${result.mode.title}"
+                recordDebugEvent(
+                    DebugCategory.App,
+                    DebugSeverity.Info,
+                    "debug_export_created",
+                    "Debug bundle exported",
+                    mapOf(
+                        "mode" to result.mode.name,
+                        "fileName" to result.fileName,
+                        "eventCount" to result.eventCount.toString(),
+                        "probeCount" to result.probeCount.toString(),
+                        "entryCount" to result.entryCount.toString(),
+                        "pathPolicy" to result.pathPolicy,
+                    ),
+                )
+            }
+            .onFailure { error ->
+                _message.value = error.message ?: "Unable to export debug bundle"
+                recordDebugEvent(
+                    DebugCategory.App,
+                    DebugSeverity.Error,
+                    "debug_export_failed",
+                    _message.value ?: "Unable to export debug bundle",
+                    mapOf("mode" to mode.name, "error" to error::class.java.simpleName),
+                )
+            }
     }
 
     fun runAllDebugProbes() {

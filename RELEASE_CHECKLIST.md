@@ -243,3 +243,12 @@ Ship only when `SHIP_STATUS.md` says `SHIP` or when every warning listed under `
 - [ ] Zero-file scan probe makes suspicious empty completed scans explicit.
 - [ ] Module scope probe points users back to `/data/adb/modules` when current scan scope is wrong.
 
+
+## Debug Workbench Phase 12 release checks
+
+- [ ] Tools → Debug workbench shows Export debug bundle.
+- [ ] Safe mode is the default and says raw paths are omitted.
+- [ ] Path-aware and Full diagnostic modes warn that paths may be included.
+- [ ] Exported bundle opens Android share sheet as a ZIP.
+- [ ] Export timeline records success/failure without leaking secrets.
+- [ ] No export mode reads or includes file contents.

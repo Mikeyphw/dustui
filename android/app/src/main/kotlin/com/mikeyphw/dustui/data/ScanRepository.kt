@@ -719,6 +719,16 @@ class ScanRepository(
         }, "Export DustUI scan").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 
+    fun exportDebugBundle(request: DebugExportRequest): DebugExportResult {
+        val result = DebugExportBundleWriter.write(context, request)
+        context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+            type = "application/zip"
+            putExtra(Intent.EXTRA_STREAM, result.uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+        }, "Export DustUI debug bundle").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        return result
+    }
+
     private companion object {
         const val MAX_DUPLICATE_BUCKET_PATHS = 2_000
         const val PACKAGE_INVENTORY_CACHE_MS = 30_000L

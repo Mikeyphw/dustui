@@ -328,3 +328,11 @@ The Debug Workbench exposes manual diagnostic probes for root service state, `/d
 
 Probe results must be visible as cards inside Debug Workbench and must also record a structured timeline event with category, severity, message, and redacted evidence.
 
+
+### Debug export bundle rules
+
+- Debug export is reachable from Tools → Debug workbench and is scan-independent.
+- The default export mode is Safe and omits raw paths.
+- Path-aware and Full diagnostic export modes may include paths for debugging, but must never include file contents.
+- Export bundles must include timeline events, probe results, scan summary, root diagnostics, navigation state, cleanup state, recommendation summary, module diagnostics, and app info.
+- Exporting a bundle must not execute deletion, mutate scans, weaken stale-scan locks, or bypass protected-path/fingerprint checks.

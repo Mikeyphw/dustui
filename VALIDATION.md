@@ -70,3 +70,18 @@ devtool -r "$REPO" --target dustui_android validate continue \
 
 The source contract checks that diagnostic probes are reachable from Debug Workbench, are evidence-only, include `/data` and `/data/adb/modules` dry preflight targets, and preserve review-first deletion semantics.
 
+
+## Debug Workbench Phase 12 validation
+
+Phase 12 adds the export bundle layer for the Debug workbench. Validate with the targeted Android gates:
+
+```bash
+./gradlew :app:compileDebugKotlin :app:testDebugUnitTest
+```
+
+Expected source-contract coverage:
+
+- `DebugExportMode.Safe`, `DebugExportMode.PathAware`, and `DebugExportMode.FullDiagnostic` exist.
+- Safe export mode redacts `/data` and `/data/adb/modules` path samples.
+- The Debug workbench exposes Export debug bundle, export mode chips, and a share action.
+- The bundle writer emits JSON/JSONL entries for report, timeline, probes, scan, root, navigation, cleanup, recommendations, modules, and app info.

@@ -78,6 +78,8 @@ import com.mikeyphw.dustui.data.CleanupRecommendationAnalysis
 import com.mikeyphw.dustui.data.CleanupReview
 import com.mikeyphw.dustui.data.DeviceCertificationReport
 import com.mikeyphw.dustui.data.DebugCategory
+import com.mikeyphw.dustui.data.DebugExportMode
+import com.mikeyphw.dustui.data.DebugExportResult
 import com.mikeyphw.dustui.data.DebugEvent
 import com.mikeyphw.dustui.data.DebugSeverity
 import com.mikeyphw.dustui.data.DebugProbeTarget
@@ -161,6 +163,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         val moduleReport by viewModel.moduleReport.collectAsStateWithLifecycle()
         val debugEvents by viewModel.debugEvents.collectAsStateWithLifecycle()
         val debugProbeResults by viewModel.debugProbeResults.collectAsStateWithLifecycle()
+        val debugExportResult by viewModel.debugExportResult.collectAsStateWithLifecycle()
         val scanDataStale by viewModel.scanDataStale.collectAsStateWithLifecycle()
         val snackbar = remember { SnackbarHostState() }
         var destination by rememberSaveable { mutableStateOf(DustDestination.INSIGHTS) }
@@ -463,9 +466,11 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     moduleReport = moduleReport,
                                     events = debugEvents,
                                     probeResults = debugProbeResults,
+                                    exportResult = debugExportResult,
                                     runProbe = viewModel::runDebugProbe,
                                     runAllProbes = viewModel::runAllDebugProbes,
                                     clearEvents = viewModel::clearDebugEvents,
+                                    exportBundle = { mode -> viewModel.exportDebugBundle(mode, destination, wide) },
                                 )
                                 destination == DustDestination.MORE -> ToolsHubScreen(
                                     modifier = Modifier.fillMaxSize(),
@@ -2788,12 +2793,16 @@ private fun DebugWorkbenchScreen(
     moduleReport: RootModuleReport?,
     events: List<DebugEvent>,
     probeResults: List<DebugProbeResult>,
+    exportResult: DebugExportResult?,
     runProbe: (DebugProbeTarget) -> Unit,
     runAllProbes: () -> Unit,
     clearEvents: () -> Unit,
+    exportBundle: (DebugExportMode) -> Unit,
 ) {
     var categoryFilter by rememberSaveable { mutableStateOf<String?>(null) }
     var problemsOnly by rememberSaveable { mutableStateOf(false) }
+    var exportModeName by rememberSaveable { mutableStateOf(DebugExportMode.Safe.name) }
+    val exportMode = DebugExportMode.valueOf(exportModeName)
     val filteredEvents = events
         .asSequence()
         .filter { categoryFilter == null || it.category.name == categoryFilter }
@@ -2842,6 +2851,49 @@ private fun DebugWorkbenchScreen(
                     MetricRow("Path preflight", pathPreflight?.let { if (it.ok) "pass: ${it.requestedPath}" else "blocked: ${it.message}" } ?: "not run")
                     MetricRow("Scan diagnostics", diagnostics?.let { "${it.warningCount} warning(s) · ${it.errorCount} error(s)" } ?: "none")
                     MetricRow("Module diagnostic", moduleReport?.diagnostic?.message ?: "not loaded")
+                }
+            }
+        }
+        item {
+            DustSectionHeader("Export debug bundle", subtitle = "Share a ZIP with debug state, timeline, probes, scan summaries, root diagnostics, cleanup state, and recommendation summaries.")
+        }
+        item {
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Export mode", fontWeight = FontWeight.SemiBold)
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(DebugExportMode.entries, key = { it.name }) { mode ->
+                            FilterChip(
+                                selected = exportMode == mode,
+                                onClick = { exportModeName = mode.name },
+                                label = { Text(mode.title) },
+                            )
+                        }
+                    }
+                    Text(exportMode.detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    DustStatusNotice(
+                        title = "${exportMode.title} bundle",
+                        detail = when (exportMode) {
+                            DebugExportMode.Safe -> "Default support bundle: counts, states, warnings, probes, and redacted roots. Raw paths are omitted."
+                            DebugExportMode.PathAware -> "Adds path evidence for debugging scan scope and cleanup readiness. File contents are never exported."
+                            DebugExportMode.FullDiagnostic -> "Adds bounded path samples and detailed metadata for deep debugging. File contents are never exported."
+                        },
+                        tone = if (exportMode == DebugExportMode.Safe) DustNoticeTone.Success else DustNoticeTone.Warning,
+                        actionLabel = "Export ${exportMode.title}",
+                        onAction = { exportBundle(exportMode) },
+                    )
+                    exportResult?.let { result ->
+                        MetricGrid(
+                            listOf(
+                                "Last export" to result.fileName,
+                                "Mode" to result.mode.title,
+                                "Events" to result.eventCount.toString(),
+                                "Probes" to result.probeCount.toString(),
+                                "Entries" to result.entryCount.toString(),
+                                "Path policy" to result.pathPolicy,
+                            ),
+                        )
+                    }
                 }
             }
         }

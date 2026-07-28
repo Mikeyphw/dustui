@@ -17593,6 +17593,146 @@
         "version": "1.0.1"
       },
       "history_id": "97be75ec719a4da49c088b97a2c030b7"
+    },
+    {
+      "applied_at": "2026-07-28T17:21:40.903734Z",
+      "artifact": "/home/mike/Downloads/dustui_android_debug_workbench_phase12_export_bundle_overlay.zip",
+      "artifact_name": "dustui_android_debug_workbench_phase12_export_bundle_overlay.zip",
+      "type": "overlay",
+      "sha256": "98b878ad604b5e8938f6c8c83792445c35ef3c26bf9a25b1ed6fd87d8e40091c",
+      "status": "ok",
+      "validation_status": "ok",
+      "commit_message": "Add debug export bundle",
+      "commit_hash": "",
+      "file_count": 10,
+      "change_counts": {
+        "add": 1,
+        "modify": 9
+      },
+      "manifest": {
+        "apply": {
+          "atomic": true,
+          "commit": {
+            "enabled": true,
+            "message": "Add debug export bundle",
+            "strategy": "single"
+          },
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false
+        },
+        "baseline": {
+          "commit": "68cdbbd",
+          "description": "DustUI Android debug baseline after Phase 11 diagnostic probes"
+        },
+        "created_by": "OpenAI ChatGPT",
+        "description": "Add Safe, Path-aware, and Full diagnostic ZIP export bundles to the Debug Workbench without changing scan, root, or deletion safety behavior.",
+        "inventory": {
+          "entries": [
+            {
+              "action": "modify",
+              "path": "CHANGELOG.md",
+              "sha256": "dd79e5103b02277b3c76f5939c4f1c6de10eaf21fc1b6da50d94800d6126f528",
+              "size": 19122,
+              "source_sha256": "b1267292423d1f95b488b4104ac201e572e6e41db7629d17e8dd476d31df717f"
+            },
+            {
+              "action": "modify",
+              "path": "RELEASE_CHECKLIST.md",
+              "sha256": "f39992f70328c2d1c5bb259f0e5ef6074f63911987e9377c3c57a5d037e3fc6b",
+              "size": 18280,
+              "source_sha256": "f74c9d0071f3b988402b3f9facb71c83bcd9a978956551c77056c47b1cdb07b6"
+            },
+            {
+              "action": "modify",
+              "path": "UI_UX_CONTRACT.md",
+              "sha256": "45828252df81f0e6aad53b83c09a1004e98e8af8399f9547a38cd69d837a53e9",
+              "size": 27993,
+              "source_sha256": "6cbe731c428b013dd1b4b8bfa438007a1b0f043b9ab10e178137beed3f2f0a8c"
+            },
+            {
+              "action": "modify",
+              "path": "VALIDATION.md",
+              "sha256": "8b98f9a813934398e4eeafe43da0dc1577244982580c271f35585c3e62dd1006",
+              "size": 3267,
+              "source_sha256": "661577be620abef517873d04f8224f7b4c795ee1e0d761a54e567a5f470d7114"
+            },
+            {
+              "action": "add",
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DebugExportBundle.kt",
+              "sha256": "50a724b7f1519dc2e6fc05f2718158a1f1d8239b479e8b5d9bb342198b91aa3e",
+              "size": 20001
+            },
+            {
+              "action": "modify",
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+              "sha256": "a668fbfa139be53749d317f23e6b99213e0efdaa342e2185e456a38afa797bff",
+              "size": 39082,
+              "source_sha256": "1e6703a62691147b115c063d675efd12e73fc58abbd869c758137b61dfff4420"
+            },
+            {
+              "action": "modify",
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "sha256": "f48cd85cca4aad7a3db7a91542cdb758eb2e142df3864d27d84c7918be0ee249",
+              "size": 175885,
+              "source_sha256": "fddc7e3e79801601fc194f147553e278ea8c906313f9bc03d3330ad4c494324a"
+            },
+            {
+              "action": "modify",
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+              "sha256": "c71fa18b899fdf5507f8d7b6dd12d0a329bf1f2af6a04e490ec35d6a053af208",
+              "size": 105562,
+              "source_sha256": "b3e0d3bd0b8c56191bc07414dabca417321c8bfec77b3ac393a7f40e36292ed5"
+            },
+            {
+              "action": "modify",
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchSourceContractTest.kt",
+              "sha256": "c62ec6a77dbbf5f10cb70aba6f320b85b7cb51ab47a4f126876b05522b404f59",
+              "size": 8240,
+              "source_sha256": "4c1a8807e29cdf2d7554c557153ea35030fa1dae262a7275d9ca8239388290f0"
+            },
+            {
+              "action": "modify",
+              "path": "docs/ANDROID_DEBUG_WORKBENCH.md",
+              "sha256": "1e51f998e64622528f27a6ea2e5826a3ad0421005e1e05c408769cae7931356f",
+              "size": 4431,
+              "source_sha256": "6cdf616fc59663b5387c54e769d8885dcc8f7803a41b12b13865308b2e899b62"
+            }
+          ],
+          "format": 1
+        },
+        "name": "DustUI Debug Workbench Phase 12 Export Bundle",
+        "notes": [
+          "Validation is optional in the manifest so the user can choose targeted --task gates during apply.",
+          "Reserved artifact metadata is intentionally not listed in inventory.",
+          "The export bundle never includes file contents and never executes cleanup operations."
+        ],
+        "schema_version": 2,
+        "target": "dustui_android",
+        "type": "overlay",
+        "validation": {
+          "build": true,
+          "execution_environment": "auto",
+          "expected": {
+            "build": "pass",
+            "maximum_warnings": 0,
+            "restore": "pass",
+            "tests": "pass"
+          },
+          "required": false,
+          "restore": true,
+          "rollback_on_failure": true,
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "149dad0f3df62fccd03e4fd6851ee3a240776715d91da95aa60f691cdf72ef87",
+            "timeout_seconds": 3600
+          },
+          "test": true
+        },
+        "version": "1.0.0"
+      },
+      "history_id": "0f4009d41c3741509558bc525a60b04e"
     }
   ]
 }
