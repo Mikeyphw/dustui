@@ -220,3 +220,9 @@ Final release-candidate hardening for the rooted Android storage workbench.
 - Restyles file rows around larger touch targets, clear metadata, path visibility, details, and selection.
 - Moves Explorer selection mode onto the shared `DustActionDock` while preserving review-first, fingerprinted deletion.
 - Adds whole-scan search examples and clearer result copy that reveals matches back into Files.
+
+### Android debug workbench · Phase 9–10
+
+- Added a bounded structured debug event recorder for app, navigation, scan, root, search, deletion, and certification flows.
+- Added Tools → Debug workbench with live state, category-filtered timeline, warning/error filter, and clearable in-memory diagnostics.
+- Added source-contract and store coverage for scan-independent Debug Workbench reachability, redacted evidence, and route-safe diagnostics.

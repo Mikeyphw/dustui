@@ -77,6 +77,9 @@ import com.mikeyphw.dustui.data.CleanupOperationEntity
 import com.mikeyphw.dustui.data.CleanupRecommendationAnalysis
 import com.mikeyphw.dustui.data.CleanupReview
 import com.mikeyphw.dustui.data.DeviceCertificationReport
+import com.mikeyphw.dustui.data.DebugCategory
+import com.mikeyphw.dustui.data.DebugEvent
+import com.mikeyphw.dustui.data.DebugSeverity
 import com.mikeyphw.dustui.data.DuplicateAnalysisSnapshot
 import com.mikeyphw.dustui.data.DuplicateGroupItem
 import com.mikeyphw.dustui.data.DuplicateKeepStrategy
@@ -152,6 +155,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         val appStorageLoading by viewModel.appStorageLoading.collectAsStateWithLifecycle()
         val rootSearchResults by viewModel.rootSearchResults.collectAsStateWithLifecycle()
         val moduleReport by viewModel.moduleReport.collectAsStateWithLifecycle()
+        val debugEvents by viewModel.debugEvents.collectAsStateWithLifecycle()
         val scanDataStale by viewModel.scanDataStale.collectAsStateWithLifecycle()
         val snackbar = remember { SnackbarHostState() }
         var destination by rememberSaveable { mutableStateOf(DustDestination.INSIGHTS) }
@@ -178,6 +182,10 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         BoxWithConstraints {
             val wide = maxWidth >= 840.dp && maxHeight >= 520.dp
             val currentPath = path ?: session?.rootPath
+            LaunchedEffect(destination, wide) {
+                viewModel.recordNavigation(destination, wide)
+                if (destination == DustDestination.DEBUG) viewModel.recordDebugWorkbenchOpened(destination, wide)
+            }
             fun openScanLauncher() {
                 if (wide) selectDestination(DustDestination.SCAN) else showScanSheet = true
             }
@@ -431,6 +439,25 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     cleanupOperations,
                                     selectedCleanupReport,
                                     viewModel,
+                                )
+                                destination == DustDestination.DEBUG -> DebugWorkbenchScreen(
+                                    modifier = Modifier.fillMaxSize(),
+                                    destination = destination,
+                                    wide = wide,
+                                    rootState = rootState,
+                                    rootServiceInfo = rootServiceInfo,
+                                    rootFailureMessage = rootFailureMessage,
+                                    session = currentSession,
+                                    diagnostics = scanDiagnostics,
+                                    pathPreflight = pathPreflight,
+                                    entriesCount = entries.size,
+                                    currentPath = currentPath,
+                                    selectedCount = selectedPaths.size,
+                                    cleanupReview = cleanupReview,
+                                    scanDataStale = scanDataStale,
+                                    moduleReport = moduleReport,
+                                    events = debugEvents,
+                                    clearEvents = viewModel::clearDebugEvents,
                                 )
                                 destination == DustDestination.MORE -> ToolsHubScreen(
                                     modifier = Modifier.fillMaxSize(),
@@ -2733,6 +2760,167 @@ private fun CleanupHistoryScreen(modifier: Modifier, operations: List<CleanupOpe
     }
 }
 
+
+@Composable
+private fun DebugWorkbenchScreen(
+    modifier: Modifier,
+    destination: DustDestination,
+    wide: Boolean,
+    rootState: RootUiState,
+    rootServiceInfo: RootServiceClient.RootServiceInfo?,
+    rootFailureMessage: String?,
+    session: ScanSessionEntity?,
+    diagnostics: ScanDiagnostics?,
+    pathPreflight: RootServiceClient.ScanRootPreflight?,
+    entriesCount: Int,
+    currentPath: String?,
+    selectedCount: Int,
+    cleanupReview: CleanupReview?,
+    scanDataStale: Boolean,
+    moduleReport: RootModuleReport?,
+    events: List<DebugEvent>,
+    clearEvents: () -> Unit,
+) {
+    var categoryFilter by rememberSaveable { mutableStateOf<String?>(null) }
+    var problemsOnly by rememberSaveable { mutableStateOf(false) }
+    val filteredEvents = events
+        .asSequence()
+        .filter { categoryFilter == null || it.category.name == categoryFilter }
+        .filter { !problemsOnly || it.severity == DebugSeverity.Warning || it.severity == DebugSeverity.Error }
+        .toList()
+    val warningCount = events.count { it.severity == DebugSeverity.Warning }
+    val errorCount = events.count { it.severity == DebugSeverity.Error }
+
+    LazyColumn(modifier, contentPadding = dustScreenPadding(bottom = 128), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item {
+            DustHeroCard(
+                title = "Debug workbench",
+                detail = "Live app state and the bounded in-memory trace timeline. This is diagnostic evidence only; it never changes cleanup safety decisions.",
+                eyebrow = "Phase 9–10 debug cockpit",
+            ) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DustMetricTile("Events", events.size.toString(), Modifier.weight(1f), detail = "Bounded ring buffer")
+                    DustMetricTile("Warnings", warningCount.toString(), Modifier.weight(1f), detail = "Needs attention")
+                    DustMetricTile("Errors", errorCount.toString(), Modifier.weight(1f), detail = "Failure traces")
+                }
+            }
+        }
+        item {
+            DustSectionHeader("Live state", subtitle = "Current truth sources used by Home, Files, Clean, Tools, root diagnostics, and deletion review.")
+        }
+        item {
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MetricGrid(
+                        listOf(
+                            "Destination" to destination.label,
+                            "Layout" to if (wide) "wide" else "compact",
+                            "Scan state" to (session?.status ?: "none"),
+                            "Indexed entries" to entriesCount.toString(),
+                            "Root state" to rootUiStateLabel(rootState),
+                            "Deletion lock" to if (scanDataStale) "stale scan" else "inactive",
+                            "Selection" to selectedCount.toString(),
+                            "Review sheet" to if (cleanupReview != null) "open" else "closed",
+                        ),
+                    )
+                    MetricRow("Scan root", session?.rootPath ?: "No scan session")
+                    MetricRow("Current path", currentPath ?: "No active path")
+                    MetricRow("Root backend", rootServiceInfo?.backend ?: "unavailable")
+                    MetricRow("Root failure", rootFailureMessage ?: "none")
+                    MetricRow("SELinux", rootServiceInfo?.selinuxEnforcing?.let { if (it) "enforcing" else "permissive" } ?: "unknown")
+                    MetricRow("Path preflight", pathPreflight?.let { if (it.ok) "pass: ${it.requestedPath}" else "blocked: ${it.message}" } ?: "not run")
+                    MetricRow("Scan diagnostics", diagnostics?.let { "${it.warningCount} warning(s) · ${it.errorCount} error(s)" } ?: "none")
+                    MetricRow("Module diagnostic", moduleReport?.diagnostic?.message ?: "not loaded")
+                }
+            }
+        }
+        item {
+            DustSectionHeader("Trace timeline", subtitle = "Structured events from app, navigation, scan, root, search, recommendations, and deletion flows.")
+        }
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item { FilterChip(selected = categoryFilter == null, onClick = { categoryFilter = null }, label = { Text("All") }) }
+                    items(DebugCategory.entries, key = { it.name }) { category ->
+                        FilterChip(
+                            selected = categoryFilter == category.name,
+                            onClick = { categoryFilter = if (categoryFilter == category.name) null else category.name },
+                            label = { Text(debugCategoryLabel(category)) },
+                        )
+                    }
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    FilterChip(selected = problemsOnly, onClick = { problemsOnly = !problemsOnly }, label = { Text("Warnings/errors") })
+                    OutlinedButton(onClick = clearEvents, Modifier.weight(1f)) { Text("Clear timeline") }
+                }
+            }
+        }
+        if (filteredEvents.isEmpty()) {
+            item { EmptyState("No debug events match", "Change filters or use the app to record navigation, scan, root, search, and cleanup events.") }
+        } else {
+            items(filteredEvents.reversed(), key = { it.id }) { event ->
+                DebugEventCard(event)
+            }
+        }
+    }
+}
+
+@Composable
+private fun DebugEventCard(event: DebugEvent) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
+                StatusPill(debugSeverityLabel(event.severity), danger = event.severity == DebugSeverity.Error)
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(event.name, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "${debugCategoryLabel(event.category)} · ${debugTimestamp(event.timestampMillis)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            Text(event.message, style = MaterialTheme.typography.bodyMedium)
+            if (event.evidence.isNotEmpty()) {
+                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    event.evidence.entries.take(8).forEach { (key, value) ->
+                        MetricRow(key, value)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun rootUiStateLabel(state: RootUiState): String = when (state) {
+    RootUiState.Available -> "available"
+    RootUiState.Checking -> "checking"
+    RootUiState.Unavailable -> "unavailable"
+}
+
+private fun debugCategoryLabel(category: DebugCategory): String = when (category) {
+    DebugCategory.App -> "App"
+    DebugCategory.Navigation -> "Navigation"
+    DebugCategory.Scan -> "Scan"
+    DebugCategory.Root -> "Root"
+    DebugCategory.Module -> "Module"
+    DebugCategory.Search -> "Search"
+    DebugCategory.Recommendation -> "Recommendation"
+    DebugCategory.Deletion -> "Deletion"
+    DebugCategory.Persistence -> "Persistence"
+    DebugCategory.Performance -> "Performance"
+}
+
+private fun debugSeverityLabel(severity: DebugSeverity): String = when (severity) {
+    DebugSeverity.Trace -> "Trace"
+    DebugSeverity.Info -> "Info"
+    DebugSeverity.Warning -> "Warning"
+    DebugSeverity.Error -> "Error"
+}
+
+private fun debugTimestamp(timestampMillis: Long): String =
+    java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US).format(java.util.Date(timestampMillis))
+
 @Composable
 private fun ToolsHubScreen(
     modifier: Modifier,
@@ -2826,6 +3014,13 @@ private fun ToolsHubScreen(
             value = "Ready",
             leading = { Text("✓", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
             onClick = { navigate(DustDestination.CERTIFICATION) },
+        )
+        DustTaskCard(
+            title = "Debug workbench",
+            detail = "Live state, structured trace timeline, warning filters, and clearable in-memory diagnostics.",
+            value = "Trace",
+            leading = { Text("⌁", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+            onClick = { navigate(DustDestination.DEBUG) },
         )
         DustTaskCard(
             title = "Scan diagnostics",

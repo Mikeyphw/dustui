@@ -38,6 +38,7 @@ class DustNavigationModelTest {
         assertEquals(DustDestination.MORE, DustNavigationModel.compactSelection(DustDestination.MODULES))
         assertEquals(DustDestination.MORE, DustNavigationModel.compactSelection(DustDestination.CERTIFICATION))
         assertEquals(DustDestination.MORE, DustNavigationModel.compactSelection(DustDestination.CLEANUP))
+        assertEquals(DustDestination.MORE, DustNavigationModel.compactSelection(DustDestination.DEBUG))
     }
 
     @Test fun `compact home stays home while scan opens from top sheet`() {
@@ -58,6 +59,7 @@ class DustNavigationModelTest {
         assertTrue(DustNavigationModel.moreDestinations.contains(DustDestination.MODULES))
         assertTrue(DustNavigationModel.moreDestinations.contains(DustDestination.CERTIFICATION))
         assertTrue(DustNavigationModel.moreDestinations.contains(DustDestination.CLEANUP))
+        assertTrue(DustNavigationModel.moreDestinations.contains(DustDestination.DEBUG))
     }
 
     @Test fun `wide navigation exposes every primary workbench`() {
@@ -71,6 +73,7 @@ class DustNavigationModelTest {
         assertTrue(DustNavigationModel.wideDestinations.contains(DustDestination.PACKAGES))
         assertTrue(DustNavigationModel.wideDestinations.contains(DustDestination.MODULES))
         assertTrue(DustNavigationModel.wideDestinations.contains(DustDestination.CERTIFICATION))
+        assertTrue(DustNavigationModel.wideDestinations.contains(DustDestination.DEBUG))
         assertFalse(DustNavigationModel.wideDestinations.contains(DustDestination.MORE))
     }
 
@@ -82,6 +85,7 @@ class DustNavigationModelTest {
         assertEquals(DustDestination.MORE, DustNavigationModel.backTarget(DustDestination.DUPLICATES, wide = false))
         assertEquals(DustDestination.MORE, DustNavigationModel.backTarget(DustDestination.APP_RESIDUE, wide = false))
         assertEquals(DustDestination.MORE, DustNavigationModel.backTarget(DustDestination.PACKAGES, wide = false))
+        assertEquals(DustDestination.MORE, DustNavigationModel.backTarget(DustDestination.DEBUG, wide = false))
         assertEquals(DustDestination.EXPLORER, DustNavigationModel.backTarget(DustDestination.SEARCH, wide = false))
         assertEquals(DustDestination.INSIGHTS, DustNavigationModel.backTarget(DustDestination.EXPLORER, wide = false))
         assertEquals(DustDestination.SCAN, DustNavigationModel.backTarget(DustDestination.PACKAGES, wide = true))
@@ -93,6 +97,7 @@ class DustNavigationModelTest {
         assertFalse(DustNavigationModel.needsScanData(DustDestination.SCAN))
         assertFalse(DustNavigationModel.needsScanData(DustDestination.INSIGHTS))
         assertFalse(DustNavigationModel.needsScanData(DustDestination.CLEANUP))
+        assertFalse(DustNavigationModel.needsScanData(DustDestination.DEBUG))
         assertTrue(DustNavigationModel.needsScanData(DustDestination.EXPLORER))
         assertTrue(DustNavigationModel.needsScanData(DustDestination.SEARCH))
     }

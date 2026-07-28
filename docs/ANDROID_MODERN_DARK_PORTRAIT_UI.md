@@ -86,3 +86,8 @@ Final sealed behavior:
 
 Final validation should run the minimal Android gates that prove this stack: debug assembly, debug unit tests, and debug lint. Device/root certification remains a release checklist item, not a source-only overlay requirement.
 
+## Phase 9–10 — Debug Workbench foundation
+
+The modern Tools hub now includes Debug workbench. It is intentionally scan-independent so users can inspect root failures and empty first-run state before a scan exists. Phase 9 adds the bounded structured event recorder. Phase 10 adds the live-state panel and filterable trace timeline.
+
+The Debug workbench is diagnostic-only: it records root, scan, navigation, search, and deletion-review events, but does not weaken review-first deletion or module-source safeguards.

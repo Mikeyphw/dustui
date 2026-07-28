@@ -225,3 +225,11 @@ Ship only when `SHIP_STATUS.md` says `SHIP` or when every warning listed under `
 - [ ] Confirm the active source audit reports zero quarantine runtime references.
 - [ ] Confirm RC packaging includes `cleaning-intelligence-qualification.json`.
 - [ ] Confirm `final-rc-gate.sh` returns `DO_NOT_SHIP` when cleaning evidence is missing or failed.
+
+## Debug Workbench release checks
+
+- [ ] Tools exposes Debug workbench before a scan exists.
+- [ ] Live state shows destination, layout, scan/root state, stale lock, selected paths, review sheet, root backend, preflight, scan diagnostics, and module diagnostics.
+- [ ] Trace timeline is bounded and filterable.
+- [ ] Debug events never bypass stale-scan locks, protected-path blocking, fingerprint checks, or review-first deletion.
+- [ ] Safe evidence redaction remains covered by unit tests.

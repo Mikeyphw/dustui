@@ -1,0 +1,143 @@
+{
+  "applied_at": "2026-07-28T16:38:10.321598Z",
+  "artifact": "/home/mike/Downloads/dustui_android_debug_workbench_phase9_10_overlay.zip",
+  "artifact_name": "dustui_android_debug_workbench_phase9_10_overlay.zip",
+  "type": "overlay",
+  "sha256": "a0ec8778022097c488d754d304125a4c23f28201e7a33e9332adcf6419316288",
+  "status": "ok",
+  "validation_status": "ok",
+  "commit_message": "Add debug workbench foundation",
+  "commit_hash": "",
+  "file_count": 12,
+  "change_counts": {
+    "add": 3,
+    "modify": 9
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Android debug workbench phase 9-10",
+    "description": "Add the bounded structured debug event recorder and scan-independent Debug Workbench UI under Tools.",
+    "version": "1.0.0",
+    "repository": {
+      "name": "dustui"
+    },
+    "target": "dustui_android",
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "CHANGELOG.md",
+          "action": "modify",
+          "sha256": "9ff53a4fa81ef8f2bb51eb0ff46ff5d645750d6e31cb6ccf481c2383f2bfd258",
+          "size": 17878,
+          "source_sha256": "968d7c2412d8b6371b2522fede6cc8e6b102899f723285ae632775176448b8ea"
+        },
+        {
+          "path": "RELEASE_CHECKLIST.md",
+          "action": "modify",
+          "sha256": "50cc0184e2d106d5740b52eacf81e2ef03c959243178a774c73284a9fc02b0c7",
+          "size": 17308,
+          "source_sha256": "2f07e60d73db048789fd4d1b5feed02f6020356fa2f4170fdbd5808031258876"
+        },
+        {
+          "path": "UI_UX_CONTRACT.md",
+          "action": "modify",
+          "sha256": "fe841aa79cddbb65d93d42d11f808d583910302be1b1a3e2e34c640592e343a5",
+          "size": 26746,
+          "source_sha256": "e10966299b8a0e06f889468038e25648b9c025e2558aa99b459d09ed3338818b"
+        },
+        {
+          "path": "VALIDATION.md",
+          "action": "modify",
+          "sha256": "b02b6d3d1da74e7abbad0bcfb33efff480979b5e5b115761f98d7a42bfc68962",
+          "size": 2125,
+          "source_sha256": "f5891b673b211657674280914f2022b9e9f6bac9f8f29ddf6c6e0067c1b48dc2"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DebugEvents.kt",
+          "action": "add",
+          "sha256": "b1b0dfa70e3e25d2df0eb179000e54c9e3a8eb4ad6ee42c366f7d149c9e3aa27",
+          "size": 1960
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+          "action": "modify",
+          "sha256": "bfad64ff078c3b35dacf257837173a675d2389664f22c19edef35c8dac931aec",
+          "size": 10070,
+          "source_sha256": "64257f9144b38522d6d2a534e221f475d3525d9f95fdbcfb14bb4e4f072d971b"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "action": "modify",
+          "sha256": "24d7f359629e15444886ad5e4292fc4d625cd9cc8d2639f2a03d156b5e5bef9d",
+          "size": 168391,
+          "source_sha256": "3685a26cf7f1198f6cfd8b0b75441f59c739f3e611ab23bfa90154e96949d4d1"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+          "action": "modify",
+          "sha256": "99d5e6b0a54620dec6a44f714cf69083b78691e6eab8ba2aff665e4f5a636bda",
+          "size": 88017,
+          "source_sha256": "48cdbaa9627c2951edea0fbd8a8d61511fe89bccb11ab44c5584cf7a595b335e"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchSourceContractTest.kt",
+          "action": "add",
+          "sha256": "c0a1d67266a2e3d625df5d49a586808fe68c789be325ba58ec21f340d2d4a89a",
+          "size": 3553
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+          "action": "modify",
+          "sha256": "3b49be1ea91f5877db619ae6b1f89fbaf3a8c8af25ff8140b4a002f177d4f088",
+          "size": 7571,
+          "source_sha256": "dbcbc21bc060422915dc313d1ce704ab8a5ce9c4f5f4170f49a30044f0b2ba2e"
+        },
+        {
+          "path": "docs/ANDROID_DEBUG_WORKBENCH.md",
+          "action": "add",
+          "sha256": "2646f7636ed23a3caad5f9b78acac4b952e52cf6184469e58ae8af055620f6be",
+          "size": 1738
+        },
+        {
+          "path": "docs/ANDROID_MODERN_DARK_PORTRAIT_UI.md",
+          "action": "modify",
+          "sha256": "0a31c5e0aee09382e2145a7bf1bf4a6e934180dcdf40219d9908062971105b59",
+          "size": 8165,
+          "source_sha256": "7204365eba7e2be135153eed474453a7b19d4a27414a319ed986f7e5933b3b06"
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false,
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Add debug workbench foundation"
+      }
+    },
+    "validation": {
+      "required": false,
+      "restore": true,
+      "build": false,
+      "test": false,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "f451848152d3c179a32c23f59d29252d03ef522f7c102f26780a881af5658bf3",
+        "timeout_seconds": 600
+      }
+    }
+  },
+  "history_id": "3b3813634b654305b55d65e34dd9e2b0"
+}

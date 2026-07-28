@@ -316,3 +316,8 @@ Required final behavior:
 
 Final validation gates should include Android debug assembly, debug unit tests, and debug lint with zero warnings and zero errors.
 
+## Debug workbench contract
+
+The Tools task zone includes a scan-independent Debug workbench for source-backed diagnostics. It must expose live state and a structured trace timeline without changing cleanup safety behavior. The debug timeline is bounded, in-memory, filterable by category, and can be cleared without touching scan data, deletion reports, root state, or persisted cleanup settings.
+
+Debug evidence must make root, scan, module-scope, search, recommendation, and deletion-review state visible. It must not silently replace disabled-action explanations, bypass stale-scan locks, or turn protected mounted targets into deletion targets.

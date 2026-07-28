@@ -48,6 +48,10 @@ import com.mikeyphw.dustui.data.DuplicateWorkbenchEngine
 import com.mikeyphw.dustui.data.AdvancedStorageAnalyzer
 import com.mikeyphw.dustui.data.SnapshotPoint
 import com.mikeyphw.dustui.data.DeviceCertificationReport
+import com.mikeyphw.dustui.data.DebugCategory
+import com.mikeyphw.dustui.data.DebugEvent
+import com.mikeyphw.dustui.data.DebugEventStore
+import com.mikeyphw.dustui.data.DebugSeverity
 import com.mikeyphw.dustui.data.RootPathInspection
 import com.mikeyphw.dustui.data.RootModuleReport
 import com.mikeyphw.dustui.data.RootFileSearchResult
@@ -88,6 +92,44 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     private val allEntries: StateFlow<List<ScanEntryEntity>> = latestSession
         .flatMapLatest { session -> session?.let { repository.observeEntries(it.id) } ?: flowOf(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private val debugEventStore = DebugEventStore()
+    val debugEvents: StateFlow<List<DebugEvent>> = debugEventStore.events
+
+    private fun recordDebugEvent(
+        category: DebugCategory,
+        severity: DebugSeverity,
+        name: String,
+        message: String,
+        evidence: Map<String, String> = emptyMap(),
+    ) {
+        debugEventStore.record(category, severity, name, message, evidence)
+    }
+
+    fun recordNavigation(destination: DustDestination, wide: Boolean) {
+        recordDebugEvent(
+            DebugCategory.Navigation,
+            DebugSeverity.Trace,
+            "destination_selected",
+            "Selected ${destination.label}",
+            mapOf("destination" to destination.name, "layout" to if (wide) "wide" else "compact"),
+        )
+    }
+
+    fun recordDebugWorkbenchOpened(destination: DustDestination, wide: Boolean) {
+        recordDebugEvent(
+            DebugCategory.App,
+            DebugSeverity.Info,
+            "debug_workbench_opened",
+            "Opened Debug workbench",
+            mapOf("fromDestination" to destination.name, "layout" to if (wide) "wide" else "compact"),
+        )
+    }
+
+    fun clearDebugEvents() {
+        debugEventStore.clear()
+        recordDebugEvent(DebugCategory.App, DebugSeverity.Info, "debug_timeline_cleared", "Debug timeline cleared")
+    }
 
     private val _explorerPath = MutableStateFlow<String?>(null)
     val explorerPath: StateFlow<String?> = _explorerPath
@@ -243,6 +285,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val message: StateFlow<String?> = _message
 
     init {
+        recordDebugEvent(DebugCategory.App, DebugSeverity.Info, "app_state_initialized", "MainViewModel initialized")
         refreshRoot()
         viewModelScope.launch { latestSession.collect { session ->
             _scanDiagnostics.value = session?.let { repository.scanDiagnostics(it.id) }
@@ -260,6 +303,13 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     }
 
     private fun resetScanScopedState(session: ScanSessionEntity?) {
+        recordDebugEvent(
+            DebugCategory.Scan,
+            DebugSeverity.Info,
+            "scan_scope_reset",
+            if (session == null) "Cleared scan-scoped state" else "Loaded scan-scoped state",
+            mapOf("scanId" to (session?.id ?: "none"), "status" to (session?.status ?: "none"), "rootPath" to (session?.rootPath ?: "none")),
+        )
         _explorerPath.value = session?.rootPath
         _filter.value = ExplorerFilter()
         _selectedEntry.value = null
@@ -329,6 +379,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     fun refreshRoot() {
         _rootState.value = RootUiState.Checking
         _rootFailureMessage.value = null
+        recordDebugEvent(DebugCategory.Root, DebugSeverity.Trace, "root_refresh_started", "Checking root service state")
         viewModelScope.launch {
             runCatching { repository.rootServiceInfo() }
                 .onSuccess { info ->
@@ -336,43 +387,98 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
                     val ready = info.ok && info.uid == 0
                     _rootState.value = if (ready) RootUiState.Available else RootUiState.Unavailable
                     if (!ready) _rootFailureMessage.value = info.message ?: "Root service is not running as UID 0"
+                    recordDebugEvent(
+                        DebugCategory.Root,
+                        if (ready) DebugSeverity.Info else DebugSeverity.Warning,
+                        "root_refresh_finished",
+                        if (ready) "Root service is available" else "Root service is not ready",
+                        mapOf(
+                            "ok" to info.ok.toString(),
+                            "uid" to info.uid.toString(),
+                            "backend" to info.backend,
+                            "message" to (info.message ?: "none"),
+                        ),
+                    )
                 }
                 .onFailure { error ->
                     _rootServiceInfo.value = null
                     _rootState.value = RootUiState.Unavailable
                     _rootFailureMessage.value = error.message ?: "Unable to bind the root service"
+                    recordDebugEvent(
+                        DebugCategory.Root,
+                        DebugSeverity.Error,
+                        "root_refresh_failed",
+                        error.message ?: "Unable to bind the root service",
+                        mapOf("error" to error::class.java.simpleName),
+                    )
                 }
         }
     }
     fun startPreset(preset: ScanPreset) = startRequest(runCatching(preset::request))
     fun diagnoseScanPath(path: String) {
         _pathPreflight.value = null
+        val normalizedPath = path.trim()
+        recordDebugEvent(DebugCategory.Scan, DebugSeverity.Trace, "scan_preflight_started", "Testing scan-root access", mapOf("rootPath" to normalizedPath))
         viewModelScope.launch {
-            runCatching { ScanRequest(rootPath = path.trim()).validated() }
+            runCatching { ScanRequest(rootPath = normalizedPath).validated() }
                 .mapCatching { repository.preflightScan(it) }
-                .onSuccess { _pathPreflight.value = it }
-                .onFailure { error -> _message.value = error.message ?: "Unable to test scan-root access" }
+                .onSuccess {
+                    _pathPreflight.value = it
+                    recordDebugEvent(
+                        DebugCategory.Scan,
+                        if (it.ok) DebugSeverity.Info else DebugSeverity.Warning,
+                        "scan_preflight_finished",
+                        if (it.ok) "Scan-root preflight passed" else "Scan-root preflight reported blockers",
+                        mapOf("rootPath" to it.requestedPath, "ok" to it.ok.toString(), "message" to it.message),
+                    )
+                }
+                .onFailure { error ->
+                    _message.value = error.message ?: "Unable to test scan-root access"
+                    recordDebugEvent(DebugCategory.Scan, DebugSeverity.Error, "scan_preflight_failed", error.message ?: "Unable to test scan-root access")
+                }
         }
     }
     fun startCustom(path: String) = startRequest(runCatching { ScanRequest(rootPath = path.trim()).validated() })
-    fun startModuleScan() = startRequest(runCatching {
-        ScanRequest(
-            presetId = "root-modules",
-            rootPath = "/data/adb/modules",
-            maxDepth = 16,
-            maxEntries = 200_000,
-            includeHidden = true,
-        ).validated()
-    })
+    fun startModuleScan() {
+        recordDebugEvent(DebugCategory.Module, DebugSeverity.Info, "module_scan_requested", "Requested /data/adb/modules module-source scan", mapOf("rootPath" to "/data/adb/modules"))
+        startRequest(runCatching {
+            ScanRequest(
+                presetId = "root-modules",
+                rootPath = "/data/adb/modules",
+                maxDepth = 16,
+                maxEntries = 200_000,
+                includeHidden = true,
+            ).validated()
+        })
+    }
     private fun startRequest(result: Result<ScanRequest>) {
-        if (_rootState.value != RootUiState.Available) { _message.value = "Root access is required"; return }
+        if (_rootState.value != RootUiState.Available) {
+            _message.value = "Root access is required"
+            recordDebugEvent(DebugCategory.Scan, DebugSeverity.Warning, "scan_request_blocked", "Root access is required")
+            return
+        }
         result.onSuccess {
             _pathPreflight.value = null
             _explorerPath.value = it.rootPath
+            recordDebugEvent(
+                DebugCategory.Scan,
+                DebugSeverity.Info,
+                "scan_requested",
+                "Started scan request",
+                mapOf("rootPath" to it.rootPath, "presetId" to (it.presetId ?: "custom"), "maxDepth" to it.maxDepth.toString(), "maxEntries" to it.maxEntries.toString()),
+            )
             repository.startScan(it)
-        }.onFailure { _message.value = it.message }
+        }.onFailure {
+            _message.value = it.message
+            recordDebugEvent(DebugCategory.Scan, DebugSeverity.Error, "scan_request_invalid", it.message ?: "Scan request is invalid")
+        }
     }
-    fun cancelActive() { latestSession.value?.id?.let(repository::cancelScan) }
+    fun cancelActive() {
+        latestSession.value?.id?.let { scanId ->
+            recordDebugEvent(DebugCategory.Scan, DebugSeverity.Warning, "scan_cancel_requested", "Cancel requested for active scan", mapOf("scanId" to scanId))
+            repository.cancelScan(scanId)
+        }
+    }
     fun open(entry: ScanEntryEntity) {
         if (entry.isDirectory) _explorerPath.value = entry.path else select(entry)
     }
@@ -575,14 +681,19 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     private fun reloadCleanupRecommendations(message: String? = null) {
         val scanId = latestSession.value?.id ?: return
         _recommendationLoading.value = true
+        recordDebugEvent(DebugCategory.Recommendation, DebugSeverity.Trace, "recommendations_refresh_started", "Refreshing cleanup recommendations", mapOf("scanId" to scanId))
         viewModelScope.launch {
             val result = runCatching { repository.cleanupRecommendations(scanId) }
             if (latestSession.value?.id == scanId) {
                 result.onSuccess { analysis ->
                     _recommendationAnalysis.value = analysis
                     _recommendationPreferences.value = repository.cleanupRecommendationPreferences(scanId)
+                    recordDebugEvent(DebugCategory.Recommendation, DebugSeverity.Info, "recommendations_refresh_finished", "Cleanup recommendations refreshed", mapOf("items" to analysis.items.size.toString()))
                     if (message != null) _message.value = message
-                }.onFailure { _message.value = it.message ?: "Unable to rank cleanup recommendations" }
+                }.onFailure {
+                    _message.value = it.message ?: "Unable to rank cleanup recommendations"
+                    recordDebugEvent(DebugCategory.Recommendation, DebugSeverity.Error, "recommendations_refresh_failed", _message.value ?: "Unable to rank cleanup recommendations")
+                }
                 _recommendationLoading.value = false
             }
         }
@@ -1312,9 +1423,11 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     }
 
     fun clearSelection() {
+        val previousCount = _selectedPaths.value.size
         _selectedPaths.value = emptySet()
         _selectedContentHashes.value = emptyMap()
         _cleanupReview.value = null
+        if (previousCount > 0) recordDebugEvent(DebugCategory.Deletion, DebugSeverity.Trace, "selection_cleared", "Cleared selected deletion paths", mapOf("count" to previousCount.toString()))
     }
 
     fun reviewCleanup() = reviewPaths(_selectedPaths.value, _selectedContentHashes.value)
@@ -1324,14 +1437,17 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     fun reviewPaths(paths: Collection<String>, expectedSha256ByPath: Map<String, String>) {
         if (_scanDataStale.value) {
             _message.value = "Run a new scan before planning another deletion"
+            recordDebugEvent(DebugCategory.Deletion, DebugSeverity.Warning, "deletion_review_blocked", "Run a new scan before planning another deletion", mapOf("reason" to "stale_scan"))
             return
         }
         val session = latestSession.value ?: return
         val requested = paths.distinct()
         if (requested.isEmpty()) {
             _message.value = "Select at least one indexed path"
+            recordDebugEvent(DebugCategory.Deletion, DebugSeverity.Warning, "deletion_review_blocked", "Select at least one indexed path", mapOf("reason" to "empty_selection"))
             return
         }
+        recordDebugEvent(DebugCategory.Deletion, DebugSeverity.Info, "deletion_review_requested", "Building permanent deletion review", mapOf("scanId" to session.id, "requestedCount" to requested.size.toString()))
         _selectedPaths.value = requested.toCollection(linkedSetOf())
         _selectedContentHashes.value = expectedSha256ByPath.filterKeys { it in requested }
         _cleanupReview.value = null
@@ -1352,6 +1468,13 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             val review = repository.reviewCleanup(session, chosen, _selectedContentHashes.value)
             if (latestSession.value?.id == session.id) {
                 _cleanupReview.value = review
+                recordDebugEvent(
+                    DebugCategory.Deletion,
+                    if (review.accepted.isEmpty()) DebugSeverity.Warning else DebugSeverity.Info,
+                    "deletion_review_created",
+                    review.message ?: "Deletion review created",
+                    mapOf("accepted" to review.accepted.size.toString(), "blocked" to review.blocked.size.toString(), "executable" to review.executable.toString()),
+                )
                 if (review.accepted.isEmpty()) {
                     _message.value = review.message ?: "No selected paths passed deletion safety checks"
                 }
@@ -1372,12 +1495,15 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         if (!review.matches(session.id, session.rootPath)) {
             _cleanupReview.value = null
             _message.value = "The active scan changed. Plan the deletion again."
+            recordDebugEvent(DebugCategory.Deletion, DebugSeverity.Warning, "deletion_execute_blocked", "The active scan changed. Plan the deletion again.", mapOf("reason" to "scan_changed"))
             return
         }
         if (!review.executable) {
             _message.value = review.message ?: "This deletion plan has no approved paths"
+            recordDebugEvent(DebugCategory.Deletion, DebugSeverity.Warning, "deletion_execute_blocked", _message.value ?: "This deletion plan has no approved paths", mapOf("reason" to "not_executable"))
             return
         }
+        recordDebugEvent(DebugCategory.Deletion, DebugSeverity.Warning, "deletion_execute_started", "Executing reviewed permanent deletion plan", mapOf("accepted" to review.accepted.size.toString(), "plannedBytes" to review.accepted.sumOf { it.plannedBytes }.toString()))
         viewModelScope.launch {
             if (latestSession.value?.id != review.scanId) {
                 _cleanupReview.value = null
@@ -1397,11 +1523,19 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
                 result.deletedBytes > 0 -> result.message ?: "Deleted ${formatBytes(result.deletedBytes)}, but some paths failed. Run a new scan."
                 else -> result.message ?: "Permanent deletion failed"
             }
+            recordDebugEvent(
+                DebugCategory.Deletion,
+                if (result.ok) DebugSeverity.Info else if (result.deletedBytes > 0) DebugSeverity.Warning else DebugSeverity.Error,
+                "deletion_execute_finished",
+                _message.value ?: "Permanent deletion finished",
+                mapOf("deletedBytes" to result.deletedBytes.toString(), "items" to result.items.size.toString(), "filesystemChanged" to filesystemChanged.toString()),
+            )
         }
     }
 
     fun refreshInsights(scanId: String? = latestSession.value?.id) {
         if (scanId == null) return
+        recordDebugEvent(DebugCategory.App, DebugSeverity.Trace, "insights_refresh_started", "Refreshing storage intelligence", mapOf("scanId" to scanId))
         viewModelScope.launch {
             val appSummaries = repository.appSummaries(scanId)
             val snapshotDelta = repository.snapshotDelta()
@@ -1442,6 +1576,20 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             _storageGrowthUnderstood.value = repository.storageGrowthUnderstood()
             refreshCleanupReports()
             _moduleReport.value = moduleReport
+            recordDebugEvent(
+                DebugCategory.Module,
+                if (moduleReport.diagnostic.status.name == "READY") DebugSeverity.Info else DebugSeverity.Warning,
+                "module_diagnostics_refreshed",
+                moduleReport.diagnostic.message,
+                mapOf("status" to moduleReport.diagnostic.status.name, "moduleCount" to moduleReport.modules.size.toString()),
+            )
+            recordDebugEvent(
+                DebugCategory.App,
+                DebugSeverity.Info,
+                "insights_refresh_finished",
+                "Storage intelligence refreshed",
+                mapOf("scanId" to scanId, "entries" to allEntries.value.size.toString(), "recommendations" to (_recommendationAnalysis.value?.items?.size ?: 0).toString()),
+            )
         }
     }
 
@@ -1543,12 +1691,18 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
 
     fun rootSearch(query: String) {
         val scanId = latestSession.value?.id
-        if (scanId == null) { _message.value = "Run a scan before searching"; return }
+        if (scanId == null) {
+            _message.value = "Run a scan before searching"
+            recordDebugEvent(DebugCategory.Search, DebugSeverity.Warning, "root_search_blocked", "Run a scan before searching")
+            return
+        }
+        recordDebugEvent(DebugCategory.Search, DebugSeverity.Trace, "root_search_started", "Whole-scan search started", mapOf("scanId" to scanId, "queryLength" to query.length.toString()))
         viewModelScope.launch {
             val results = repository.rootSearch(scanId, RootFileSearchRequest(query = query))
             if (latestSession.value?.id != scanId) return@launch
             _rootSearchResults.value = results
             _message.value = "Found ${results.size} root-indexed result(s)"
+            recordDebugEvent(DebugCategory.Search, DebugSeverity.Info, "root_search_finished", "Whole-scan search finished", mapOf("resultCount" to results.size.toString()))
         }
     }
 
@@ -1558,10 +1712,18 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         allEntries.value.firstOrNull { it.path == result.path }?.let { select(it) }
     }
     fun runDeviceCertification() {
+        recordDebugEvent(DebugCategory.App, DebugSeverity.Trace, "device_certification_started", "Running device certification")
         viewModelScope.launch {
             _certification.value = repository.deviceCertification()
             val report = _certification.value ?: return@launch
             _message.value = if (report.releaseReady) "Device certification passed with ${report.warnings} warning(s)" else "Device certification found ${report.failures} blocker(s)"
+            recordDebugEvent(
+                DebugCategory.App,
+                if (report.releaseReady) DebugSeverity.Info else DebugSeverity.Warning,
+                "device_certification_finished",
+                _message.value ?: "Device certification finished",
+                mapOf("releaseReady" to report.releaseReady.toString(), "warnings" to report.warnings.toString(), "failures" to report.failures.toString()),
+            )
         }
     }
 

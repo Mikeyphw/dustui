@@ -48,3 +48,12 @@ devtool \
 
 The final accepted run must report zero failed tests, zero errors, and zero warnings. The bundled source audit `android/scripts/validate-modern-dark-portrait-ui.py` checks the sealed Home / Files / Clean / Tools navigation, compact scan sheet, Home dashboard, Files search split, Clean cockpit, Tools hub, and module-source diagnostics wording before Gradle validation runs.
 
+## Android debug workbench validation
+
+For Phase 9–10 Debug Workbench changes, use targeted Android validation tasks when you do not need a full APK gate:
+
+```bash
+./gradlew :app:compileDebugKotlin :app:testDebugUnitTest
+```
+
+Before final debug roadmap sealing, include `:app:assembleDebug` and `:app:lintDebug` as well.

@@ -38,6 +38,7 @@ enum class DustDestination(val label: String, val shortLabel: String, val symbol
     MODULES("Modules", "Modules", "▥", "Tools"),
     CERTIFICATION("Certification", "Cert", "✓", "Run"),
     CLEANUP("Deletion reports", "Reports", "↺", "Actions"),
+    DEBUG("Debug workbench", "Debug", "⌁", "Actions"),
     MORE("Tools", "Tools", "•••", "Tools"),
 }
 
@@ -64,6 +65,7 @@ object DustNavigationModel {
         DustDestination.MODULES,
         DustDestination.CERTIFICATION,
         DustDestination.CLEANUP,
+        DustDestination.DEBUG,
     )
 
     val moreDestinations = listOf(
@@ -76,6 +78,7 @@ object DustNavigationModel {
         DustDestination.MODULES,
         DustDestination.CERTIFICATION,
         DustDestination.CLEANUP,
+        DustDestination.DEBUG,
     )
 
     fun compactSelection(destination: DustDestination): DustDestination = when (destination) {
@@ -90,7 +93,7 @@ object DustNavigationModel {
         else -> destination
     }
 
-    fun needsScanData(destination: DustDestination): Boolean = destination !in setOf(DustDestination.SCAN, DustDestination.INSIGHTS, DustDestination.CLEANUP)
+    fun needsScanData(destination: DustDestination): Boolean = destination !in setOf(DustDestination.SCAN, DustDestination.INSIGHTS, DustDestination.CLEANUP, DustDestination.DEBUG)
 
     fun refreshesInsights(destination: DustDestination): Boolean = destination in setOf(
         DustDestination.INSIGHTS,
@@ -105,6 +108,7 @@ object DustNavigationModel {
         DustDestination.MODULES,
         DustDestination.CERTIFICATION,
         DustDestination.CLEANUP,
+        DustDestination.DEBUG,
         DustDestination.MORE,
     )
 
