@@ -17733,6 +17733,130 @@
         "version": "1.0.0"
       },
       "history_id": "0f4009d41c3741509558bc525a60b04e"
+    },
+    {
+      "applied_at": "2026-07-28T17:33:29.140299Z",
+      "artifact": "/home/mike/Downloads/dustui_android_debug_workbench_phase13_ui_overlay_reasons_overlay.zip",
+      "artifact_name": "dustui_android_debug_workbench_phase13_ui_overlay_reasons_overlay.zip",
+      "type": "overlay",
+      "sha256": "99a8791cb09c102554f0ea9514d00198aedadc32ad3a493bfff98cc25e9b87b4",
+      "status": "ok",
+      "validation_status": "ok",
+      "commit_message": "Add debug UI overlay and disabled action explanations",
+      "commit_hash": "",
+      "file_count": 8,
+      "change_counts": {
+        "modify": 8
+      },
+      "manifest": {
+        "apply": {
+          "atomic": true,
+          "commit": {
+            "enabled": true,
+            "message": "Add debug UI overlay and disabled action explanations",
+            "strategy": "single"
+          },
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false
+        },
+        "baseline": {
+          "commit": "dad53a0",
+          "description": "DustUI Android debug baseline after Phase 12 export bundle"
+        },
+        "created_by": "OpenAI ChatGPT",
+        "description": "Add an opt-in floating UI debug overlay and plain-language disabled-action explanations without changing scan or cleanup safety behavior.",
+        "inventory": {
+          "entries": [
+            {
+              "action": "modify",
+              "path": "CHANGELOG.md",
+              "sha256": "bf876bbdae58ef5b245bc8ee6139e25cdea0fa114676171fdc2fab04385acd74",
+              "size": 19546,
+              "source_sha256": "dd79e5103b02277b3c76f5939c4f1c6de10eaf21fc1b6da50d94800d6126f528"
+            },
+            {
+              "action": "modify",
+              "path": "UI_UX_CONTRACT.md",
+              "sha256": "3e19ee7dee7aad796c00183a5bc4815181784dcc3b7d5ae01ab2ad7416e4a71b",
+              "size": 28543,
+              "source_sha256": "45828252df81f0e6aad53b83c09a1004e98e8af8399f9547a38cd69d837a53e9"
+            },
+            {
+              "action": "modify",
+              "path": "RELEASE_CHECKLIST.md",
+              "sha256": "1d6831b8cc2e42b8e581e11fe1b6cb4ee5fb32f85110c0917f120bf79fe9ccda",
+              "size": 18671,
+              "source_sha256": "f39992f70328c2d1c5bb259f0e5ef6074f63911987e9377c3c57a5d037e3fc6b"
+            },
+            {
+              "action": "modify",
+              "path": "VALIDATION.md",
+              "sha256": "75f6dcfa968d2cb2cfa71fde0db725df1c7ec9e836723430f4c9a5b8cd680559",
+              "size": 3617,
+              "source_sha256": "8b98f9a813934398e4eeafe43da0dc1577244982580c271f35585c3e62dd1006"
+            },
+            {
+              "action": "modify",
+              "path": "docs/ANDROID_DEBUG_WORKBENCH.md",
+              "sha256": "47937deb61f9313e17f07c2852cacecd7f32386198d7265f2a24a804593b69a7",
+              "size": 5480,
+              "source_sha256": "1e51f998e64622528f27a6ea2e5826a3ad0421005e1e05c408769cae7931356f"
+            },
+            {
+              "action": "modify",
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "sha256": "7e512795d80c46b89d4465b8a109c2742aa66760096928cae0923e747fa3b692",
+              "size": 182895,
+              "source_sha256": "f48cd85cca4aad7a3db7a91542cdb758eb2e142df3864d27d84c7918be0ee249"
+            },
+            {
+              "action": "modify",
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+              "sha256": "5da8743133925d296997fb12087ae44295570429898de05e2adfa04b34ddcf5c",
+              "size": 106226,
+              "source_sha256": "c71fa18b899fdf5507f8d7b6dd12d0a329bf1f2af6a04e490ec35d6a053af208"
+            },
+            {
+              "action": "modify",
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchSourceContractTest.kt",
+              "sha256": "f95e22cff9068d9655c0cb3e6dd4e50a08caaab6bb377f5da0ad4c4066d7360d",
+              "size": 10231,
+              "source_sha256": "c62ec6a77dbbf5f10cb70aba6f320b85b7cb51ab47a4f126876b05522b404f59"
+            }
+          ],
+          "format": 1
+        },
+        "name": "DustUI Debug Workbench Phase 13 UI Overlay and Disabled Reasons",
+        "notes": [
+          "Validation is optional so the user can choose targeted --task gates during apply.",
+          "Reserved artifact metadata is intentionally not listed in inventory.",
+          "The overlay and disabled reasons are diagnostic-only and do not execute cleanup, start scans automatically, or bypass stale locks."
+        ],
+        "schema_version": 2,
+        "target": "dustui_android",
+        "type": "overlay",
+        "validation": {
+          "build": false,
+          "execution_environment": "auto",
+          "expected": {
+            "maximum_warnings": 0,
+            "restore": "pass"
+          },
+          "required": false,
+          "restore": true,
+          "rollback_on_failure": true,
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "93fd273e2e42abd5bc580e1596cb4142223410c28f3c94d8f4ed9c5823a82283",
+            "timeout_seconds": 900
+          },
+          "test": false
+        },
+        "version": "1.0.0"
+      },
+      "history_id": "c4a0355d44974c55afac973081f9a41d"
     }
   ]
 }

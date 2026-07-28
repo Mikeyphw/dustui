@@ -106,6 +106,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val debugProbeResults: StateFlow<List<DebugProbeResult>> = _debugProbeResults
     private val _debugExportResult = MutableStateFlow<DebugExportResult?>(null)
     val debugExportResult: StateFlow<DebugExportResult?> = _debugExportResult
+    private val _debugOverlayVisible = MutableStateFlow(false)
+    val debugOverlayVisible: StateFlow<Boolean> = _debugOverlayVisible
 
     private fun recordDebugEvent(
         category: DebugCategory,
@@ -140,6 +142,21 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     fun clearDebugEvents() {
         debugEventStore.clear()
         recordDebugEvent(DebugCategory.App, DebugSeverity.Info, "debug_timeline_cleared", "Debug timeline cleared")
+    }
+
+    fun setDebugOverlayVisible(visible: Boolean) {
+        if (_debugOverlayVisible.value == visible) return
+        _debugOverlayVisible.value = visible
+        recordDebugEvent(
+            DebugCategory.App,
+            DebugSeverity.Info,
+            if (visible) "ui_debug_overlay_enabled" else "ui_debug_overlay_disabled",
+            if (visible) "UI debug overlay enabled" else "UI debug overlay disabled",
+        )
+    }
+
+    fun toggleDebugOverlay() {
+        setDebugOverlayVisible(!_debugOverlayVisible.value)
     }
 
 

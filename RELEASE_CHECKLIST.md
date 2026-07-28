@@ -252,3 +252,9 @@ Ship only when `SHIP_STATUS.md` says `SHIP` or when every warning listed under `
 - [ ] Exported bundle opens Android share sheet as a ZIP.
 - [ ] Export timeline records success/failure without leaking secrets.
 - [ ] No export mode reads or includes file contents.
+
+### Debug Workbench Phase 13 release checks
+- [ ] Toggle the UI debug overlay from Tools → Debug workbench.
+- [ ] Confirm the overlay reports route, layout, scan, root, stale lock, selection, module status, and event count.
+- [ ] Confirm tapping the overlay returns to Debug workbench.
+- [ ] Confirm disabled actions explain missing scan, root, stale-lock, or confirmation preconditions.

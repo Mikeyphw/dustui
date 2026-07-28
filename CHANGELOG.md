@@ -243,3 +243,8 @@ Final release-candidate hardening for the rooted Android storage workbench.
 - Recorded probe start and finish events into the structured debug timeline with redacted evidence.
 - Added source-contract coverage to keep probes non-destructive and review-first cleanup intact.
 
+
+### Debug Workbench · Phase 13 UI overlay and disabled-action explanations
+- Added an opt-in floating UI debug overlay from Debug workbench with route/layout/scan/root/stale/selection/module/event state.
+- Added explicit disabled-action explanations for scan, export, certification, stale deletion, and permanent-deletion confirmation gates.
+- Kept overlay and explanations diagnostic-only with no cleanup safety changes.

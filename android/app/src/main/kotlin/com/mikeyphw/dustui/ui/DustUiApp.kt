@@ -164,6 +164,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         val debugEvents by viewModel.debugEvents.collectAsStateWithLifecycle()
         val debugProbeResults by viewModel.debugProbeResults.collectAsStateWithLifecycle()
         val debugExportResult by viewModel.debugExportResult.collectAsStateWithLifecycle()
+        val debugOverlayVisible by viewModel.debugOverlayVisible.collectAsStateWithLifecycle()
         val scanDataStale by viewModel.scanDataStale.collectAsStateWithLifecycle()
         val snackbar = remember { SnackbarHostState() }
         var destination by rememberSaveable { mutableStateOf(DustDestination.INSIGHTS) }
@@ -220,7 +221,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                             TextButton(onClick = { menuOpen = true }) { Text(destination.actionLabel) }
                             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                                 DropdownMenuItem(
-                                    text = { Text("Export CSV") },
+                                    text = { DisabledMenuText("Export CSV", exportCsvDisabledReason(session)) },
                                     enabled = session != null,
                                     onClick = { menuOpen = false; viewModel.exportCsv() },
                                 )
@@ -229,7 +230,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     onClick = { menuOpen = false; openScanLauncher() },
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Run certification") },
+                                    text = { DisabledMenuText("Run certification", certificationDisabledReason(session)) },
                                     enabled = session != null,
                                     onClick = { menuOpen = false; selectDestination(DustDestination.CERTIFICATION); viewModel.runDeviceCertification() },
                                 )
@@ -467,6 +468,8 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     events = debugEvents,
                                     probeResults = debugProbeResults,
                                     exportResult = debugExportResult,
+                                    debugOverlayVisible = debugOverlayVisible,
+                                    toggleDebugOverlay = viewModel::toggleDebugOverlay,
                                     runProbe = viewModel::runDebugProbe,
                                     runAllProbes = viewModel::runAllDebugProbes,
                                     clearEvents = viewModel::clearDebugEvents,
@@ -477,6 +480,20 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     navigate = ::selectDestination,
                                     openWholeScanSearch = { selectDestination(DustDestination.SEARCH) },
                                     openScanDiagnostics = { openScanLauncher() },
+                                )
+                            }
+                            if (debugOverlayVisible) {
+                                DebugOverlayHud(
+                                    destination = destination,
+                                    wide = wide,
+                                    session = currentSession,
+                                    rootState = rootState,
+                                    selectedCount = selectedPaths.size,
+                                    scanDataStale = scanDataStale,
+                                    moduleReport = moduleReport,
+                                    eventCount = debugEvents.size,
+                                    openDebug = { selectDestination(DustDestination.DEBUG) },
+                                    modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
                                 )
                             }
                             if (destination != DustDestination.EXPLORER && selectedPaths.isNotEmpty()) {
@@ -556,6 +573,67 @@ private fun dustSheetPadding(): PaddingValues = PaddingValues(
 
 
 @Composable
+private fun DisabledMenuText(label: String, disabledReason: DisabledActionReason?) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(label)
+        disabledReason?.let { reason ->
+            Text(
+                "Disabled: ${reason.detail}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+private data class DisabledActionReason(val title: String, val detail: String)
+
+@Composable
+private fun DisabledReasonNotice(reason: DisabledActionReason) {
+    DustStatusNotice(
+        title = reason.title,
+        detail = reason.detail,
+        tone = DustNoticeTone.Warning,
+    )
+}
+
+private fun exportCsvDisabledReason(session: ScanSessionEntity?): DisabledActionReason? =
+    if (session == null) DisabledActionReason(
+        title = "Export CSV unavailable",
+        detail = "Start a scan before exporting indexed entries.",
+    ) else null
+
+private fun certificationDisabledReason(session: ScanSessionEntity?): DisabledActionReason? =
+    if (session == null) DisabledActionReason(
+        title = "Certification unavailable",
+        detail = "Start a scan before running device certification against scan evidence.",
+    ) else null
+
+private fun scanActionDisabledReason(rootReady: Boolean, rootFailure: String?): DisabledActionReason? =
+    if (!rootReady) DisabledActionReason(
+        title = "Scan action disabled",
+        detail = rootFailure ?: "Root identity is not available yet. Retry root diagnostics before scanning.",
+    ) else null
+
+private fun staleDeletionDisabledReason(): DisabledActionReason = DisabledActionReason(
+    title = "Deletion action disabled",
+    detail = "Scan results are stale after cleanup. Run a new scan before selecting paths or creating a deletion plan.",
+)
+
+private fun cleanupExecutionDisabledReason(review: CleanupReview, confirmed: Boolean): DisabledActionReason? = when {
+    !review.executable -> DisabledActionReason(
+        title = "Permanent deletion disabled",
+        detail = review.message ?: "No accepted fingerprint-verified paths are ready to delete.",
+    )
+    !confirmed -> DisabledActionReason(
+        title = "Confirmation required",
+        detail = "Check the irreversible-deletion confirmation before executing the reviewed plan.",
+    )
+    else -> null
+}
+
+
+@Composable
 private fun ScanRequiredEmptyState(modifier: Modifier = Modifier, detail: String, onStartScan: () -> Unit) {
     LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
@@ -614,12 +692,14 @@ private fun ScanLauncherSheet(
                     title = preset.title,
                     detail = preset.description,
                     value = preset.path,
-                    onClick = {
-                        requestNotificationPermission()
-                        vm.startPreset(preset)
-                        close()
-                        openHome()
-                    },
+                    onClick = if (rootReady) {
+                        {
+                            requestNotificationPermission()
+                            vm.startPreset(preset)
+                            close()
+                            openHome()
+                        }
+                    } else null,
                     selected = custom == preset.path,
                     leading = { Text(preset.title.take(1).ifBlank { "•" }, fontWeight = FontWeight.Bold) },
                     modifier = Modifier.fillMaxWidth(),
@@ -652,6 +732,9 @@ private fun ScanLauncherSheet(
                                 enabled = rootReady,
                                 modifier = Modifier.weight(1f),
                             ) { Text("Start scan") }
+                        }
+                        scanActionDisabledReason(rootReady, rootFailure)?.let { reason ->
+                            DisabledReasonNotice(reason)
                         }
                     }
                 }
@@ -1318,6 +1401,9 @@ private fun ActionablePathCard(
                 OutlinedButton(onClick = reveal, Modifier.weight(1f)) { Text("Explorer") }
             }
             Button(onClick = delete, enabled = deletionEnabled, modifier = Modifier.fillMaxWidth()) { Text("Delete permanently…") }
+            if (!deletionEnabled) {
+                DisabledReasonNotice(staleDeletionDisabledReason())
+            }
         }
     }
 }
@@ -1344,6 +1430,9 @@ private fun StorageCompositionActions(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = selectAll, enabled = enabled, modifier = Modifier.weight(1f)) { Text("Select all") }
                 Button(onClick = planDeletion, enabled = enabled, modifier = Modifier.weight(1f)) { Text("Plan deletion") }
+            }
+            if (!enabled) {
+                DisabledReasonNotice(staleDeletionDisabledReason())
             }
             if (slice.sourceLabels.size > 1) {
                 HorizontalDivider()
@@ -2775,6 +2864,48 @@ private fun CleanupHistoryScreen(modifier: Modifier, operations: List<CleanupOpe
 
 
 @Composable
+private fun DebugOverlayHud(
+    destination: DustDestination,
+    wide: Boolean,
+    session: ScanSessionEntity?,
+    rootState: RootUiState,
+    selectedCount: Int,
+    scanDataStale: Boolean,
+    moduleReport: RootModuleReport?,
+    eventCount: Int,
+    openDebug: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.clickable(onClick = openDebug),
+        shape = MaterialTheme.shapes.large,
+        color = DustModernColors.SurfaceHighest,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        tonalElevation = 6.dp,
+        shadowElevation = 6.dp,
+    ) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text("Debug overlay", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+            Text(
+                "${destination.shortLabel} · ${if (wide) "wide" else "compact"} · scan=${session?.status?.lowercase() ?: "none"}",
+                style = MaterialTheme.typography.labelSmall,
+            )
+            Text(
+                "root=${rootUiStateLabel(rootState)} · stale=$scanDataStale · selected=$selectedCount",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                "modules=${moduleReport?.diagnostic?.status?.name?.lowercase() ?: "unknown"} · events=$eventCount",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+
+@Composable
 private fun DebugWorkbenchScreen(
     modifier: Modifier,
     destination: DustDestination,
@@ -2794,6 +2925,8 @@ private fun DebugWorkbenchScreen(
     events: List<DebugEvent>,
     probeResults: List<DebugProbeResult>,
     exportResult: DebugExportResult?,
+    debugOverlayVisible: Boolean,
+    toggleDebugOverlay: () -> Unit,
     runProbe: (DebugProbeTarget) -> Unit,
     runAllProbes: () -> Unit,
     clearEvents: () -> Unit,
@@ -2853,6 +2986,22 @@ private fun DebugWorkbenchScreen(
                     MetricRow("Module diagnostic", moduleReport?.diagnostic?.message ?: "not loaded")
                 }
             }
+        }
+        item {
+            DustSectionHeader("UI debug overlay", subtitle = "A tiny floating HUD that explains route, layout, scan, root, stale-lock, module-scope, and selection state while you move through the app.")
+        }
+        item {
+            DustStatusNotice(
+                title = if (debugOverlayVisible) "UI debug overlay is visible" else "UI debug overlay is hidden",
+                detail = if (debugOverlayVisible) {
+                    "Tap the floating HUD from any screen to return here. It is diagnostic-only and does not change scan or cleanup state."
+                } else {
+                    "Show a compact overlay for debugging disabled buttons, stale locks, route mapping, module scope, and current scan state."
+                },
+                tone = if (debugOverlayVisible) DustNoticeTone.Success else DustNoticeTone.Warning,
+                actionLabel = if (debugOverlayVisible) "Hide overlay" else "Show overlay",
+                onAction = toggleDebugOverlay,
+            )
         }
         item {
             DustSectionHeader("Export debug bundle", subtitle = "Share a ZIP with debug state, timeline, probes, scan summaries, root diagnostics, cleanup state, and recommendation summaries.")
@@ -3338,6 +3487,9 @@ private fun CleanupReviewSheet(review: CleanupReview?, close: () -> Unit, execut
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(checked = confirmed, onCheckedChange = { confirmed = it })
                         Text("I understand this deletion is irreversible.", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                    }
+                    cleanupExecutionDisabledReason(review, confirmed)?.let { reason ->
+                        DisabledReasonNotice(reason)
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = close, Modifier.weight(1f)) { Text("Cancel") }

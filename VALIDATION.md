@@ -85,3 +85,9 @@ Expected source-contract coverage:
 - Safe export mode redacts `/data` and `/data/adb/modules` path samples.
 - The Debug workbench exposes Export debug bundle, export mode chips, and a share action.
 - The bundle writer emits JSON/JSONL entries for report, timeline, probes, scan, root, navigation, cleanup, recommendations, modules, and app info.
+
+## Debug Workbench Phase 13 validation notes
+- Compile and unit tests should include `DebugWorkbenchSourceContractTest`.
+- Verify the Debug workbench exposes the UI debug overlay toggle.
+- Verify the overlay is diagnostic-only and links back to Debug workbench.
+- Verify disabled export/certification/scan/deletion actions include explicit reasons.

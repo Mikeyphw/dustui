@@ -336,3 +336,9 @@ Probe results must be visible as cards inside Debug Workbench and must also reco
 - Path-aware and Full diagnostic export modes may include paths for debugging, but must never include file contents.
 - Export bundles must include timeline events, probe results, scan summary, root diagnostics, navigation state, cleanup state, recommendation summary, module diagnostics, and app info.
 - Exporting a bundle must not execute deletion, mutate scans, weaken stale-scan locks, or bypass protected-path/fingerprint checks.
+
+### Debug Workbench Phase 13 · UI overlay and disabled actions
+- The UI debug overlay is opt-in from Debug workbench and diagnostic-only.
+- The overlay must show route/layout/scan/root/stale/selection/module/event state and tapping it must return to Debug workbench.
+- Disabled scan, export, certification, stale-deletion, and final deletion actions must expose plain-language reasons instead of silent disabled controls.
+- Disabled explanations must not loosen cleanup safeguards, protected-path blocking, fingerprint checks, or stale-scan locks.

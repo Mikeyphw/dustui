@@ -72,3 +72,11 @@ Privacy contract:
 3. Secret-like evidence values are redacted in every mode.
 4. Export creation must record a structured debug timeline event.
 5. Export failure must record a structured error event and surface a user-visible message.
+
+## Phase 13 · UI overlay and disabled-action explanations
+
+Phase 13 adds a diagnostic-only UI debug overlay and explicit disabled-action explanations.
+
+The overlay is toggled from **Tools → Debug workbench → UI debug overlay**. When visible, it floats above the current screen and shows the current destination, compact/wide layout, scan status, root state, stale cleanup lock, selected path count, module diagnostic status, and trace-event count. Tapping the overlay opens the Debug workbench. It does not start scans, execute cleanup, bypass stale locks, or mutate selection state.
+
+Disabled actions must explain why they are blocked when the reason affects support/debuggability. The first locked surfaces are CSV export, device certification, scan start/check access when root is unavailable, stale-scan deletion actions, and final permanent-deletion execution. Messages should tell the user the exact missing precondition, such as starting a scan, retrying root diagnostics, rescanning after cleanup, or confirming irreversible deletion.

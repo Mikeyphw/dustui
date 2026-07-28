@@ -136,6 +136,37 @@ class DebugWorkbenchSourceContractTest {
         assertTrue(app.contains("Raw paths are omitted"))
     }
 
+
+    @Test fun `phase 13 exposes a floating UI debug overlay toggle`() {
+        val app = source("src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt")
+        val vm = source("src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt")
+
+        assertTrue(vm.contains("val debugOverlayVisible: StateFlow<Boolean>"))
+        assertTrue(vm.contains("fun setDebugOverlayVisible(visible: Boolean)"))
+        assertTrue(vm.contains("fun toggleDebugOverlay()"))
+        assertTrue(vm.contains("ui_debug_overlay_enabled"))
+        assertTrue(app.contains("DebugOverlayHud("))
+        assertTrue(app.contains("UI debug overlay"))
+        assertTrue(app.contains("Tap the floating HUD from any screen"))
+        assertTrue(app.contains("root=\${rootUiStateLabel(rootState)}"))
+        assertTrue(app.contains("modules=\${moduleReport?.diagnostic?.status?.name?.lowercase() ?: \"unknown\"}"))
+    }
+
+    @Test fun `phase 13 disabled actions explain why they are unavailable`() {
+        val app = source("src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt")
+
+        assertTrue(app.contains("private data class DisabledActionReason"))
+        assertTrue(app.contains("private fun DisabledReasonNotice"))
+        assertTrue(app.contains("DisabledMenuText(\"Export CSV\", exportCsvDisabledReason(session))"))
+        assertTrue(app.contains("DisabledMenuText(\"Run certification\", certificationDisabledReason(session))"))
+        assertTrue(app.contains("Start a scan before exporting indexed entries."))
+        assertTrue(app.contains("Root identity is not available yet. Retry root diagnostics before scanning."))
+        assertTrue(app.contains("Scan results are stale after cleanup. Run a new scan before selecting paths or creating a deletion plan."))
+        assertTrue(app.contains("Confirmation required"))
+        assertTrue(app.contains("Check the irreversible-deletion confirmation before executing the reviewed plan."))
+        assertTrue(app.contains("onClick = if (rootReady)"))
+    }
+
     private fun source(relative: String): String = File(projectRoot(), "android/app/$relative").readText()
 
     private fun projectRoot(): File {
