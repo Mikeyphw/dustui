@@ -1,0 +1,127 @@
+{
+  "applied_at": "2026-07-28T17:44:45.962051Z",
+  "artifact": "/home/mike/Downloads/dustui_android_debug_workbench_phase14_final_contract_overlay.zip",
+  "artifact_name": "dustui_android_debug_workbench_phase14_final_contract_overlay.zip",
+  "type": "overlay",
+  "sha256": "58a7462c0ecfcf9abcad1bbc1de9b327860f132656045db140e40e328f462fb9",
+  "status": "ok",
+  "validation_status": "ok",
+  "commit_message": "Seal debug workbench contract",
+  "commit_hash": "",
+  "file_count": 8,
+  "change_counts": {
+    "add": 3,
+    "modify": 5
+  },
+  "manifest": {
+    "apply": {
+      "atomic": true,
+      "commit": {
+        "enabled": true,
+        "message": "Seal debug workbench contract",
+        "strategy": "single"
+      },
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false
+    },
+    "baseline": {
+      "commit": "1f647de",
+      "description": "DustUI Android debug baseline after Phase 13 UI overlay and disabled reasons"
+    },
+    "created_by": "OpenAI ChatGPT",
+    "description": "Seal the Debug Workbench roadmap with final docs, source contracts, validation script, and release checklist coverage without runtime safety changes.",
+    "inventory": {
+      "entries": [
+        {
+          "action": "modify",
+          "path": "CHANGELOG.md",
+          "sha256": "6c5ba95065e106b838be6bf852c21edc6e2b052592e0be2a9bfbbb6edcf22878",
+          "size": 20246,
+          "source_sha256": "bf876bbdae58ef5b245bc8ee6139e25cdea0fa114676171fdc2fab04385acd74"
+        },
+        {
+          "action": "modify",
+          "path": "RELEASE_CHECKLIST.md",
+          "sha256": "f6386241339d73a0c01a03d6b11fd5f2d097efedd1e010668d7e6aa592ee9bd7",
+          "size": 19533,
+          "source_sha256": "1d6831b8cc2e42b8e581e11fe1b6cb4ee5fb32f85110c0917f120bf79fe9ccda"
+        },
+        {
+          "action": "modify",
+          "path": "UI_UX_CONTRACT.md",
+          "sha256": "8e263c803bb86b9dea63c24707efca61d6ae5e952847f72f6b43caa2ee2adfaf",
+          "size": 29476,
+          "source_sha256": "3e19ee7dee7aad796c00183a5bc4815181784dcc3b7d5ae01ab2ad7416e4a71b"
+        },
+        {
+          "action": "modify",
+          "path": "VALIDATION.md",
+          "sha256": "218df6e063df1c85a7a040889f533e6dd833df4c669e7b4cb6bb052e19a64241",
+          "size": 4283,
+          "source_sha256": "75f6dcfa968d2cb2cfa71fde0db725df1c7ec9e836723430f4c9a5b8cd680559"
+        },
+        {
+          "action": "add",
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchFinalContractTest.kt",
+          "sha256": "951aa4fc935b7bb2bcfb8cfa32c20b8cd0bb4b54199358cdaef8da0aa41edf2d",
+          "size": 4528
+        },
+        {
+          "action": "add",
+          "path": "android/scripts/validate-debug-workbench-contract.py",
+          "sha256": "ecb4d2c3f7ada7e160541b6b7ca4330f6628ee49880e52976450d4f8d9edcd08",
+          "size": 4590
+        },
+        {
+          "action": "modify",
+          "path": "docs/ANDROID_DEBUG_WORKBENCH.md",
+          "sha256": "a2df9541dfa4f647a9721a4aa41427d999163a458d96040332378b2296a97c38",
+          "size": 6638,
+          "source_sha256": "47937deb61f9313e17f07c2852cacecd7f32386198d7265f2a24a804593b69a7"
+        },
+        {
+          "action": "add",
+          "path": "docs/ANDROID_DEBUG_WORKBENCH_FINAL_SEAL.md",
+          "sha256": "9b85d08f835c9e5f481e459a4be4e2e4702c550a890d544ce5424d3d5b066e75",
+          "size": 2733
+        }
+      ],
+      "format": 1
+    },
+    "name": "DustUI Debug Workbench Phase 14 Final Contract Seal",
+    "notes": [
+      "This is the final debug contract phase, so validation is required.",
+      "Reserved artifact metadata is intentionally not listed in inventory.",
+      "Runtime scan, root, cleanup, export, and navigation behavior is unchanged except for source contracts and docs."
+    ],
+    "repository": {
+      "name": "dustui"
+    },
+    "schema_version": 2,
+    "target": "dustui_android",
+    "type": "overlay",
+    "validation": {
+      "build": true,
+      "execution_environment": "auto",
+      "expected": {
+        "build": "pass",
+        "maximum_warnings": 0,
+        "restore": "pass",
+        "tests": "pass"
+      },
+      "required": true,
+      "restore": true,
+      "rollback_on_failure": true,
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "6018a2b08b467382a2d59e87808c3f83b53679022f23725a31d3a729754424ad",
+        "timeout_seconds": 3600
+      },
+      "test": true
+    },
+    "version": "1.0.0"
+  },
+  "history_id": "a4e315570c6e42a99c392dd7c25f9bd8"
+}

@@ -80,3 +80,19 @@ Phase 13 adds a diagnostic-only UI debug overlay and explicit disabled-action ex
 The overlay is toggled from **Tools → Debug workbench → UI debug overlay**. When visible, it floats above the current screen and shows the current destination, compact/wide layout, scan status, root state, stale cleanup lock, selected path count, module diagnostic status, and trace-event count. Tapping the overlay opens the Debug workbench. It does not start scans, execute cleanup, bypass stale locks, or mutate selection state.
 
 Disabled actions must explain why they are blocked when the reason affects support/debuggability. The first locked surfaces are CSV export, device certification, scan start/check access when root is unavailable, stale-scan deletion actions, and final permanent-deletion execution. Messages should tell the user the exact missing precondition, such as starting a scan, retrying root diagnostics, rescanning after cleanup, or confirming irreversible deletion.
+
+## Phase 14 · Final debug contract seal
+
+Phase 14 seals the Debug Workbench roadmap after Phases 9 through 13. It adds final documentation, source contracts, and a source audit script without changing runtime scan, root, cleanup, export, or navigation behavior.
+
+Final contract:
+
+- Debug workbench remains reachable from Tools before scan data exists.
+- The timeline remains bounded to 500 in-memory events and redacts sensitive evidence before storage.
+- Diagnostic probes remain evidence-only and must not create deletion plans, execute cleanup, or mutate scan state.
+- Export bundles keep Safe as the default mode, never include file contents, and keep path exposure mode-specific.
+- The UI debug overlay remains opt-in and may only report route/layout/scan/root/selection/module/event state.
+- Disabled-action explanations may clarify missing preconditions, but must not weaken root, stale-scan, protected-path, fingerprint, or irreversible-confirmation gates.
+
+The source audit is `android/scripts/validate-debug-workbench-contract.py`. It is intentionally source-level so Devtool can run it quickly before the heavier Android build/test/lint gates.
+

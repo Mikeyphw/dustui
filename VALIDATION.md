@@ -91,3 +91,20 @@ Expected source-contract coverage:
 - Verify the Debug workbench exposes the UI debug overlay toggle.
 - Verify the overlay is diagnostic-only and links back to Debug workbench.
 - Verify disabled export/certification/scan/deletion actions include explicit reasons.
+
+## Debug Workbench final validation
+
+For Phase 14 and later Debug Workbench contract changes, run the source audit before Android gates:
+
+```bash
+python3 android/scripts/validate-debug-workbench-contract.py "$REPO"
+```
+
+Recommended Devtool gate:
+
+```bash
+devtool   --copy   --auto-hud   --hud-mode desktop-window   --yes   -r "$REPO"   --target dustui_android   apply-overlay "$HOME/Downloads/dustui_android_debug_workbench_phase14_final_contract_overlay.zip"   --validate   --task :app:compileDebugKotlin   --task :app:testDebugUnitTest   --task :app:lintDebug
+```
+
+Expected result: all selected tasks pass with zero Devtool diagnostics warnings and zero errors.
+

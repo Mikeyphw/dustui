@@ -1,3 +1,10 @@
+## Debug Workbench · Phase 14 final contract seal
+
+- Sealed the Debug Workbench roadmap after Phases 9 through 13 with final docs, source contracts, release checklist items, and a source-level audit script.
+- Locked Debug workbench as a scan-independent Tools surface with Live state, Trace timeline, Diagnostic probes, Export debug bundle, and UI debug overlay sections.
+- Locked the safety contract that probes, exports, overlays, and disabled-action explanations remain diagnostic-only and never bypass cleanup safeguards.
+- Added final contract tests covering route behavior, bounded/redacted event storage, Safe export path policy, no-file-content export behavior, and the final source audit.
+
 
 ### Debug Workbench · Phase 12 export bundle
 

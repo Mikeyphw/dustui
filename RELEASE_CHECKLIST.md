@@ -258,3 +258,14 @@ Ship only when `SHIP_STATUS.md` says `SHIP` or when every warning listed under `
 - [ ] Confirm the overlay reports route, layout, scan, root, stale lock, selection, module status, and event count.
 - [ ] Confirm tapping the overlay returns to Debug workbench.
 - [ ] Confirm disabled actions explain missing scan, root, stale-lock, or confirmation preconditions.
+
+### Debug Workbench Phase 14 final seal checks
+- [ ] Run `python3 android/scripts/validate-debug-workbench-contract.py "$REPO"`.
+- [ ] Confirm Tools exposes Debug workbench before first scan.
+- [ ] Confirm Live state, Trace timeline, Diagnostic probes, Export debug bundle, and UI debug overlay sections are visible.
+- [ ] Confirm Safe export omits raw paths and every export mode excludes file contents.
+- [ ] Confirm probes do not execute cleanup, create deletion plans, or mutate scan state.
+- [ ] Confirm stale-scan, protected-path, fingerprint, and irreversible-confirmation gates still block destructive paths.
+- [ ] Confirm disabled actions explain missing scan, root, stale-lock, or confirmation preconditions.
+- [ ] Confirm `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, and `:app:lintDebug` pass with zero diagnostics warnings and zero errors.
+

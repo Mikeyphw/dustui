@@ -342,3 +342,18 @@ Probe results must be visible as cards inside Debug Workbench and must also reco
 - The overlay must show route/layout/scan/root/stale/selection/module/event state and tapping it must return to Debug workbench.
 - Disabled scan, export, certification, stale-deletion, and final deletion actions must expose plain-language reasons instead of silent disabled controls.
 - Disabled explanations must not loosen cleanup safeguards, protected-path blocking, fingerprint checks, or stale-scan locks.
+
+## Debug Workbench final contract
+
+Debug Workbench is a Tools-scoped diagnostic surface, not an alternate cleanup path.
+
+Required behavior:
+
+- `DEBUG` must remain reachable through Tools and wide navigation while staying scan-independent.
+- The Debug Workbench must show Live state, Trace timeline, Diagnostic probes, Export debug bundle, and UI debug overlay controls.
+- Debug events must stay bounded and redacted before storage.
+- Probes must remain evidence-only and must not execute cleanup, create deletion plans, bypass stale locks, or bypass protected-path checks.
+- Export bundles must default to Safe mode, must never include file contents, and must keep raw paths out of Safe mode.
+- The floating UI debug overlay must be opt-in, diagnostic-only, and must route back to Debug Workbench when tapped.
+- Disabled-action reason copy may explain blocked actions, but must not convert a blocked action into an executable one.
+
