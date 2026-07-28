@@ -36,6 +36,72 @@ data class DebugEvent(
     val evidence: Map<String, String> = emptyMap(),
 )
 
+
+enum class DebugProbeGroup {
+    Root,
+    Scan,
+    Module,
+    Cleanup,
+    Search,
+}
+
+enum class DebugProbeStatus {
+    Pass,
+    Warning,
+    Failed,
+}
+
+enum class DebugProbeTarget(val title: String, val group: DebugProbeGroup, val detail: String) {
+    RootService(
+        title = "Root service",
+        group = DebugProbeGroup.Root,
+        detail = "Checks root binder identity, UID, backend, scanner, and SELinux evidence.",
+    ),
+    DataRootAccess(
+        title = "/data access",
+        group = DebugProbeGroup.Root,
+        detail = "Runs a dry preflight against /data without starting a scan.",
+    ),
+    ModuleRootAccess(
+        title = "/data/adb/modules access",
+        group = DebugProbeGroup.Module,
+        detail = "Runs a dry preflight against the module source root.",
+    ),
+    ActiveScan(
+        title = "Active scan state",
+        group = DebugProbeGroup.Scan,
+        detail = "Explains whether the latest scan session can feed Home, Files, Clean, and Tools.",
+    ),
+    ZeroFileScan(
+        title = "Zero-file scan reason",
+        group = DebugProbeGroup.Scan,
+        detail = "Flags completed scans that indexed zero entries so they never look successful silently.",
+    ),
+    ModuleScope(
+        title = "Module scope",
+        group = DebugProbeGroup.Module,
+        detail = "Checks whether module values came from /data/adb/modules instead of the wrong scan root.",
+    ),
+    DeletionReadiness(
+        title = "Deletion readiness",
+        group = DebugProbeGroup.Cleanup,
+        detail = "Explains why review-first permanent deletion is available or blocked.",
+    ),
+    SearchReadiness(
+        title = "Search readiness",
+        group = DebugProbeGroup.Search,
+        detail = "Checks whether whole-scan search has a scan and indexed entries to search.",
+    ),
+}
+
+data class DebugProbeResult(
+    val target: DebugProbeTarget,
+    val status: DebugProbeStatus,
+    val message: String,
+    val evidence: Map<String, String> = emptyMap(),
+    val updatedAtMillis: Long = System.currentTimeMillis(),
+)
+
 class DebugEventStore(private val limit: Int = DUST_DEBUG_EVENT_LIMIT) {
     private var nextId = 1L
     private val _events = MutableStateFlow<List<DebugEvent>>(emptyList())

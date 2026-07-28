@@ -51,6 +51,10 @@ import com.mikeyphw.dustui.data.DeviceCertificationReport
 import com.mikeyphw.dustui.data.DebugCategory
 import com.mikeyphw.dustui.data.DebugEvent
 import com.mikeyphw.dustui.data.DebugEventStore
+import com.mikeyphw.dustui.data.ModuleDiagnosticStatus
+import com.mikeyphw.dustui.data.DebugProbeTarget
+import com.mikeyphw.dustui.data.DebugProbeStatus
+import com.mikeyphw.dustui.data.DebugProbeResult
 import com.mikeyphw.dustui.data.DebugSeverity
 import com.mikeyphw.dustui.data.RootPathInspection
 import com.mikeyphw.dustui.data.RootModuleReport
@@ -95,6 +99,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
 
     private val debugEventStore = DebugEventStore()
     val debugEvents: StateFlow<List<DebugEvent>> = debugEventStore.events
+    private val _debugProbeResults = MutableStateFlow<List<DebugProbeResult>>(emptyList())
+    val debugProbeResults: StateFlow<List<DebugProbeResult>> = _debugProbeResults
 
     private fun recordDebugEvent(
         category: DebugCategory,
@@ -130,6 +136,305 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         debugEventStore.clear()
         recordDebugEvent(DebugCategory.App, DebugSeverity.Info, "debug_timeline_cleared", "Debug timeline cleared")
     }
+
+    fun runAllDebugProbes() {
+        recordDebugEvent(DebugCategory.App, DebugSeverity.Info, "debug_probes_run_all", "Running every diagnostic probe")
+        DebugProbeTarget.entries.forEach(::runDebugProbe)
+    }
+
+    fun runDebugProbe(target: DebugProbeTarget) {
+        recordDebugEvent(
+            target.debugCategory(),
+            DebugSeverity.Trace,
+            "debug_probe_started",
+            "Started ${target.title} probe",
+            mapOf("probe" to target.name, "group" to target.group.name),
+        )
+        viewModelScope.launch {
+            val result = evaluateDebugProbe(target)
+            _debugProbeResults.value = (_debugProbeResults.value.filterNot { it.target == target } + result)
+                .sortedBy { it.target.ordinal }
+            recordDebugEvent(
+                target.debugCategory(),
+                when (result.status) {
+                    DebugProbeStatus.Pass -> DebugSeverity.Info
+                    DebugProbeStatus.Warning -> DebugSeverity.Warning
+                    DebugProbeStatus.Failed -> DebugSeverity.Error
+                },
+                "debug_probe_finished",
+                result.message,
+                result.evidence + ("probe" to target.name),
+            )
+        }
+    }
+
+    private suspend fun evaluateDebugProbe(target: DebugProbeTarget): DebugProbeResult = when (target) {
+        DebugProbeTarget.RootService -> rootServiceProbe()
+        DebugProbeTarget.DataRootAccess -> preflightProbe(DebugProbeTarget.DataRootAccess, "/data")
+        DebugProbeTarget.ModuleRootAccess -> preflightProbe(DebugProbeTarget.ModuleRootAccess, "/data/adb/modules")
+        DebugProbeTarget.ActiveScan -> activeScanProbe()
+        DebugProbeTarget.ZeroFileScan -> zeroFileScanProbe()
+        DebugProbeTarget.ModuleScope -> moduleScopeProbe()
+        DebugProbeTarget.DeletionReadiness -> deletionReadinessProbe()
+        DebugProbeTarget.SearchReadiness -> searchReadinessProbe()
+    }
+
+    private suspend fun rootServiceProbe(): DebugProbeResult = runCatching { repository.rootServiceInfo() }
+        .fold(
+            onSuccess = { info ->
+                val ready = info.ok && info.uid == 0
+                DebugProbeResult(
+                    target = DebugProbeTarget.RootService,
+                    status = if (ready) DebugProbeStatus.Pass else DebugProbeStatus.Warning,
+                    message = if (ready) "Root service is available as UID 0" else (info.message ?: "Root service is not running as UID 0"),
+                    evidence = mapOf(
+                        "ok" to info.ok.toString(),
+                        "uid" to info.uid.toString(),
+                        "backend" to info.backend,
+                        "scanner" to info.scanner,
+                        "selinux" to (info.selinuxEnforcing?.let { if (it) "enforcing" else "permissive" } ?: "unknown"),
+                    ),
+                )
+            },
+            onFailure = { error ->
+                DebugProbeResult(
+                    target = DebugProbeTarget.RootService,
+                    status = DebugProbeStatus.Failed,
+                    message = error.message ?: "Unable to bind the root service",
+                    evidence = mapOf("error" to error::class.java.simpleName),
+                )
+            },
+        )
+
+    private suspend fun preflightProbe(target: DebugProbeTarget, rootPath: String): DebugProbeResult = runCatching {
+        repository.preflightScan(
+            ScanRequest(
+                rootPath = rootPath,
+                maxDepth = 1,
+                maxEntries = 64,
+                includeHidden = true,
+            ).validated(),
+        )
+    }.fold(
+        onSuccess = { preflight ->
+            DebugProbeResult(
+                target = target,
+                status = if (preflight.ok) DebugProbeStatus.Pass else DebugProbeStatus.Warning,
+                message = if (preflight.ok) "${target.title} preflight passed" else preflight.message,
+                evidence = mapOf(
+                    "requestedPath" to preflight.requestedPath,
+                    "ok" to preflight.ok.toString(),
+                    "message" to preflight.message,
+                    "exists" to preflight.exists.toString(),
+                    "directory" to preflight.directory.toString(),
+                    "opened" to preflight.opened.toString(),
+                    "hasChildren" to (preflight.hasChildren?.toString() ?: "unknown"),
+                    "code" to preflight.code,
+                ),
+            )
+        },
+        onFailure = { error ->
+            DebugProbeResult(
+                target = target,
+                status = DebugProbeStatus.Failed,
+                message = error.message ?: "${target.title} preflight failed",
+                evidence = mapOf("requestedPath" to rootPath, "error" to error::class.java.simpleName),
+            )
+        },
+    )
+
+    private fun activeScanProbe(): DebugProbeResult {
+        val session = latestSession.value
+        return when {
+            session == null -> DebugProbeResult(
+                target = DebugProbeTarget.ActiveScan,
+                status = DebugProbeStatus.Warning,
+                message = "No scan session is loaded yet",
+                evidence = mapOf("scanId" to "none"),
+            )
+            session.status == "COMPLETED" -> DebugProbeResult(
+                target = DebugProbeTarget.ActiveScan,
+                status = DebugProbeStatus.Pass,
+                message = "Latest scan completed and can feed app workbenches",
+                evidence = scanSessionEvidence(session),
+            )
+            session.status == "RUNNING" -> DebugProbeResult(
+                target = DebugProbeTarget.ActiveScan,
+                status = DebugProbeStatus.Warning,
+                message = "A scan is still running; values may update as entries arrive",
+                evidence = scanSessionEvidence(session),
+            )
+            else -> DebugProbeResult(
+                target = DebugProbeTarget.ActiveScan,
+                status = DebugProbeStatus.Failed,
+                message = session.errorMessage ?: "Latest scan ended with status ${session.status}",
+                evidence = scanSessionEvidence(session),
+            )
+        }
+    }
+
+    private fun zeroFileScanProbe(): DebugProbeResult {
+        val session = latestSession.value
+        val entries = allEntries.value.size
+        val diagnostics = _scanDiagnostics.value
+        return when {
+            session == null -> DebugProbeResult(
+                target = DebugProbeTarget.ZeroFileScan,
+                status = DebugProbeStatus.Warning,
+                message = "No scan exists, so zero-file state cannot be evaluated yet",
+                evidence = mapOf("scanId" to "none"),
+            )
+            session.status == "COMPLETED" && entries == 0 -> DebugProbeResult(
+                target = DebugProbeTarget.ZeroFileScan,
+                status = DebugProbeStatus.Failed,
+                message = "Completed scan indexed zero entries; inspect preflight, truncation, and root evidence",
+                evidence = scanSessionEvidence(session) + mapOf(
+                    "indexedEntries" to entries.toString(),
+                    "warnings" to (diagnostics?.warningCount ?: 0).toString(),
+                    "errors" to (diagnostics?.errorCount ?: 0).toString(),
+                ),
+            )
+            session.status == "COMPLETED" -> DebugProbeResult(
+                target = DebugProbeTarget.ZeroFileScan,
+                status = DebugProbeStatus.Pass,
+                message = "Completed scan indexed entries; zero-file guard is clear",
+                evidence = scanSessionEvidence(session) + ("indexedEntries" to entries.toString()),
+            )
+            else -> DebugProbeResult(
+                target = DebugProbeTarget.ZeroFileScan,
+                status = DebugProbeStatus.Warning,
+                message = "Wait for scan completion before evaluating zero-file behavior",
+                evidence = scanSessionEvidence(session) + ("indexedEntries" to entries.toString()),
+            )
+        }
+    }
+
+    private fun moduleScopeProbe(): DebugProbeResult {
+        val report = _moduleReport.value
+        val diagnostic = report?.diagnostic
+        val status = diagnostic?.status
+        return when (status) {
+            ModuleDiagnosticStatus.READY -> DebugProbeResult(
+                target = DebugProbeTarget.ModuleScope,
+                status = DebugProbeStatus.Pass,
+                message = "Module values are backed by module-source scan evidence",
+                evidence = mapOf(
+                    "status" to status.name,
+                    "currentScanRoot" to (diagnostic.currentScanRoot ?: "none"),
+                    "expectedRoot" to diagnostic.expectedRoot,
+                    "modules" to report.modules.size.toString(),
+                ),
+            )
+            ModuleDiagnosticStatus.ROOT_ACCESS_FAILED, ModuleDiagnosticStatus.SCAN_FAILED -> DebugProbeResult(
+                target = DebugProbeTarget.ModuleScope,
+                status = DebugProbeStatus.Failed,
+                message = diagnostic.message,
+                evidence = moduleDiagnosticEvidence(diagnostic),
+            )
+            null -> DebugProbeResult(
+                target = DebugProbeTarget.ModuleScope,
+                status = DebugProbeStatus.Warning,
+                message = "Module diagnostics have not loaded yet. Scan /data/adb/modules for source-backed values.",
+                evidence = mapOf("expectedRoot" to "/data/adb/modules"),
+            )
+            else -> DebugProbeResult(
+                target = DebugProbeTarget.ModuleScope,
+                status = DebugProbeStatus.Warning,
+                message = diagnostic.message,
+                evidence = moduleDiagnosticEvidence(diagnostic),
+            )
+        }
+    }
+
+    private fun deletionReadinessProbe(): DebugProbeResult {
+        val session = latestSession.value
+        val selected = _selectedPaths.value.size
+        val review = _cleanupReview.value
+        return when {
+            session == null -> DebugProbeResult(
+                target = DebugProbeTarget.DeletionReadiness,
+                status = DebugProbeStatus.Warning,
+                message = "Run a scan before planning review-first deletion",
+                evidence = mapOf("scanId" to "none", "selectedPaths" to selected.toString()),
+            )
+            _scanDataStale.value -> DebugProbeResult(
+                target = DebugProbeTarget.DeletionReadiness,
+                status = DebugProbeStatus.Failed,
+                message = "Current scan is stale after cleanup. Rescan before creating a new deletion plan.",
+                evidence = mapOf("scanId" to session.id, "selectedPaths" to selected.toString(), "stale" to "true"),
+            )
+            selected == 0 && review == null -> DebugProbeResult(
+                target = DebugProbeTarget.DeletionReadiness,
+                status = DebugProbeStatus.Warning,
+                message = "Select exact indexed paths before opening deletion review",
+                evidence = mapOf("scanId" to session.id, "selectedPaths" to "0"),
+            )
+            else -> DebugProbeResult(
+                target = DebugProbeTarget.DeletionReadiness,
+                status = DebugProbeStatus.Pass,
+                message = if (review != null) "A review-first deletion plan is open" else "Selected paths can be sent to deletion review",
+                evidence = mapOf(
+                    "scanId" to session.id,
+                    "selectedPaths" to selected.toString(),
+                    "reviewOpen" to (review != null).toString(),
+                    "accepted" to (review?.accepted?.size ?: 0).toString(),
+                    "blocked" to (review?.blocked?.size ?: 0).toString(),
+                ),
+            )
+        }
+    }
+
+    private fun searchReadinessProbe(): DebugProbeResult {
+        val session = latestSession.value
+        val entries = allEntries.value.size
+        return when {
+            session == null -> DebugProbeResult(
+                target = DebugProbeTarget.SearchReadiness,
+                status = DebugProbeStatus.Warning,
+                message = "Run a scan before using whole-scan search",
+                evidence = mapOf("scanId" to "none"),
+            )
+            entries == 0 -> DebugProbeResult(
+                target = DebugProbeTarget.SearchReadiness,
+                status = DebugProbeStatus.Warning,
+                message = "Whole-scan search has no indexed entries to search",
+                evidence = scanSessionEvidence(session) + ("indexedEntries" to "0"),
+            )
+            else -> DebugProbeResult(
+                target = DebugProbeTarget.SearchReadiness,
+                status = DebugProbeStatus.Pass,
+                message = "Whole-scan search has indexed entries available",
+                evidence = scanSessionEvidence(session) + ("indexedEntries" to entries.toString()),
+            )
+        }
+    }
+
+    private fun DebugProbeTarget.debugCategory(): DebugCategory = when (group) {
+        com.mikeyphw.dustui.data.DebugProbeGroup.Root -> DebugCategory.Root
+        com.mikeyphw.dustui.data.DebugProbeGroup.Scan -> DebugCategory.Scan
+        com.mikeyphw.dustui.data.DebugProbeGroup.Module -> DebugCategory.Module
+        com.mikeyphw.dustui.data.DebugProbeGroup.Cleanup -> DebugCategory.Deletion
+        com.mikeyphw.dustui.data.DebugProbeGroup.Search -> DebugCategory.Search
+    }
+
+    private fun scanSessionEvidence(session: ScanSessionEntity): Map<String, String> = mapOf(
+        "scanId" to session.id,
+        "rootPath" to session.rootPath,
+        "status" to session.status,
+        "totalBytes" to session.totalBytes.toString(),
+        "scannedItems" to session.scannedItems.toString(),
+        "scannedBytes" to session.scannedBytes.toString(),
+        "warningCount" to session.warningCount.toString(),
+        "message" to (session.errorMessage ?: "none"),
+    )
+
+    private fun moduleDiagnosticEvidence(diagnostic: com.mikeyphw.dustui.data.ModuleAnalysisDiagnostic): Map<String, String> = mapOf(
+        "status" to diagnostic.status.name,
+        "currentScanRoot" to (diagnostic.currentScanRoot ?: "none"),
+        "expectedRoot" to diagnostic.expectedRoot,
+        "modulePathAccessible" to diagnostic.modulePathAccessible.toString(),
+        "rootCode" to (diagnostic.rootCode ?: "none"),
+    )
 
     private val _explorerPath = MutableStateFlow<String?>(null)
     val explorerPath: StateFlow<String?> = _explorerPath

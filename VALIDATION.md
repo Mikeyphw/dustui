@@ -57,3 +57,16 @@ For Phase 9–10 Debug Workbench changes, use targeted Android validation tasks 
 ```
 
 Before final debug roadmap sealing, include `:app:assembleDebug` and `:app:lintDebug` as well.
+
+## Debug Workbench Phase 11 validation
+
+Recommended quick gates after applying the Phase 11 diagnostic probes overlay:
+
+```bash
+devtool -r "$REPO" --target dustui_android validate continue \
+  --task :app:compileDebugKotlin \
+  --task :app:testDebugUnitTest
+```
+
+The source contract checks that diagnostic probes are reachable from Debug Workbench, are evidence-only, include `/data` and `/data/adb/modules` dry preflight targets, and preserve review-first deletion semantics.
+

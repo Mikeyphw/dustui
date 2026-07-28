@@ -91,3 +91,8 @@ Final validation should run the minimal Android gates that prove this stack: deb
 The modern Tools hub now includes Debug workbench. It is intentionally scan-independent so users can inspect root failures and empty first-run state before a scan exists. Phase 9 adds the bounded structured event recorder. Phase 10 adds the live-state panel and filterable trace timeline.
 
 The Debug workbench is diagnostic-only: it records root, scan, navigation, search, and deletion-review events, but does not weaken review-first deletion or module-source safeguards.
+
+### Debug probes in Tools
+
+Phase 11 extends the Debug Workbench with evidence-only diagnostic probes. They help users answer why root, module, scan, cleanup, or search state looks blocked without touching deletion safety or scan persistence.
+

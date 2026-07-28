@@ -1,0 +1,131 @@
+{
+  "applied_at": "2026-07-28T17:06:41.520691Z",
+  "artifact": "/home/mike/Downloads/dustui_android_debug_workbench_phase11_diagnostic_probes_overlay_r2.zip",
+  "artifact_name": "dustui_android_debug_workbench_phase11_diagnostic_probes_overlay_r2.zip",
+  "type": "overlay",
+  "sha256": "60c6dc5ff84085c7902bf1fbc3fe91a2c28d159080bafebce29ba82e66028957",
+  "status": "ok",
+  "validation_status": "ok",
+  "commit_message": "Add debug diagnostic probes",
+  "commit_hash": "",
+  "file_count": 10,
+  "change_counts": {
+    "modify": 10
+  },
+  "manifest": {
+    "apply": {
+      "atomic": true,
+      "commit": {
+        "enabled": true,
+        "message": "Add debug diagnostic probes",
+        "strategy": "single"
+      },
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false
+    },
+    "description": "Add evidence-only diagnostic probes to the Debug Workbench for root, scan, module, cleanup, and search states. Repacked as r2 with reserved artifact metadata removed from inventory.",
+    "inventory": {
+      "entries": [
+        {
+          "action": "modify",
+          "path": "CHANGELOG.md",
+          "sha256": "b1267292423d1f95b488b4104ac201e572e6e41db7629d17e8dd476d31df717f",
+          "size": 18430,
+          "source_sha256": "9ff53a4fa81ef8f2bb51eb0ff46ff5d645750d6e31cb6ccf481c2383f2bfd258"
+        },
+        {
+          "action": "modify",
+          "path": "RELEASE_CHECKLIST.md",
+          "sha256": "f74c9d0071f3b988402b3f9facb71c83bcd9a978956551c77056c47b1cdb07b6",
+          "size": 17854,
+          "source_sha256": "50cc0184e2d106d5740b52eacf81e2ef03c959243178a774c73284a9fc02b0c7"
+        },
+        {
+          "action": "modify",
+          "path": "UI_UX_CONTRACT.md",
+          "sha256": "6cbe731c428b013dd1b4b8bfa438007a1b0f043b9ab10e178137beed3f2f0a8c",
+          "size": 27388,
+          "source_sha256": "fe841aa79cddbb65d93d42d11f808d583910302be1b1a3e2e34c640592e343a5"
+        },
+        {
+          "action": "modify",
+          "path": "VALIDATION.md",
+          "sha256": "661577be620abef517873d04f8224f7b4c795ee1e0d761a54e567a5f470d7114",
+          "size": 2604,
+          "source_sha256": "b02b6d3d1da74e7abbad0bcfb33efff480979b5e5b115761f98d7a42bfc68962"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DebugEvents.kt",
+          "sha256": "45bea945da04b0e3fba265f5f1534c75229be23406457da8408227411240b2c7",
+          "size": 4020,
+          "source_sha256": "b1b0dfa70e3e25d2df0eb179000e54c9e3a8eb4ad6ee42c366f7d149c9e3aa27"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "sha256": "fddc7e3e79801601fc194f147553e278ea8c906313f9bc03d3330ad4c494324a",
+          "size": 172600,
+          "source_sha256": "24d7f359629e15444886ad5e4292fc4d625cd9cc8d2639f2a03d156b5e5bef9d"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+          "sha256": "b3e0d3bd0b8c56191bc07414dabca417321c8bfec77b3ac393a7f40e36292ed5",
+          "size": 102878,
+          "source_sha256": "99d5e6b0a54620dec6a44f714cf69083b78691e6eab8ba2aff665e4f5a636bda"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchSourceContractTest.kt",
+          "sha256": "4c1a8807e29cdf2d7554c557153ea35030fa1dae262a7275d9ca8239388290f0",
+          "size": 5525,
+          "source_sha256": "c0a1d67266a2e3d625df5d49a586808fe68c789be325ba58ec21f340d2d4a89a"
+        },
+        {
+          "action": "modify",
+          "path": "docs/ANDROID_DEBUG_WORKBENCH.md",
+          "sha256": "6cdf616fc59663b5387c54e769d8885dcc8f7803a41b12b13865308b2e899b62",
+          "size": 3031,
+          "source_sha256": "2646f7636ed23a3caad5f9b78acac4b952e52cf6184469e58ae8af055620f6be"
+        },
+        {
+          "action": "modify",
+          "path": "docs/ANDROID_MODERN_DARK_PORTRAIT_UI.md",
+          "sha256": "9e7d7c64267dea17533c133a4a3ee1e668d3e7d622bbf325617c239386ac53df",
+          "size": 8409,
+          "source_sha256": "0a31c5e0aee09382e2145a7bf1bf4a6e934180dcdf40219d9908062971105b59"
+        }
+      ],
+      "format": 1
+    },
+    "name": "dustui-android-debug-workbench-phase11-diagnostic-probes-r2",
+    "repository": {
+      "name": "dustui"
+    },
+    "schema_version": 2,
+    "target": "dustui_android",
+    "type": "overlay",
+    "validation": {
+      "build": false,
+      "execution_environment": "auto",
+      "expected": {
+        "maximum_warnings": 0,
+        "restore": "pass"
+      },
+      "required": false,
+      "restore": true,
+      "rollback_on_failure": true,
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "4c6ebd43daf70a0a5f2b71b046b8db784de97d49f4fb6dd2ac71e0d03ca50986",
+        "timeout_seconds": 600
+      },
+      "test": false
+    },
+    "version": "1.0.1"
+  },
+  "history_id": "97be75ec719a4da49c088b97a2c030b7"
+}

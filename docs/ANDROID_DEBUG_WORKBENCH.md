@@ -23,3 +23,21 @@ Workbench sections:
 - Timeline control: clear the in-memory buffer without touching scan data, cleanup reports, or root state.
 
 Debug Workbench must remain evidence-only. It can explain disabled or suspicious states, but it must not bypass root preflight, stale-scan locks, protected-path blocking, fingerprint validation, or review-first permanent deletion.
+
+## Phase 11 — Diagnostic probes
+
+The Debug Workbench now includes manual evidence-only probes. A probe is a targeted check that explains one root, scan, module, cleanup, or search state without mutating persisted scan data and without executing deletion.
+
+Probe targets:
+
+- Root service: verifies root binder identity, UID 0, backend, scanner, and SELinux evidence.
+- `/data` access: runs a dry scan-root preflight against `/data`.
+- `/data/adb/modules` access: runs a dry module-source preflight.
+- Active scan state: explains whether the latest scan can feed Home, Files, Clean, and Tools.
+- Zero-file scan reason: makes completed empty scans explicit instead of silently presenting zero values.
+- Module scope: verifies module values come from `/data/adb/modules` scan evidence.
+- Deletion readiness: explains stale-scan, empty-selection, and open-review states without creating or executing a plan.
+- Search readiness: checks whether whole-scan search has a scan and indexed entries available.
+
+Every probe result is shown in the workbench and recorded back into the structured debug timeline. Probe evidence is redacted by the same debug-event store rules. Probes must not call cleanup execution or bypass protected-path, stale-scan, fingerprint, or review-first deletion safeguards.
+

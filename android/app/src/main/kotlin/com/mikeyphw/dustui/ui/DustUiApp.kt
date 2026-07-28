@@ -80,6 +80,10 @@ import com.mikeyphw.dustui.data.DeviceCertificationReport
 import com.mikeyphw.dustui.data.DebugCategory
 import com.mikeyphw.dustui.data.DebugEvent
 import com.mikeyphw.dustui.data.DebugSeverity
+import com.mikeyphw.dustui.data.DebugProbeTarget
+import com.mikeyphw.dustui.data.DebugProbeStatus
+import com.mikeyphw.dustui.data.DebugProbeResult
+import com.mikeyphw.dustui.data.DebugProbeGroup
 import com.mikeyphw.dustui.data.DuplicateAnalysisSnapshot
 import com.mikeyphw.dustui.data.DuplicateGroupItem
 import com.mikeyphw.dustui.data.DuplicateKeepStrategy
@@ -156,6 +160,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         val rootSearchResults by viewModel.rootSearchResults.collectAsStateWithLifecycle()
         val moduleReport by viewModel.moduleReport.collectAsStateWithLifecycle()
         val debugEvents by viewModel.debugEvents.collectAsStateWithLifecycle()
+        val debugProbeResults by viewModel.debugProbeResults.collectAsStateWithLifecycle()
         val scanDataStale by viewModel.scanDataStale.collectAsStateWithLifecycle()
         val snackbar = remember { SnackbarHostState() }
         var destination by rememberSaveable { mutableStateOf(DustDestination.INSIGHTS) }
@@ -457,6 +462,9 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     scanDataStale = scanDataStale,
                                     moduleReport = moduleReport,
                                     events = debugEvents,
+                                    probeResults = debugProbeResults,
+                                    runProbe = viewModel::runDebugProbe,
+                                    runAllProbes = viewModel::runAllDebugProbes,
                                     clearEvents = viewModel::clearDebugEvents,
                                 )
                                 destination == DustDestination.MORE -> ToolsHubScreen(
@@ -2779,6 +2787,9 @@ private fun DebugWorkbenchScreen(
     scanDataStale: Boolean,
     moduleReport: RootModuleReport?,
     events: List<DebugEvent>,
+    probeResults: List<DebugProbeResult>,
+    runProbe: (DebugProbeTarget) -> Unit,
+    runAllProbes: () -> Unit,
     clearEvents: () -> Unit,
 ) {
     var categoryFilter by rememberSaveable { mutableStateOf<String?>(null) }
@@ -2835,7 +2846,26 @@ private fun DebugWorkbenchScreen(
             }
         }
         item {
-            DustSectionHeader("Trace timeline", subtitle = "Structured events from app, navigation, scan, root, search, recommendations, and deletion flows.")
+            DustSectionHeader("Diagnostic probes", subtitle = "Manual evidence checks for root, scan, module, cleanup, and whole-scan search state. Probes do not delete, mutate scans, or weaken safety gates.")
+        }
+        item {
+            DustStatusNotice(
+                title = "Evidence-only probes",
+                detail = "Run targeted checks when a value looks empty, a button is disabled, or a root path is suspicious. Each result records to the trace timeline.",
+                tone = DustNoticeTone.Success,
+                actionLabel = "Run all probes",
+                onAction = runAllProbes,
+            )
+        }
+        items(DebugProbeTarget.entries, key = { it.name }) { target ->
+            DebugProbeCard(
+                target = target,
+                result = probeResults.firstOrNull { it.target == target },
+                runProbe = { runProbe(target) },
+            )
+        }
+        item {
+            DustSectionHeader("Trace timeline", subtitle = "Structured events from app, navigation, scan, root, search, recommendations, deletion flows, and diagnostic probes.")
         }
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -2860,6 +2890,49 @@ private fun DebugWorkbenchScreen(
         } else {
             items(filteredEvents.reversed(), key = { it.id }) { event ->
                 DebugEventCard(event)
+            }
+        }
+    }
+}
+
+@Composable
+private fun DebugProbeCard(target: DebugProbeTarget, result: DebugProbeResult?, runProbe: () -> Unit) {
+    val status = result?.status
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
+                StatusPill(
+                    status?.let { debugProbeStatusLabel(it) } ?: "Not run",
+                    danger = status == DebugProbeStatus.Failed,
+                )
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(target.title, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "${debugProbeGroupLabel(target.group)} · ${target.detail}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                TextButton(onClick = runProbe) { Text(if (result == null) "Run" else "Rerun") }
+            }
+            if (result == null) {
+                Text(
+                    "No result yet. Run this probe to capture current evidence without changing app data.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                Text(result.message, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    "Updated ${debugTimestamp(result.updatedAtMillis)}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (result.evidence.isNotEmpty()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        result.evidence.entries.take(8).forEach { (key, value) -> MetricRow(key, value) }
+                    }
+                }
             }
         }
     }
@@ -2896,6 +2969,20 @@ private fun rootUiStateLabel(state: RootUiState): String = when (state) {
     RootUiState.Available -> "available"
     RootUiState.Checking -> "checking"
     RootUiState.Unavailable -> "unavailable"
+}
+
+private fun debugProbeStatusLabel(status: DebugProbeStatus): String = when (status) {
+    DebugProbeStatus.Pass -> "Pass"
+    DebugProbeStatus.Warning -> "Warning"
+    DebugProbeStatus.Failed -> "Failed"
+}
+
+private fun debugProbeGroupLabel(group: DebugProbeGroup): String = when (group) {
+    DebugProbeGroup.Root -> "Root"
+    DebugProbeGroup.Scan -> "Scan"
+    DebugProbeGroup.Module -> "Module"
+    DebugProbeGroup.Cleanup -> "Cleanup"
+    DebugProbeGroup.Search -> "Search"
 }
 
 private fun debugCategoryLabel(category: DebugCategory): String = when (category) {

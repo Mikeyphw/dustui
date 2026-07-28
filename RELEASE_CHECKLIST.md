@@ -233,3 +233,13 @@ Ship only when `SHIP_STATUS.md` says `SHIP` or when every warning listed under `
 - [ ] Trace timeline is bounded and filterable.
 - [ ] Debug events never bypass stale-scan locks, protected-path blocking, fingerprint checks, or review-first deletion.
 - [ ] Safe evidence redaction remains covered by unit tests.
+
+## Debug Workbench Phase 11 checklist
+
+- [ ] Tools → Debug workbench shows Diagnostic probes before the trace timeline.
+- [ ] Run all probes records probe-start/probe-finish events in the timeline.
+- [ ] `/data` and `/data/adb/modules` probes run dry preflight only.
+- [ ] Deletion readiness probe explains stale scan and empty selection without executing deletion.
+- [ ] Zero-file scan probe makes suspicious empty completed scans explicit.
+- [ ] Module scope probe points users back to `/data/adb/modules` when current scan scope is wrong.
+

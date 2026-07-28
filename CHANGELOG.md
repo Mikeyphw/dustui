@@ -226,3 +226,11 @@ Final release-candidate hardening for the rooted Android storage workbench.
 - Added a bounded structured debug event recorder for app, navigation, scan, root, search, deletion, and certification flows.
 - Added Tools → Debug workbench with live state, category-filtered timeline, warning/error filter, and clearable in-memory diagnostics.
 - Added source-contract and store coverage for scan-independent Debug Workbench reachability, redacted evidence, and route-safe diagnostics.
+
+### Android debug workbench · Phase 11 diagnostic probes
+
+- Added evidence-only diagnostic probes for root service, `/data`, `/data/adb/modules`, active scan state, zero-file scans, module scope, deletion readiness, and whole-scan search readiness.
+- Added probe result cards inside Debug Workbench with Run/Rerun controls and a Run all probes action.
+- Recorded probe start and finish events into the structured debug timeline with redacted evidence.
+- Added source-contract coverage to keep probes non-destructive and review-first cleanup intact.
+

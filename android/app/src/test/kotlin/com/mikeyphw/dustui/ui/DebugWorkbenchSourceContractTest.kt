@@ -3,6 +3,8 @@ package com.mikeyphw.dustui.ui
 import com.mikeyphw.dustui.data.DebugCategory
 import com.mikeyphw.dustui.data.DebugEventStore
 import com.mikeyphw.dustui.data.DebugSeverity
+import com.mikeyphw.dustui.data.DebugProbeTarget
+import com.mikeyphw.dustui.data.DebugProbeStatus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -55,6 +57,41 @@ class DebugWorkbenchSourceContractTest {
         assertTrue(app.contains("Clear timeline"))
         assertTrue(app.contains("DebugCategory.entries"))
         assertFalse(app.contains("Debug workbench is unavailable until scan"))
+    }
+
+
+    @Test fun `phase 11 diagnostic probes define evidence only targets`() {
+        val targets = DebugProbeTarget.entries.map { it.name }
+
+        assertTrue(targets.contains("RootService"))
+        assertTrue(targets.contains("DataRootAccess"))
+        assertTrue(targets.contains("ModuleRootAccess"))
+        assertTrue(targets.contains("ActiveScan"))
+        assertTrue(targets.contains("ZeroFileScan"))
+        assertTrue(targets.contains("ModuleScope"))
+        assertTrue(targets.contains("DeletionReadiness"))
+        assertTrue(targets.contains("SearchReadiness"))
+        assertEquals("Pass", DebugProbeStatus.Pass.name)
+    }
+
+    @Test fun `phase 11 debug workbench exposes manual probes and records results`() {
+        val app = source("src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt")
+        val vm = source("src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt")
+        val model = source("src/main/kotlin/com/mikeyphw/dustui/data/DebugEvents.kt")
+
+        assertTrue(model.contains("enum class DebugProbeTarget"))
+        assertTrue(model.contains("data class DebugProbeResult"))
+        assertTrue(vm.contains("val debugProbeResults: StateFlow<List<DebugProbeResult>>"))
+        assertTrue(vm.contains("fun runAllDebugProbes()"))
+        assertTrue(vm.contains("fun runDebugProbe(target: DebugProbeTarget)"))
+        assertTrue(vm.contains("preflightProbe(DebugProbeTarget.DataRootAccess, \"/data\")"))
+        assertTrue(vm.contains("preflightProbe(DebugProbeTarget.ModuleRootAccess, \"/data/adb/modules\")"))
+        assertTrue(vm.contains("DeletionReadiness"))
+        assertTrue(app.contains("Diagnostic probes"))
+        assertTrue(app.contains("Evidence-only probes"))
+        assertTrue(app.contains("Run all probes"))
+        assertTrue(app.contains("DebugProbeCard("))
+        assertFalse(app.contains("executeCleanup(review)"))
     }
 
     private fun source(relative: String): String = File(projectRoot(), "android/app/$relative").readText()

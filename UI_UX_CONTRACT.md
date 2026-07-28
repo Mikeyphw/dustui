@@ -321,3 +321,10 @@ Final validation gates should include Android debug assembly, debug unit tests, 
 The Tools task zone includes a scan-independent Debug workbench for source-backed diagnostics. It must expose live state and a structured trace timeline without changing cleanup safety behavior. The debug timeline is bounded, in-memory, filterable by category, and can be cleared without touching scan data, deletion reports, root state, or persisted cleanup settings.
 
 Debug evidence must make root, scan, module-scope, search, recommendation, and deletion-review state visible. It must not silently replace disabled-action explanations, bypass stale-scan locks, or turn protected mounted targets into deletion targets.
+
+### Debug diagnostic probe rules
+
+The Debug Workbench exposes manual diagnostic probes for root service state, `/data` access, `/data/adb/modules` access, active scan health, zero-file scans, module scope, deletion readiness, and whole-scan search readiness. These probes are evidence-only: they may run root preflight checks and read current ViewModel state, but they must not execute deletion, mutate scan data, weaken stale-scan locks, or bypass review-first cleanup.
+
+Probe results must be visible as cards inside Debug Workbench and must also record a structured timeline event with category, severity, message, and redacted evidence.
+
