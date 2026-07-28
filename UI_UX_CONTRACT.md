@@ -42,10 +42,12 @@ DustUI is a rooted Android storage workbench. The UI must remain readable on pho
 
 ## Navigation rules
 
-1. Compact screens use bottom navigation for the five core destinations.
-2. Wide screens use the navigation rail.
-3. Overflow destinations live behind More only on compact screens.
-4. Destination routing must use `DustDestination`, not ad-hoc boolean toggles.
+1. Compact portrait screens use bottom navigation for the four task zones: Home, Files, Clean, and Tools.
+2. Wide screens use the navigation rail and may expose the full workbench list directly.
+3. Overflow destinations live behind Tools only on compact screens, while Clean is a primary compact task zone.
+4. `SCAN` remains an internal/wide destination; compact scanning opens from the top-bar Scan action and scan/evidence sheet.
+5. `SEARCH` remains an internal whole-scan destination; compact selection for search highlights Files.
+6. Destination routing must use `DustDestination`, not ad-hoc boolean toggles.
 
 
 ## Session and permanent-deletion safety rules
@@ -67,7 +69,7 @@ DustUI is a rooted Android storage workbench. The UI must remain readable on pho
 
 1. Back closes deletion review, details, and selection mode before changing destinations.
 2. In Explorer, Back navigates to the parent until the scan root is reached.
-3. Compact specialized workbenches return to More; primary workbenches return to Scan.
+3. Compact specialized workbenches return to Tools; Files returns to Home, Clean returns to Home, and whole-scan Search returns to Files. Wide specialized workbenches may return to Scan.
 4. Wide mode must consider both width and height.
 5. Donut charts stack vertically on compact widths, and metric grids collapse to one column when needed.
 6. Package status indicators must wrap rather than overflow.
@@ -295,3 +297,22 @@ Required behavior:
 - Root modules must never show silent empty values for the wrong scan root.
 - A wrong-scope module state must show the current scan root, expected `/data/adb/modules` root, root preflight state, source status, and a **Scan /data/adb/modules** action.
 - Module overlay conflicts are evidence about mounted targets, but actions apply only to module-owned source files under `/data/adb/modules`.
+
+## Modern dark portrait final qualification contract
+
+Phase 8 seals the completed Home / Files / Clean / Tools stack and removes stale pre-revamp expectations from the release contract.
+
+Required final behavior:
+
+- Phase 1 design primitives are the shared visual vocabulary for modern cards, notices, chips, metric tiles, action docks, and bottom sheets.
+- Phase 2 compact navigation exposes exactly Home, Files, Clean, and Tools while preserving historical route names internally.
+- Phase 3 compact scan entry is a top-bar Scan action with a modal scan/evidence sheet; root/preflight/zero-file/truncation/depth diagnostics remain textual and actionable.
+- Phase 4 Home is Storage health, remains available before the first scan, and keeps diagnostic evidence visible after scans complete.
+- Phase 5 Files separates current-folder filtering from whole-scan search and routes destructive paths through the reviewed deletion flow.
+- Phase 6 Clean is a review-first cockpit with stale-state locks, safe-batch limits, manual-review labels, and fingerprinted deletion review.
+- Phase 7 Tools groups Storage intelligence, Cleanup workbenches, and Operations while preserving App storage, Root modules, Growth, Search, Rules, Large files, Duplicates, App residue, Deletion reports, Certification, and Scan diagnostics.
+- Wrong-scope module scans must say `Current scan does not include modules`, show the current root, required `/data/adb/modules` root, root preflight state, source status, and offer `Scan /data/adb/modules`.
+- Module overlay conflicts remain evidence about mounted targets; actions apply only to module-owned source files under `/data/adb/modules`.
+
+Final validation gates should include Android debug assembly, debug unit tests, and debug lint with zero warnings and zero errors.
+

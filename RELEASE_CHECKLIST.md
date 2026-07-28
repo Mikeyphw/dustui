@@ -9,6 +9,18 @@
 - [ ] Confirm release APK builds.
 - [ ] Confirm Room schemas are exported.
 
+
+## Modern dark portrait final seal validation
+
+- [ ] Confirm compact bottom navigation shows exactly Home, Files, Clean, and Tools.
+- [ ] Confirm compact Scan opens from the top action and modal scan/evidence sheet.
+- [ ] Confirm Home remains usable before the first scan and shows Storage health after scanning.
+- [ ] Confirm Files separates current-folder filtering from whole-scan search.
+- [ ] Confirm Clean stays review-first, stale-locked, and fingerprinted before permanent deletion.
+- [ ] Confirm Tools groups Storage intelligence, Cleanup workbenches, and Operations.
+- [ ] Confirm wrong-scope Modules says `Current scan does not include modules` and offers `Scan /data/adb/modules`.
+- [ ] Confirm final Devtool validation runs only `:app:assembleDebug`, `:app:testDebugUnitTest`, and `:app:lintDebug`, with zero warnings and zero errors.
+
 ## Phase 19 ranked cleanup recommendation validation
 
 - [ ] Confirm compact users open Recommendations from More and wide users see it in the navigation rail.

@@ -17,6 +17,14 @@
 
 # DustUI changelog
 
+## Android modern dark portrait UI phase 8 final contract seal
+
+- Sealed the completed Home / Files / Clean / Tools compact portrait roadmap after Phases 1–7.
+- Reconciled stale pre-revamp navigation contract wording so compact routes no longer claim five bottom destinations or primary returns to Scan.
+- Corrected the remaining modern UI documentation to use the contract-required module diagnostic wording: `Current scan does not include modules`.
+- Added final seal documentation and a source audit for the modern compact scan sheet, Home dashboard, Files search split, Clean cockpit, Tools hub, and module-source diagnostics.
+- Added final source-contract tests and validation instructions for the minimal final Devtool gates: `:app:assembleDebug`, `:app:testDebugUnitTest`, and `:app:lintDebug`.
+
 ## Android modern dark portrait UI phase 7
 
 - Replaced the generic More list with a grouped Tools hub for Storage intelligence, Cleanup workbenches, and Operations.

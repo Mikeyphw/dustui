@@ -1,0 +1,117 @@
+{
+  "applied_at": "2026-07-28T15:45:44.317173Z",
+  "artifact": "/home/mike/Downloads/dustui_android_modern_ui_phase8_final_contract_overlay_r2.zip",
+  "artifact_name": "dustui_android_modern_ui_phase8_final_contract_overlay_r2.zip",
+  "type": "overlay",
+  "sha256": "920bb062e9b1dae977a6f6ab20472363f5320d5f3cc9ee1739ca7c116dac8808",
+  "status": "ok",
+  "validation_status": "ok",
+  "commit_message": "Seal modern dark portrait UI contracts",
+  "commit_hash": "",
+  "file_count": 8,
+  "change_counts": {
+    "add": 3,
+    "modify": 5
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "DustUI Android modern UI phase 8 final contract seal r2",
+    "description": "Seal the modern dark portrait Home / Files / Clean / Tools roadmap with reconciled contracts, final source audit, validation docs, and corrected final source-contract coverage.",
+    "version": "1.0.1",
+    "repository": {
+      "name": "dustui"
+    },
+    "target": "dustui_android",
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "CHANGELOG.md",
+          "action": "modify",
+          "sha256": "e0dc9be0bea625667175d2ef01b1e8cf5ba592b2cde5efe5c75d60c489ae9cfc",
+          "size": 17082,
+          "source_sha256": "91e6712ef315a4d3deb77913c7c492aa09c72f7849fd9f161cd2aed5b293a74e"
+        },
+        {
+          "path": "RELEASE_CHECKLIST.md",
+          "action": "modify",
+          "sha256": "2f07e60d73db048789fd4d1b5feed02f6020356fa2f4170fdbd5808031258876",
+          "size": 16814,
+          "source_sha256": "a5544858611648d11dd47f3e244ea1e582173c87ec667897a0fc244cf1c59df0"
+        },
+        {
+          "path": "UI_UX_CONTRACT.md",
+          "action": "modify",
+          "sha256": "e10966299b8a0e06f889468038e25648b9c025e2558aa99b459d09ed3338818b",
+          "size": 26096,
+          "source_sha256": "49de5589622eedb665c4972d8cf0849a705ec5877fb10aded8d897737ac804c4"
+        },
+        {
+          "path": "VALIDATION.md",
+          "action": "modify",
+          "sha256": "f5891b673b211657674280914f2022b9e9f6bac9f8f29ddf6c6e0067c1b48dc2",
+          "size": 1802,
+          "source_sha256": "8ee79648b02e27fc27793c15b02d90e35099e1d201fdfbf056dfadbc924f25a7"
+        },
+        {
+          "path": "docs/ANDROID_MODERN_DARK_PORTRAIT_UI.md",
+          "action": "modify",
+          "sha256": "7204365eba7e2be135153eed474453a7b19d4a27414a319ed986f7e5933b3b06",
+          "size": 7645,
+          "source_sha256": "6d0bcfa0e4269e338ebb58ee7e0fa8a98bff0887c7834281a2e635a4de86d6ff"
+        },
+        {
+          "path": "docs/ANDROID_MODERN_DARK_PORTRAIT_FINAL_SEAL.md",
+          "action": "add",
+          "sha256": "fcb629269c9c9b742bf547e5ea49c98b6eb0dd32698ef15db517ff323e9da08f",
+          "size": 3275
+        },
+        {
+          "path": "android/scripts/validate-modern-dark-portrait-ui.py",
+          "action": "add",
+          "sha256": "b94988304004ebe0666bc9249205430de719e468c5bcc7d7e6f176b8f0ee5126",
+          "size": 3565
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/ModernDarkPortraitFinalContractTest.kt",
+          "action": "add",
+          "sha256": "d3237d1658a00099606d06cd4a20c59ef2c034e5b35197436049c49e42e404c3",
+          "size": 3888
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false,
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "Seal modern dark portrait UI contracts"
+      }
+    },
+    "validation": {
+      "required": true,
+      "restore": true,
+      "build": true,
+      "test": true,
+      "rollback_on_failure": true,
+      "execution_environment": "auto",
+      "expected": {
+        "restore": "pass",
+        "build": "pass",
+        "tests": "pass",
+        "maximum_warnings": 0
+      },
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "715187a3b42b4d628f490725f6ce7a2dbced426e67f7c94b9d2ccb8768afac32",
+        "timeout_seconds": 600
+      }
+    }
+  },
+  "history_id": "d568a5a089d54c8790e57cb513f56ecf"
+}

@@ -66,4 +66,23 @@ Phase 7 turns the old More list into a grouped **Tools** hub. Advanced surfaces 
 
 The Tools hub preserves existing workbench routes while making diagnostics easier to discover. Scan diagnostics open the compact scan/evidence sheet, whole-scan search keeps the internal Search route, and module actions stay source-safe.
 
-The Root modules surface now starts with a module-source diagnostic summary. When the active scan root is not `/data/adb/modules`, the UI says **Current scan excludes modules**, shows the current root, expected module root, preflight state, and source status, then offers a direct **Scan /data/adb/modules** action. Empty module values are never treated as a successful zero unless the diagnostic explicitly says no modules were found.
+The Root modules surface now starts with a module-source diagnostic summary. When the active scan root is not `/data/adb/modules`, the UI says **Current scan does not include modules**, shows the current root, expected module root, preflight state, and source status, then offers a direct **Scan /data/adb/modules** action. Empty module values are never treated as a successful zero unless the diagnostic explicitly says no modules were found.
+
+## Phase 8 — Final contract seal
+
+Phase 8 seals the modern dark portrait stack after Phases 1–7. It does not add another screen or loosen any cleanup behavior; it reconciles the contracts, validation checklist, and source audits so the final validation run checks the finished shell instead of stale pre-revamp wording.
+
+Final sealed behavior:
+
+- Compact portrait navigation is exactly **Home**, **Files**, **Clean**, and **Tools**.
+- `SCAN` stays an internal/wide destination and opens from the compact top-bar scan action plus modal scan/evidence sheet.
+- `SEARCH` stays an internal whole-scan route and continues to highlight Files in compact navigation.
+- Home remains usable before the first scan and surfaces scan/root/storage health evidence after scans complete.
+- Files keeps current-folder filtering separate from whole-scan search.
+- Clean remains review-first, scan-bound, fingerprinted, stale-state locked, and never directly destructive.
+- Tools groups advanced workbenches while preserving all historical destinations.
+- Wrong-scope module scans must say **Current scan does not include modules** and offer **Scan /data/adb/modules**.
+- Module conflict actions remain source-only: protected mounted targets are evidence, never deletion targets.
+
+Final validation should run the minimal Android gates that prove this stack: debug assembly, debug unit tests, and debug lint. Device/root certification remains a release checklist item, not a source-only overlay requirement.
+
