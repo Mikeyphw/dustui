@@ -16969,6 +16969,82 @@
         }
       },
       "history_id": "d568a5a089d54c8790e57cb513f56ecf"
+    },
+    {
+      "applied_at": "2026-07-28T15:56:43.050763Z",
+      "artifact": "/home/mike/Downloads/dustui_android_modern_ui_phase8_warning_cleanup_overlay.zip",
+      "artifact_name": "dustui_android_modern_ui_phase8_warning_cleanup_overlay.zip",
+      "type": "overlay",
+      "sha256": "fc4632c7f8a8defa30c21a5e5595321f0b3fb6a42dce84d95a03326df86f3e54",
+      "status": "ok",
+      "validation_status": "ok",
+      "commit_message": "Clean modern dark portrait final contract warning",
+      "commit_hash": "",
+      "file_count": 2,
+      "change_counts": {
+        "modify": 2
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Android modern UI phase 8 warning cleanup",
+        "description": "Remove the final ModernDarkPortraitFinalContractTest Kotlin platform-nullability warning while preserving the Phase 8 final contract seal.",
+        "version": "1.0.0",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "CHANGELOG.md",
+              "action": "modify",
+              "sha256": "968d7c2412d8b6371b2522fede6cc8e6b102899f723285ae632775176448b8ea",
+              "size": 17427,
+              "source_sha256": "e0dc9be0bea625667175d2ef01b1e8cf5ba592b2cde5efe5c75d60c489ae9cfc"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/ModernDarkPortraitFinalContractTest.kt",
+              "action": "modify",
+              "sha256": "46cf23f83ea789f88c1301ea6ef93ccc22a4ed7f600ee63857372b0a9307bdef",
+              "size": 3985,
+              "source_sha256": "d3237d1658a00099606d06cd4a20c59ef2c034e5b35197436049c49e42e404c3"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Clean modern dark portrait final contract warning"
+          }
+        },
+        "validation": {
+          "required": true,
+          "restore": true,
+          "build": false,
+          "test": true,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "restore": "pass",
+            "tests": "pass",
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "10036db8ee7c3c6aee3617f54e4e6900af76f5e906528ab63a037814e1e15c5e",
+            "timeout_seconds": 600
+          }
+        }
+      },
+      "history_id": "6052949a0fce46568b0c236cc5cfa021"
     }
   ]
 }

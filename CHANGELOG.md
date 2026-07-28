@@ -1,4 +1,10 @@
 
+## Android modern dark portrait UI — Phase 8 warning cleanup
+
+- Cleans the final contract test helper by resolving `user.dir` with `requireNotNull` before constructing the project root `File`.
+- Preserves the Phase 8 final seal behavior while removing the Kotlin Java-platform nullability warning from `ModernDarkPortraitFinalContractTest`.
+
+
 ### Android modern dark portrait UI phase 7 source contract hotfix
 
 - Aligned the modern module diagnostics source contract with the root diagnostics contract-required wrong-scope wording so module scans continue to expose actionable `/data/adb/modules` guidance without failing the final unit-test gate.

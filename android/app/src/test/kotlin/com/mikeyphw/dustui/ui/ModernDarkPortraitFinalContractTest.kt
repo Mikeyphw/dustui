@@ -65,6 +65,9 @@ class ModernDarkPortraitFinalContractTest {
 
     private fun source(relative: String): String = File(projectRoot(), "android/app/$relative").readText()
 
-    private fun projectRoot(): File = generateSequence(File(System.getProperty("user.dir")).absoluteFile) { it.parentFile }
-        .first { File(it, "android/app/src/main").isDirectory }
+    private fun projectRoot(): File {
+        val userDir = requireNotNull(System.getProperty("user.dir")) { "user.dir is not set" }
+        return generateSequence(File(userDir).absoluteFile) { it.parentFile }
+            .first { File(it, "android/app/src/main").isDirectory }
+    }
 }
