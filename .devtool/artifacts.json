@@ -16587,6 +16587,80 @@
         }
       },
       "history_id": "a18037b5149f450fba0109f29161995b"
+    },
+    {
+      "applied_at": "2026-07-27T19:52:27.986161Z",
+      "artifact": "/storage/emulated/0/Download/dustui_android_modern_ui_phase7_source_contract_hotfix_overlay.zip",
+      "artifact_name": "dustui_android_modern_ui_phase7_source_contract_hotfix_overlay.zip",
+      "type": "overlay",
+      "sha256": "e3d3d31239449933ee66cfd86094121bb508bdfe77f4c2128fa6e55314a0353a",
+      "status": "failed",
+      "validation_status": "ok",
+      "commit_message": "Fix modern UI phase 7 source contract",
+      "commit_hash": "",
+      "file_count": 2,
+      "change_counts": {
+        "unchanged": 2
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "DustUI Android phase 7 source contract hotfix",
+        "description": "Align the Phase 7 modern module diagnostics source contract with the root diagnostics contract-required wrong-scope wording after the validation hotfix.",
+        "version": "1.0.0",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+              "action": "modify",
+              "sha256": "3d480780d737ecd14f119e1a5f2c4bc18cce2734face38594b03e0ba1402ba86",
+              "size": 33367,
+              "source_sha256": "b48b0956a6a22f2f6cf741efa1fc48c9b33727735d1f18117f313da3822a99ac"
+            },
+            {
+              "path": "CHANGELOG.md",
+              "action": "modify",
+              "sha256": "91e6712ef315a4d3deb77913c7c492aa09c72f7849fd9f161cd2aed5b293a74e",
+              "size": 16277,
+              "source_sha256": "9765266ae3c1758eeee408f1b2e3e7c0eac5efcf44c59c2c2619bf3bb5373f37"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "Fix modern UI phase 7 source contract"
+          }
+        },
+        "validation": {
+          "required": false,
+          "restore": false,
+          "build": false,
+          "test": false,
+          "rollback_on_failure": true,
+          "execution_environment": "auto",
+          "expected": {
+            "maximum_warnings": 0
+          },
+          "script": {
+            "path": ".devtool-artifact/validate.sh",
+            "runner": "bash",
+            "sha256": "101b662eba7082fd64322b3c987d07f03449e3a92bf54727393dd2138b44f8ac",
+            "timeout_seconds": 600
+          }
+        }
+      },
+      "history_id": "4538fcf337444bc88ae665e2cff749a4"
     }
   ]
 }
