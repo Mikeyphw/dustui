@@ -247,5 +247,6 @@ android/captures/
 # Devtool runtime state
 .devtool/cache/
 .devtool/reports/
+.devtool/state/
 .devtool/test-history.json
 .devtool/tmp/
