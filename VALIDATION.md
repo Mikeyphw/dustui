@@ -108,3 +108,13 @@ devtool   --copy   --auto-hud   --hud-mode desktop-window   --yes   -r "$REPO"  
 
 Expected result: all selected tasks pass with zero Devtool diagnostics warnings and zero errors.
 
+
+### Debug Workbench Phase 15
+
+Validate Phase 15 with targeted Android gates:
+
+```bash
+./gradlew :app:compileDebugKotlin :app:testDebugUnitTest :app:lintDebug --no-configuration-cache
+```
+
+Manual smoke check: launch a debug build, open Files/Clean/Tools before any scan, run a shared-storage scan, then confirm input remains responsive after completion and depth-cap evidence is informational unless another warning/failure is present.

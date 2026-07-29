@@ -96,3 +96,13 @@ Final contract:
 
 The source audit is `android/scripts/validate-debug-workbench-contract.py`. It is intentionally source-level so Devtool can run it quickly before the heavier Android build/test/lint gates.
 
+
+## Phase 15 · Scan freeze guard and pre-scan task access
+
+Phase 15 keeps the debug roadmap usable when users report an ANR immediately after scan completion.
+
+- Post-scan storage intelligence refresh runs off the UI thread and cancels stale refresh jobs when a newer scan appears.
+- Expensive derived pages use background flow contexts instead of recomputing large scan summaries on the input/render thread.
+- Files, Clean, Tools, Debug workbench, and deletion reports remain reachable before the first scan. They show explicit no-scan explanations instead of a blank or blocked route.
+- Depth-cap diagnostics are informational unless the scan also has a real failure, zero-file warning, truncation, or persisted warning.
+- Shared storage, app data, broad data, root module, and custom scan defaults use a deeper traversal cap so normal internal-storage trees do not immediately look broken.

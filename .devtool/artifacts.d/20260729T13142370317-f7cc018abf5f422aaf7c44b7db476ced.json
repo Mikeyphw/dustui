@@ -1,0 +1,15 @@
+{
+  "applied_at": "2026-07-29T13:14:23.703176Z",
+  "artifact": "/home/mike/Downloads/dustui_android_debug_workbench_phase15_scan_freeze_guard_overlay.zip",
+  "artifact_name": "dustui_android_debug_workbench_phase15_scan_freeze_guard_overlay.zip",
+  "type": "overlay",
+  "sha256": "",
+  "status": "failed",
+  "validation_status": "ok",
+  "commit_message": "",
+  "commit_hash": "",
+  "file_count": 0,
+  "change_counts": {},
+  "manifest": {},
+  "history_id": "f7cc018abf5f422aaf7c44b7db476ced"
+}

@@ -19,10 +19,10 @@ data class ScanPreset(
 
     companion object {
         val defaults = listOf(
-            ScanPreset("shared", "Shared storage", "Downloads, media and user files", "/storage/emulated/0", 6),
-            ScanPreset("apps", "App data", "Private data for the primary Android user", "/data/user/0", 5, true),
-            ScanPreset("data", "Android data", "Broad /data scan kept on one filesystem", "/data", 4, true),
-            ScanPreset("modules", "Root modules", "Magisk, KernelSU and APatch module payloads", "/data/adb/modules", 8, true),
+            ScanPreset("shared", "Shared storage", "Downloads, media and user files", "/storage/emulated/0", 16),
+            ScanPreset("apps", "App data", "Private data for the primary Android user", "/data/user/0", 16, true),
+            ScanPreset("data", "Android data", "Broad /data scan kept on one filesystem", "/data", 16, true),
+            ScanPreset("modules", "Root modules", "Magisk, KernelSU and APatch module payloads", "/data/adb/modules", 16, true),
         )
     }
 }

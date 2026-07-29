@@ -357,3 +357,11 @@ Required behavior:
 - The floating UI debug overlay must be opt-in, diagnostic-only, and must route back to Debug Workbench when tapped.
 - Disabled-action reason copy may explain blocked actions, but must not convert a blocked action into an executable one.
 
+
+### Phase 15 scan freeze and pre-scan access contract
+
+- Home, Files, Clean, Tools, Debug workbench, and deletion reports must remain reachable before the first scan.
+- Files and Clean may explain that scan-backed content is unavailable, but they must not render a blank route or force the user back to Home.
+- Post-scan summary work must not run on the input/render thread. Expensive storage intelligence and derived paging/filtering should run on IO/default dispatchers.
+- Depth-cap evidence is informational by default. It becomes user-blocking only when paired with failure, zero-file, truncation, or persisted warning/error evidence.
+- No pre-scan page may bypass deletion review, stale-scan locks, protected-path blocking, or fingerprint verification.

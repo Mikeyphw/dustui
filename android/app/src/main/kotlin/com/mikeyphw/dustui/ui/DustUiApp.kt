@@ -287,7 +287,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                             when {
                                 currentSession == null && DustNavigationModel.needsScanData(destination) -> ScanRequiredEmptyState(
                                     Modifier.fillMaxSize(),
-                                    detail = "Start a root scan before opening files, cleanup, analytics, rules, growth history, duplicates, app residue, search, packages, modules, or certification.",
+                                    detail = "This specialized workbench needs an indexed scan first. Files, Clean, Tools, Debug workbench, and deletion reports remain reachable before scanning.",
                                     onStartScan = { openScanLauncher() },
                                 )
                                 destination == DustDestination.SCAN -> ScanLauncher(
@@ -301,6 +301,12 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     viewModel,
                                     requestNotificationPermission,
                                 ) { selectDestination(DustDestination.INSIGHTS) }
+                                destination == DustDestination.EXPLORER && currentSession == null -> FilesNoScanScreen(
+                                    modifier = Modifier.fillMaxSize(),
+                                    onStartScan = { openScanLauncher() },
+                                    openTools = { selectDestination(DustDestination.MORE) },
+                                    openDebug = { selectDestination(DustDestination.DEBUG) },
+                                )
                                 destination == DustDestination.EXPLORER && currentSession != null -> Explorer(
                                     Modifier.fillMaxSize(),
                                     currentSession,
@@ -335,6 +341,12 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     openLargeFiles = { selectDestination(DustDestination.LARGE_FILES) },
                                     openResidue = { selectDestination(DustDestination.APP_RESIDUE) },
                                     openDiagnostics = { openScanLauncher() },
+                                )
+                                destination == DustDestination.RECOMMENDATIONS && currentSession == null -> CleanNoScanScreen(
+                                    modifier = Modifier.fillMaxSize(),
+                                    onStartScan = { openScanLauncher() },
+                                    openTools = { selectDestination(DustDestination.MORE) },
+                                    openDebug = { selectDestination(DustDestination.DEBUG) },
                                 )
                                 destination == DustDestination.RECOMMENDATIONS && currentSession != null -> CleanupRecommendationsScreen(
                                     Modifier.fillMaxSize(),
@@ -634,6 +646,82 @@ private fun cleanupExecutionDisabledReason(review: CleanupReview, confirmed: Boo
 
 
 @Composable
+private fun FilesNoScanScreen(
+    modifier: Modifier = Modifier,
+    onStartScan: () -> Unit,
+    openTools: () -> Unit,
+    openDebug: () -> Unit,
+) {
+    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item {
+            DustHeroCard(
+                title = "Files are waiting for a scan",
+                detail = "This page stays open before the first scan so navigation never dead-ends. Start a scan to populate folders, breadcrumbs, search filters, charts, and details.",
+                eyebrow = "Files",
+                trailing = { DustPathPill("no scan yet") },
+            ) {
+                DustStatusNotice(
+                    title = "No indexed file tree yet",
+                    detail = "DustUI has not loaded a scan session. Tools and Debug workbench remain available for root checks and diagnostics.",
+                    tone = DustNoticeTone.Warning,
+                )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = onStartScan, modifier = Modifier.weight(1f)) { Text("Start scan") }
+                    OutlinedButton(onClick = openDebug, modifier = Modifier.weight(1f)) { Text("Debug") }
+                }
+            }
+        }
+        item {
+            DustTaskCard(
+                title = "Open Tools",
+                detail = "Use scan diagnostics, Debug workbench, export bundle, and module-source checks before indexing files.",
+                value = "Tools",
+                onClick = openTools,
+                leading = { Text("•••", fontWeight = FontWeight.Bold) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun CleanNoScanScreen(
+    modifier: Modifier = Modifier,
+    onStartScan: () -> Unit,
+    openTools: () -> Unit,
+    openDebug: () -> Unit,
+) {
+    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item {
+            DustHeroCard(
+                title = "Clean is locked until scan evidence exists",
+                detail = "Cleanup actions require fingerprinted paths from the active scan, but the Clean page remains reachable so the app can explain the lock instead of hiding the tab.",
+                eyebrow = "Clean",
+                trailing = { DustPathPill("review-first") },
+            ) {
+                DustStatusNotice(
+                    title = "Permanent deletion remains unavailable",
+                    detail = "Start a scan before selecting paths, creating deletion plans, or running recommendation engines. No safety gate is bypassed here.",
+                    tone = DustNoticeTone.Warning,
+                )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = onStartScan, modifier = Modifier.weight(1f)) { Text("Start scan") }
+                    OutlinedButton(onClick = openDebug, modifier = Modifier.weight(1f)) { Text("Why locked?") }
+                }
+            }
+        }
+        item {
+            DustTaskCard(
+                title = "Open Tools",
+                detail = "Review diagnostics, probes, and export bundle state before running a scan.",
+                value = "Tools",
+                onClick = openTools,
+                leading = { Text("⌁", fontWeight = FontWeight.Bold) },
+            )
+        }
+    }
+}
+
+@Composable
 private fun ScanRequiredEmptyState(modifier: Modifier = Modifier, detail: String, onStartScan: () -> Unit) {
     LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
@@ -679,7 +767,7 @@ private fun ScanLauncherSheet(
             item {
                 DustBottomSheetHeader(
                     title = "Start a scan",
-                    detail = "Choose a root-aware scope. Fatal preflight failures, zero-file warnings, truncation, and depth notices stay visible as diagnostics evidence.",
+                    detail = "Choose a root-aware scope. Fatal preflight failures, zero-file warnings, truncation, and informational depth-cap evidence stay visible.",
                     onClose = close,
                 )
             }
@@ -824,7 +912,8 @@ private fun ScanLatestDiagnosticsNotice(diagnostics: ScanDiagnostics) {
     val zeroFiles = diagnostics.completedAt != null && diagnostics.emittedFiles == 0L
     val tone = when {
         diagnostics.hasFailure -> DustNoticeTone.Error
-        zeroFiles || diagnostics.truncated || diagnostics.depthLimitedDirectories > 0 || diagnostics.warningCount > 0 -> DustNoticeTone.Warning
+        zeroFiles || diagnostics.truncated || diagnostics.warningCount > 0 -> DustNoticeTone.Warning
+        diagnostics.depthLimitedDirectories > 0 -> DustNoticeTone.Success
         else -> DustNoticeTone.Success
     }
     DustStatusNotice(
@@ -832,7 +921,7 @@ private fun ScanLatestDiagnosticsNotice(diagnostics: ScanDiagnostics) {
             diagnostics.hasFailure -> "Latest scan has failure evidence"
             zeroFiles -> "Zero-file scan warning"
             diagnostics.truncated -> "Latest scan was truncated"
-            diagnostics.depthLimitedDirectories > 0 -> "Latest scan hit a depth limit"
+            diagnostics.depthLimitedDirectories > 0 -> "Latest scan reached the configured depth cap"
             diagnostics.warningCount > 0 -> "Latest scan has persisted warnings"
             else -> "Latest scan diagnostics are clean"
         },
@@ -1242,7 +1331,7 @@ private fun SessionCard(session: ScanSessionEntity, diagnostics: ScanDiagnostics
                         buildString {
                             append(session.warningCount).append(" warnings")
                             if (details.truncated) append(" · results truncated")
-                            if (details.depthLimitedDirectories > 0) append(" · depth-limited")
+                            if (details.depthLimitedDirectories > 0) append(" · depth cap info")
                         },
                         Modifier.weight(1f),
                         style = MaterialTheme.typography.labelMedium,
@@ -1263,7 +1352,7 @@ private fun SessionCard(session: ScanSessionEntity, diagnostics: ScanDiagnostics
                     details.canonicalRoot?.let { Detail("Canonical root", it) }
                     details.mountPoint?.let { mount -> Detail("Mount", "$mount · ${details.filesystem ?: "unknown"} · ${details.mountOptions ?: "options unavailable"}") }
                     Detail("Emitted", "${details.emittedFiles} files · ${details.emittedDirectories} directories")
-                    Detail("Traversal limits", "${details.depthLimitedDirectories} depth-limited · ${details.skippedFilesystemEntries} filesystem skips")
+                    Detail("Traversal limits", "${details.depthLimitedDirectories} depth-capped director${if (details.depthLimitedDirectories == 1L) "y" else "ies"} · ${details.skippedFilesystemEntries} filesystem skips")
                     if (details.issues.isNotEmpty()) {
                         DustSectionHeader("Recorded notices", subtitle = "Exact scanner and root-service diagnostics retained for this scan.")
                         details.issues.takeLast(8).forEach { issue ->
@@ -2345,7 +2434,7 @@ private fun HomeDashboardScreen(
             item {
                 DustHeroCard(
                     title = "Start your first scan",
-                    detail = "Pick a root-aware scope before opening files, cleanup, analytics, rules, growth history, duplicates, app residue, search, packages, modules, or certification.",
+                    detail = "Pick a root-aware scope to populate results. Files, Clean, Tools, deletion reports, and Debug workbench stay open so you can inspect why data is unavailable.",
                     eyebrow = "Storage health",
                     trailing = { DustPathPill("root-aware") },
                 ) {
@@ -2619,10 +2708,10 @@ private fun HomeDiagnosticsNotice(
             onAction = onReview,
         )
         (diagnostics?.depthLimitedDirectories ?: 0L) > 0L -> DustStatusNotice(
-            title = "Latest scan hit a depth limit",
-            detail = "One or more directories exceeded the configured traversal depth. Evidence stays available after navigation.",
-            tone = DustNoticeTone.Warning,
-            actionLabel = "Review",
+            title = "Depth cap reached for some folders",
+            detail = "The scan remains usable. DustUI records the depth-cap evidence as informational unless files were truncated, zero, or failed; use a deeper custom scan for those folders if needed.",
+            tone = DustNoticeTone.Success,
+            actionLabel = "Review evidence",
             onAction = onReview,
         )
         (diagnostics?.warningCount ?: session.warningCount.toInt()) > 0 -> DustStatusNotice(
@@ -3312,7 +3401,7 @@ private fun ToolsHubScreen(
         )
         DustTaskCard(
             title = "Scan diagnostics",
-            detail = "Root identity, preflight evidence, zero-file warnings, truncation, and depth-limit notices.",
+            detail = "Root identity, preflight evidence, zero-file warnings, truncation, and informational depth-cap evidence.",
             value = "Evidence",
             leading = { Text("!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
             onClick = openScanDiagnostics,

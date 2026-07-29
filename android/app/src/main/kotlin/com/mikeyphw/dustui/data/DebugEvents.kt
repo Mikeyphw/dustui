@@ -107,6 +107,7 @@ class DebugEventStore(private val limit: Int = DUST_DEBUG_EVENT_LIMIT) {
     private val _events = MutableStateFlow<List<DebugEvent>>(emptyList())
     val events: StateFlow<List<DebugEvent>> = _events.asStateFlow()
 
+    @Synchronized
     fun record(
         category: DebugCategory,
         severity: DebugSeverity,
@@ -126,6 +127,7 @@ class DebugEventStore(private val limit: Int = DUST_DEBUG_EVENT_LIMIT) {
         _events.value = (_events.value + event).takeLast(limit.coerceAtLeast(1))
     }
 
+    @Synchronized
     fun clear() {
         _events.value = emptyList()
     }

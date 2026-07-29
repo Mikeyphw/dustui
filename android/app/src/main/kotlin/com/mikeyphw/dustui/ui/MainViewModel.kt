@@ -87,6 +87,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -98,6 +99,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
     private val allEntries: StateFlow<List<ScanEntryEntity>> = latestSession
         .flatMapLatest { session -> session?.let { repository.observeEntries(it.id) } ?: flowOf(emptyList()) }
+        .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val debugEventStore = DebugEventStore()
@@ -542,7 +544,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
                 EntrySort.NAME -> compareBy<ScanEntryEntity> { it.name.lowercase() }
                 EntrySort.MODIFIED -> compareByDescending<ScanEntryEntity> { it.modifiedAt }.thenBy { it.name.lowercase() }
             }).toList()
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    }.flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _rootState = MutableStateFlow<RootUiState>(RootUiState.Checking)
     val rootState: StateFlow<RootUiState> = _rootState
@@ -572,8 +575,10 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     private val _duplicateManualKeep = MutableStateFlow<Map<String, String>>(emptyMap())
     val duplicatePage: StateFlow<DuplicatePage> = combine(_duplicateAnalysis, _duplicateFilter, _duplicateManualKeep) { analysis, filter, manualKeep ->
         DuplicateWorkbenchEngine.evaluate(analysis, filter, manualKeep)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DuplicatePage.empty())
+    }.flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DuplicatePage.empty())
     private var duplicateAnalysisJob: Job? = null
+    private var insightsRefreshJob: Job? = null
     private val _certification = MutableStateFlow<DeviceCertificationReport?>(null)
     val certification: StateFlow<DeviceCertificationReport?> = _certification
     private val _appStorageInspector = MutableStateFlow<AppStorageInspectorAnalysis?>(null)
@@ -584,7 +589,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val appStorageFilter: StateFlow<AppStorageInspectorFilter> = _appStorageFilter
     val appStoragePage: StateFlow<AppStorageInspectorPage> = combine(_appStorageInspector, _appStorageFilter) { analysis, filter ->
         AppStorageInspectorEngine.evaluate(analysis, filter)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppStorageInspectorPage.empty())
+    }.flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppStorageInspectorPage.empty())
     private val _residueAnalysis = MutableStateFlow<AppResidueAnalysis?>(null)
     val residueAnalysis: StateFlow<AppResidueAnalysis?> = _residueAnalysis
     private val _residueLoading = MutableStateFlow(false)
@@ -593,7 +599,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val residueFilter: StateFlow<AppResidueFilter> = _residueFilter
     val residuePage: StateFlow<AppResiduePage> = combine(_residueAnalysis, _residueFilter) { analysis, filter ->
         AppResidueWorkbenchEngine.evaluate(analysis, filter)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppResiduePage.empty())
+    }.flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppResiduePage.empty())
     private val _recommendationAnalysis = MutableStateFlow<CleanupRecommendationAnalysis?>(null)
     val recommendationAnalysis: StateFlow<CleanupRecommendationAnalysis?> = _recommendationAnalysis
     private val _recommendationLoading = MutableStateFlow(false)
@@ -607,7 +614,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         _recommendationPreferences,
     ) { analysis, filter, preferences ->
         CleanupRecommendationEngine.evaluate(analysis, filter, preferences)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CleanupRecommendationPage.empty())
+    }.flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CleanupRecommendationPage.empty())
     private val _cleanupRules = MutableStateFlow(repository.cleanupRules())
     val cleanupRules: StateFlow<List<CleanupRule>> = _cleanupRules
     private val _cleanupRulePreview = MutableStateFlow<CleanupRulePreview?>(null)
@@ -635,7 +643,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         _storageGrowthUnderstood,
     ) { analysis, filter, understood ->
         StorageGrowthEngine.evaluate(analysis, filter, understood)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StorageGrowthPage.empty())
+    }.flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StorageGrowthPage.empty())
     private val _storageGrowthLoading = MutableStateFlow(false)
     val storageGrowthLoading: StateFlow<Boolean> = _storageGrowthLoading
     private val initialCleanupReportLoad = repository.cleanupReportLoad()
@@ -659,7 +668,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val largeFileFilter: StateFlow<LargeFileFilter> = _largeFileFilter
     val largeFiles: StateFlow<LargeFilePage> = combine(_largeFileSourceEntries, _largeFileFilter) { entries, filter ->
         LargeFileWorkbenchEngine.evaluate(entries, filter)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LargeFilePage.empty())
+    }.flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LargeFilePage.empty())
     private val _moduleReport = MutableStateFlow<RootModuleReport?>(null)
     val moduleReport: StateFlow<RootModuleReport?> = _moduleReport
     val message: StateFlow<String?> = _message
@@ -705,6 +715,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         _largeFileFilter.value = LargeFileFilter()
         duplicateAnalysisJob?.cancel()
         duplicateAnalysisJob = null
+        insightsRefreshJob?.cancel()
+        insightsRefreshJob = null
         _duplicateAnalysis.value = null
         _duplicateFilter.value = DuplicateFilter()
         _duplicateManualKeep.value = emptyMap()
@@ -1915,8 +1927,9 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
 
     fun refreshInsights(scanId: String? = latestSession.value?.id) {
         if (scanId == null) return
-        recordDebugEvent(DebugCategory.App, DebugSeverity.Trace, "insights_refresh_started", "Refreshing storage intelligence", mapOf("scanId" to scanId))
-        viewModelScope.launch {
+        insightsRefreshJob?.cancel()
+        recordDebugEvent(DebugCategory.App, DebugSeverity.Trace, "insights_refresh_started", "Refreshing storage intelligence off the UI thread", mapOf("scanId" to scanId))
+        insightsRefreshJob = viewModelScope.launch(Dispatchers.IO) {
             val appSummaries = repository.appSummaries(scanId)
             val snapshotDelta = repository.snapshotDelta()
             val snapshotHistory = repository.snapshotHistory()
@@ -1967,9 +1980,10 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
                 DebugCategory.App,
                 DebugSeverity.Info,
                 "insights_refresh_finished",
-                "Storage intelligence refreshed",
+                "Storage intelligence refreshed without blocking input dispatch",
                 mapOf("scanId" to scanId, "entries" to allEntries.value.size.toString(), "recommendations" to (_recommendationAnalysis.value?.items?.size ?: 0).toString()),
             )
+            if (latestSession.value?.id == scanId) insightsRefreshJob = null
         }
     }
 

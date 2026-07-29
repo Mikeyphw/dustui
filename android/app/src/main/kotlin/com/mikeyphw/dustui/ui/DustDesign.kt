@@ -93,7 +93,15 @@ object DustNavigationModel {
         else -> destination
     }
 
-    fun needsScanData(destination: DustDestination): Boolean = destination !in setOf(DustDestination.SCAN, DustDestination.INSIGHTS, DustDestination.CLEANUP, DustDestination.DEBUG)
+    fun needsScanData(destination: DustDestination): Boolean = destination !in setOf(
+        DustDestination.SCAN,
+        DustDestination.INSIGHTS,
+        DustDestination.EXPLORER,
+        DustDestination.RECOMMENDATIONS,
+        DustDestination.CLEANUP,
+        DustDestination.DEBUG,
+        DustDestination.MORE,
+    )
 
     fun refreshesInsights(destination: DustDestination): Boolean = destination in setOf(
         DustDestination.INSIGHTS,

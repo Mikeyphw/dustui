@@ -50,7 +50,13 @@ class DebugWorkbenchSourceContractTest {
 
         assertTrue(design.contains("DEBUG(\"Debug workbench\", \"Debug\""))
         assertTrue(design.contains("DustDestination.DEBUG"))
-        assertTrue(design.contains("DustDestination.SCAN, DustDestination.INSIGHTS, DustDestination.CLEANUP, DustDestination.DEBUG"))
+        assertFalse(DustNavigationModel.needsScanData(DustDestination.SCAN))
+        assertFalse(DustNavigationModel.needsScanData(DustDestination.INSIGHTS))
+        assertFalse(DustNavigationModel.needsScanData(DustDestination.EXPLORER))
+        assertFalse(DustNavigationModel.needsScanData(DustDestination.RECOMMENDATIONS))
+        assertFalse(DustNavigationModel.needsScanData(DustDestination.MORE))
+        assertFalse(DustNavigationModel.needsScanData(DustDestination.CLEANUP))
+        assertFalse(DustNavigationModel.needsScanData(DustDestination.DEBUG))
         assertTrue(app.contains("DebugWorkbenchScreen("))
         assertTrue(app.contains("title = \"Debug workbench\""))
         assertTrue(app.contains("Live state"))
@@ -165,6 +171,44 @@ class DebugWorkbenchSourceContractTest {
         assertTrue(app.contains("Confirmation required"))
         assertTrue(app.contains("Check the irreversible-deletion confirmation before executing the reviewed plan."))
         assertTrue(app.contains("onClick = if (rootReady)"))
+    }
+
+
+    @Test fun `phase 15 keeps core task zones reachable before scan`() {
+        val app = source("src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt")
+
+        assertFalse(DustNavigationModel.needsScanData(DustDestination.EXPLORER))
+        assertFalse(DustNavigationModel.needsScanData(DustDestination.RECOMMENDATIONS))
+        assertFalse(DustNavigationModel.needsScanData(DustDestination.MORE))
+        assertTrue(app.contains("FilesNoScanScreen("))
+        assertTrue(app.contains("CleanNoScanScreen("))
+        assertTrue(app.contains("Files, Clean, Tools, Debug workbench, and deletion reports remain reachable before scanning."))
+        assertTrue(app.contains("Cleanup actions require fingerprinted paths from the active scan"))
+    }
+
+    @Test fun `phase 15 moves post scan summaries off the UI thread`() {
+        val vm = source("src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt")
+
+        assertTrue(vm.contains("import kotlinx.coroutines.flow.flowOn"))
+        assertTrue(vm.contains("private var insightsRefreshJob: Job? = null"))
+        assertTrue(vm.contains("viewModelScope.launch(Dispatchers.IO)"))
+        assertTrue(vm.contains("Refreshing storage intelligence off the UI thread"))
+        assertTrue(vm.contains(".flowOn(Dispatchers.Default)"))
+        assertTrue(vm.contains("Storage intelligence refreshed without blocking input dispatch"))
+    }
+
+    @Test fun `phase 15 treats depth caps as informational and raises default depth`() {
+        val app = source("src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt")
+        val models = source("src/main/kotlin/com/mikeyphw/dustui/scan/ScanModels.kt")
+        val presets = source("src/main/kotlin/com/mikeyphw/dustui/scan/ScanPreset.kt")
+
+        assertTrue(models.contains("val maxDepth: Int = 16"))
+        assertTrue(models.contains("json.optInt(\"maxDepth\", 16)"))
+        assertTrue(presets.contains("\"/storage/emulated/0\", 16"))
+        assertTrue(presets.contains("\"/data\", 16"))
+        assertTrue(app.contains("Latest scan reached the configured depth cap"))
+        assertTrue(app.contains("Depth cap reached for some folders"))
+        assertFalse(app.contains("Latest scan hit a depth limit"))
     }
 
     private fun source(relative: String): String = File(projectRoot(), "android/app/$relative").readText()

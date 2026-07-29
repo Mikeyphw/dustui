@@ -12,7 +12,7 @@ data class ScanRequest(
     val scanId: String = UUID.randomUUID().toString(),
     val presetId: String? = null,
     val rootPath: String,
-    val maxDepth: Int = 5,
+    val maxDepth: Int = 16,
     val maxEntries: Long = 20_000,
     val mode: EntryMode = EntryMode.ALL,
     val minSize: Long = 0,
@@ -68,7 +68,7 @@ data class ScanRequest(
                 scanId = json.getString("scanId"),
                 presetId = json.optString("presetId").takeIf { it.isNotBlank() && it != "null" },
                 rootPath = json.getString("rootPath"),
-                maxDepth = json.optInt("maxDepth", 5),
+                maxDepth = json.optInt("maxDepth", 16),
                 maxEntries = json.optLong("maxEntries", 20_000),
                 mode = runCatching { EntryMode.valueOf(json.optString("mode", EntryMode.ALL.name)) }
                     .getOrDefault(EntryMode.ALL),

@@ -269,3 +269,11 @@ Ship only when `SHIP_STATUS.md` says `SHIP` or when every warning listed under `
 - [ ] Confirm disabled actions explain missing scan, root, stale-lock, or confirmation preconditions.
 - [ ] Confirm `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, and `:app:lintDebug` pass with zero diagnostics warnings and zero errors.
 
+
+### Debug Workbench Phase 15 release checklist
+
+- [ ] Files, Clean, Tools, Debug workbench, and deletion reports are reachable before first scan.
+- [ ] Broad shared-storage scan does not trigger a post-completion ANR.
+- [ ] Debug event timeline records post-scan refresh without unbounded event spam.
+- [ ] Depth-cap evidence is presented as informational unless paired with truncation, zero-file, warning, or failure evidence.
+- [ ] Permanent deletion gates remain unchanged.

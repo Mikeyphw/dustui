@@ -1,0 +1,171 @@
+{
+  "applied_at": "2026-07-29T13:26:12.525976Z",
+  "artifact": "/home/mike/Downloads/dustui_android_debug_workbench_phase15_scan_freeze_guard_overlay_r2.zip",
+  "artifact_name": "dustui_android_debug_workbench_phase15_scan_freeze_guard_overlay_r2.zip",
+  "type": "overlay",
+  "sha256": "96fd74c4064c5bedd98770638cd7821fb5b82bcd959f25044372d92439f3318a",
+  "status": "rolled-back",
+  "validation_status": "failed",
+  "commit_message": "Fix debug workbench post-scan freeze guard",
+  "commit_hash": "",
+  "file_count": 14,
+  "change_counts": {
+    "modify": 14
+  },
+  "manifest": {
+    "apply": {
+      "atomic": true,
+      "commit": {
+        "enabled": true,
+        "message": "Fix debug workbench post-scan freeze guard",
+        "strategy": "single"
+      },
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false
+    },
+    "baseline": {
+      "commit": "8fdcb9c",
+      "description": "DustUI Android Debug Workbench clean baseline after Phase 14 final contract seal"
+    },
+    "created_by": "OpenAI ChatGPT",
+    "description": "Fix post-scan ANR risk, keep core task zones reachable before the first scan, make depth-cap diagnostics informational, and repair the phase 15 source-contract Kotlin literals.",
+    "inventory": {
+      "entries": [
+        {
+          "action": "modify",
+          "path": "CHANGELOG.md",
+          "sha256": "b71591d3aab1f4b0b23718af321191eab1d90a2087b0c1bf48edea7e8659ddd4",
+          "size": 20837,
+          "source_sha256": "6c5ba95065e106b838be6bf852c21edc6e2b052592e0be2a9bfbbb6edcf22878"
+        },
+        {
+          "action": "modify",
+          "path": "RELEASE_CHECKLIST.md",
+          "sha256": "ed6af5fd29d34cc10d2c428eff3114cd4189d085df4ea6e52df7ddd6e61b0f28",
+          "size": 20011,
+          "source_sha256": "f6386241339d73a0c01a03d6b11fd5f2d097efedd1e010668d7e6aa592ee9bd7"
+        },
+        {
+          "action": "modify",
+          "path": "UI_UX_CONTRACT.md",
+          "sha256": "204dde36c6ba6a88eadabee4c3b6afeae8c77c81a917233344de314899f9aa09",
+          "size": 30235,
+          "source_sha256": "8e263c803bb86b9dea63c24707efca61d6ae5e952847f72f6b43caa2ee2adfaf"
+        },
+        {
+          "action": "modify",
+          "path": "VALIDATION.md",
+          "sha256": "e1514dee818ef755dc48c404c55f8a39545cb6f784382e44563e0787026bb759",
+          "size": 4719,
+          "source_sha256": "218df6e063df1c85a7a040889f533e6dd833df4c669e7b4cb6bb052e19a64241"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DebugEvents.kt",
+          "sha256": "87f13db6e06baf6eaf0a2b6206201763f58b5aa4b8b37b2e61cea23a2ac57ddf",
+          "size": 4056,
+          "source_sha256": "45bea945da04b0e3fba265f5f1534c75229be23406457da8408227411240b2c7"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/scan/ScanModels.kt",
+          "sha256": "729b39f818f67bad72e26886212c6aff5744cda19f01bb215473d78615063f12",
+          "size": 3592,
+          "source_sha256": "b7698b810d70a115cc98fa6bc3fadba54b9b413efb1667b0a49e1baea69af82f"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/scan/ScanPreset.kt",
+          "sha256": "88d252a9c3061269946c5ab99ec4c5d8b32cdbc545c8f778ae1c4d30c58664e2",
+          "size": 993,
+          "source_sha256": "f663115b76b7c5de7136991fbb25648cdb6b0a58deb53dc8384d5ef012da27ce"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+          "sha256": "3a4a2022ae9f977d4fb94b9e00b90ec17f385eceb2abadc83dffcaead0916c95",
+          "size": 10214,
+          "source_sha256": "bfad64ff078c3b35dacf257837173a675d2389664f22c19edef35c8dac931aec"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "sha256": "03c00e8bfb35fc5312a6eb24daa4676622a75d58b32535eea32f363d7cd05706",
+          "size": 187546,
+          "source_sha256": "7e512795d80c46b89d4465b8a109c2742aa66760096928cae0923e747fa3b692"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+          "sha256": "91861a8eb1f7721ad609ccc89ef599079d669964a044c84a2e449bbf7deacfc4",
+          "size": 106875,
+          "source_sha256": "5da8743133925d296997fb12087ae44295570429898de05e2adfa04b34ddcf5c"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchSourceContractTest.kt",
+          "sha256": "73cc68cce43995a021f053a51e14984f8ee842910f8f2696591f92ff2e7dc0c6",
+          "size": 12437,
+          "source_sha256": "f95e22cff9068d9655c0cb3e6dd4e50a08caaab6bb377f5da0ad4c4066d7360d"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+          "sha256": "bd45ed7f59cd111b9284c5fbacb326ce2bfcaf2459f863b6d21722d707211a27",
+          "size": 7761,
+          "source_sha256": "3b49be1ea91f5877db619ae6b1f89fbaf3a8c8af25ff8140b4a002f177d4f088"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+          "sha256": "bb7d43a4d901d6edff477d46954c52e322026082bc2e74c8bc7158271ab4d3f8",
+          "size": 33382,
+          "source_sha256": "3d480780d737ecd14f119e1a5f2c4bc18cce2734face38594b03e0ba1402ba86"
+        },
+        {
+          "action": "modify",
+          "path": "docs/ANDROID_DEBUG_WORKBENCH.md",
+          "sha256": "7d934acb9c465dca3023958e9b2df40e19dcb1141b7ae64b3e7ec6647a62a509",
+          "size": 7532,
+          "source_sha256": "a2df9541dfa4f647a9721a4aa41427d999163a458d96040332378b2296a97c38"
+        }
+      ],
+      "format": 1
+    },
+    "name": "DustUI Debug Workbench Phase 15 Scan Freeze Guard r2",
+    "notes": [
+      "Reserved artifact metadata is intentionally not listed in inventory.",
+      "Runtime deletion gates are unchanged.",
+      "Post-scan summary work moves off the UI thread to reduce ANR risk after scan completion."
+    ],
+    "repository": {
+      "name": "dustui"
+    },
+    "schema_version": 2,
+    "target": "dustui_android",
+    "type": "overlay",
+    "validation": {
+      "build": true,
+      "execution_environment": "auto",
+      "expected": {
+        "build": "pass",
+        "maximum_warnings": 0,
+        "restore": "pass",
+        "tests": "pass"
+      },
+      "required": true,
+      "restore": true,
+      "rollback_on_failure": true,
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "0b434328123fa5133ffdfc5c57d56f6187a59cde16d2c6134f7429584dcc9989",
+        "timeout_seconds": 3600
+      },
+      "test": true
+    },
+    "version": "1.0.1"
+  },
+  "history_id": "b5491148f33e401093f35cb29798959b"
+}

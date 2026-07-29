@@ -1,5 +1,10 @@
 ## Debug Workbench · Phase 14 final contract seal
 
+### Debug Workbench Phase 15 scan freeze guard r3
+
+- Realigned source-contract assertions with the Phase 15 scan-independent task-zone model so Files, Clean, Tools, Debug workbench, and deletion reports are verified through `DustNavigationModel.needsScanData(...)` instead of brittle contiguous source strings.
+
+
 - Sealed the Debug Workbench roadmap after Phases 9 through 13 with final docs, source contracts, release checklist items, and a source-level audit script.
 - Locked Debug workbench as a scan-independent Tools surface with Live state, Trace timeline, Diagnostic probes, Export debug bundle, and UI debug overlay sections.
 - Locked the safety contract that probes, exports, overlays, and disabled-action explanations remain diagnostic-only and never bypass cleanup safeguards.
@@ -255,3 +260,11 @@ Final release-candidate hardening for the rooted Android storage workbench.
 - Added an opt-in floating UI debug overlay from Debug workbench with route/layout/scan/root/stale/selection/module/event state.
 - Added explicit disabled-action explanations for scan, export, certification, stale deletion, and permanent-deletion confirmation gates.
 - Kept overlay and explanations diagnostic-only with no cleanup safety changes.
+
+### Android Debug Workbench · Phase 15 scan freeze guard
+
+- Moved post-scan storage intelligence refresh off the UI thread to reduce ANR risk after scan completion.
+- Shifted expensive derived workbench paging/filtering flows to background contexts.
+- Kept Files, Clean, Tools, Debug workbench, and deletion reports reachable before the first scan with explicit no-scan explanations.
+- Raised default scan traversal depth to 16 for custom and built-in Android scopes.
+- Reclassified depth-cap UI copy as informational unless truncation, zero-file, warning, or failure evidence is present.

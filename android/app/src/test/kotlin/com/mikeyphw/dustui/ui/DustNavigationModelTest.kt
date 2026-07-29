@@ -93,12 +93,14 @@ class DustNavigationModelTest {
         assertNull(DustNavigationModel.backTarget(DustDestination.INSIGHTS, wide = false))
     }
 
-    @Test fun `home scan and reports work without scan data`() {
+    @Test fun `home files clean tools scan debug and reports work without scan data`() {
         assertFalse(DustNavigationModel.needsScanData(DustDestination.SCAN))
         assertFalse(DustNavigationModel.needsScanData(DustDestination.INSIGHTS))
+        assertFalse(DustNavigationModel.needsScanData(DustDestination.EXPLORER))
+        assertFalse(DustNavigationModel.needsScanData(DustDestination.RECOMMENDATIONS))
         assertFalse(DustNavigationModel.needsScanData(DustDestination.CLEANUP))
         assertFalse(DustNavigationModel.needsScanData(DustDestination.DEBUG))
-        assertTrue(DustNavigationModel.needsScanData(DustDestination.EXPLORER))
+        assertFalse(DustNavigationModel.needsScanData(DustDestination.MORE))
         assertTrue(DustNavigationModel.needsScanData(DustDestination.SEARCH))
     }
 }
