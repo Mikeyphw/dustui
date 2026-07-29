@@ -158,6 +158,7 @@
 - Added group/page selection, exact-path inspection, Explorer reveal, and reviewed permanent-deletion planning.
 
 ### Phase 16 · Large file workbench
+- Phase 16 r3 aligns the scan-sheet source contract with the quieter depth-boundary wording introduced by the adjustable depth policy.
 
 - Added a dedicated Android large-file destination backed by the complete active-scan entry set rather than only the Explorer display window.
 - Added presets for 100 MiB+, 500 MiB+, 1 GiB+, older files, old archives, large videos, and APK installers.
@@ -268,3 +269,11 @@ Final release-candidate hardening for the rooted Android storage workbench.
 - Kept Files, Clean, Tools, Debug workbench, and deletion reports reachable before the first scan with explicit no-scan explanations.
 - Raised default scan traversal depth to 16 for custom and built-in Android scopes.
 - Reclassified depth-cap UI copy as informational unless truncation, zero-file, warning, or failure evidence is present.
+
+### DustUI Android Debug Workbench · Phase 16 performance/depth controls
+
+- Added adjustable scan-depth policy controls for Fast, Forgiving/default, and Deep scans.
+- Made Forgiving the default depth behavior with unlimited traversal depth plus an entry cap to protect the UI.
+- Raised allowed depth ceiling to 128 for automation/manual scan requests while preserving `-1` unlimited depth support.
+- Added cooperative checkpoints inside post-scan insight refresh to reduce long CPU bursts after scan completion.
+- Reworded depth-cap evidence as quiet informational boundary evidence unless paired with zero-file, truncation, warning, or error signals.

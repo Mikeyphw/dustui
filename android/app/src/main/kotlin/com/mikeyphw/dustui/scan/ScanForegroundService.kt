@@ -254,7 +254,7 @@ class ScanForegroundService : Service() {
                                     code = "DEPTH_LIMIT_REACHED",
                                     severity = ScanDiagnosticSeverity.INFO,
                                     phase = "completion",
-                                    message = "${event.depthLimitedDirectories} director${if (event.depthLimitedDirectories == 1L) "y" else "ies"} reached the configured depth limit.",
+                                    message = "${event.depthLimitedDirectories} director${if (event.depthLimitedDirectories == 1L) "y" else "ies"} reached a depth boundary; this is informational unless paired with truncation or zero-file evidence.",
                                 )
                                 if (event.skippedFilesystemEntries > 0) issue(
                                     code = "FILESYSTEM_BOUNDARIES_SKIPPED",
@@ -268,7 +268,7 @@ class ScanForegroundService : Service() {
                                         request.mode == EntryMode.DIRECTORIES -> "This scan was configured to emit directories only, so the file count is zero."
                                         request.minSize > 0L -> "The root opened successfully, but no files matched the minimum-size filter."
                                         request.maxDepth == 0 -> "The root opened successfully, but maximum depth is zero."
-                                        else -> "The root opened successfully, but no file records were emitted. Review hidden-file, depth, exclusion, and result-limit settings."
+                                        else -> "The root opened successfully, but no file records were emitted. Review hidden-file, exclusion, result-limit, and depth-policy settings."
                                     }
                                     issue(
                                         code = "ZERO_FILES_EMITTED",

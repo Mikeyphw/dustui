@@ -1,0 +1,159 @@
+{
+  "applied_at": "2026-07-29T17:08:42.486470Z",
+  "artifact": "/home/mike/Downloads/dustui_android_debug_workbench_phase16_performance_depth_controls_overlay_r2.zip",
+  "artifact_name": "dustui_android_debug_workbench_phase16_performance_depth_controls_overlay_r2.zip",
+  "type": "overlay",
+  "sha256": "73b1259d2a94684a724fbc9841db46a66e84285d723fec09d7f2912fe627c3a6",
+  "status": "rolled-back",
+  "validation_status": "failed",
+  "commit_message": "Add scan depth controls and performance guard",
+  "commit_hash": "",
+  "file_count": 12,
+  "change_counts": {
+    "modify": 12
+  },
+  "manifest": {
+    "apply": {
+      "atomic": true,
+      "commit": {
+        "enabled": true,
+        "message": "Add scan depth controls and performance guard",
+        "strategy": "single"
+      },
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false
+    },
+    "baseline": {
+      "commit": "a17ddde",
+      "description": "DustUI Android debug baseline after Phase 15 scan freeze guard r3"
+    },
+    "created_by": "OpenAI ChatGPT",
+    "description": "Further optimize post-scan refresh responsiveness and add forgiving adjustable scan-depth policies. Revision 2 removes duplicate test imports from the source-contract test.",
+    "inventory": {
+      "entries": [
+        {
+          "action": "modify",
+          "path": "CHANGELOG.md",
+          "sha256": "13f8e7115c732a6eac9d7046ed749c4c606017064d539fab5a2a6a595c4d819c",
+          "size": 21804,
+          "source_sha256": "263b7d675614a2cf160ef1aade084626574ad843208f63cf7d277ba5dd8dc37e"
+        },
+        {
+          "action": "modify",
+          "path": "RELEASE_CHECKLIST.md",
+          "sha256": "53516455ded9842279c796eb5fde1e544e5f6e60afc61bb8b21f08b145e8c1ee",
+          "size": 20306,
+          "source_sha256": "ed6af5fd29d34cc10d2c428eff3114cd4189d085df4ea6e52df7ddd6e61b0f28"
+        },
+        {
+          "action": "modify",
+          "path": "UI_UX_CONTRACT.md",
+          "sha256": "ea0057fd98b4e6ca8a9519c34389960c726faaba3eb9cefb0c4f5e329edf3efb",
+          "size": 30700,
+          "source_sha256": "204dde36c6ba6a88eadabee4c3b6afeae8c77c81a917233344de314899f9aa09"
+        },
+        {
+          "action": "modify",
+          "path": "VALIDATION.md",
+          "sha256": "bed847746b26eb7d2bb5abb3a7d50166a0526f4f12ce7e21381f1d5b6e8e0a06",
+          "size": 4842,
+          "source_sha256": "e1514dee818ef755dc48c404c55f8a39545cb6f784382e44563e0787026bb759"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/scan/ScanForegroundService.kt",
+          "sha256": "da504da561d4cfde5d21a5f42ac5bce52b3c6e0ab65ed278259ec1179443d33e",
+          "size": 25226,
+          "source_sha256": "cb9a846d8d350754ce95323d35a634fd29de7931b97c7e4a69d81002cefebf3f"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/scan/ScanModels.kt",
+          "sha256": "684f280a2c0dd005e27537a202029cf43ed0c947351491760d4795622c1438c4",
+          "size": 5415,
+          "source_sha256": "729b39f818f67bad72e26886212c6aff5744cda19f01bb215473d78615063f12"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/scan/ScanPreset.kt",
+          "sha256": "d22a5d1b1687b5d5f135f6559d781e493f2ac75339034a1642f941257a30f67c",
+          "size": 1233,
+          "source_sha256": "88d252a9c3061269946c5ab99ec4c5d8b32cdbc545c8f778ae1c4d30c58664e2"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/tasker/DustTaskerReceiver.kt",
+          "sha256": "4758120f4d61b97ff024e71938ec705b0e82cbf55b959a1b9ebfd4630905f5dc",
+          "size": 2706,
+          "source_sha256": "1f7e9e84e36413dd528d739cfadbdd3b32ef01a22bdd263f8376302aaf27a9c2"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "sha256": "36a9456e1f6562b464729b8c103411f60304c8258273081b76302fd62f42b686",
+          "size": 189591,
+          "source_sha256": "03c00e8bfb35fc5312a6eb24daa4676622a75d58b32535eea32f363d7cd05706"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+          "sha256": "0a73af06072776b3ee6bcc64b13d096c6e4216518205d0fb2cd24b82cb653f50",
+          "size": 108362,
+          "source_sha256": "91861a8eb1f7721ad609ccc89ef599079d669964a044c84a2e449bbf7deacfc4"
+        },
+        {
+          "action": "modify",
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchSourceContractTest.kt",
+          "sha256": "ac1adedc210257df8e8aebe3c062f68d2f8e3138e46c2275a098ca4c0f2a01d3",
+          "size": 15024,
+          "source_sha256": "b910e2a0d65c67c38eb1863ef5b8ce24281c63c6ee6ca118ca163ff9ba85cad0"
+        },
+        {
+          "action": "modify",
+          "path": "docs/ANDROID_DEBUG_WORKBENCH.md",
+          "sha256": "1702db48c452d7e502ff03acbb7c430480b13265b207aa6e3c53bef0457cda1b",
+          "size": 7910,
+          "source_sha256": "7d934acb9c465dca3023958e9b2df40e19dcb1141b7ae64b3e7ec6647a62a509"
+        }
+      ],
+      "format": 1
+    },
+    "name": "DustUI Debug Workbench Phase 16 Performance Depth Controls",
+    "notes": [
+      "Reserved artifact metadata is intentionally not listed in inventory.",
+      "Forgiving depth mode removes the depth cap by default while retaining an entry cap.",
+      "Post-scan refresh uses cooperative checkpoints to reduce long CPU bursts.",
+      "Deletion and protected-path safety gates are unchanged.",
+      "Revision 2 removes duplicate ScanDepthPolicy/ScanDepthProfile imports in DebugWorkbenchSourceContractTest; runtime changes are unchanged from r1."
+    ],
+    "repository": {
+      "name": "dustui"
+    },
+    "schema_version": 2,
+    "target": "dustui_android",
+    "type": "overlay",
+    "validation": {
+      "build": true,
+      "execution_environment": "auto",
+      "expected": {
+        "build": "pass",
+        "maximum_warnings": 0,
+        "restore": "pass",
+        "tests": "pass"
+      },
+      "required": true,
+      "restore": true,
+      "rollback_on_failure": true,
+      "script": {
+        "path": ".devtool-artifact/validate.sh",
+        "runner": "bash",
+        "sha256": "77edade7195ea18839e7b16d3388bb8016bc7cc6fab8064c788c487ee35a5dd6",
+        "timeout_seconds": 3600
+      },
+      "test": true
+    },
+    "version": "1.0.1"
+  },
+  "history_id": "52db41ffe4bc4dd1920c310962f81c68"
+}

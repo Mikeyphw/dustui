@@ -7,6 +7,8 @@ import com.mikeyphw.dustui.data.DebugExportMode
 import com.mikeyphw.dustui.data.DebugSeverity
 import com.mikeyphw.dustui.data.DebugProbeTarget
 import com.mikeyphw.dustui.data.DebugProbeStatus
+import com.mikeyphw.dustui.scan.ScanDepthPolicy
+import com.mikeyphw.dustui.scan.ScanDepthProfile
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -194,7 +196,7 @@ class DebugWorkbenchSourceContractTest {
         assertTrue(vm.contains("viewModelScope.launch(Dispatchers.IO)"))
         assertTrue(vm.contains("Refreshing storage intelligence off the UI thread"))
         assertTrue(vm.contains(".flowOn(Dispatchers.Default)"))
-        assertTrue(vm.contains("Storage intelligence refreshed without blocking input dispatch"))
+        assertTrue(vm.contains("Storage intelligence refreshed with cooperative checkpoints"))
     }
 
     @Test fun `phase 15 treats depth caps as informational and raises default depth`() {
@@ -202,13 +204,45 @@ class DebugWorkbenchSourceContractTest {
         val models = source("src/main/kotlin/com/mikeyphw/dustui/scan/ScanModels.kt")
         val presets = source("src/main/kotlin/com/mikeyphw/dustui/scan/ScanPreset.kt")
 
-        assertTrue(models.contains("val maxDepth: Int = 16"))
-        assertTrue(models.contains("json.optInt(\"maxDepth\", 16)"))
-        assertTrue(presets.contains("\"/storage/emulated/0\", 16"))
-        assertTrue(presets.contains("\"/data\", 16"))
-        assertTrue(app.contains("Latest scan reached the configured depth cap"))
-        assertTrue(app.contains("Depth cap reached for some folders"))
+        assertTrue(models.contains("object ScanDepthPolicy"))
+        assertTrue(models.contains("DEFAULT_MAX_DEPTH = UNLIMITED_DEPTH"))
+        assertTrue(models.contains("json.optInt(\"maxDepth\", ScanDepthPolicy.DEFAULT_MAX_DEPTH)"))
+        assertTrue(presets.contains("ScanDepthPolicy.DEFAULT_MAX_DEPTH"))
+        assertTrue(app.contains("Latest scan noted depth-cap boundaries"))
+        assertTrue(app.contains("Depth-cap boundaries noted"))
         assertFalse(app.contains("Latest scan hit a depth limit"))
+    }
+
+    @Test fun `phase 16 makes scan depth forgiving adjustable and bounded`() {
+        val app = source("src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt")
+        val vm = source("src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt")
+        val models = source("src/main/kotlin/com/mikeyphw/dustui/scan/ScanModels.kt")
+        val tasker = source("src/main/kotlin/com/mikeyphw/dustui/tasker/DustTaskerReceiver.kt")
+
+        assertEquals(ScanDepthPolicy.UNLIMITED_DEPTH, ScanDepthProfile.default.maxDepth)
+        assertEquals(40_000L, ScanDepthProfile.default.maxEntries)
+        assertTrue(models.contains("MAX_ALLOWED_DEPTH = 128"))
+        assertTrue(models.contains("enum class ScanDepthProfile"))
+        assertTrue(vm.contains("val scanDepthProfile: StateFlow<ScanDepthProfile>"))
+        assertTrue(vm.contains("fun selectScanDepthProfile(profile: ScanDepthProfile)"))
+        assertTrue(vm.contains("preset.request(_scanDepthProfile.value)"))
+        assertTrue(vm.contains("maxEntries = _scanDepthProfile.value.maxEntries"))
+        assertTrue(vm.contains("scan_depth_profile_selected"))
+        assertTrue(app.contains("ScanDepthSelector("))
+        assertTrue(app.contains("Depth caps are adjustable and forgiving by default"))
+        assertTrue(app.contains("Unlimited depth still keeps an entry cap"))
+        assertTrue(tasker.contains("coerceIn(ScanDepthPolicy.UNLIMITED_DEPTH, ScanDepthPolicy.MAX_ALLOWED_DEPTH)"))
+    }
+
+    @Test fun `phase 16 adds cooperative post scan refresh checkpoints`() {
+        val vm = source("src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt")
+
+        assertTrue(vm.contains("import kotlinx.coroutines.ensureActive"))
+        assertTrue(vm.contains("import kotlinx.coroutines.yield"))
+        assertTrue(vm.contains("suspend fun checkpoint()"))
+        assertTrue(vm.contains("coroutineContext.ensureActive()"))
+        assertTrue(vm.contains("yield()"))
+        assertTrue(vm.contains("Storage intelligence refreshed with cooperative checkpoints"))
     }
 
     private fun source(relative: String): String = File(projectRoot(), "android/app/$relative").readText()

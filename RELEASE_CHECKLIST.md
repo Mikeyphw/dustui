@@ -277,3 +277,7 @@ Ship only when `SHIP_STATUS.md` says `SHIP` or when every warning listed under `
 - [ ] Debug event timeline records post-scan refresh without unbounded event spam.
 - [ ] Depth-cap evidence is presented as informational unless paired with truncation, zero-file, warning, or failure evidence.
 - [ ] Permanent deletion gates remain unchanged.
+
+- [ ] Verify Phase 16 scans can switch between Fast, Forgiving, and Deep depth policies before scanning.
+- [ ] Verify internal storage scans no longer raise scary depth-cap copy under normal traversal boundaries.
+- [ ] Verify post-scan UI remains responsive after large internal-storage scans.

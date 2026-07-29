@@ -111,6 +111,8 @@ import com.mikeyphw.dustui.data.StorageBucket
 import com.mikeyphw.dustui.data.VisualAnalytics
 import com.mikeyphw.dustui.scan.ScanStatus
 import com.mikeyphw.dustui.root.RootServiceClient
+import com.mikeyphw.dustui.scan.ScanDepthPolicy
+import com.mikeyphw.dustui.scan.ScanDepthProfile
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -165,6 +167,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         val debugProbeResults by viewModel.debugProbeResults.collectAsStateWithLifecycle()
         val debugExportResult by viewModel.debugExportResult.collectAsStateWithLifecycle()
         val debugOverlayVisible by viewModel.debugOverlayVisible.collectAsStateWithLifecycle()
+        val scanDepthProfile by viewModel.scanDepthProfile.collectAsStateWithLifecycle()
         val scanDataStale by viewModel.scanDataStale.collectAsStateWithLifecycle()
         val snackbar = remember { SnackbarHostState() }
         var destination by rememberSaveable { mutableStateOf(DustDestination.INSIGHTS) }
@@ -299,6 +302,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     scanDiagnostics,
                                     pathPreflight,
                                     viewModel,
+                                    scanDepthProfile,
                                     requestNotificationPermission,
                                 ) { selectDestination(DustDestination.INSIGHTS) }
                                 destination == DustDestination.EXPLORER && currentSession == null -> FilesNoScanScreen(
@@ -560,6 +564,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                 diagnostics = scanDiagnostics,
                 pathPreflight = pathPreflight,
                 vm = viewModel,
+                scanDepthProfile = scanDepthProfile,
                 requestNotificationPermission = requestNotificationPermission,
                 close = { showScanSheet = false },
                 openHome = { selectDestination(DustDestination.INSIGHTS) },
@@ -742,6 +747,35 @@ private fun ScanRequiredEmptyState(modifier: Modifier = Modifier, detail: String
     }
 }
 
+@Composable
+private fun ScanDepthSelector(
+    selected: ScanDepthProfile,
+    onSelect: (ScanDepthProfile) -> Unit,
+) {
+    Card {
+        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            DustSectionHeader(
+                "Depth policy",
+                subtitle = "Depth caps are adjustable and forgiving by default. Unlimited depth still keeps an entry cap so the UI stays responsive.",
+            )
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(ScanDepthProfile.entries, key = { it.name }) { profile ->
+                    FilterChip(
+                        selected = selected == profile,
+                        onClick = { onSelect(profile) },
+                        label = { Text(profile.shortTitle) },
+                    )
+                }
+            }
+            DustStatusNotice(
+                title = "${selected.title}: ${ScanDepthPolicy.label(selected.maxDepth)}",
+                detail = "${selected.description} Entry cap: ${selected.maxEntries}. Depth-cap messages stay informational unless zero-file, truncation, warning, or error evidence appears.",
+                tone = DustNoticeTone.Success,
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ScanLauncherSheet(
@@ -752,6 +786,7 @@ private fun ScanLauncherSheet(
     diagnostics: ScanDiagnostics?,
     pathPreflight: RootServiceClient.ScanRootPreflight?,
     vm: MainViewModel,
+    scanDepthProfile: ScanDepthProfile,
     requestNotificationPermission: () -> Unit,
     close: () -> Unit,
     openHome: () -> Unit,
@@ -772,8 +807,9 @@ private fun ScanLauncherSheet(
                 )
             }
             item { ScanRootStatusCard(root, rootInfo, rootFailure, vm::refreshRoot) }
+            item { ScanDepthSelector(scanDepthProfile, vm::selectScanDepthProfile) }
             item {
-                DustSectionHeader("Scan presets", subtitle = "Common Android scopes with explicit root/access diagnostics.")
+                DustSectionHeader("Scan presets", subtitle = "Common Android scopes with explicit root/access diagnostics. Depth policy: ${scanDepthProfile.title} · ${ScanDepthPolicy.label(scanDepthProfile.maxDepth)} · ${scanDepthProfile.maxEntries} entry cap.")
             }
             items(vm.presets) { preset ->
                 DustTaskCard(
@@ -921,7 +957,7 @@ private fun ScanLatestDiagnosticsNotice(diagnostics: ScanDiagnostics) {
             diagnostics.hasFailure -> "Latest scan has failure evidence"
             zeroFiles -> "Zero-file scan warning"
             diagnostics.truncated -> "Latest scan was truncated"
-            diagnostics.depthLimitedDirectories > 0 -> "Latest scan reached the configured depth cap"
+            diagnostics.depthLimitedDirectories > 0 -> "Latest scan noted depth-cap boundaries"
             diagnostics.warningCount > 0 -> "Latest scan has persisted warnings"
             else -> "Latest scan diagnostics are clean"
         },
@@ -940,6 +976,7 @@ private fun ScanLauncher(
     diagnostics: ScanDiagnostics?,
     pathPreflight: RootServiceClient.ScanRootPreflight?,
     vm: MainViewModel,
+    scanDepthProfile: ScanDepthProfile,
     requestNotificationPermission: () -> Unit,
     openExplorer: () -> Unit,
 ) {
@@ -963,7 +1000,8 @@ private fun ScanLauncher(
                 }
             }
         }
-        item { DustSectionHeader("Scan presets", subtitle = "Common storage scopes for root-aware Android analysis.") }
+        item { ScanDepthSelector(scanDepthProfile, vm::selectScanDepthProfile) }
+        item { DustSectionHeader("Scan presets", subtitle = "Common storage scopes. Depth policy: ${scanDepthProfile.title} · ${ScanDepthPolicy.label(scanDepthProfile.maxDepth)} · ${scanDepthProfile.maxEntries} entry cap.") }
         item {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 vm.presets.forEach { preset ->
@@ -2708,8 +2746,8 @@ private fun HomeDiagnosticsNotice(
             onAction = onReview,
         )
         (diagnostics?.depthLimitedDirectories ?: 0L) > 0L -> DustStatusNotice(
-            title = "Depth cap reached for some folders",
-            detail = "The scan remains usable. DustUI records the depth-cap evidence as informational unless files were truncated, zero, or failed; use a deeper custom scan for those folders if needed.",
+            title = "Depth-cap boundaries noted",
+            detail = "The scan remains usable. Depth boundaries are quiet informational evidence by default; choose Forgiving or Deep in the scan sheet to remove or relax depth limits for the next scan.",
             tone = DustNoticeTone.Success,
             actionLabel = "Review evidence",
             onAction = onReview,
@@ -3401,7 +3439,7 @@ private fun ToolsHubScreen(
         )
         DustTaskCard(
             title = "Scan diagnostics",
-            detail = "Root identity, preflight evidence, zero-file warnings, truncation, and informational depth-cap evidence.",
+            detail = "Root identity, preflight evidence, zero-file warnings, truncation, and quiet depth-boundary evidence.",
             value = "Evidence",
             leading = { Text("!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
             onClick = openScanDiagnostics,

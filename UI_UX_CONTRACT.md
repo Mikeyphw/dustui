@@ -365,3 +365,7 @@ Required behavior:
 - Post-scan summary work must not run on the input/render thread. Expensive storage intelligence and derived paging/filtering should run on IO/default dispatchers.
 - Depth-cap evidence is informational by default. It becomes user-blocking only when paired with failure, zero-file, truncation, or persisted warning/error evidence.
 - No pre-scan page may bypass deletion review, stale-scan locks, protected-path blocking, or fingerprint verification.
+
+### Phase 16 scan depth and responsiveness contract
+
+Scan depth must be user-adjustable from the scan launcher. The default policy is forgiving: no depth cap, but still bounded by an entry limit to protect responsiveness. Depth-cap evidence must read as informational boundary evidence unless paired with zero-file, truncation, warning, or error signals. Post-scan summaries must use cooperative off-main refresh checkpoints rather than one large UI-thread burst.

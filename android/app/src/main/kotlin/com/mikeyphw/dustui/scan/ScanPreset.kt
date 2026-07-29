@@ -9,20 +9,21 @@ data class ScanPreset(
     val includeHidden: Boolean = false,
     val minSize: Long = 0,
 ) {
-    fun request(): ScanRequest = ScanRequest(
+    fun request(depthProfile: ScanDepthProfile = ScanDepthProfile.default): ScanRequest = ScanRequest(
         presetId = id,
         rootPath = path,
-        maxDepth = maxDepth,
+        maxDepth = depthProfile.maxDepth,
+        maxEntries = depthProfile.maxEntries,
         includeHidden = includeHidden,
         minSize = minSize,
     ).validated()
 
     companion object {
         val defaults = listOf(
-            ScanPreset("shared", "Shared storage", "Downloads, media and user files", "/storage/emulated/0", 16),
-            ScanPreset("apps", "App data", "Private data for the primary Android user", "/data/user/0", 16, true),
-            ScanPreset("data", "Android data", "Broad /data scan kept on one filesystem", "/data", 16, true),
-            ScanPreset("modules", "Root modules", "Magisk, KernelSU and APatch module payloads", "/data/adb/modules", 16, true),
+            ScanPreset("shared", "Shared storage", "Downloads, media and user files", "/storage/emulated/0", ScanDepthPolicy.DEFAULT_MAX_DEPTH),
+            ScanPreset("apps", "App data", "Private data for the primary Android user", "/data/user/0", ScanDepthPolicy.DEFAULT_MAX_DEPTH, true),
+            ScanPreset("data", "Android data", "Broad /data scan kept on one filesystem", "/data", ScanDepthPolicy.DEFAULT_MAX_DEPTH, true),
+            ScanPreset("modules", "Root modules", "Magisk, KernelSU and APatch module payloads", "/data/adb/modules", ScanDepthPolicy.DEFAULT_MAX_DEPTH, true),
         )
     }
 }

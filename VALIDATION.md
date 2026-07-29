@@ -118,3 +118,5 @@ Validate Phase 15 with targeted Android gates:
 ```
 
 Manual smoke check: launch a debug build, open Files/Clean/Tools before any scan, run a shared-storage scan, then confirm input remains responsive after completion and depth-cap evidence is informational unless another warning/failure is present.
+
+- Phase 16 adds `ScanDepthProfile` source contracts, cooperative post-scan refresh checks, and Tasker depth bound checks.

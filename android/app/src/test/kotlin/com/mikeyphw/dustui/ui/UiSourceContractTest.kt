@@ -100,7 +100,7 @@ class UiSourceContractTest {
         assertTrue(app.contains("Fatal preflight failure"))
         assertTrue(app.contains("Zero-file scan warning"))
         assertTrue(app.contains("Latest scan was truncated"))
-        assertTrue(app.contains("Latest scan reached the configured depth cap"))
+        assertTrue(app.contains("Latest scan noted depth-cap boundaries"))
         assertTrue(app.contains("/data/adb/modules"))
         assertTrue(app.contains("Wrong-scope module values must be shown as unavailable, never silent zeroes."))
     }

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.core.os.bundleOf
+import com.mikeyphw.dustui.scan.ScanDepthPolicy
 import com.mikeyphw.dustui.scan.ScanForegroundService
 import com.mikeyphw.dustui.scan.ScanRequest
 
@@ -18,7 +19,7 @@ class DustTaskerReceiver : BroadcastReceiver() {
                 val request = runCatching {
                     ScanRequest(
                         rootPath = plugin.getString(KEY_PATH, DEFAULT_PATH).orEmpty().trim(),
-                        maxDepth = plugin.getInt(KEY_DEPTH, DEFAULT_DEPTH).coerceIn(0, 64),
+                        maxDepth = plugin.getInt(KEY_DEPTH, DEFAULT_DEPTH).coerceIn(ScanDepthPolicy.UNLIMITED_DEPTH, ScanDepthPolicy.MAX_ALLOWED_DEPTH),
                         presetId = "tasker",
                     ).validated()
                 }.getOrNull() ?: return
@@ -51,6 +52,6 @@ class DustTaskerReceiver : BroadcastReceiver() {
         const val RESULT_SCAN_ID = "dustui_result_scan_id"
         const val RESULT_PATH = "dustui_result_path"
         const val DEFAULT_PATH = "/storage/emulated/0"
-        const val DEFAULT_DEPTH = 5
+        const val DEFAULT_DEPTH = ScanDepthPolicy.DEFAULT_MAX_DEPTH
     }
 }

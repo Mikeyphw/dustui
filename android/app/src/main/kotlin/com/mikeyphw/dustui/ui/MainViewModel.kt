@@ -75,12 +75,15 @@ import com.mikeyphw.dustui.data.LargeFilePage
 import com.mikeyphw.dustui.data.LargeFilePreset
 import com.mikeyphw.dustui.data.LargeFileSort
 import com.mikeyphw.dustui.data.LargeFileWorkbenchEngine
+import com.mikeyphw.dustui.scan.ScanDepthProfile
 import com.mikeyphw.dustui.scan.ScanPreset
 import com.mikeyphw.dustui.scan.ScanRequest
 import com.mikeyphw.dustui.root.RootServiceClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.yield
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -90,11 +93,14 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.coroutines.coroutineContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     private var activeSessionId: String? = null
     val presets = ScanPreset.defaults
+    private val _scanDepthProfile = MutableStateFlow(ScanDepthProfile.default)
+    val scanDepthProfile: StateFlow<ScanDepthProfile> = _scanDepthProfile
     val latestSession: StateFlow<ScanSessionEntity?> = repository.observeLatestSession()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
     private val allEntries: StateFlow<List<ScanEntryEntity>> = latestSession
@@ -159,6 +165,18 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
 
     fun toggleDebugOverlay() {
         setDebugOverlayVisible(!_debugOverlayVisible.value)
+    }
+
+    fun selectScanDepthProfile(profile: ScanDepthProfile) {
+        if (_scanDepthProfile.value == profile) return
+        _scanDepthProfile.value = profile
+        recordDebugEvent(
+            DebugCategory.Scan,
+            DebugSeverity.Info,
+            "scan_depth_profile_selected",
+            "Selected ${profile.title} scan depth policy",
+            mapOf("maxDepth" to profile.maxDepth.toString(), "maxEntries" to profile.maxEntries.toString()),
+        )
     }
 
 
@@ -806,13 +824,13 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
                 }
         }
     }
-    fun startPreset(preset: ScanPreset) = startRequest(runCatching(preset::request))
+    fun startPreset(preset: ScanPreset) = startRequest(runCatching { preset.request(_scanDepthProfile.value) })
     fun diagnoseScanPath(path: String) {
         _pathPreflight.value = null
         val normalizedPath = path.trim()
         recordDebugEvent(DebugCategory.Scan, DebugSeverity.Trace, "scan_preflight_started", "Testing scan-root access", mapOf("rootPath" to normalizedPath))
         viewModelScope.launch {
-            runCatching { ScanRequest(rootPath = normalizedPath).validated() }
+            runCatching { ScanRequest(rootPath = normalizedPath, maxDepth = _scanDepthProfile.value.maxDepth, maxEntries = _scanDepthProfile.value.maxEntries).validated() }
                 .mapCatching { repository.preflightScan(it) }
                 .onSuccess {
                     _pathPreflight.value = it
@@ -830,15 +848,15 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
                 }
         }
     }
-    fun startCustom(path: String) = startRequest(runCatching { ScanRequest(rootPath = path.trim()).validated() })
+    fun startCustom(path: String) = startRequest(runCatching { ScanRequest(rootPath = path.trim(), maxDepth = _scanDepthProfile.value.maxDepth, maxEntries = _scanDepthProfile.value.maxEntries).validated() })
     fun startModuleScan() {
         recordDebugEvent(DebugCategory.Module, DebugSeverity.Info, "module_scan_requested", "Requested /data/adb/modules module-source scan", mapOf("rootPath" to "/data/adb/modules"))
         startRequest(runCatching {
             ScanRequest(
                 presetId = "root-modules",
                 rootPath = "/data/adb/modules",
-                maxDepth = 16,
-                maxEntries = 200_000,
+                maxDepth = _scanDepthProfile.value.maxDepth,
+                maxEntries = _scanDepthProfile.value.maxEntries,
                 includeHidden = true,
             ).validated()
         })
@@ -1930,20 +1948,33 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         insightsRefreshJob?.cancel()
         recordDebugEvent(DebugCategory.App, DebugSeverity.Trace, "insights_refresh_started", "Refreshing storage intelligence off the UI thread", mapOf("scanId" to scanId))
         insightsRefreshJob = viewModelScope.launch(Dispatchers.IO) {
+            fun scanStillCurrent(): Boolean = latestSession.value?.id == scanId
+            suspend fun checkpoint() {
+                coroutineContext.ensureActive()
+                if (!scanStillCurrent()) return
+                yield()
+            }
             val appSummaries = repository.appSummaries(scanId)
+            checkpoint()
             val snapshotDelta = repository.snapshotDelta()
             val snapshotHistory = repository.snapshotHistory()
+            checkpoint()
             val advancedReport = repository.advancedAnalysis(scanId)
+            checkpoint()
             val largeFilePreset = _largeFileFilter.value.preset
             _largeFileLoading.value = true
             val largeFileEntries = repository.largeFileEntries(scanId, largeFilePreset)
+            checkpoint()
             _residueLoading.value = true
             val residueResult = runCatching { repository.appResidueAnalysis(scanId) }
             val residueAnalysis = residueResult.getOrNull()
+            checkpoint()
             _recommendationLoading.value = true
             val recommendationResult = runCatching { repository.cleanupRecommendations(scanId, residueAnalysis) }
+            checkpoint()
             _appStorageLoading.value = true
             val appStorageResult = runCatching { repository.appStorageInspector(scanId, residueAnalysis) }
+            checkpoint()
             val moduleReport = repository.moduleAnalysis(scanId)
             if (latestSession.value?.id != scanId) return@launch
             _appSummaries.value = appSummaries
@@ -1980,7 +2011,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
                 DebugCategory.App,
                 DebugSeverity.Info,
                 "insights_refresh_finished",
-                "Storage intelligence refreshed without blocking input dispatch",
+                "Storage intelligence refreshed with cooperative checkpoints",
                 mapOf("scanId" to scanId, "entries" to allEntries.value.size.toString(), "recommendations" to (_recommendationAnalysis.value?.items?.size ?: 0).toString()),
             )
             if (latestSession.value?.id == scanId) insightsRefreshJob = null

@@ -106,3 +106,7 @@ Phase 15 keeps the debug roadmap usable when users report an ANR immediately aft
 - Files, Clean, Tools, Debug workbench, and deletion reports remain reachable before the first scan. They show explicit no-scan explanations instead of a blank or blocked route.
 - Depth-cap diagnostics are informational unless the scan also has a real failure, zero-file warning, truncation, or persisted warning.
 - Shared storage, app data, broad data, root module, and custom scan defaults use a deeper traversal cap so normal internal-storage trees do not immediately look broken.
+
+## Phase 16 performance and depth controls
+
+The scan launcher exposes Fast, Forgiving, and Deep depth policies. Forgiving is the default and removes the depth cap while retaining an entry cap, so internal storage scans do not report normal nested folders as failures. Post-scan insight refresh uses cooperative checkpoints so large scans yield between expensive summary steps.
