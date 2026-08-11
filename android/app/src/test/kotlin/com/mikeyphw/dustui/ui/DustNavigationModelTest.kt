@@ -103,4 +103,11 @@ class DustNavigationModelTest {
         assertFalse(DustNavigationModel.needsScanData(DustDestination.MORE))
         assertTrue(DustNavigationModel.needsScanData(DustDestination.SEARCH))
     }
+    @Test fun `layout normalization prevents invalid adaptive destinations`() {
+        assertEquals(DustDestination.INSIGHTS, DustNavigationModel.layoutDestination(DustDestination.SCAN, wide = false))
+        assertEquals(DustDestination.INSIGHTS, DustNavigationModel.layoutDestination(DustDestination.MORE, wide = true))
+        assertEquals(DustDestination.SCAN, DustNavigationModel.layoutDestination(DustDestination.SCAN, wide = true))
+        assertEquals(DustDestination.GROWTH, DustNavigationModel.layoutDestination(DustDestination.GROWTH, wide = false))
+    }
+
 }

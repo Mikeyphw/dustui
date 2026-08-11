@@ -174,6 +174,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         var menuOpen by remember { mutableStateOf(false) }
         var showScanSheet by rememberSaveable { mutableStateOf(false) }
         var selectedApp by rememberSaveable { mutableStateOf<String?>(null) }
+        var selectedAppSessionId by rememberSaveable { mutableStateOf<String?>(null) }
 
         fun selectDestination(target: DustDestination) {
             destination = target
@@ -186,7 +187,9 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         }
 
         LaunchedEffect(session?.id) {
-            selectedApp = null
+            val currentSessionId = session?.id
+            if (selectedAppSessionId != null && selectedAppSessionId != currentSessionId) selectedApp = null
+            selectedAppSessionId = currentSessionId
             if (session != null && destination == DustDestination.SCAN) destination = DustDestination.INSIGHTS
         }
         LaunchedEffect(message) { message?.let { snackbar.showSnackbar(it); viewModel.clearMessage() } }
@@ -194,7 +197,18 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         BoxWithConstraints {
             val wide = maxWidth >= 840.dp && maxHeight >= 520.dp
             val currentPath = path ?: session?.rootPath
-            LaunchedEffect(destination, wide) {
+            LaunchedEffect(destination, wide, session?.id) {
+                val normalizedDestination = DustNavigationModel.layoutDestination(destination, wide)
+                if (normalizedDestination != destination) {
+                    destination = normalizedDestination
+                    return@LaunchedEffect
+                }
+                when (destination) {
+                    DustDestination.RULES -> viewModel.refreshCleanupRules()
+                    DustDestination.GROWTH -> viewModel.reloadStorageGrowth()
+                    DustDestination.CLEANUP -> viewModel.refreshCleanupReports()
+                    else -> if (DustNavigationModel.refreshesInsights(destination)) viewModel.refreshInsights()
+                }
                 viewModel.recordNavigation(destination, wide)
                 if (destination == DustDestination.DEBUG) viewModel.recordDebugWorkbenchOpened(destination, wide)
             }
@@ -446,7 +460,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                         viewModel.revealPath(filePath)
                                         selectDestination(DustDestination.EXPLORER)
                                     },
-                                    onSelectPackage = { selectedApp = it },
+                                    onSelectPackage = { selectedApp = it; selectedAppSessionId = currentSession?.id },
                                 )
                                 destination == DustDestination.MODULES -> ModuleAnalyzerScreen(
                                     Modifier.fillMaxSize(),

@@ -120,7 +120,7 @@ object CleanupVerificationEngine {
                 ?: CleanupPathObservation(CleanupPathPresence.UNKNOWN, "No retry observation was recorded")
             val status = when {
                 observation.presence == CleanupPathPresence.UNKNOWN -> CleanupVerificationStatus.FAILED
-                observation.presence == CleanupPathPresence.MISSING && item.reportedDeletedBytes >= item.plannedBytes && item.plannedBytes > 0 -> CleanupVerificationStatus.VERIFIED_DELETED
+                observation.presence == CleanupPathPresence.MISSING && item.reportedDeletedBytes >= item.plannedBytes -> CleanupVerificationStatus.VERIFIED_DELETED
                 observation.presence == CleanupPathPresence.MISSING && item.reportedDeletedBytes > 0 -> CleanupVerificationStatus.PARTIAL
                 observation.presence == CleanupPathPresence.PRESENT && item.reportedDeletedBytes > 0 -> CleanupVerificationStatus.PARTIAL
                 else -> CleanupVerificationStatus.FAILED

@@ -95,6 +95,7 @@ object CleanupReportCodec {
                 .apply { item.fingerprint?.let { fingerprint ->
                     put("fingerprint", JSONObject()
                         .put("device", fingerprint.device)
+                        .apply { fingerprint.mountId?.let { put("mountId", it) } }
                         .put("inode", fingerprint.inode)
                         .put("mode", fingerprint.mode)
                         .put("statSizeBytes", fingerprint.statSizeBytes)
@@ -127,6 +128,7 @@ object CleanupReportCodec {
                             fp.optLong("device"), fp.optLong("inode"), fp.optInt("mode"), fp.optLong("statSizeBytes"),
                             fp.optLong("modifiedAt"), fp.optString("treeDigest"), fp.optLong("entryCount"),
                             fp.optString("contentSha256").takeIf(String::isNotBlank),
+                            mountId = fp.optString("mountId").takeIf(String::isNotBlank),
                         )
                     },
                 ))

@@ -2,10 +2,10 @@ package com.mikeyphw.dustui.data
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Index
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.ArrayDeque
 import java.util.UUID
 
 @Entity(tableName = "cleanup_operations", primaryKeys = ["id"], indices = [Index("scanId")])
@@ -20,6 +20,11 @@ data class CleanupOperationEntity(
     val createdAt: Long,
     val completedAt: Long? = null,
     val message: String? = null,
+    @ColumnInfo(defaultValue = "''") val reviewId: String = "",
+    @ColumnInfo(defaultValue = "1") val scanGeneration: Long = 1L,
+    @ColumnInfo(defaultValue = "''") val planHash: String = "",
+    @ColumnInfo(defaultValue = "0") val expiresAt: Long = 0L,
+    @ColumnInfo(defaultValue = "'CERTAIN'") val outcomeCertainty: String = CleanupOutcomeCertainty.CERTAIN.name,
 )
 
 /** Retained only so existing version-2 databases remain readable. New cleanup never writes this table. */
@@ -33,27 +38,64 @@ data class QuarantineEntryEntity(
     val restoredAt: Long? = null,
 )
 
+@Entity(
+    tableName = "cleanup_plan_items",
+    primaryKeys = ["operationId", "path"],
+    indices = [Index("operationId"), Index("role")],
+    foreignKeys = [
+        ForeignKey(
+            entity = CleanupOperationEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["operationId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+)
+data class CleanupPlanItemEntity(
+    val operationId: String,
+    val path: String,
+    val role: String,
+    val itemType: String,
+    val plannedBytes: Long,
+    val expectedDevice: Long? = null,
+    val expectedMountId: String? = null,
+    val expectedInode: Long? = null,
+    val expectedMode: Int? = null,
+    val expectedStatSizeBytes: Long? = null,
+    val expectedModifiedAt: Long? = null,
+    val expectedTreeDigest: String? = null,
+    val expectedEntryCount: Long? = null,
+    val expectedSha256: String? = null,
+    val retainedPath: String? = null,
+    val retainedSha256: String? = null,
+    val packageName: String? = null,
+    val createdAt: Long = System.currentTimeMillis(),
+)
+
+enum class CleanupOperationStatus { REVIEWED, EXECUTING, VERIFYING, COMPLETED, PARTIAL, FAILED, BLOCKED, UNKNOWN_OUTCOME, INTERRUPTED }
+
+enum class CleanupOutcomeCertainty { CERTAIN, UNKNOWN }
+
 data class CleanupPlan(
     val id: String = UUID.randomUUID().toString(),
     val scanId: String,
     val rootPath: String,
     val items: List<CleanupPlanItem>,
+    val scanGeneration: Long = 1L,
 ) {
     fun normalized(): CleanupPlan {
-        val sorted = items.distinctBy { it.path }.sortedBy { it.path.length }
-        val roots = mutableListOf<CleanupPlanItem>()
-        sorted.forEach { candidate ->
-            if (roots.none { candidate.path == it.path || candidate.path.startsWith(it.path.trimEnd('/') + "/") }) {
-                roots += candidate
-            }
-        }
-        return copy(items = roots)
+        val normalizedItems = items.mapNotNull { item ->
+            PathSafety.normalize(item.path)?.let { normalized -> item.copy(path = normalized) }
+        }.distinctBy { it.path }
+        val byPath = normalizedItems.associateBy { it.path }
+        return copy(items = PathSafety.collapseRoots(byPath.keys).mapNotNull(byPath::get))
     }
 
     fun toJson(): String = JSONObject()
         .put("id", id)
         .put("scanId", scanId)
         .put("rootPath", rootPath)
+        .put("scanGeneration", scanGeneration)
         .put(
             "items",
             JSONArray(items.map { item ->
@@ -63,6 +105,9 @@ data class CleanupPlan(
                     .put("directory", item.isDirectory)
                     .put("modifiedAt", item.modifiedAt)
                     .apply { item.expectedSha256?.let { put("expectedSha256", it) } }
+                    .apply { item.retainedPath?.let { put("retainedPath", it) } }
+                    .apply { item.retainedSha256?.let { put("retainedSha256", it) } }
+                    .apply { item.packageName?.let { put("packageName", it) } }
             }),
         )
         .toString()
@@ -74,6 +119,9 @@ data class CleanupPlanItem(
     val isDirectory: Boolean = false,
     val modifiedAt: Long = 0,
     val expectedSha256: String? = null,
+    val retainedPath: String? = null,
+    val retainedSha256: String? = null,
+    val packageName: String? = null,
 )
 
 data class CleanupPathFingerprint(
@@ -85,6 +133,7 @@ data class CleanupPathFingerprint(
     val treeDigest: String,
     val entryCount: Long,
     val contentSha256: String? = null,
+    val mountId: String? = null,
 )
 
 data class CleanupApprovedItem(
@@ -92,6 +141,9 @@ data class CleanupApprovedItem(
     val plannedBytes: Long,
     val isDirectory: Boolean,
     val fingerprint: CleanupPathFingerprint,
+    val retainedPath: String? = null,
+    val retainedSha256: String? = null,
+    val packageName: String? = null,
 )
 
 data class CleanupReview(
@@ -104,8 +156,12 @@ data class CleanupReview(
     val blocked: List<CleanupBlockedItem>,
     val plannedBytes: Long,
     val message: String? = null,
+    val scanGeneration: Long = 1L,
 ) {
     val executable: Boolean get() = ok && accepted.isNotEmpty()
+
+    fun matches(scanId: String, rootPath: String, scanGeneration: Long): Boolean =
+        this.scanId == scanId && this.rootPath == rootPath && this.scanGeneration == scanGeneration
 
     fun matches(scanId: String, rootPath: String): Boolean =
         this.scanId == scanId && this.rootPath == rootPath
@@ -114,6 +170,7 @@ data class CleanupReview(
         .put("operationId", operationId)
         .put("scanId", scanId)
         .put("rootPath", rootPath)
+        .put("scanGeneration", scanGeneration)
         .put(
             "accepted",
             JSONArray(accepted.map { item ->
@@ -125,6 +182,7 @@ data class CleanupReview(
                         "fingerprint",
                         JSONObject()
                             .put("device", item.fingerprint.device)
+                            .apply { item.fingerprint.mountId?.let { put("mountId", it) } }
                             .put("inode", item.fingerprint.inode)
                             .put("mode", item.fingerprint.mode)
                             .put("statSizeBytes", item.fingerprint.statSizeBytes)
@@ -133,6 +191,9 @@ data class CleanupReview(
                             .put("entryCount", item.fingerprint.entryCount)
                             .apply { item.fingerprint.contentSha256?.let { put("contentSha256", it) } },
                     )
+                    .apply { item.retainedPath?.let { put("retainedPath", it) } }
+                    .apply { item.retainedSha256?.let { put("retainedSha256", it) } }
+                    .apply { item.packageName?.let { put("packageName", it) } }
             }),
         )
         .toString()
@@ -166,28 +227,24 @@ object CleanupSafetyPolicy {
         "/data/adb", "/data/system", "/data/misc", "/data/local/tmp/dustui",
     )
 
-    fun blockReason(path: String, scanRoot: String): String? {
+    fun blockReason(
+        path: String,
+        scanRoot: String,
+        protectedPaths: Collection<String> = emptyList(),
+        excludedPaths: Collection<String> = emptyList(),
+    ): String? {
         val clean = normalize(path) ?: return "Invalid or relative path"
         val root = normalize(scanRoot) ?: return "Invalid scan root"
         if (clean == root) return "The scan root cannot be deleted"
         if (clean in protectedExact) return "Protected Android path"
-        if (protectedSubtrees.any { protected -> clean == protected || clean.startsWith(protected.trimEnd('/') + "/") }) {
+        if (protectedSubtrees.any { protected -> PathSafety.isSameOrDescendant(clean, protected) }) {
             return "Protected Android path"
         }
-        if (!clean.startsWith(root.trimEnd('/') + "/")) return "Path is outside the reviewed scan root"
+        if (!PathSafety.isSameOrDescendant(clean, root)) return "Path is outside the reviewed scan root"
+        if (protectedPaths.any { PathSafety.intersects(clean, it) }) return "Path intersects a protected selection"
+        if (excludedPaths.any { PathSafety.intersects(clean, it) }) return "Path intersects an excluded selection"
         return null
     }
 
-    fun normalize(path: String): String? {
-        if (!path.startsWith('/')) return null
-        val parts = ArrayDeque<String>()
-        path.split('/').forEach { part ->
-            when (part) {
-                "", "." -> Unit
-                ".." -> if (parts.isEmpty()) return null else parts.removeLast()
-                else -> parts.addLast(part)
-            }
-        }
-        return "/" + parts.joinToString("/")
-    }
+    fun normalize(path: String): String? = PathSafety.normalize(path)
 }

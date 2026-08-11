@@ -1,12 +1,21 @@
 package com.mikeyphw.dustui.scan
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import androidx.core.app.NotificationCompat
 import androidx.core.content.edit
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ForegroundInfo
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.mikeyphw.dustui.MainActivity
+import com.mikeyphw.dustui.R
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 class ScheduledScanWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
@@ -14,15 +23,45 @@ class ScheduledScanWorker(context: Context, params: WorkerParameters) : Coroutin
         val prefs = applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val raw = prefs.getString(KEY_REQUEST, null) ?: return Result.success()
         return runCatching {
-            ScanForegroundService.start(applicationContext, ScanRequest.fromJson(raw).copy(scanId = java.util.UUID.randomUUID().toString()))
+            val request = ScanRequest.fromJson(raw).copy(scanId = UUID.randomUUID().toString())
+            setForeground(createForegroundInfo(request))
+            // The worker owns foreground/background admission before delegating to the interactive
+            // scan service. This prevents scheduled work from attempting an unqualified background
+            // foreground-service launch.
+            ScanForegroundService.start(applicationContext, request, launchedFromForegroundWorker = true)
             Result.success()
         }.getOrElse { Result.retry() }
+    }
+
+    private fun createForegroundInfo(request: ScanRequest): ForegroundInfo {
+        val manager = applicationContext.getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(
+            NotificationChannel(CHANNEL_ID, applicationContext.getString(R.string.scan_channel), NotificationManager.IMPORTANCE_LOW),
+        )
+        val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_scan)
+            .setContentTitle(applicationContext.getString(R.string.scanning_title))
+            .setContentText("Scheduled scan: ${request.rootPath}")
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setContentIntent(
+                PendingIntent.getActivity(
+                    applicationContext,
+                    0,
+                    Intent(applicationContext, MainActivity::class.java),
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                ),
+            )
+            .build()
+        return ForegroundInfo(NOTIFICATION_ID, notification)
     }
 
     companion object {
         private const val PREFS = "dustui_schedule"
         private const val KEY_REQUEST = "request"
         private const val WORK = "dustui_periodic_scan"
+        private const val CHANNEL_ID = "dustui_scheduled_scans"
+        private const val NOTIFICATION_ID = 7102
         fun set(context: Context, request: ScanRequest, hours: Long) {
             context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit { putString(KEY_REQUEST, request.toJson()) }
             val work = PeriodicWorkRequestBuilder<ScheduledScanWorker>(hours.coerceAtLeast(15), TimeUnit.HOURS).build()

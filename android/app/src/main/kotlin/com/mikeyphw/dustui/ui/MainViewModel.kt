@@ -94,6 +94,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.coroutines.coroutineContext
+import java.util.concurrent.atomic.AtomicLong
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModel(private val repository: ScanRepository) : ViewModel() {
@@ -597,6 +598,19 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DuplicatePage.empty())
     private var duplicateAnalysisJob: Job? = null
     private var insightsRefreshJob: Job? = null
+    private val rootRefreshRequestId = AtomicLong(0)
+    private val scanPreflightRequestId = AtomicLong(0)
+    private val rootInspectionRequestId = AtomicLong(0)
+    private val largeFileRequestId = AtomicLong(0)
+    private val residueRequestId = AtomicLong(0)
+    private val recommendationRequestId = AtomicLong(0)
+    private val cleanupRuleRequestId = AtomicLong(0)
+    private val cleanupRuleDraftRequestId = AtomicLong(0)
+    private val storageGrowthRequestId = AtomicLong(0)
+    private val cleanupVerificationRequestId = AtomicLong(0)
+    private val rootSearchRequestId = AtomicLong(0)
+    private val insightsRequestId = AtomicLong(0)
+    private val certificationRequestId = AtomicLong(0)
     private val _certification = MutableStateFlow<DeviceCertificationReport?>(null)
     val certification: StateFlow<DeviceCertificationReport?> = _certification
     private val _appStorageInspector = MutableStateFlow<AppStorageInspectorAnalysis?>(null)
@@ -710,7 +724,21 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         } }
     }
 
+    private fun invalidateScanScopedRequests() {
+        rootInspectionRequestId.incrementAndGet()
+        largeFileRequestId.incrementAndGet()
+        residueRequestId.incrementAndGet()
+        recommendationRequestId.incrementAndGet()
+        cleanupRuleRequestId.incrementAndGet()
+        cleanupRuleDraftRequestId.incrementAndGet()
+        storageGrowthRequestId.incrementAndGet()
+        cleanupVerificationRequestId.incrementAndGet()
+        rootSearchRequestId.incrementAndGet()
+        insightsRequestId.incrementAndGet()
+    }
+
     private fun resetScanScopedState(session: ScanSessionEntity?) {
+        invalidateScanScopedRequests()
         recordDebugEvent(
             DebugCategory.Scan,
             DebugSeverity.Info,
@@ -787,12 +815,14 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     }
 
     fun refreshRoot() {
+        val requestId = rootRefreshRequestId.incrementAndGet()
         _rootState.value = RootUiState.Checking
         _rootFailureMessage.value = null
-        recordDebugEvent(DebugCategory.Root, DebugSeverity.Trace, "root_refresh_started", "Checking root service state")
+        recordDebugEvent(DebugCategory.Root, DebugSeverity.Trace, "root_refresh_started", "Checking root service state", mapOf("requestId" to requestId.toString()))
         viewModelScope.launch {
             runCatching { repository.rootServiceInfo() }
                 .onSuccess { info ->
+                    if (rootRefreshRequestId.get() != requestId) return@onSuccess
                     _rootServiceInfo.value = info
                     val ready = info.ok && info.uid == 0
                     _rootState.value = if (ready) RootUiState.Available else RootUiState.Unavailable
@@ -811,6 +841,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
                     )
                 }
                 .onFailure { error ->
+                    if (rootRefreshRequestId.get() != requestId) return@onFailure
                     _rootServiceInfo.value = null
                     _rootState.value = RootUiState.Unavailable
                     _rootFailureMessage.value = error.message ?: "Unable to bind the root service"
@@ -826,13 +857,15 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     }
     fun startPreset(preset: ScanPreset) = startRequest(runCatching { preset.request(_scanDepthProfile.value) })
     fun diagnoseScanPath(path: String) {
+        val requestId = scanPreflightRequestId.incrementAndGet()
         _pathPreflight.value = null
         val normalizedPath = path.trim()
-        recordDebugEvent(DebugCategory.Scan, DebugSeverity.Trace, "scan_preflight_started", "Testing scan-root access", mapOf("rootPath" to normalizedPath))
+        recordDebugEvent(DebugCategory.Scan, DebugSeverity.Trace, "scan_preflight_started", "Testing scan-root access", mapOf("rootPath" to normalizedPath, "requestId" to requestId.toString()))
         viewModelScope.launch {
             runCatching { ScanRequest(rootPath = normalizedPath, maxDepth = _scanDepthProfile.value.maxDepth, maxEntries = _scanDepthProfile.value.maxEntries).validated() }
                 .mapCatching { repository.preflightScan(it) }
                 .onSuccess {
+                    if (scanPreflightRequestId.get() != requestId) return@onSuccess
                     _pathPreflight.value = it
                     recordDebugEvent(
                         DebugCategory.Scan,
@@ -843,6 +876,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
                     )
                 }
                 .onFailure { error ->
+                    if (scanPreflightRequestId.get() != requestId) return@onFailure
                     _message.value = error.message ?: "Unable to test scan-root access"
                     recordDebugEvent(DebugCategory.Scan, DebugSeverity.Error, "scan_preflight_failed", error.message ?: "Unable to test scan-root access")
                 }
@@ -868,6 +902,11 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             return
         }
         result.onSuccess {
+            latestSession.value?.takeIf { session -> session.status == "STARTING" || session.status == "RUNNING" || session.status == "CANCELLING" }?.let { busy ->
+                _message.value = "A scan is already ${busy.status.lowercase()}. Cancel or wait before starting another."
+                recordDebugEvent(DebugCategory.Scan, DebugSeverity.Warning, "scan_request_blocked", _message.value ?: "Scan already active", mapOf("activeScanId" to busy.id, "status" to busy.status))
+                return
+            }
             _pathPreflight.value = null
             _explorerPath.value = it.rootPath
             recordDebugEvent(
@@ -896,7 +935,14 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         _selectedEntry.value = entry
         _selectedIntelligence.value = repository.inspect(entry.path)
         _selectedRootInspection.value = null
-        viewModelScope.launch { _selectedRootInspection.value = repository.inspectRootPath(entry.path) }
+        val requestId = rootInspectionRequestId.incrementAndGet()
+        val requestedPath = entry.path
+        viewModelScope.launch {
+            val inspection = repository.inspectRootPath(requestedPath)
+            if (rootInspectionRequestId.get() == requestId && _selectedEntry.value?.path == requestedPath) {
+                _selectedRootInspection.value = inspection
+            }
+        }
     }
     fun closeDetails() { _selectedEntry.value = null; _selectedIntelligence.value = null; _selectedRootInspection.value = null }
     fun navigate(path: String) { _explorerPath.value = path }
@@ -932,11 +978,16 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     }
 
     private fun reloadLargeFileEntries(preset: LargeFilePreset = _largeFileFilter.value.preset) {
-        val scanId = latestSession.value?.id ?: return
+        val session = latestSession.value ?: return
+        val scanId = session.id
+        val generation = session.generation
+        val requestId = largeFileRequestId.incrementAndGet()
         _largeFileLoading.value = true
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = runCatching { repository.largeFileEntries(scanId, preset) }
-            if (latestSession.value?.id == scanId && _largeFileFilter.value.preset == preset) {
+            if (latestSession.value?.let { it.id == scanId && it.generation == generation } == true &&
+                _largeFileFilter.value.preset == preset && largeFileRequestId.get() == requestId
+            ) {
                 result.onSuccess { _largeFileSourceEntries.value = it }
                     .onFailure { _message.value = it.message ?: "Unable to load large files" }
                 _largeFileLoading.value = false
@@ -1031,18 +1082,20 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         if (paths.isEmpty()) {
             _message.value = "This group has no high-confidence unprotected locations. Review individual paths instead."
         } else {
-            reviewPaths(paths)
+            reviewPaths(paths, emptyMap(), emptyMap(), paths.associateWith { packageName })
         }
     }
 
     fun selectResiduePage() = selectResiduePaths(residuePage.value.recommendedPaths, "high-confidence residue on this page")
 
     fun reviewResiduePage() {
-        val paths = residuePage.value.recommendedPaths
+        val page = residuePage.value
+        val paths = page.recommendedPaths
         if (paths.isEmpty()) {
             _message.value = "No high-confidence unprotected residue is visible on this page"
         } else {
-            reviewPaths(paths)
+            val packageByPath = page.items.flatMap { group -> group.recommendedDeletionPaths.map { path -> path to group.packageName } }.toMap()
+            reviewPaths(paths, emptyMap(), emptyMap(), packageByPath)
         }
     }
 
@@ -1075,11 +1128,16 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     }
 
     private fun reloadResidueAnalysis(message: String? = null) {
-        val scanId = latestSession.value?.id ?: return
+        val session = latestSession.value ?: return
+        val scanId = session.id
+        val generation = session.generation
+        val requestId = residueRequestId.incrementAndGet()
         _residueLoading.value = true
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = runCatching { repository.appResidueAnalysis(scanId) }
-            if (latestSession.value?.id == scanId) {
+            if (latestSession.value?.let { it.id == scanId && it.generation == generation } == true &&
+                residueRequestId.get() == requestId
+            ) {
                 result.onSuccess { _residueAnalysis.value = it }
                     .onFailure { _message.value = it.message ?: "Unable to analyze app residue" }
                 _residueLoading.value = false
@@ -1089,16 +1147,21 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     }
 
     private fun reloadCleanupRecommendations(message: String? = null) {
-        val scanId = latestSession.value?.id ?: return
+        val session = latestSession.value ?: return
+        val scanId = session.id
+        val generation = session.generation
+        val requestId = recommendationRequestId.incrementAndGet()
         _recommendationLoading.value = true
-        recordDebugEvent(DebugCategory.Recommendation, DebugSeverity.Trace, "recommendations_refresh_started", "Refreshing cleanup recommendations", mapOf("scanId" to scanId))
-        viewModelScope.launch {
+        recordDebugEvent(DebugCategory.Recommendation, DebugSeverity.Trace, "recommendations_refresh_started", "Refreshing cleanup recommendations", mapOf("scanId" to scanId, "generation" to generation.toString(), "requestId" to requestId.toString()))
+        viewModelScope.launch(Dispatchers.IO) {
             val result = runCatching { repository.cleanupRecommendations(scanId) }
-            if (latestSession.value?.id == scanId) {
+            if (latestSession.value?.let { it.id == scanId && it.generation == generation } == true &&
+                recommendationRequestId.get() == requestId
+            ) {
                 result.onSuccess { analysis ->
                     _recommendationAnalysis.value = analysis
                     _recommendationPreferences.value = repository.cleanupRecommendationPreferences(scanId)
-                    recordDebugEvent(DebugCategory.Recommendation, DebugSeverity.Info, "recommendations_refresh_finished", "Cleanup recommendations refreshed", mapOf("items" to analysis.items.size.toString()))
+                    recordDebugEvent(DebugCategory.Recommendation, DebugSeverity.Info, "recommendations_refresh_finished", "Cleanup recommendations refreshed", mapOf("items" to analysis.items.size.toString(), "requestId" to requestId.toString()))
                     if (message != null) _message.value = message
                 }.onFailure {
                     _message.value = it.message ?: "Unable to rank cleanup recommendations"
@@ -1276,11 +1339,16 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     fun refreshCleanupRules(preview: Boolean = true) {
         _cleanupRules.value = repository.cleanupRules()
         if (!preview) return
-        val scanId = latestSession.value?.id ?: return
+        val session = latestSession.value ?: return
+        val scanId = session.id
+        val generation = session.generation
+        val requestId = cleanupRuleRequestId.incrementAndGet()
         _cleanupRuleLoading.value = true
         viewModelScope.launch(Dispatchers.IO) {
             val result = runCatching { repository.cleanupRulePreview(scanId) }
-            if (latestSession.value?.id == scanId) {
+            if (latestSession.value?.let { it.id == scanId && it.generation == generation } == true &&
+                cleanupRuleRequestId.get() == requestId
+            ) {
                 result.onSuccess { _cleanupRulePreview.value = it }
                     .onFailure { _message.value = it.message ?: "Unable to preview cleanup rules" }
                 _cleanupRuleLoading.value = false
@@ -1289,10 +1357,13 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     }
 
     fun previewCleanupRuleDraft(rule: CleanupRule) {
-        val scanId = latestSession.value?.id ?: run {
+        val session = latestSession.value ?: run {
             _message.value = "Run a scan before previewing a cleanup rule"
             return
         }
+        val scanId = session.id
+        val generation = session.generation
+        val requestId = cleanupRuleDraftRequestId.incrementAndGet()
         val validation = com.mikeyphw.dustui.data.CleanupRuleEngine.validate(rule.copy(enabled = false))
         if (!validation.valid) {
             _cleanupRuleDraftPreview.value = null
@@ -1303,7 +1374,9 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             val draft = rule.copy(enabled = false)
             val result = runCatching { repository.cleanupRulePreview(scanId, listOf(draft), includeDisabled = true) }
-            if (latestSession.value?.id == scanId) {
+            if (latestSession.value?.let { it.id == scanId && it.generation == generation } == true &&
+                cleanupRuleDraftRequestId.get() == requestId
+            ) {
                 result.onSuccess { preview ->
                     _cleanupRuleDraftPreview.value = preview.matches.firstOrNull()?.let { CleanupRuleDraftPreview(draft, it) }
                 }.onFailure { _message.value = it.message ?: "Unable to preview this cleanup rule" }
@@ -1392,13 +1465,15 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     ) {
         val current = currentOffset.coerceAtLeast(0)
         val previous = previousOffset.coerceAtLeast(current + 1)
+        val requestId = storageGrowthRequestId.incrementAndGet()
         _storageGrowthCurrentOffset.value = current
         _storageGrowthPreviousOffset.value = previous
         _storageGrowthLoading.value = true
         viewModelScope.launch(Dispatchers.IO) {
             val sessions = runCatching { repository.completedStorageGrowthSessions() }.getOrElse { emptyList() }
-            _storageGrowthSessionCount.value = sessions.size
             val result = runCatching { repository.storageGrowth(current, previous) }
+            if (storageGrowthRequestId.get() != requestId || _storageGrowthCurrentOffset.value != current || _storageGrowthPreviousOffset.value != previous) return@launch
+            _storageGrowthSessionCount.value = sessions.size
             result.onSuccess { analysis ->
                 if (analysis == null) {
                     _message.value = "No completed scans exist at that comparison range"
@@ -1583,16 +1658,20 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
 
     fun retryCleanupVerification(operationId: String) {
         if (_cleanupReportVerifying.value != null) return
+        val requestId = cleanupVerificationRequestId.incrementAndGet()
         _cleanupReportVerifying.value = operationId
         viewModelScope.launch(Dispatchers.IO) {
             runCatching { repository.retryCleanupVerification(operationId) }
                 .onSuccess { updated ->
+                    if (cleanupVerificationRequestId.get() != requestId || _cleanupReportVerifying.value != operationId) return@onSuccess
                     refreshCleanupReports()
                     _selectedCleanupReport.value = updated
                     _message.value = "Verification retried for ${updated.items.size} path(s)"
                 }
-                .onFailure { _message.value = it.message ?: "Unable to retry verification" }
-            _cleanupReportVerifying.value = null
+                .onFailure {
+                    if (cleanupVerificationRequestId.get() == requestId) _message.value = it.message ?: "Unable to retry verification"
+                }
+            if (cleanupVerificationRequestId.get() == requestId) _cleanupReportVerifying.value = null
         }
     }
 
@@ -1653,11 +1732,13 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         if (duplicateAnalysisJob?.isActive == true) return
         clearVerifiedDuplicateSelection()
         val threshold = _duplicateFilter.value.threshold
+        val requestedGeneration = session.generation
         duplicateAnalysisJob = viewModelScope.launch(Dispatchers.IO) {
+            fun stillCurrent(): Boolean = latestSession.value?.let { it.id == session.id && it.generation == requestedGeneration } == true
             val result = repository.analyzeDuplicates(session.id, threshold.minBytes, reset) { update ->
-                if (latestSession.value?.id == session.id) _duplicateAnalysis.value = update
+                if (stillCurrent()) _duplicateAnalysis.value = update
             }
-            if (latestSession.value?.id == session.id) {
+            if (stillCurrent()) {
                 _duplicateAnalysis.value = result
                 _message.value = result.message
                 reloadCleanupRecommendations()
@@ -1691,7 +1772,9 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         if (paths.isEmpty()) {
             _message.value = "Choose a retained copy before planning deletion"
         } else {
-            reviewPaths(paths, paths.associateWith { item?.group?.sha256.orEmpty() })
+            val retained = item?.copies?.firstOrNull { it.key == item.keepCopyKey }?.primaryPath
+            val retainedEvidence = if (retained.isNullOrBlank()) emptyMap() else paths.associateWith { retained to item.group.sha256 }
+            reviewPaths(paths, paths.associateWith { item?.group?.sha256.orEmpty() }, retainedEvidence)
         }
     }
 
@@ -1705,8 +1788,13 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         if (paths.isEmpty()) {
             _message.value = "No safely removable duplicate copies are visible on this page"
         } else {
-            val hashes = duplicatePage.value.items.flatMap { item -> item.deletionPaths.map { it to item.group.sha256 } }.toMap()
-            reviewPaths(paths, hashes)
+            val page = duplicatePage.value
+            val hashes = page.items.flatMap { item -> item.deletionPaths.map { it to item.group.sha256 } }.toMap()
+            val retainedEvidence = page.items.flatMap { item ->
+                val retained = item.copies.firstOrNull { copy -> copy.key == item.keepCopyKey }?.primaryPath
+                if (retained.isNullOrBlank()) emptyList() else item.deletionPaths.map { path -> path to (retained to item.group.sha256) }
+            }.toMap()
+            reviewPaths(paths, hashes, retainedEvidence)
         }
     }
 
@@ -1842,15 +1930,32 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
 
     fun reviewCleanup() = reviewPaths(_selectedPaths.value, _selectedContentHashes.value)
 
-    fun reviewPaths(paths: Collection<String>) = reviewPaths(paths, emptyMap())
+    fun reviewPaths(paths: Collection<String>) = reviewPaths(paths, emptyMap(), emptyMap(), emptyMap())
 
-    fun reviewPaths(paths: Collection<String>, expectedSha256ByPath: Map<String, String>) {
+    fun reviewPaths(paths: Collection<String>, expectedSha256ByPath: Map<String, String>) = reviewPaths(paths, expectedSha256ByPath, emptyMap(), emptyMap())
+
+    fun reviewPaths(
+        paths: Collection<String>,
+        expectedSha256ByPath: Map<String, String>,
+        retainedEvidenceByPath: Map<String, Pair<String, String>>,
+        packageNameByPath: Map<String, String> = emptyMap(),
+    ) {
         if (_scanDataStale.value) {
             _message.value = "Run a new scan before planning another deletion"
             recordDebugEvent(DebugCategory.Deletion, DebugSeverity.Warning, "deletion_review_blocked", "Run a new scan before planning another deletion", mapOf("reason" to "stale_scan"))
             return
         }
         val session = latestSession.value ?: return
+        if (session.status != "COMPLETED") {
+            _message.value = "Complete a scan before planning permanent deletion"
+            recordDebugEvent(DebugCategory.Deletion, DebugSeverity.Warning, "deletion_review_blocked", "Complete a scan before planning permanent deletion", mapOf("status" to session.status))
+            return
+        }
+        if (session.truncated || session.integrityStatus == "TRUNCATED" || session.integrityStatus == "FAILED_INTEGRITY" || session.integrityStatus == "INTERRUPTED") {
+            _message.value = "Run a complete scan before planning permanent deletion"
+            recordDebugEvent(DebugCategory.Deletion, DebugSeverity.Warning, "deletion_review_blocked", "Run a complete scan before planning permanent deletion", mapOf("integrityStatus" to session.integrityStatus, "truncated" to session.truncated.toString()))
+            return
+        }
         val requested = paths.distinct()
         if (requested.isEmpty()) {
             _message.value = "Select at least one indexed path"
@@ -1863,11 +1968,17 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         _cleanupReview.value = null
         viewModelScope.launch {
             val resolved = repository.entriesByPaths(session.id, requested)
-            if (latestSession.value?.id != session.id) {
+            if (latestSession.value?.id != session.id || latestSession.value?.generation != session.generation) {
                 _message.value = "The active scan changed. Plan the deletion again."
                 return@launch
             }
             val byPath = resolved.associateBy { it.path }
+            val missing = requested.filterNot { it in byPath }
+            if (missing.isNotEmpty()) {
+                _message.value = "${missing.size} selected path(s) no longer belong to the active scan. Plan the deletion again."
+                recordDebugEvent(DebugCategory.Deletion, DebugSeverity.Warning, "deletion_review_blocked", _message.value ?: "Selected paths missing", mapOf("missing" to missing.size.toString()))
+                return@launch
+            }
             val chosen = requested.mapNotNull(byPath::get)
             if (chosen.isEmpty()) {
                 _message.value = "Selected paths no longer belong to the active scan"
@@ -1875,8 +1986,14 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             }
             _selectedPaths.value = chosen.mapTo(linkedSetOf()) { it.path }
             _selectedContentHashes.value = _selectedContentHashes.value.filterKeys { it in _selectedPaths.value }
-            val review = repository.reviewCleanup(session, chosen, _selectedContentHashes.value)
-            if (latestSession.value?.id == session.id) {
+            val review = repository.reviewCleanup(
+                session,
+                chosen,
+                _selectedContentHashes.value,
+                retainedEvidenceByPath.filterKeys { it in _selectedPaths.value },
+                packageNameByPath.filterKeys { it in _selectedPaths.value },
+            )
+            if (latestSession.value?.id == session.id && latestSession.value?.generation == session.generation) {
                 _cleanupReview.value = review
                 recordDebugEvent(
                     DebugCategory.Deletion,
@@ -1902,10 +2019,16 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             _message.value = "Review the permanent deletion plan first"
             return
         }
-        if (!review.matches(session.id, session.rootPath)) {
+        if (!review.matches(session.id, session.rootPath, session.generation)) {
             _cleanupReview.value = null
             _message.value = "The active scan changed. Plan the deletion again."
             recordDebugEvent(DebugCategory.Deletion, DebugSeverity.Warning, "deletion_execute_blocked", "The active scan changed. Plan the deletion again.", mapOf("reason" to "scan_changed"))
+            return
+        }
+        if (session.status != "COMPLETED" || session.truncated || session.integrityStatus == "TRUNCATED" || session.integrityStatus == "FAILED_INTEGRITY" || session.integrityStatus == "INTERRUPTED") {
+            _cleanupReview.value = null
+            _message.value = "Run a complete scan before executing permanent deletion"
+            recordDebugEvent(DebugCategory.Deletion, DebugSeverity.Warning, "deletion_execute_blocked", _message.value ?: "Scan is not a complete authoritative source", mapOf("status" to session.status, "integrityStatus" to session.integrityStatus))
             return
         }
         if (!review.executable) {
@@ -1915,7 +2038,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         }
         recordDebugEvent(DebugCategory.Deletion, DebugSeverity.Warning, "deletion_execute_started", "Executing reviewed permanent deletion plan", mapOf("accepted" to review.accepted.size.toString(), "plannedBytes" to review.accepted.sumOf { it.plannedBytes }.toString()))
         viewModelScope.launch {
-            if (latestSession.value?.id != review.scanId) {
+            if (latestSession.value?.id != review.scanId || latestSession.value?.generation != review.scanGeneration) {
                 _cleanupReview.value = null
                 _message.value = "The active scan changed. Plan the deletion again."
                 return@launch
@@ -1923,13 +2046,14 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             val result = repository.executeCleanup(review)
             refreshCleanupReports()
             _cleanupReview.value = null
-            val filesystemChanged = result.items.any { it.status == "DELETED" || it.status == "PARTIAL" }
+            val filesystemChanged = result.status == "UNKNOWN_OUTCOME" || result.items.any { it.status == "DELETED" || it.status == "PARTIAL" || it.status == "UNKNOWN_OUTCOME" }
             if (filesystemChanged) {
                 _scanDataStale.value = true
                 clearSelection()
             }
             _message.value = when {
                 result.ok -> "Deleted ${formatBytes(result.deletedBytes)} permanently. Run a new scan to refresh results."
+                result.status == "UNKNOWN_OUTCOME" -> result.message ?: "Deletion outcome is ambiguous. Reverify the report and run a new scan."
                 result.deletedBytes > 0 -> result.message ?: "Deleted ${formatBytes(result.deletedBytes)}, but some paths failed. Run a new scan."
                 else -> result.message ?: "Permanent deletion failed"
             }
@@ -1945,38 +2069,43 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
 
     fun refreshInsights(scanId: String? = latestSession.value?.id) {
         if (scanId == null) return
+        val requestedSession = latestSession.value?.takeIf { it.id == scanId }
+        val requestedGeneration = requestedSession?.generation ?: return
+        val requestId = insightsRequestId.incrementAndGet()
         insightsRefreshJob?.cancel()
-        recordDebugEvent(DebugCategory.App, DebugSeverity.Trace, "insights_refresh_started", "Refreshing storage intelligence off the UI thread", mapOf("scanId" to scanId))
+        recordDebugEvent(DebugCategory.App, DebugSeverity.Trace, "insights_refresh_started", "Refreshing storage intelligence off the UI thread", mapOf("scanId" to scanId, "generation" to requestedGeneration.toString(), "requestId" to requestId.toString()))
         insightsRefreshJob = viewModelScope.launch(Dispatchers.IO) {
-            fun scanStillCurrent(): Boolean = latestSession.value?.id == scanId
+            fun scanStillCurrent(): Boolean = latestSession.value?.let { it.id == scanId && it.generation == requestedGeneration } == true && insightsRequestId.get() == requestId
             suspend fun checkpoint() {
                 coroutineContext.ensureActive()
-                if (!scanStillCurrent()) return
+                if (!scanStillCurrent()) throw kotlinx.coroutines.CancellationException("Stale insights request")
                 yield()
             }
-            val appSummaries = repository.appSummaries(scanId)
+            val analysisEntries = repository.entriesForAnalysis(scanId)
             checkpoint()
-            val snapshotDelta = repository.snapshotDelta()
+            val appSummaries = repository.appSummaries(scanId, analysisEntries)
+            checkpoint()
+            val snapshotDelta = repository.snapshotDelta(scanId, analysisEntries)
             val snapshotHistory = repository.snapshotHistory()
             checkpoint()
-            val advancedReport = repository.advancedAnalysis(scanId)
+            val advancedReport = repository.advancedAnalysis(scanId, analysisEntries)
             checkpoint()
             val largeFilePreset = _largeFileFilter.value.preset
             _largeFileLoading.value = true
             val largeFileEntries = repository.largeFileEntries(scanId, largeFilePreset)
             checkpoint()
             _residueLoading.value = true
-            val residueResult = runCatching { repository.appResidueAnalysis(scanId) }
+            val residueResult = runCatching { repository.appResidueAnalysis(scanId, analysisEntries) }
             val residueAnalysis = residueResult.getOrNull()
             checkpoint()
             _recommendationLoading.value = true
-            val recommendationResult = runCatching { repository.cleanupRecommendations(scanId, residueAnalysis) }
+            val recommendationResult = runCatching { repository.cleanupRecommendations(scanId, residueAnalysis, analysisEntries) }
             checkpoint()
             _appStorageLoading.value = true
-            val appStorageResult = runCatching { repository.appStorageInspector(scanId, residueAnalysis) }
+            val appStorageResult = runCatching { repository.appStorageInspector(scanId, residueAnalysis, analysisEntries) }
             checkpoint()
-            val moduleReport = repository.moduleAnalysis(scanId)
-            if (latestSession.value?.id != scanId) return@launch
+            val moduleReport = repository.moduleAnalysis(scanId, analysisEntries)
+            if (!scanStillCurrent()) return@launch
             _appSummaries.value = appSummaries
             _snapshotDelta.value = snapshotDelta
             _snapshotHistory.value = snapshotHistory
@@ -2012,9 +2141,9 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
                 DebugSeverity.Info,
                 "insights_refresh_finished",
                 "Storage intelligence refreshed with cooperative checkpoints",
-                mapOf("scanId" to scanId, "entries" to allEntries.value.size.toString(), "recommendations" to (_recommendationAnalysis.value?.items?.size ?: 0).toString()),
+                mapOf("scanId" to scanId, "entries" to analysisEntries.size.toString(), "recommendations" to (_recommendationAnalysis.value?.items?.size ?: 0).toString()),
             )
-            if (latestSession.value?.id == scanId) insightsRefreshJob = null
+            if (scanStillCurrent()) insightsRefreshJob = null
         }
     }
 
@@ -2073,7 +2202,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
 
     fun reviewAppStorageResidue(packageName: String) {
         val paths = _appStorageInspector.value?.packages?.firstOrNull { it.packageName == packageName }?.residuePaths.orEmpty().filter { it.deletionEligible }.map { it.path }
-        if (paths.isEmpty()) _message.value = "No high-confidence unprotected residue is eligible" else reviewPaths(paths)
+        if (paths.isEmpty()) _message.value = "No high-confidence unprotected residue is eligible" else reviewPaths(paths, emptyMap(), emptyMap(), paths.associateWith { packageName })
     }
 
     private fun selectAppStoragePaths(paths: List<String>, hashes: Map<String, String>, label: String) {
@@ -2110,24 +2239,31 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
 
     fun protectAppStoragePath(path: String, protect: Boolean) {
         if (protect) repository.protectAppStoragePath(path) else repository.unprotectAppStoragePath(path)
+        _selectedPaths.value = emptySet()
+        _selectedContentHashes.value = emptyMap()
+        _cleanupReview.value = null
         latestSession.value?.id?.let(::refreshInsights)
         _message.value = if (protect) "Protected $path" else "Removed protection from $path"
     }
 
     fun rootSearch(query: String) {
-        val scanId = latestSession.value?.id
-        if (scanId == null) {
+        val session = latestSession.value
+        val scanId = session?.id
+        val generation = session?.generation
+        if (scanId == null || generation == null) {
             _message.value = "Run a scan before searching"
             recordDebugEvent(DebugCategory.Search, DebugSeverity.Warning, "root_search_blocked", "Run a scan before searching")
             return
         }
-        recordDebugEvent(DebugCategory.Search, DebugSeverity.Trace, "root_search_started", "Whole-scan search started", mapOf("scanId" to scanId, "queryLength" to query.length.toString()))
+        val requestId = rootSearchRequestId.incrementAndGet()
+        recordDebugEvent(DebugCategory.Search, DebugSeverity.Trace, "root_search_started", "Whole-scan search started", mapOf("scanId" to scanId, "generation" to generation.toString(), "requestId" to requestId.toString(), "queryLength" to query.length.toString()))
         viewModelScope.launch {
             val results = repository.rootSearch(scanId, RootFileSearchRequest(query = query))
-            if (latestSession.value?.id != scanId) return@launch
+            val stillCurrent = latestSession.value?.let { it.id == scanId && it.generation == generation } == true && rootSearchRequestId.get() == requestId
+            if (!stillCurrent) return@launch
             _rootSearchResults.value = results
             _message.value = "Found ${results.size} root-indexed result(s)"
-            recordDebugEvent(DebugCategory.Search, DebugSeverity.Info, "root_search_finished", "Whole-scan search finished", mapOf("resultCount" to results.size.toString()))
+            recordDebugEvent(DebugCategory.Search, DebugSeverity.Info, "root_search_finished", "Whole-scan search finished", mapOf("resultCount" to results.size.toString(), "requestId" to requestId.toString()))
         }
     }
 
@@ -2137,10 +2273,12 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         allEntries.value.firstOrNull { it.path == result.path }?.let { select(it) }
     }
     fun runDeviceCertification() {
-        recordDebugEvent(DebugCategory.App, DebugSeverity.Trace, "device_certification_started", "Running device certification")
-        viewModelScope.launch {
-            _certification.value = repository.deviceCertification()
-            val report = _certification.value ?: return@launch
+        val requestId = certificationRequestId.incrementAndGet()
+        recordDebugEvent(DebugCategory.App, DebugSeverity.Trace, "device_certification_started", "Running device certification", mapOf("requestId" to requestId.toString()))
+        viewModelScope.launch(Dispatchers.IO) {
+            val report = repository.deviceCertification()
+            if (certificationRequestId.get() != requestId) return@launch
+            _certification.value = report
             _message.value = if (report.releaseReady) "Device certification passed with ${report.warnings} warning(s)" else "Device certification found ${report.failures} blocker(s)"
             recordDebugEvent(
                 DebugCategory.App,

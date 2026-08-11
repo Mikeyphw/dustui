@@ -17,15 +17,18 @@ import com.mikeyphw.dustui.data.ScanDiagnosticIssue
 import com.mikeyphw.dustui.data.ScanDiagnosticSeverity
 import com.mikeyphw.dustui.data.ScanDiagnostics
 import com.mikeyphw.dustui.data.ScanEntryEntity
+import com.mikeyphw.dustui.data.ScanIntegrityStatus
 import com.mikeyphw.dustui.data.ScanSessionEntity
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 class ScanForegroundService : Service() {
@@ -48,14 +51,31 @@ class ScanForegroundService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> {
-                if (scanJob?.isActive == true) return START_NOT_STICKY
                 val raw = intent.getStringExtra(EXTRA_REQUEST) ?: return START_NOT_STICKY
                 val request = runCatching { ScanRequest.fromJson(raw) }.getOrElse {
-                    stopSelf()
+                    stopSelfResult(startId)
+                    return START_NOT_STICKY
+                }
+                if (scanJob?.isActive == true) {
+                    scope.launch {
+                        dao.upsertSession(
+                            ScanSessionEntity(
+                                id = request.scanId,
+                                presetId = request.presetId,
+                                rootPath = request.rootPath,
+                                optionsJson = request.toJson(),
+                                status = ScanStatus.FAILED.name,
+                                startedAt = System.currentTimeMillis(),
+                                completedAt = System.currentTimeMillis(),
+                                errorMessage = "Another scan is already running",
+                                integrityStatus = ScanIntegrityStatus.FAILED_INTEGRITY.name,
+                            ),
+                        )
+                    }
                     return START_NOT_STICKY
                 }
                 activeScanId = request.scanId
-                scanJob = scope.launch { execute(request) }
+                scanJob = scope.launch { execute(request, startId) }
             }
             ACTION_CANCEL -> {
                 intent.getStringExtra(EXTRA_SCAN_ID)?.let { scanId ->
@@ -70,7 +90,7 @@ class ScanForegroundService : Service() {
         return START_NOT_STICKY
     }
 
-    private suspend fun execute(request: ScanRequest) {
+    private suspend fun execute(request: ScanRequest, startId: Int) {
         var session = ScanSessionEntity(
             id = request.scanId,
             presetId = request.presetId,
@@ -173,6 +193,7 @@ class ScanForegroundService : Service() {
             session = session.copy(status = ScanStatus.RUNNING.name)
             dao.upsertSession(session)
             val pending = ArrayList<ScanEntryEntity>(ENTRY_BATCH_SIZE)
+            var persistedEntries = 0L
             var terminalEvent = false
             var emptyAfterTerminal = 0
 
@@ -211,7 +232,7 @@ class ScanForegroundService : Service() {
                                     modifiedAt = event.modifiedAt,
                                     fileCount = event.fileCount,
                                 )
-                                if (pending.size >= ENTRY_BATCH_SIZE) flush(pending)
+                                if (pending.size >= ENTRY_BATCH_SIZE) persistedEntries += flush(pending)
                             }
                             is ScanEvent.Progress -> session = session.copy(
                                 scannedItems = event.scannedItems,
@@ -284,7 +305,11 @@ class ScanForegroundService : Service() {
                                     totalBytes = event.totalBytes,
                                     scannedItems = event.scannedItems,
                                     scannedBytes = event.scannedBytes,
-                                    warningCount = event.warnings,
+                                    warningCount = maxOf(session.warningCount, event.warnings),
+                                    observedEntryCount = event.emittedEntries,
+                                    persistedEntryCount = persistedEntries + pending.size,
+                                    truncated = event.truncated,
+                                    integrityStatus = if (event.truncated) ScanIntegrityStatus.TRUNCATED.name else ScanIntegrityStatus.COMPLETE.name,
                                     currentPath = "",
                                 )
                             }
@@ -318,7 +343,8 @@ class ScanForegroundService : Service() {
                             }
                         }
                     }
-                    flush(pending)
+                    persistedEntries += flush(pending)
+                    session = session.copy(persistedEntryCount = persistedEntries)
                     dao.upsertSession(session)
                     notifications.notify(NOTIFICATION_ID, notification(session, running = !terminalEvent))
 
@@ -359,44 +385,52 @@ class ScanForegroundService : Service() {
                 }
             }
         } catch (cancelled: CancellationException) {
-            runCatching { rootClient.cancelScan(request.scanId) }
-            diagnostics = diagnostics.copy(completedAt = System.currentTimeMillis())
-            saveDiagnostics()
-            session = session.copy(
-                status = ScanStatus.CANCELLED.name,
-                completedAt = diagnostics.completedAt,
-            )
-            runCatching { dao.upsertSession(session) }
+            withContext(NonCancellable) {
+                runCatching { rootClient.cancelScan(request.scanId) }
+                diagnostics = diagnostics.copy(completedAt = System.currentTimeMillis())
+                saveDiagnostics()
+                session = session.copy(
+                    status = ScanStatus.CANCELLED.name,
+                    completedAt = diagnostics.completedAt,
+                    integrityStatus = ScanIntegrityStatus.INTERRUPTED.name,
+                )
+                runCatching { dao.upsertSession(session) }
+            }
             throw cancelled
         } catch (error: Throwable) {
-            runCatching { rootClient.cancelScan(request.scanId) }
-            diagnostics = diagnostics.copy(completedAt = System.currentTimeMillis())
-            val failure = error as? ScanStartFailure
-            issue(
-                code = failure?.code ?: "SCAN_PIPELINE_FAILED",
-                severity = ScanDiagnosticSeverity.ERROR,
-                phase = if (failure != null) "preflight" else "scan-service",
-                message = error.message ?: error.javaClass.simpleName,
-                path = failure?.path ?: request.rootPath,
-                errno = failure?.errno,
-            )
-            session = session.copy(
-                status = ScanStatus.FAILED.name,
-                completedAt = diagnostics.completedAt,
-                errorMessage = diagnosticMessage(
-                    failure?.code ?: "SCAN_PIPELINE_FAILED",
-                    error.message ?: error.javaClass.simpleName,
-                    failure?.path ?: request.rootPath,
-                    failure?.errno,
-                ),
-            )
-            runCatching { dao.upsertSession(session) }
-            saveDiagnostics()
+            withContext(NonCancellable) {
+                runCatching { rootClient.cancelScan(request.scanId) }
+                diagnostics = diagnostics.copy(completedAt = System.currentTimeMillis())
+                val failure = error as? ScanStartFailure
+                issue(
+                    code = failure?.code ?: "SCAN_PIPELINE_FAILED",
+                    severity = ScanDiagnosticSeverity.ERROR,
+                    phase = if (failure != null) "preflight" else "scan-service",
+                    message = error.message ?: error.javaClass.simpleName,
+                    path = failure?.path ?: request.rootPath,
+                    errno = failure?.errno,
+                )
+                session = session.copy(
+                    status = ScanStatus.FAILED.name,
+                    completedAt = diagnostics.completedAt,
+                    errorMessage = diagnosticMessage(
+                        failure?.code ?: "SCAN_PIPELINE_FAILED",
+                        error.message ?: error.javaClass.simpleName,
+                        failure?.path ?: request.rootPath,
+                        failure?.errno,
+                    ),
+                    integrityStatus = ScanIntegrityStatus.FAILED_INTEGRITY.name,
+                )
+                runCatching { dao.upsertSession(session) }
+                saveDiagnostics()
+            }
         } finally {
-            activeScanId = null
-            if (session.status == ScanStatus.COMPLETED.name) runCatching { StorageAlertNotifier.evaluate(this@ScanForegroundService, dao) }
-            if (foregroundStarted) finishNotification(session)
-            stopSelf()
+            withContext(NonCancellable) {
+                if (activeScanId == request.scanId) activeScanId = null
+                if (session.status == ScanStatus.COMPLETED.name) runCatching { StorageAlertNotifier.evaluate(this@ScanForegroundService, dao) }
+                if (foregroundStarted) finishNotification(session)
+                stopSelfResult(startId)
+            }
         }
     }
 
@@ -408,11 +442,12 @@ class ScanForegroundService : Service() {
         errno?.let { append(" · errno ").append(it) }
     }
 
-    private suspend fun flush(entries: MutableList<ScanEntryEntity>) {
-        if (entries.isEmpty()) return
+    private suspend fun flush(entries: MutableList<ScanEntryEntity>): Long {
+        if (entries.isEmpty()) return 0L
         val copy = entries.toList()
         entries.clear()
         dao.upsertEntries(copy)
+        return copy.size.toLong()
     }
 
     private fun notification(session: ScanSessionEntity, running: Boolean) = NotificationCompat.Builder(this, CHANNEL_ID)
@@ -466,6 +501,15 @@ class ScanForegroundService : Service() {
         notifications.notify(NOTIFICATION_ID, notification(session, running = false))
     }
 
+    override fun onTimeout(startId: Int, fgsType: Int) {
+        val scanId = activeScanId
+        if (scanId != null) {
+            scanJob?.cancel()
+            scope.launch { runCatching { rootClient.cancelScan(scanId) } }
+        }
+        stopSelfResult(startId)
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
@@ -490,14 +534,18 @@ class ScanForegroundService : Service() {
         private const val ACTION_CANCEL = "com.mikeyphw.dustui.action.CANCEL_SCAN"
         private const val EXTRA_REQUEST = "request"
         private const val EXTRA_SCAN_ID = "scanId"
+        private const val EXTRA_FOREGROUND_WORKER = "foregroundWorker"
 
-        fun start(context: Context, request: ScanRequest) {
-            ContextCompat.startForegroundService(
-                context,
-                Intent(context, ScanForegroundService::class.java)
-                    .setAction(ACTION_START)
-                    .putExtra(EXTRA_REQUEST, request.validated().toJson()),
-            )
+        fun start(context: Context, request: ScanRequest, launchedFromForegroundWorker: Boolean = false) {
+            val intent = Intent(context, ScanForegroundService::class.java)
+                .setAction(ACTION_START)
+                .putExtra(EXTRA_REQUEST, request.validated().toJson())
+                .putExtra(EXTRA_FOREGROUND_WORKER, launchedFromForegroundWorker)
+            if (launchedFromForegroundWorker) {
+                context.startService(intent)
+            } else {
+                ContextCompat.startForegroundService(context, intent)
+            }
         }
 
         fun cancel(context: Context, scanId: String) {

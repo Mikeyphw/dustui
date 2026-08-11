@@ -93,6 +93,12 @@ object DustNavigationModel {
         else -> destination
     }
 
+    fun layoutDestination(destination: DustDestination, wide: Boolean): DustDestination = when {
+        !wide && destination == DustDestination.SCAN -> DustDestination.INSIGHTS
+        wide && destination == DustDestination.MORE -> DustDestination.INSIGHTS
+        else -> destination
+    }
+
     fun needsScanData(destination: DustDestination): Boolean = destination !in setOf(
         DustDestination.SCAN,
         DustDestination.INSIGHTS,

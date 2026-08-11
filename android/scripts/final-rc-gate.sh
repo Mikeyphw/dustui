@@ -33,6 +33,11 @@ bash -n scripts/package-rc.sh
 bash -n scripts/release-gate.sh
 bash -n scripts/final-rc-gate.sh
 bash -n scripts/cleaning-intelligence-gate.sh
+bash -n scripts/validate-remediation-full.sh
+bash -n scripts/validate-room-migrations.sh
+bash -n scripts/run-rooted-destructive-safety-tests.sh
+bash -n scripts/run-multi-user-residue-validation.sh
+bash -n scripts/run-device-scale-performance.sh
 python3 -m py_compile scripts/cleaning-intelligence-audit.py
 
 if [[ "${DUSTUI_SKIP_RELEASE_GATE:-0}" != "1" ]]; then
@@ -66,7 +71,7 @@ cleaning_evidence="${DUSTUI_CLEANING_EVIDENCE:-build/cleaning-intelligence/quali
 smoke_ready=false
 cert_ready=false
 cleaning_ready=false
-if [[ -d "$smoke_evidence" ]]; then
+if [[ -d "$smoke_evidence" ]] && find "$smoke_evidence" -type f -size +0c -print -quit | grep -q .; then
   smoke_ready=true
 fi
 if [[ -s "$cert_archive" ]]; then cert_ready=true; fi
@@ -117,6 +122,7 @@ cat > "$status_root/final-rc-manifest.json" <<JSON
 JSON
 
 printf 'DustUI final RC status written to %s\n' "$status_root"
-if [[ "$ship_state" == "DO_NOT_SHIP" ]]; then
+if [[ "$ship_state" != "SHIP" ]]; then
+  echo "Final RC is not fully ship-ready: $ship_state" >&2
   exit 1
 fi

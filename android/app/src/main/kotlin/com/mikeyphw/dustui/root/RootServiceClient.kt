@@ -31,14 +31,17 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
+import java.io.File
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 class RootServiceClient(private val context: Context) {
     private val bindMutex = Mutex()
-    private val callMutex = Mutex()
     @Volatile private var remote: IDustRootService? = null
     @Volatile private var activeConnection: ServiceConnection? = null
+    private val activeDuplicateOperations = ConcurrentHashMap<String, String>()
 
     suspend fun rootAvailable(): Boolean = withTimeoutOrNull(ROOT_TIMEOUT_MS) {
         runCatching { serviceInfo().let { it.ok && it.uid == 0 } }.getOrDefault(false)
@@ -86,23 +89,31 @@ class RootServiceClient(private val context: Context) {
     suspend fun scanState(scanId: String): RootScanState = call { it.scanState(scanId) }
     suspend fun cancelScan(scanId: String): RootScanState = call { it.cancelScan(scanId) }
 
-    suspend fun verifyDuplicates(scanId: String, paths: List<String>, sizeBytes: Long, scanRoot: String): DuplicateVerificationReport = cleanupCall(DUPLICATE_TIMEOUT_MS) { service ->
-        service.verifyDuplicates(
-            JSONObject()
-                .put("scanId", scanId)
-                .put("sizeBytes", sizeBytes)
-                .put("partialBytes", 64 * 1024)
-                .put("scanRoot", scanRoot)
-                .put("paths", JSONArray(paths))
-                .toString(),
-        )
-    }.let { raw ->
+    suspend fun verifyDuplicates(scanId: String, paths: List<String>, sizeBytes: Long, scanRoot: String): DuplicateVerificationReport {
+        val operationId = UUID.randomUUID().toString()
+        activeDuplicateOperations[scanId] = operationId
+        val raw = try {
+            duplicateExecutionCall(operationId, DUPLICATE_TIMEOUT_MS) { service ->
+                service.verifyDuplicates(
+                    JSONObject()
+                        .put("operationId", operationId)
+                        .put("scanId", scanId)
+                        .put("sizeBytes", sizeBytes)
+                        .put("partialBytes", 64 * 1024)
+                        .put("scanRoot", scanRoot)
+                        .put("paths", JSONArray(paths))
+                        .toString(),
+                )
+            }
+        } finally {
+            activeDuplicateOperations.remove(scanId, operationId)
+        }
         val json = JSONObject(raw)
         if (json.optBoolean("cancelled")) throw kotlinx.coroutines.CancellationException("Duplicate verification cancelled")
         check(json.optBoolean("ok")) { json.optString("message", "Duplicate verification failed") }
         val groupsJson = json.optJSONArray("groups") ?: JSONArray()
         val skippedJson = json.optJSONArray("skipped") ?: JSONArray()
-        DuplicateVerificationReport(
+        return DuplicateVerificationReport(
             groups = buildList {
                 for (index in 0 until groupsJson.length()) {
                     val group = groupsJson.getJSONObject(index)
@@ -149,7 +160,8 @@ class RootServiceClient(private val context: Context) {
 
 
     suspend fun cancelDuplicateVerification(scanId: String): Boolean = withContext(Dispatchers.IO) {
-        runCatching { JSONObject(service().cancelDuplicateVerification(scanId)).optBoolean("cancelled") }.getOrDefault(false)
+        val operationId = activeDuplicateOperations[scanId] ?: scanId
+        runCatching { JSONObject(service().cancelDuplicateVerification(operationId)).optBoolean("cancelled") }.getOrDefault(false)
     }
 
     suspend fun installedPackages(): InstalledPackageInventory = cleanupCall { it.installedPackages() }.let { raw ->
@@ -180,11 +192,71 @@ class RootServiceClient(private val context: Context) {
             .let { raw -> parseReview(raw, normalized) }
     }
 
-    suspend fun executeCleanup(review: CleanupReview): CleanupExecutionResult =
-        cleanupCall(120_000L) { it.executeCleanup(review.toExecutionJson()) }.let(::parseExecution)
+    suspend fun executeCleanup(review: CleanupReview): CleanupExecutionResult {
+        val request = writeCleanupExecutionPlan(review)
+        return cleanupExecutionCall(review.operationId, 120_000L) { it.executeCleanup(request) }.let(::parseExecution)
+    }
 
-    private suspend fun cleanupCall(timeoutMs: Long = CALL_TIMEOUT_MS, block: (IDustRootService) -> String): String = withTimeout(timeoutMs) {
-        callMutex.withLock { withContext(Dispatchers.IO) { block(service()) } }
+    private fun writeCleanupExecutionPlan(review: CleanupReview): String {
+        val directory = File(context.cacheDir, CLEANUP_PLAN_DIRECTORY).apply { mkdirs() }
+        pruneOldCleanupPlanFiles(directory)
+        val file = File(directory, "${safeOperationFileName(review.operationId)}.json")
+        val temporary = File(directory, "${file.name}.tmp")
+        temporary.writeText(review.toExecutionJson(), Charsets.UTF_8)
+        if (!temporary.renameTo(file)) {
+            file.writeText(review.toExecutionJson(), Charsets.UTF_8)
+            temporary.delete()
+        }
+        return JSONObject()
+            .put("operationId", review.operationId)
+            .toString()
+    }
+
+    private fun safeOperationFileName(operationId: String): String = operationId.map { character ->
+        if (character.isLetterOrDigit() || character == '-' || character == '_') character else '_'
+    }.joinToString("").take(120).ifBlank { "operation" }
+
+    private fun pruneOldCleanupPlanFiles(directory: File) {
+        val cutoff = System.currentTimeMillis() - CLEANUP_PLAN_RETENTION_MS
+        directory.listFiles()?.filter { it.isFile && it.lastModified() < cutoff }?.forEach { it.delete() }
+    }
+
+
+    private suspend fun cleanupExecutionCall(
+        operationId: String,
+        timeoutMs: Long,
+        block: (IDustRootService) -> String,
+    ): String = try {
+        withTimeout(timeoutMs) {
+            withContext(Dispatchers.IO) { block(service()) }
+        }
+    } catch (error: TimeoutCancellationException) {
+        runCatching { service().cancelCleanup(operationId) }
+        dropConnection()
+        throw error
+    }
+
+    private suspend fun duplicateExecutionCall(
+        operationId: String,
+        timeoutMs: Long,
+        block: (IDustRootService) -> String,
+    ): String = try {
+        withTimeout(timeoutMs) {
+            withContext(Dispatchers.IO) { block(service()) }
+        }
+    } catch (error: TimeoutCancellationException) {
+        runCatching { service().cancelDuplicateVerification(operationId) }
+        dropConnection()
+        throw error
+    }
+
+    private suspend fun cleanupCall(timeoutMs: Long = CALL_TIMEOUT_MS, block: (IDustRootService) -> String): String = try {
+        withTimeout(timeoutMs) {
+            withContext(Dispatchers.IO) { block(service()) }
+        }
+    } catch (error: TimeoutCancellationException) {
+        dropConnection()
+        throw error
     }
 
     private fun parseReview(raw: String, plan: CleanupPlan): CleanupReview {
@@ -196,6 +268,7 @@ class RootServiceClient(private val context: Context) {
             operationId = json.optString("operationId").ifBlank { plan.id },
             scanId = plan.scanId,
             rootPath = plan.rootPath,
+            scanGeneration = plan.scanGeneration,
             reviewedAt = System.currentTimeMillis(),
             accepted = buildList {
                 if (accepted != null) for (index in 0 until accepted.length()) {
@@ -208,6 +281,7 @@ class RootServiceClient(private val context: Context) {
                             isDirectory = item.optBoolean("directory"),
                             fingerprint = CleanupPathFingerprint(
                                 device = fingerprint.optLong("device"),
+                                mountId = fingerprint.optString("mountId").takeIf(String::isNotBlank),
                                 inode = fingerprint.optLong("inode"),
                                 mode = fingerprint.optInt("mode"),
                                 statSizeBytes = fingerprint.optLong("statSizeBytes"),
@@ -216,6 +290,9 @@ class RootServiceClient(private val context: Context) {
                                 entryCount = fingerprint.optLong("entryCount"),
                                 contentSha256 = fingerprint.optString("contentSha256").takeIf(String::isNotBlank),
                             ),
+                            retainedPath = item.optString("retainedPath").takeIf(String::isNotBlank),
+                            retainedSha256 = item.optString("retainedSha256").takeIf(String::isNotBlank),
+                            packageName = item.optString("packageName").takeIf(String::isNotBlank),
                         ),
                     )
                 }
@@ -262,23 +339,28 @@ class RootServiceClient(private val context: Context) {
         block: (IDustRootService) -> String,
     ): RootScanState = try {
         withTimeout(timeoutMs) {
-            callMutex.withLock {
-                withContext(Dispatchers.IO) {
-                    val service = service()
-                    runCatching { RootScanState.fromJson(block(service)) }.getOrElse { error ->
-                        remote = null
-                        throw error
-                    }
+            withContext(Dispatchers.IO) {
+                val service = service()
+                runCatching { RootScanState.fromJson(block(service)) }.getOrElse { error ->
+                    remote = null
+                    throw error
                 }
             }
         }
     } catch (error: TimeoutCancellationException) {
-        remote = null
+        dropConnection()
         RootScanState(false, message = "Root service call timed out")
     }
 
     private suspend fun service(): IDustRootService = remote ?: bindMutex.withLock {
         remote ?: bindService().also { remote = it }
+    }
+
+    private fun dropConnection() {
+        val connection = activeConnection
+        activeConnection = null
+        remote = null
+        if (connection != null) runCatching { RootService.unbind(connection) }
     }
 
     private suspend fun bindService(): IDustRootService = withTimeout(BIND_TIMEOUT_MS) {
@@ -379,5 +461,7 @@ class RootServiceClient(private val context: Context) {
         const val START_TIMEOUT_MS = 30_000L
         const val DUPLICATE_TIMEOUT_MS = 10 * 60 * 1000L
         const val CALL_TIMEOUT_MS = 10_000L
+        const val CLEANUP_PLAN_DIRECTORY = "dustui_cleanup_plans"
+        const val CLEANUP_PLAN_RETENTION_MS = 24 * 60 * 60 * 1000L
     }
 }

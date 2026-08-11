@@ -100,6 +100,7 @@ data class AppResidueAnalysis(
     val protectedLocationCount: Int,
     val generatedAt: Long,
     val message: String? = null,
+    val scanGeneration: Long = 1L,
 ) {
     val totalBytes: Long = groups.sumOf { it.totalBytes }
     val recommendedBytes: Long = groups.sumOf { group ->
@@ -114,6 +115,7 @@ data class AppResidueAnalysis(
             groups = emptyList(),
             protectedLocationCount = 0,
             generatedAt = 0,
+            scanGeneration = 1L,
         )
     }
 }
@@ -166,6 +168,7 @@ object AppResidueAnalyzer {
         protectedPaths: Set<String>,
         appLabels: Map<String, String> = emptyMap(),
         generatedAt: Long = System.currentTimeMillis(),
+        scanGeneration: Long = 1L,
     ): AppResidueAnalysis {
         val candidates = entries.asSequence()
             .filter { it.isDirectory }
@@ -208,6 +211,7 @@ object AppResidueAnalyzer {
             groups = groups,
             protectedLocationCount = groups.sumOf { it.protectedCount },
             generatedAt = generatedAt,
+            scanGeneration = scanGeneration,
             message = inventory.message,
         )
     }

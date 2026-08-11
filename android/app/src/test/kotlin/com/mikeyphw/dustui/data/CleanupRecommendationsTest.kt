@@ -57,6 +57,28 @@ class CleanupRecommendationsTest {
         assertEquals(CleanupRecommendationKind.APP_RESIDUE, analysis.items.single().kind)
     }
 
+    @Test fun `recommendation claimed paths use bidirectional component overlap`() {
+        val root = "/storage/emulated/0/Android/data/com.example.gone"
+        val residue = AppResidueAnalysis(
+            "scan",
+            true,
+            setOf(0),
+            listOf(residueGroup("com.example.gone", AppResidueConfidence.HIGH, root)),
+            0,
+            1,
+        )
+        val entries = listOf(
+            directory(root, 2L * GIB),
+            file("$root/archive.zip", GIB, ageDays = 400),
+            file("/storage/emulated/0/Android/data/com.example.gone-old/archive.zip", GIB, ageDays = 400),
+        )
+        val analysis = CleanupRecommendationEngine.analyze("scan", entries, null, residue, nowSeconds = NOW)
+        assertEquals(2, analysis.items.size)
+        assertTrue(analysis.items.any { it.kind == CleanupRecommendationKind.APP_RESIDUE && it.paths == listOf(root) })
+        assertTrue(analysis.items.any { "/storage/emulated/0/Android/data/com.example.gone-old/archive.zip" in it.paths })
+        assertFalse(analysis.items.any { "$root/archive.zip" in it.paths })
+    }
+
     @Test fun `rank score is deterministic and exposes its point breakdown`() {
         val entry = file("/storage/Download/old.apk", 700L * MIB, ageDays = 120)
         val first = CleanupRecommendationEngine.analyze("scan", listOf(entry), null, null, nowSeconds = NOW).items.single()

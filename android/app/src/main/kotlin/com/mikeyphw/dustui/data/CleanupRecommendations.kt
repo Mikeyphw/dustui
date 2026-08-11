@@ -71,12 +71,13 @@ data class CleanupRecommendationAnalysis(
     val scanId: String,
     val items: List<CleanupRecommendation>,
     val generatedAt: Long,
+    val scanGeneration: Long = 1L,
 ) {
     val totalBytes: Long = items.sumOf { it.reclaimableBytes }
     val highConfidenceBytes: Long = items.filter { it.batchEligible }.sumOf { it.reclaimableBytes }
 
     companion object {
-        fun empty(scanId: String = ""): CleanupRecommendationAnalysis = CleanupRecommendationAnalysis(scanId, emptyList(), 0)
+        fun empty(scanId: String = "", scanGeneration: Long = 1L): CleanupRecommendationAnalysis = CleanupRecommendationAnalysis(scanId, emptyList(), 0, scanGeneration)
     }
 }
 
@@ -140,22 +141,23 @@ object CleanupRecommendationEngine {
         duplicateAnalysis: DuplicateAnalysisSnapshot?,
         residueAnalysis: AppResidueAnalysis?,
         nowSeconds: Long = System.currentTimeMillis() / 1000L,
+        scanGeneration: Long = 1L,
     ): CleanupRecommendationAnalysis {
         val recommendations = mutableListOf<CleanupRecommendation>()
-        val claimed = mutableListOf<String>()
+        val claimed = PathSafety.MutableOverlapIndex()
 
         residueRecommendations(residueAnalysis).forEach { candidate ->
             val accepted = candidate.withUnclaimedPaths(claimed, entries)
             if (accepted != null) {
                 recommendations += accepted
-                claimed += accepted.paths
+                claimed.addAll(accepted.paths)
             }
         }
         duplicateRecommendations(duplicateAnalysis).forEach { candidate ->
             val accepted = candidate.withUnclaimedPaths(claimed, entries)
             if (accepted != null) {
                 recommendations += accepted
-                claimed += accepted.paths
+                claimed.addAll(accepted.paths)
             }
         }
 
@@ -221,7 +223,7 @@ object CleanupRecommendationEngine {
                 val accepted = candidate.withUnclaimedPaths(claimed, entries)
                 if (accepted != null) {
                     recommendations += accepted
-                    claimed += accepted.paths
+                    claimed.addAll(accepted.paths)
                 }
             }
 
@@ -233,6 +235,7 @@ object CleanupRecommendationEngine {
                     .thenBy { it.id },
             ),
             generatedAt = System.currentTimeMillis(),
+            scanGeneration = scanGeneration,
         )
     }
 
@@ -441,10 +444,10 @@ object CleanupRecommendationEngine {
     }
 
     private fun CleanupRecommendation.withUnclaimedPaths(
-        claimed: List<String>,
+        claimed: PathSafety.MutableOverlapIndex,
         entries: List<ScanEntryEntity>,
     ): CleanupRecommendation? {
-        val remaining = paths.filterNot { path -> claimed.any { root -> overlaps(root, path) } }
+        val remaining = paths.filterNot { path -> claimed.intersects(path) }
         if (remaining.isEmpty()) return null
         if (remaining.size == paths.size) return this
         val sizes = entries.associate { it.path to it.sizeBytes }
@@ -486,15 +489,5 @@ object CleanupRecommendationEngine {
     private fun ScanEntryEntity.ageDays(nowSeconds: Long): Long? = modifiedAt.takeIf { it > 0 }
         ?.let { ((nowSeconds - it).coerceAtLeast(0L) / REC_DAY_SECONDS) }
 
-    private fun normalizePaths(paths: Collection<String>): List<String> = paths.asSequence()
-        .map { it.trim().trimEnd('/').ifBlank { "/" } }
-        .distinct()
-        .sortedBy { it.length }
-        .fold(mutableListOf()) { kept, path ->
-            if (kept.none { root -> path == root || path.startsWith("$root/") }) kept += path
-            kept
-        }
-
-    private fun overlaps(first: String, second: String): Boolean =
-        first == second || first.startsWith("$second/") || second.startsWith("$first/")
+    private fun normalizePaths(paths: Collection<String>): List<String> = PathSafety.collapseRoots(paths)
 }

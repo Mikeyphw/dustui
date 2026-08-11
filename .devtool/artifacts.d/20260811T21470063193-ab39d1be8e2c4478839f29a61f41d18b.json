@@ -1,0 +1,18 @@
+{
+  "applied_at": "2026-08-11T21:47:00.631936Z",
+  "artifact": "/storage/emulated/0/Download/dustui_master_remediation_overlay_20260811.zip",
+  "artifact_name": "dustui_master_remediation_overlay_20260811.zip",
+  "type": "overlay",
+  "sha256": "9b28cdf0cf75eea6c036d2eb27a24e5ed68349ede132e43945ca53a174b3fbea",
+  "status": "ok",
+  "validation_status": "not-run",
+  "commit_message": "",
+  "commit_hash": "",
+  "file_count": 52,
+  "change_counts": {
+    "add": 13,
+    "modify": 39
+  },
+  "manifest": {},
+  "history_id": "ab39d1be8e2c4478839f29a61f41d18b"
+}

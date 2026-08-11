@@ -6,7 +6,7 @@ import java.nio.file.Paths
 import java.util.UUID
 
 enum class EntryMode(val nativeValue: Int) { ALL(0), DIRECTORIES(1), FILES(2) }
-enum class ScanStatus { STARTING, RUNNING, COMPLETED, CANCELLED, FAILED }
+enum class ScanStatus { CREATED, STARTING, RUNNING, CANCELLING, COMPLETED, COMPLETED_TRUNCATED, CANCELLED, FAILED, FAILED_INTEGRITY, INTERRUPTED }
 
 object ScanDepthPolicy {
     const val UNLIMITED_DEPTH = -1

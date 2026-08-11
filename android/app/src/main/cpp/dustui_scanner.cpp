@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <cstring>
 #include <memory>
+#include <sstream>
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -23,6 +24,7 @@
 
 namespace {
 constexpr std::uint64_t kProgressInterval = 128;
+constexpr std::size_t kOutputBufferBytes = 256 * 1024;
 
 enum class EntryMode : int { All = 0, Directories = 1, Files = 2 };
 
@@ -74,6 +76,180 @@ struct ScanContext {
 std::mutex gCancelMutex;
 std::unordered_map<std::string, std::shared_ptr<std::atomic_bool>> gCancelFlags;
 
+std::shared_ptr<std::atomic_bool> registerCancellationFlag(const std::string& operationId) {
+    auto cancelled = std::make_shared<std::atomic_bool>(false);
+    if (operationId.empty()) return cancelled;
+    std::lock_guard<std::mutex> guard(gCancelMutex);
+    gCancelFlags[operationId] = cancelled;
+    return cancelled;
+}
+
+void unregisterCancellationFlag(const std::string& operationId, const std::shared_ptr<std::atomic_bool>& expected) {
+    if (operationId.empty()) return;
+    std::lock_guard<std::mutex> guard(gCancelMutex);
+    const auto found = gCancelFlags.find(operationId);
+    if (found != gCancelFlags.end() && found->second == expected) gCancelFlags.erase(found);
+}
+
+bool requestCancellationFlag(const std::string& operationId) {
+    std::lock_guard<std::mutex> guard(gCancelMutex);
+    const auto found = gCancelFlags.find(operationId);
+    if (found == gCancelFlags.end()) return false;
+    found->second->store(true, std::memory_order_relaxed);
+    return true;
+}
+
+
+std::string jsonEscape(const std::string& value) {
+    std::string escaped;
+    escaped.reserve(value.size() + 8);
+    for (const unsigned char valueByte : value) {
+        switch (valueByte) {
+            case '"': escaped += "\\\""; break;
+            case '\\': escaped += "\\\\"; break;
+            case '\b': escaped += "\\b"; break;
+            case '\f': escaped += "\\f"; break;
+            case '\n': escaped += "\\n"; break;
+            case '\r': escaped += "\\r"; break;
+            case '\t': escaped += "\\t"; break;
+            default:
+                if (valueByte < 0x20U) {
+                    char buffer[7];
+                    std::snprintf(buffer, sizeof(buffer), "\\u%04x", valueByte);
+                    escaped += buffer;
+                } else {
+                    escaped.push_back(static_cast<char>(valueByte));
+                }
+        }
+    }
+    return escaped;
+}
+
+std::string deletionJson(bool ok, bool complete, std::uint64_t deletedBytes, const std::string& message,
+                         bool unknownOutcome = false) {
+    std::ostringstream out;
+    out << "{\"ok\":" << (ok ? "true" : "false")
+        << ",\"complete\":" << (complete ? "true" : "false")
+        << ",\"deletedBytes\":" << deletedBytes
+        << ",\"unknownOutcome\":" << (unknownOutcome ? "true" : "false");
+    if (!message.empty()) out << ",\"message\":\"" << jsonEscape(message) << "\"";
+    out << "}";
+    return out.str();
+}
+
+std::vector<std::string> splitRelativePath(const std::string& relativePath, std::string& error) {
+    std::vector<std::string> parts;
+    if (relativePath.empty() || relativePath == "." || relativePath[0] == '/') {
+        error = "Native deletion requires a non-root relative path";
+        return parts;
+    }
+    std::size_t start = 0;
+    while (start <= relativePath.size()) {
+        const auto end = relativePath.find('/', start);
+        const auto token = relativePath.substr(start, end == std::string::npos ? std::string::npos : end - start);
+        if (token.empty() || token == "." || token == ".." || token.find('\0') != std::string::npos) {
+            error = "Native deletion path contains an unsafe component";
+            parts.clear();
+            return parts;
+        }
+        parts.push_back(token);
+        if (end == std::string::npos) break;
+        start = end + 1;
+    }
+    if (parts.empty()) error = "Native deletion requires at least one relative path component";
+    return parts;
+}
+
+bool statMatchesReviewedTop(const struct stat& actual, jlong expectedDevice, jlong expectedInode,
+                            jint expectedMode, jlong expectedSize, jlong expectedModifiedAt) {
+    return static_cast<jlong>(actual.st_dev) == expectedDevice &&
+           static_cast<jlong>(actual.st_ino) == expectedInode &&
+           static_cast<jint>(actual.st_mode) == expectedMode &&
+           static_cast<jlong>(actual.st_size) == expectedSize &&
+           static_cast<jlong>(actual.st_mtime) == expectedModifiedAt;
+}
+
+bool deleteTreeAt(int parentFd, const std::string& name, dev_t rootDevice,
+                  const std::shared_ptr<std::atomic_bool>& cancelled,
+                  std::uint64_t& deletedBytes, std::string& error, bool& unknownOutcome) {
+    if (cancelled != nullptr && cancelled->load(std::memory_order_relaxed)) {
+        error = deletedBytes > 0 ? "Native deletion cancellation requested after filesystem mutation"
+                                 : "Native deletion cancellation requested before mutation";
+        unknownOutcome = deletedBytes > 0;
+        return false;
+    }
+    struct stat metadata {};
+    if (fstatat(parentFd, name.c_str(), &metadata, AT_SYMLINK_NOFOLLOW) != 0) {
+        error = "Unable to inspect reviewed target: " + std::string(std::strerror(errno));
+        return false;
+    }
+    if (S_ISLNK(metadata.st_mode)) {
+        error = "Native deletion refuses symbolic links";
+        return false;
+    }
+    if (metadata.st_dev != rootDevice) {
+        error = "Native deletion refused filesystem boundary crossing";
+        return false;
+    }
+    if (S_ISDIR(metadata.st_mode)) {
+        int directoryFd = openat(parentFd, name.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW);
+        if (directoryFd < 0) {
+            error = "Unable to open directory for fd-relative deletion: " + std::string(std::strerror(errno));
+            return false;
+        }
+        DIR* directory = fdopendir(directoryFd);
+        if (directory == nullptr) {
+            const int errorNumber = errno;
+            close(directoryFd);
+            error = "Unable to enumerate directory for fd-relative deletion: " + std::string(std::strerror(errorNumber));
+            return false;
+        }
+        bool ok = true;
+        while (ok) {
+            errno = 0;
+            dirent* entry = readdir(directory);
+            if (entry == nullptr) {
+                if (errno != 0) {
+                    ok = false;
+                    error = "Unable to read directory during fd-relative deletion: " + std::string(std::strerror(errno));
+                }
+                break;
+            }
+            const char* childName = entry->d_name;
+            if (std::strcmp(childName, ".") == 0 || std::strcmp(childName, "..") == 0) continue;
+            ok = deleteTreeAt(dirfd(directory), childName, rootDevice, cancelled, deletedBytes, error, unknownOutcome);
+        }
+        closedir(directory);
+        if (!ok) return false;
+        if (cancelled != nullptr && cancelled->load(std::memory_order_relaxed)) {
+            error = deletedBytes > 0 ? "Native deletion cancellation requested after filesystem mutation"
+                                     : "Native deletion cancellation requested before mutation";
+            unknownOutcome = deletedBytes > 0;
+            return false;
+        }
+        if (unlinkat(parentFd, name.c_str(), AT_REMOVEDIR) != 0) {
+            error = "Unable to remove directory with unlinkat: " + std::string(std::strerror(errno));
+            return false;
+        }
+        return true;
+    }
+    const std::uint64_t bytes = S_ISREG(metadata.st_mode) && metadata.st_size > 0
+        ? static_cast<std::uint64_t>(metadata.st_size)
+        : 0ULL;
+    if (cancelled != nullptr && cancelled->load(std::memory_order_relaxed)) {
+        error = deletedBytes > 0 ? "Native deletion cancellation requested after filesystem mutation"
+                                 : "Native deletion cancellation requested before mutation";
+        unknownOutcome = deletedBytes > 0;
+        return false;
+    }
+    if (unlinkat(parentFd, name.c_str(), 0) != 0) {
+        error = "Unable to remove file with unlinkat: " + std::string(std::strerror(errno));
+        return false;
+    }
+    deletedBytes += bytes;
+    return true;
+}
+
 void writeJsonString(FILE* output, const std::string& value) {
     std::fputc('"', output);
     for (const unsigned char valueByte : value) {
@@ -96,9 +272,9 @@ void writeJsonString(FILE* output, const std::string& value) {
     std::fputc('"', output);
 }
 
-void finishEvent(FILE* output) {
+void finishEvent(FILE* output, bool flush = false) {
     std::fputc('\n', output);
-    std::fflush(output);
+    if (flush) std::fflush(output);
 }
 
 std::string baseName(const std::string& path) {
@@ -166,7 +342,7 @@ void emitError(FILE* output, const std::string& code, const std::string& phase,
     writeJsonString(output, message);
     if (errorNumber != 0) std::fprintf(output, ",\"errno\":%d", errorNumber);
     std::fputc('}', output);
-    finishEvent(output);
+    finishEvent(output, true);
 }
 
 void emitProgress(ScanContext& context, const std::string& path) {
@@ -175,7 +351,7 @@ void emitProgress(ScanContext& context, const std::string& path) {
         context.scannedItems, context.scannedBytes);
     writeJsonString(context.output, path);
     std::fputc('}', context.output);
-    finishEvent(context.output);
+    finishEvent(context.output, true);
 }
 
 bool shouldEmit(ScanContext& context, bool directory, int depth, std::uint64_t size) {
@@ -319,35 +495,28 @@ Java_com_mikeyphw_dustui_root_NativeDustScanner_scan(
         close(outputFd);
         return 3;
     }
-    setvbuf(output, nullptr, _IOLBF, 0);
+    setvbuf(output, nullptr, _IOFBF, kOutputBufferBytes);
 
-    auto cancelled = std::make_shared<std::atomic_bool>(false);
-    {
-        std::lock_guard<std::mutex> guard(gCancelMutex);
-        gCancelFlags[scanId] = cancelled;
-    }
+    auto cancelled = registerCancellationFlag(scanId);
 
     struct stat rootMetadata {};
     if (lstat(root.c_str(), &rootMetadata) != 0) {
         const int errorNumber = errno;
         emitError(output, "ROOT_LSTAT_FAILED", "root-preflight", root, std::strerror(errorNumber), errorNumber);
         std::fclose(output);
-        std::lock_guard<std::mutex> guard(gCancelMutex);
-        gCancelFlags.erase(scanId);
+        unregisterCancellationFlag(scanId, cancelled);
         return 4;
     }
     if (S_ISLNK(rootMetadata.st_mode)) {
         emitError(output, "ROOT_SYMLINK", "root-preflight", root, "Scan root is a symbolic link");
         std::fclose(output);
-        std::lock_guard<std::mutex> guard(gCancelMutex);
-        gCancelFlags.erase(scanId);
+        unregisterCancellationFlag(scanId, cancelled);
         return 5;
     }
     if (!S_ISDIR(rootMetadata.st_mode)) {
         emitError(output, "ROOT_NOT_DIRECTORY", "root-preflight", root, "Scan root is not a directory");
         std::fclose(output);
-        std::lock_guard<std::mutex> guard(gCancelMutex);
-        gCancelFlags.erase(scanId);
+        unregisterCancellationFlag(scanId, cancelled);
         return 6;
     }
     DIR* rootProbe = opendir(root.c_str());
@@ -355,8 +524,7 @@ Java_com_mikeyphw_dustui_root_NativeDustScanner_scan(
         const int errorNumber = errno;
         emitError(output, "ROOT_OPEN_FAILED", "root-preflight", root, std::strerror(errorNumber), errorNumber);
         std::fclose(output);
-        std::lock_guard<std::mutex> guard(gCancelMutex);
-        gCancelFlags.erase(scanId);
+        unregisterCancellationFlag(scanId, cancelled);
         return 7;
     }
     closedir(rootProbe);
@@ -390,7 +558,7 @@ Java_com_mikeyphw_dustui_root_NativeDustScanner_scan(
     std::fputs("{\"type\":\"start\",\"backend\":\"dustui-native-root-v3\",\"root\":", output);
     writeJsonString(output, root);
     std::fputc('}', output);
-    finishEvent(output);
+    finishEvent(output, true);
 
     const Totals totals = scanPath(context, root, 0);
     const bool wasCancelled = cancelled->load(std::memory_order_relaxed);
@@ -414,13 +582,12 @@ Java_com_mikeyphw_dustui_root_NativeDustScanner_scan(
                 context.truncated ? "true" : "false", context.depthLimitedDirectories,
                 context.skippedFilesystemEntries, context.rootOpened ? "true" : "false");
         }
-        finishEvent(output);
+        finishEvent(output, true);
         std::fclose(output);
     }
 
     {
-        std::lock_guard<std::mutex> guard(gCancelMutex);
-        gCancelFlags.erase(scanId);
+        unregisterCancellationFlag(scanId, cancelled);
     }
     return context.fatal ? 8 : (wasCancelled ? 130 : 0);
 }
@@ -428,11 +595,104 @@ Java_com_mikeyphw_dustui_root_NativeDustScanner_scan(
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_mikeyphw_dustui_root_NativeDustScanner_cancel(JNIEnv* env, jobject, jstring scanIdValue) {
     const std::string scanId = javaString(env, scanIdValue);
-    std::lock_guard<std::mutex> guard(gCancelMutex);
-    const auto found = gCancelFlags.find(scanId);
-    if (found == gCancelFlags.end()) return JNI_FALSE;
-    found->second->store(true, std::memory_order_relaxed);
-    return JNI_TRUE;
+    return requestCancellationFlag(scanId) ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_mikeyphw_dustui_root_NativeDustScanner_cancelDeletion(JNIEnv* env, jobject, jstring operationIdValue) {
+    const std::string operationId = javaString(env, operationIdValue);
+    return requestCancellationFlag(operationId) ? JNI_TRUE : JNI_FALSE;
+}
+
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_mikeyphw_dustui_root_NativeDustScanner_deleteReviewedPath(
+    JNIEnv* env, jobject, jstring operationIdValue, jstring rootValue, jstring relativeValue,
+    jlong expectedDevice, jlong expectedInode, jint expectedMode, jlong expectedSize, jlong expectedModifiedAt) {
+    const std::string operationId = javaString(env, operationIdValue);
+    auto cancelled = registerCancellationFlag(operationId);
+    const std::string root = javaString(env, rootValue);
+    const std::string relative = javaString(env, relativeValue);
+    auto returnResponse = [&](const std::string& response) -> jstring {
+        unregisterCancellationFlag(operationId, cancelled);
+        return env->NewStringUTF(response.c_str());
+    };
+    if (root.empty() || relative.empty()) {
+        const std::string response = deletionJson(false, false, 0, "Native deletion requires root and relative target path");
+        return returnResponse(response);
+    }
+
+    std::string pathError;
+    const auto components = splitRelativePath(relative, pathError);
+    if (!pathError.empty()) {
+        const std::string response = deletionJson(false, false, 0, pathError);
+        return returnResponse(response);
+    }
+
+    int rootFd = open(root.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW);
+    if (rootFd < 0) {
+        const std::string response = deletionJson(false, false, 0, "Unable to open reviewed root with O_NOFOLLOW: " + std::string(std::strerror(errno)));
+        return returnResponse(response);
+    }
+    struct stat rootMetadata {};
+    if (fstat(rootFd, &rootMetadata) != 0) {
+        const int errorNumber = errno;
+        close(rootFd);
+        const std::string response = deletionJson(false, false, 0, "Unable to inspect reviewed root fd: " + std::string(std::strerror(errorNumber)));
+        return returnResponse(response);
+    }
+
+    int parentFd = rootFd;
+    for (std::size_t index = 0; index + 1 < components.size(); ++index) {
+        int nextFd = openat(parentFd, components[index].c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW);
+        if (parentFd != rootFd) close(parentFd);
+        if (nextFd < 0) {
+            const int errorNumber = errno;
+            close(rootFd);
+            const std::string response = deletionJson(false, false, 0, "Unable to resolve reviewed target parent fd: " + std::string(std::strerror(errorNumber)));
+            return returnResponse(response);
+        }
+        struct stat parentMetadata {};
+        if (fstat(nextFd, &parentMetadata) != 0) {
+            const int errorNumber = errno;
+            close(nextFd);
+            close(rootFd);
+            const std::string response = deletionJson(false, false, 0, "Unable to inspect reviewed target parent fd: " + std::string(std::strerror(errorNumber)));
+            return returnResponse(response);
+        }
+        if (parentMetadata.st_dev != rootMetadata.st_dev) {
+            close(nextFd);
+            close(rootFd);
+            const std::string response = deletionJson(false, false, 0, "Native deletion refused parent filesystem boundary crossing");
+            return returnResponse(response);
+        }
+        parentFd = nextFd;
+    }
+
+    const std::string& leaf = components.back();
+    struct stat topMetadata {};
+    if (fstatat(parentFd, leaf.c_str(), &topMetadata, AT_SYMLINK_NOFOLLOW) != 0) {
+        const int errorNumber = errno;
+        if (parentFd != rootFd) close(parentFd);
+        close(rootFd);
+        const std::string response = deletionJson(false, false, 0, "Unable to inspect reviewed top-level target: " + std::string(std::strerror(errorNumber)));
+        return returnResponse(response);
+    }
+    if (!statMatchesReviewedTop(topMetadata, expectedDevice, expectedInode, expectedMode, expectedSize, expectedModifiedAt)) {
+        if (parentFd != rootFd) close(parentFd);
+        close(rootFd);
+        const std::string response = deletionJson(false, false, 0, "Reviewed top-level filesystem identity changed before native deletion");
+        return returnResponse(response);
+    }
+
+    std::uint64_t deletedBytes = 0;
+    std::string error;
+    bool unknownOutcome = false;
+    const bool ok = deleteTreeAt(parentFd, leaf, rootMetadata.st_dev, cancelled, deletedBytes, error, unknownOutcome);
+    if (parentFd != rootFd) close(parentFd);
+    close(rootFd);
+    const std::string response = deletionJson(ok, ok, deletedBytes, error, unknownOutcome);
+    return returnResponse(response);
 }
 
 extern "C" JNIEXPORT jstring JNICALL

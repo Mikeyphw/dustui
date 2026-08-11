@@ -53,8 +53,11 @@ class ScanRepository(
     suspend fun preflightScan(request: ScanRequest): RootServiceClient.ScanRootPreflight = rootClient.preflightScan(request)
     fun scanDiagnostics(scanId: String): ScanDiagnostics? = scanDiagnosticStore.load(scanId)
     suspend fun entry(scanId: String, path: String): ScanEntryEntity? = dao.entryOnce(scanId, path)
-    suspend fun entriesByPaths(scanId: String, paths: Collection<String>): List<ScanEntryEntity> =
-        if (paths.isEmpty()) emptyList() else dao.entriesByPathsOnce(scanId, paths.distinct())
+    suspend fun entriesByPaths(scanId: String, paths: Collection<String>): List<ScanEntryEntity> {
+        val distinct = paths.distinct()
+        if (distinct.isEmpty()) return emptyList()
+        return distinct.chunked(SQLITE_SAFE_BIND_BATCH).flatMap { chunk -> dao.entriesByPathsOnce(scanId, chunk) }
+    }
 
 
     suspend fun deviceCertification(): DeviceCertificationReport {
@@ -87,27 +90,42 @@ class ScanRepository(
         return SnapshotAnalyzer.diff(dao.entriesOnce(current.id), previous?.let { dao.entriesOnce(it.id) }.orEmpty(), current.id, previous?.id)
     }
 
+    suspend fun snapshotDelta(scanId: String, currentEntries: List<ScanEntryEntity>): SnapshotDelta? {
+        val sessions = dao.completedSessions(3)
+        val current = dao.session(scanId) ?: sessions.firstOrNull { it.id == scanId } ?: return null
+        val previous = sessions.firstOrNull { it.id != scanId }
+        val previousEntries = previous?.let { dao.entriesOnce(it.id) }.orEmpty()
+        return SnapshotAnalyzer.diff(currentEntries, previousEntries, current.id, previous?.id)
+    }
+
+    suspend fun entriesForAnalysis(scanId: String): List<ScanEntryEntity> = dao.entriesOnce(scanId)
 
     suspend fun snapshotHistory(limit: Int = 12): List<SnapshotPoint> = dao.completedSessions(limit)
         .asReversed()
         .map { SnapshotPoint(it.completedAt ?: it.startedAt, it.totalBytes) }
 
-    suspend fun appSummaries(scanId: String): List<AppStorageSummary> {
+    suspend fun appSummaries(scanId: String): List<AppStorageSummary> = appSummaries(scanId, dao.entriesOnce(scanId))
+
+    suspend fun appSummaries(scanId: String, entries: List<ScanEntryEntity>): List<AppStorageSummary> {
         val installed = context.packageManager.getInstalledPackages(0).mapTo(mutableSetOf()) { it.packageName }
-        return SnapshotAnalyzer.appSummaries(dao.entriesOnce(scanId), installed)
+        return SnapshotAnalyzer.appSummaries(entries, installed)
     }
 
-    suspend fun appResidueAnalysis(scanId: String): AppResidueAnalysis {
+    suspend fun appResidueAnalysis(scanId: String): AppResidueAnalysis = appResidueAnalysis(scanId, dao.entriesOnce(scanId))
+
+    suspend fun appResidueAnalysis(scanId: String, entries: List<ScanEntryEntity>): AppResidueAnalysis {
+        val session = dao.session(scanId)
         val inventory = installedPackageInventory()
         val labels = context.packageManager.getInstalledApplications(0).associate { info ->
             info.packageName to context.packageManager.getApplicationLabel(info).toString()
         }
         return AppResidueAnalyzer.analyze(
             scanId = scanId,
-            entries = dao.entriesOnce(scanId),
+            entries = entries,
             inventory = inventory,
             protectedPaths = residueProtectionStore.paths(),
             appLabels = labels,
+            scanGeneration = session?.generation ?: 1L,
         )
     }
 
@@ -153,9 +171,11 @@ class ScanRepository(
         LargeFilePreset.INSTALLERS -> dao.installerFilesOnce(scanId)
     }
 
-    suspend fun advancedAnalysis(scanId: String): AdvancedStorageReport {
+    suspend fun advancedAnalysis(scanId: String): AdvancedStorageReport = advancedAnalysis(scanId, dao.entriesOnce(scanId))
+
+    suspend fun advancedAnalysis(scanId: String, entries: List<ScanEntryEntity>): AdvancedStorageReport {
         val installed = context.packageManager.getInstalledPackages(0).mapTo(mutableSetOf()) { it.packageName }
-        return AdvancedStorageAnalyzer.analyze(dao.entriesOnce(scanId), installed, readMountTable())
+        return AdvancedStorageAnalyzer.analyze(entries, installed, readMountTable())
     }
 
     suspend fun packageProfiles(scanId: String): List<PackageStorageProfile> {
@@ -174,8 +194,15 @@ class ScanRepository(
     suspend fun appStorageInspector(
         scanId: String,
         providedResidueAnalysis: AppResidueAnalysis? = null,
+    ): AppStorageInspectorAnalysis = appStorageInspector(scanId, providedResidueAnalysis, dao.entriesOnce(scanId))
+
+    suspend fun appStorageInspector(
+        scanId: String,
+        providedResidueAnalysis: AppResidueAnalysis? = null,
+        currentEntries: List<ScanEntryEntity>,
     ): AppStorageInspectorAnalysis {
-        val currentEntries = dao.entriesOnce(scanId)
+        val currentSession = dao.session(scanId)
+        val currentGeneration = currentSession?.generation ?: 1L
         val sessions = dao.completedSessions(100)
         val currentIndex = sessions.indexOfFirst { it.id == scanId }
         val previousSession = if (currentIndex >= 0) sessions.getOrNull(currentIndex + 1) else sessions.firstOrNull { it.id != scanId }
@@ -186,7 +213,7 @@ class ScanRepository(
                 metadata.putIfAbsent(packageName, AppPackageMetadata(packageName, packageName, installed = true))
             }
         }
-        val residue = providedResidueAnalysis ?: runCatching { appResidueAnalysis(scanId) }.getOrNull()
+        val residue = providedResidueAnalysis?.takeIf { it.scanGeneration == currentGeneration } ?: runCatching { appResidueAnalysis(scanId, currentEntries) }.getOrNull()
         return AppStorageInspectorEngine.analyze(
             scanId = scanId,
             currentEntries = currentEntries,
@@ -194,7 +221,7 @@ class ScanRepository(
             previousEntries = previousEntries,
             metadata = packageMetadata,
             packageInventoryComplete = inventory.complete,
-            duplicateSnapshot = duplicateStore.load(scanId),
+            duplicateSnapshot = duplicateStore.load(scanId)?.takeIf { it.scanGeneration == currentGeneration },
             residueAnalysis = residue,
             protectedPaths = residueProtectionStore.paths(),
             ignoredPackages = appStoragePreferenceStore.ignoredPackages(),
@@ -248,9 +275,10 @@ class ScanRepository(
     suspend fun rootSearch(scanId: String, request: RootFileSearchRequest): List<RootFileSearchResult> =
         RootFileSearchEngine.search(dao.entriesOnce(scanId), request)
 
-    suspend fun moduleAnalysis(scanId: String): RootModuleReport {
+    suspend fun moduleAnalysis(scanId: String): RootModuleReport = moduleAnalysis(scanId, dao.entriesOnce(scanId))
+
+    suspend fun moduleAnalysis(scanId: String, entries: List<ScanEntryEntity>): RootModuleReport {
         val session = dao.session(scanId)
-        val entries = dao.entriesOnce(scanId)
         val analyzed = RootModuleAnalyzer.analyze(entries)
         val moduleRoot = "/data/adb/modules"
         val scanRoot = session?.rootPath
@@ -326,16 +354,24 @@ class ScanRepository(
     suspend fun cleanupRecommendations(
         scanId: String,
         providedResidueAnalysis: AppResidueAnalysis? = null,
+    ): CleanupRecommendationAnalysis = cleanupRecommendations(scanId, providedResidueAnalysis, dao.entriesOnce(scanId))
+
+    suspend fun cleanupRecommendations(
+        scanId: String,
+        providedResidueAnalysis: AppResidueAnalysis? = null,
+        entries: List<ScanEntryEntity>,
     ): CleanupRecommendationAnalysis {
-        val duplicateAnalysis = duplicateStore.load(scanId)
-        val residueAnalysis = providedResidueAnalysis ?: appResidueAnalysis(scanId)
+        val sessionGeneration = dao.session(scanId)?.generation ?: 1L
+        val duplicateAnalysis = duplicateStore.load(scanId)?.takeIf { it.scanGeneration == sessionGeneration }
+        val residueAnalysis = providedResidueAnalysis?.takeIf { it.scanGeneration == sessionGeneration } ?: appResidueAnalysis(scanId, entries)
         recommendationPreferenceStore.pruneDismissedScans(scanId)
         val ignoredPackages = appStoragePreferenceStore.ignoredPackages()
         val analysis = CleanupRecommendationEngine.analyze(
             scanId = scanId,
-            entries = dao.entriesOnce(scanId),
+            entries = entries,
             duplicateAnalysis = duplicateAnalysis,
             residueAnalysis = residueAnalysis,
+            scanGeneration = sessionGeneration,
         )
         if (ignoredPackages.isEmpty()) return analysis
         return analysis.copy(items = analysis.items.filterNot { recommendation ->
@@ -385,14 +421,14 @@ class ScanRepository(
     ): CleanupRulePreview {
         val session = requireNotNull(dao.session(scanId)) { "Cleanup-rule scan no longer exists" }
         val entries = dao.entriesOnce(scanId)
-        val duplicateSnapshot = duplicateStore.load(scanId)
+        val duplicateSnapshot = duplicateStore.load(scanId)?.takeIf { it.scanGeneration == session.generation }
         val duplicatePaths = duplicateSnapshot?.groups.orEmpty().flatMap { group ->
             val threshold = DuplicateThreshold.entries.firstOrNull { it.minBytes == duplicateSnapshot?.minSizeBytes } ?: DuplicateThreshold.ONE_MIB
             DuplicateWorkbenchEngine.groupItem(group, DuplicateFilter(threshold = threshold, keepStrategy = DuplicateKeepStrategy.NEWEST)).deletionPaths
         }.toSet()
         val residue = appResidueAnalysis(scanId)
         val residueByPath = residue.groups.flatMap { group -> group.locations.map { it.path to group.confidence } }.toMap()
-        return CleanupRuleEngine.preview(scanId, session.rootPath, entries, rules, duplicatePaths, residueByPath, includeDisabled = includeDisabled)
+        return CleanupRuleEngine.preview(scanId, session.rootPath, entries, rules, duplicatePaths, residueByPath, includeDisabled = includeDisabled, scanGeneration = session.generation)
     }
 
     suspend fun completedStorageGrowthSessions(): List<ScanSessionEntity> =
@@ -422,8 +458,7 @@ class ScanRepository(
 
     suspend fun pruneStorageGrowthHistory(keep: Int): Int {
         val bounded = keep.coerceIn(StorageGrowthPreferenceStore.MIN_RETENTION, StorageGrowthPreferenceStore.MAX_RETENTION)
-        dao.deleteEntriesBeyondCompletedRetention(bounded)
-        dao.deleteSessionsBeyondCompletedRetention(bounded)
+        dao.pruneCompletedScanRetention(bounded)
         storageGrowthPreferenceStore.setRetentionLimit(bounded)
         val remaining = dao.completedSessions(bounded)
         storageGrowthPreferenceStore.prune(remaining.mapTo(linkedSetOf()) { it.id })
@@ -471,11 +506,11 @@ class ScanRepository(
     ): DuplicateAnalysisSnapshot {
         if (reset) duplicateStore.clear(scanId)
         val session = requireNotNull(dao.session(scanId)) { "Duplicate analysis scan no longer exists" }
-        val existing = duplicateStore.load(scanId)?.takeIf { it.minSizeBytes == minSizeBytes }
+        val existing = duplicateStore.load(scanId)?.takeIf { it.minSizeBytes == minSizeBytes && it.scanGeneration == session.generation }
         val buckets = dao.duplicateSizeBuckets(scanId, minSizeBytes)
         val bucketSizes = buckets.mapTo(linkedSetOf()) { it.sizeBytes }
         val now = System.currentTimeMillis()
-        var snapshot = (existing ?: DuplicateAnalysisSnapshot.empty(scanId, minSizeBytes, now)).copy(
+        var snapshot = (existing ?: DuplicateAnalysisSnapshot.empty(scanId, minSizeBytes, now, session.generation)).copy(
             status = "RUNNING",
             totalBuckets = buckets.size,
             completedBuckets = existing?.completedSizes?.count { it in bucketSizes } ?: 0,
@@ -565,10 +600,13 @@ class ScanRepository(
         session: ScanSessionEntity,
         entries: List<ScanEntryEntity>,
         expectedSha256ByPath: Map<String, String> = emptyMap(),
+        retainedEvidenceByPath: Map<String, Pair<String, String>> = emptyMap(),
+        packageNameByPath: Map<String, String> = emptyMap(),
     ): CleanupReview {
         val plan = CleanupPlan(
             scanId = session.id,
             rootPath = session.rootPath,
+            scanGeneration = session.generation,
             items = entries.map { entry ->
                 CleanupPlanItem(
                     path = entry.path,
@@ -576,6 +614,9 @@ class ScanRepository(
                     isDirectory = entry.isDirectory,
                     modifiedAt = entry.modifiedAt,
                     expectedSha256 = expectedSha256ByPath[entry.path],
+                    retainedPath = retainedEvidenceByPath[entry.path]?.first,
+                    retainedSha256 = retainedEvidenceByPath[entry.path]?.second,
+                    packageName = packageNameByPath[entry.path],
                 )
             },
         ).normalized()
@@ -600,26 +641,99 @@ class ScanRepository(
                 message = listOfNotNull(blocked.message, "Verification report could not be saved: ${saveFailure.message ?: saveFailure.javaClass.simpleName}").joinToString(" · "),
             )
         }
+        if (System.currentTimeMillis() - review.reviewedAt > CLEANUP_REVIEW_TTL_MS) {
+            return CleanupExecutionResult(
+                ok = false,
+                operationId = review.operationId,
+                status = CleanupOperationStatus.BLOCKED.name,
+                deletedBytes = 0,
+                failedCount = review.accepted.size,
+                items = review.accepted.map { item -> CleanupItemResult(item.path, item.plannedBytes, 0, "BLOCKED", "Cleanup review expired; create a new plan") },
+                message = "Cleanup review expired; create a new plan",
+            )
+        }
         val plannedBytes = review.accepted.sumOf { it.plannedBytes }
-        dao.upsertCleanupOperation(
+        val insertedOperation = dao.insertCleanupOperationIfAbsent(
             CleanupOperationEntity(
-                id = review.operationId, scanId = review.scanId, rootPath = review.rootPath, status = "EXECUTING",
-                selectedCount = review.accepted.size, plannedBytes = plannedBytes, createdAt = startedAt,
+                id = review.operationId,
+                scanId = review.scanId,
+                rootPath = review.rootPath,
+                status = CleanupOperationStatus.REVIEWED.name,
+                selectedCount = review.accepted.size,
+                plannedBytes = plannedBytes,
+                createdAt = startedAt,
+                reviewId = review.operationId,
+                scanGeneration = review.scanGeneration,
+                expiresAt = review.reviewedAt + CLEANUP_REVIEW_TTL_MS,
             ),
         )
+        if (insertedOperation != -1L) {
+            dao.replaceCleanupPlanItems(
+                review.operationId,
+                review.accepted.map { item ->
+                    CleanupPlanItemEntity(
+                        operationId = review.operationId,
+                        path = item.path,
+                        role = "DELETE",
+                        itemType = if (item.isDirectory) "DIRECTORY" else "FILE",
+                        plannedBytes = item.plannedBytes,
+                        expectedDevice = item.fingerprint.device,
+                        expectedMountId = item.fingerprint.mountId,
+                        expectedInode = item.fingerprint.inode,
+                        expectedMode = item.fingerprint.mode,
+                        expectedStatSizeBytes = item.fingerprint.statSizeBytes,
+                        expectedModifiedAt = item.fingerprint.modifiedAt,
+                        expectedTreeDigest = item.fingerprint.treeDigest,
+                        expectedEntryCount = item.fingerprint.entryCount,
+                        expectedSha256 = item.fingerprint.contentSha256,
+                        retainedPath = item.retainedPath,
+                        retainedSha256 = item.retainedSha256,
+                        packageName = item.packageName,
+                        createdAt = startedAt,
+                    )
+                },
+            )
+        }
+        val claimed = dao.claimCleanupOperation(review.operationId)
+        if (claimed != 1) {
+            return CleanupExecutionResult(
+                ok = false,
+                operationId = review.operationId,
+                status = CleanupOperationStatus.BLOCKED.name,
+                deletedBytes = 0,
+                failedCount = review.accepted.size,
+                items = review.accepted.map { item -> CleanupItemResult(item.path, item.plannedBytes, 0, "BLOCKED", "Cleanup operation was already claimed or is no longer reviewable") },
+                message = "Cleanup operation was already claimed or is no longer reviewable",
+            )
+        }
         val result = runCatching { rootClient.executeCleanup(review) }.getOrElse { error ->
             CleanupExecutionResult(
-                ok = false, operationId = review.operationId, status = "FAILED", deletedBytes = 0, failedCount = review.accepted.size,
-                items = review.accepted.map { item -> CleanupItemResult(item.path, item.plannedBytes, 0, "FAILED", error.message) },
-                message = error.message,
+                ok = false,
+                operationId = review.operationId,
+                status = CleanupOperationStatus.UNKNOWN_OUTCOME.name,
+                deletedBytes = 0,
+                failedCount = review.accepted.size,
+                items = review.accepted.map { item -> CleanupItemResult(item.path, item.plannedBytes, 0, "UNKNOWN", error.message) },
+                message = "Root execution result is unknown: ${error.message ?: error.javaClass.simpleName}",
             )
         }
         val summary = deletionSummary(result)
         dao.upsertCleanupOperation(
             CleanupOperationEntity(
-                id = review.operationId, scanId = review.scanId, rootPath = review.rootPath, status = result.status,
-                selectedCount = review.accepted.size, plannedBytes = plannedBytes, deletedBytes = result.deletedBytes,
-                createdAt = startedAt, completedAt = System.currentTimeMillis(), message = summary,
+                id = review.operationId,
+                scanId = review.scanId,
+                rootPath = review.rootPath,
+                status = result.status,
+                selectedCount = review.accepted.size,
+                plannedBytes = plannedBytes,
+                deletedBytes = result.deletedBytes,
+                createdAt = startedAt,
+                completedAt = System.currentTimeMillis(),
+                message = summary,
+                reviewId = review.operationId,
+                scanGeneration = review.scanGeneration,
+                expiresAt = review.reviewedAt + CLEANUP_REVIEW_TTL_MS,
+                outcomeCertainty = if (result.status == CleanupOperationStatus.UNKNOWN_OUTCOME.name) CleanupOutcomeCertainty.UNKNOWN.name else CleanupOutcomeCertainty.CERTAIN.name,
             ),
         )
         val saveFailure = runCatching { persistVerificationReport(review, result, startedAt, freeBytesBefore) }.exceptionOrNull()
@@ -701,7 +815,8 @@ class ScanRepository(
         val now = System.currentTimeMillis()
         val operations = dao.executingCleanupOperations()
         operations.forEach { dao.upsertCleanupOperation(OperationRecovery.recover(it, now)) }
-        return operations.size
+        val scans = dao.interruptActiveScanSessions(now)
+        return operations.size + scans
     }
 
     fun schedule(request: ScanRequest, hours: Long) = ScheduledScanWorker.set(context, request, hours)
@@ -732,5 +847,7 @@ class ScanRepository(
     private companion object {
         const val MAX_DUPLICATE_BUCKET_PATHS = 2_000
         const val PACKAGE_INVENTORY_CACHE_MS = 30_000L
+        const val SQLITE_SAFE_BIND_BATCH = 500
+        const val CLEANUP_REVIEW_TTL_MS = 15 * 60 * 1000L
     }
 }

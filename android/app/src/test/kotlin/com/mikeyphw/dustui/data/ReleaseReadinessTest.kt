@@ -31,6 +31,7 @@ class ReleaseReadinessTest {
         )
         val report = FinalRcReadiness.evaluate("1.4.0-rc1", evidence(packagingReport = packaging))
         assertEquals(RcDecision.SHIP_WITH_WARNINGS, report.decision)
+        assertFalse(report.shipReady)
         assertEquals(1, report.warnings)
     }
 
@@ -46,6 +47,7 @@ class ReleaseReadinessTest {
     @Test fun `status line summarizes decision`() {
         val report = FinalRcReadiness.evaluate("1.4.0-rc1", evidence(deviceCertificationPassed = false))
         assertEquals(RcDecision.SHIP_WITH_WARNINGS, report.decision)
+        assertFalse(report.shipReady)
         assertTrue(report.statusLine().contains("1.4.0-rc1"))
         assertTrue(report.statusLine().contains("ship-with-warnings"))
     }

@@ -53,7 +53,7 @@ data class FinalRcReport(
         get() = issues.count { it.severity == RcIssueSeverity.WARNING }
 
     val shipReady: Boolean
-        get() = decision != RcDecision.DO_NOT_SHIP
+        get() = decision == RcDecision.SHIP
 
     fun statusLine(): String {
         val normalized = decision.name.lowercase(Locale.US).replace('_', '-')

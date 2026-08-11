@@ -34,6 +34,7 @@ data class DuplicateAnalysisSnapshot(
     val updatedAt: Long,
     val currentSizeBytes: Long? = null,
     val message: String? = null,
+    val scanGeneration: Long = 1L,
 ) {
     val reclaimableBytes: Long get() = groups.sumOf { it.reclaimableBytes }
     val safeReclaimableBytes: Long get() = groups.sumOf { it.safeReclaimableBytes }
@@ -41,7 +42,7 @@ data class DuplicateAnalysisSnapshot(
     val resumable: Boolean get() = status == "PAUSED" || status == "FAILED"
 
     companion object {
-        fun empty(scanId: String, minSizeBytes: Long, now: Long = System.currentTimeMillis()) = DuplicateAnalysisSnapshot(
+        fun empty(scanId: String, minSizeBytes: Long, now: Long = System.currentTimeMillis(), scanGeneration: Long = 1L) = DuplicateAnalysisSnapshot(
             scanId = scanId,
             minSizeBytes = minSizeBytes,
             status = "IDLE",
@@ -55,6 +56,7 @@ data class DuplicateAnalysisSnapshot(
             completedSizes = emptySet(),
             startedAt = now,
             updatedAt = now,
+            scanGeneration = scanGeneration,
         )
     }
 }

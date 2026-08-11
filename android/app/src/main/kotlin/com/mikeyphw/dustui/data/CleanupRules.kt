@@ -69,6 +69,7 @@ data class CleanupRulePreview(
     val scanId: String,
     val generatedAt: Long,
     val matches: List<CleanupRuleMatch>,
+    val scanGeneration: Long = 1L,
 ) {
     val enabledRuleCount: Int = matches.size
     val exactPaths: List<String> = CleanupRuleEngine.collapseOverlaps(matches.flatMap { it.actionableEntries }.map { it.path })
@@ -196,6 +197,7 @@ object CleanupRuleEngine {
         residueConfidenceByPath: Map<String, AppResidueConfidence> = emptyMap(),
         nowEpochSeconds: Long = System.currentTimeMillis() / 1000L,
         includeDisabled: Boolean = false,
+        scanGeneration: Long = 1L,
     ): CleanupRulePreview {
         val eligible = rules.filter { (includeDisabled || it.enabled) && validate(it).valid }
         val matches = eligible.map { rule ->
@@ -211,7 +213,7 @@ object CleanupRuleEngine {
             }
             CleanupRuleMatch(rule.id, rule.name, collapsed, collapsed.sumOf { it.sizeBytes }, blocked)
         }
-        return CleanupRulePreview(scanId, System.currentTimeMillis(), matches)
+        return CleanupRulePreview(scanId, System.currentTimeMillis(), matches, scanGeneration)
     }
 
     fun matches(
@@ -260,8 +262,8 @@ object CleanupRuleEngine {
         val path = CleanupSafetyPolicy.normalize(entry.path) ?: return false
         if (conditions.entryType == CleanupRuleEntryType.FILES && entry.isDirectory) return false
         if (conditions.entryType == CleanupRuleEntryType.DIRECTORIES && !entry.isDirectory) return false
-        if (compiled.includes.isNotEmpty() && compiled.includes.none { isWithin(path, it) }) return false
-        if (compiled.excludes.any { isWithin(path, it) }) return false
+        if (compiled.includes.isNotEmpty() && compiled.includes.none { PathSafety.isSameOrDescendant(path, it) }) return false
+        if (compiled.excludes.any { PathSafety.intersects(path, it) }) return false
         if (compiled.extensions.isNotEmpty() && entry.name.substringAfterLast('.', "").lowercase(Locale.ROOT) !in compiled.extensions) return false
         if (entry.sizeBytes < conditions.minimumBytes) return false
         if (conditions.maximumBytes != null && entry.sizeBytes > conditions.maximumBytes) return false
@@ -276,7 +278,7 @@ object CleanupRuleEngine {
         if (conditions.duplicateOnly && path !in duplicatePaths) return false
         if (conditions.residueConfidence != CleanupRuleResidueConfidence.ANY) {
             val actual = residueConfidenceByPath.entries
-                .filter { isWithin(path, it.key) || isWithin(it.key, path) }
+                .filter { PathSafety.isSameOrDescendant(path, it.key) }
                 .maxOfOrNull { it.value.rank } ?: 0
             if (actual < conditions.residueConfidence.rank) return false
         }
@@ -286,24 +288,19 @@ object CleanupRuleEngine {
     fun relativeDepth(path: String, scanRoot: String, includeRoots: List<String>): Int {
         val normalizedPath = CleanupSafetyPolicy.normalize(path) ?: return Int.MAX_VALUE
         val normalizedScanRoot = CleanupSafetyPolicy.normalize(scanRoot) ?: "/"
-        val base = includeRoots.filter { isWithin(normalizedPath, it) }.maxByOrNull(String::length) ?: normalizedScanRoot
+        val base = includeRoots.filter { PathSafety.isSameOrDescendant(normalizedPath, it) }.maxByOrNull(String::length) ?: normalizedScanRoot
         val relative = normalizedPath.removePrefix(base.trimEnd('/')).trim('/')
         return if (relative.isBlank()) 0 else relative.split('/').size
     }
 
-    fun collapseOverlaps(paths: Collection<String>): List<String> {
-        val sorted = paths.mapNotNull(CleanupSafetyPolicy::normalize).distinct().sortedWith(compareBy<String> { it.length }.thenBy { it })
-        val roots = mutableListOf<String>()
-        sorted.forEach { path -> if (roots.none { isWithin(path, it) }) roots += path }
-        return roots
-    }
+    fun collapseOverlaps(paths: Collection<String>): List<String> = PathSafety.collapseRoots(paths)
 
     private fun collapseEntryOverlaps(entries: List<ScanEntryEntity>): List<ScanEntryEntity> {
         val byPath = entries.associateBy { it.path }
         return collapseOverlaps(byPath.keys).mapNotNull(byPath::get)
     }
 
-    private fun isWithin(path: String, root: String): Boolean = path == root || path.startsWith(root.trimEnd('/') + "/")
+    private fun isWithin(path: String, root: String): Boolean = PathSafety.isSameOrDescendant(path, root)
 }
 
 object CleanupRulePresets {

@@ -22,6 +22,7 @@ data class SnapshotDelta(
 object SnapshotAnalyzer {
     fun appSummaries(entries: List<ScanEntryEntity>, installedPackages: Set<String>): List<AppStorageSummary> {
         return entries.asSequence()
+            .filterNot { it.isDirectory }
             .mapNotNull { entry -> packageFromPath(entry.path)?.let { it to entry } }
             .groupBy({ it.first }, { it.second })
             .map { (pkg, owned) ->
@@ -38,8 +39,8 @@ object SnapshotAnalyzer {
     }
 
     fun diff(current: List<ScanEntryEntity>, previous: List<ScanEntryEntity>, currentId: String, previousId: String?): SnapshotDelta {
-        val old = previous.associateBy { it.path }
-        val now = current.associateBy { it.path }
+        val old = previous.asSequence().filterNot { it.isDirectory }.associateBy { it.path }
+        val now = current.asSequence().filterNot { it.isDirectory }.associateBy { it.path }
         var added = 0L; var removed = 0L; var changed = 0
         for ((path, entry) in now) {
             val before = old[path]

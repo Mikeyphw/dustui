@@ -79,6 +79,15 @@ class StorageGrowthTest {
         assertEquals(2, shown.pageCount)
     }
 
+
+    @Test fun `incompatible or truncated scans do not compare as growth`() {
+        val old = session("old", 100, 1)
+        val truncated = session("new", 200, 2).copy(truncated = true, integrityStatus = ScanIntegrityStatus.TRUNCATED.name)
+        val differentRoot = session("other", 200, 3).copy(rootPath = "/data")
+        assertTrue(StorageGrowthEngine.compare(truncated, listOf(file("/storage/a.bin", 200)), old, listOf(file("/storage/a.bin", 100))).items.isEmpty())
+        assertTrue(StorageGrowthEngine.compare(differentRoot, listOf(file("/data/a.bin", 200)), old, listOf(file("/storage/a.bin", 100))).items.isEmpty())
+    }
+
     @Test fun `historical current endpoints are not marked latest`() {
         val newest = session("newest", 1_000, 3)
         val historicalCurrent = session("middle", 800, 2)
@@ -97,7 +106,17 @@ class StorageGrowthTest {
         assertTrue(latest.currentIsLatest)
     }
 
-    private fun session(id: String, total: Long, completed: Long) = ScanSessionEntity(id, null, "/storage", "{}", "COMPLETED", startedAt = completed, completedAt = completed, totalBytes = total)
+    private fun session(id: String, total: Long, completed: Long) = ScanSessionEntity(
+        id,
+        null,
+        "/storage",
+        "{}",
+        "COMPLETED",
+        startedAt = completed,
+        completedAt = completed,
+        totalBytes = total,
+        integrityStatus = ScanIntegrityStatus.COMPLETE.name,
+    )
     private fun file(path: String, bytes: Long) = ScanEntryEntity("scan", path, path.substringBeforeLast('/'), path.substringAfterLast('/'), bytes, bytes, false, path.count { it == '/' }, 1, 1)
     private fun directory(path: String) = ScanEntryEntity("scan", path, "/", path.substringAfterLast('/'), 10_000, 10_000, true, 1, 1, 2)
     private companion object { const val MIB = 1024L * 1024L }

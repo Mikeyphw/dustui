@@ -45,6 +45,7 @@ class DuplicateAnalysisStore(context: Context) {
         .put("schemaVersion", 1)
         .put("scanId", snapshot.scanId)
         .put("minSizeBytes", snapshot.minSizeBytes)
+        .put("scanGeneration", snapshot.scanGeneration)
         .put("status", snapshot.status)
         .put("totalBuckets", snapshot.totalBuckets)
         .put("completedBuckets", snapshot.completedBuckets)
@@ -91,6 +92,7 @@ class DuplicateAnalysisStore(context: Context) {
         return DuplicateAnalysisSnapshot(
             scanId = json.getString("scanId"),
             minSizeBytes = json.getLong("minSizeBytes"),
+            scanGeneration = json.optLong("scanGeneration", 1L),
             status = json.optString("status", "IDLE"),
             totalBuckets = json.optInt("totalBuckets"),
             completedBuckets = json.optInt("completedBuckets"),

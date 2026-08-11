@@ -79,8 +79,9 @@ object AdvancedStorageAnalyzer {
         .take(50)
 
     fun largeOldFiles(files: List<ScanEntryEntity>, now: Long): List<LargeOldFile> = files.asSequence()
-        .filter { it.sizeBytes >= 100L * MIB && it.modifiedAt > 0 && now - it.modifiedAt >= 180L * DAY_MS }
-        .map { LargeOldFile(it.path, it.sizeBytes, it.modifiedAt, ((now - it.modifiedAt) / DAY_MS).coerceAtLeast(0)) }
+        .map { it to modifiedAtMillis(it.modifiedAt) }
+        .filter { (entry, modifiedAt) -> entry.sizeBytes >= 100L * MIB && modifiedAt > 0 && now - modifiedAt >= 180L * DAY_MS }
+        .map { (entry, modifiedAt) -> LargeOldFile(entry.path, entry.sizeBytes, modifiedAt, ((now - modifiedAt) / DAY_MS).coerceAtLeast(0)) }
         .sortedByDescending { it.sizeBytes }
         .take(100)
         .toList()
@@ -108,9 +109,15 @@ object AdvancedStorageAnalyzer {
             now - modifiedAt < 365L * DAY_MS -> "181–365 days"
             else -> "Older than 1 year"
         }
-        return files.groupBy { bucket(it.modifiedAt) }
+        return files.groupBy { bucket(modifiedAtMillis(it.modifiedAt)) }
             .map { (label, owned) -> StorageBucket(label, owned.sumOf { it.sizeBytes }, owned.size) }
             .sortedByDescending { it.bytes }
+    }
+
+    private fun modifiedAtMillis(value: Long): Long = when {
+        value <= 0L -> value
+        value < 10_000_000_000L -> value * 1000L
+        else -> value
     }
 
     fun parseMounts(text: String): List<MountTopology> = text.lineSequence().mapNotNull { line ->

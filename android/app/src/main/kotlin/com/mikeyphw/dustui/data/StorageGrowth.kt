@@ -5,6 +5,7 @@ import kotlin.math.abs
 
 private const val LARGE_FILE_THRESHOLD_BYTES = 100L * 1024L * 1024L
 private const val SUDDEN_GROWTH_THRESHOLD_BYTES = 100L * 1024L * 1024L
+private val COMPLETE_GROWTH_STATUSES = setOf(ScanIntegrityStatus.COMPLETE.name, ScanIntegrityStatus.COMPLETE_WITH_WARNINGS.name)
 
 enum class StorageGrowthKind(val label: String) { ADDED("New"), GROWN("Grew"), SHRUNK("Shrank"), REMOVED("Removed") }
 enum class StorageGrowthGroup(val label: String) {
@@ -104,26 +105,70 @@ object StorageGrowthEngine {
         previousEntries: List<ScanEntryEntity>,
         timelineSessions: List<ScanSessionEntity> = listOf(currentSession, previousSession),
     ): StorageGrowthAnalysis {
-        val current = currentEntries.filterNot { it.isDirectory }.associateBy { it.path }
-        val previous = previousEntries.filterNot { it.isDirectory }.associateBy { it.path }
-        val paths = (current.keys + previous.keys).toSortedSet()
-        val items = paths.mapNotNull { path ->
-            val now = current[path]
-            val before = previous[path]
-            val oldBytes = before?.sizeBytes ?: 0
-            val newBytes = now?.sizeBytes ?: 0
-            if (oldBytes == newBytes) return@mapNotNull null
-            val kind = when {
-                before == null -> StorageGrowthKind.ADDED
-                now == null -> StorageGrowthKind.REMOVED
-                newBytes > oldBytes -> StorageGrowthKind.GROWN
-                else -> StorageGrowthKind.SHRUNK
+        if (!compatibleSnapshots(currentSession, previousSession)) {
+            return StorageGrowthAnalysis(currentSession, previousSession, emptyList(), timeline(timelineSessions), emptyList())
+        }
+        val current = currentEntries.asSequence()
+            .filterNot { it.isDirectory }
+            .sortedWith(scanPathComparator())
+            .toList()
+        val previous = previousEntries.asSequence()
+            .filterNot { it.isDirectory }
+            .sortedWith(scanPathComparator())
+            .toList()
+        val items = mutableListOf<StorageGrowthItem>()
+        var currentIndex = 0
+        var previousIndex = 0
+        while (currentIndex < current.size || previousIndex < previous.size) {
+            val now = current.getOrNull(currentIndex)
+            val before = previous.getOrNull(previousIndex)
+            val comparison = when {
+                now == null -> 1
+                before == null -> -1
+                else -> comparePaths(now.path, before.path)
             }
-            StorageGrowthItem(path, now?.name ?: before?.name.orEmpty(), kind, oldBytes, newBytes, newBytes - oldBytes, before, now)
-        }.sortedWith(compareByDescending<StorageGrowthItem> { abs(it.deltaBytes) }.thenBy { it.path.lowercase(Locale.ROOT) })
+            val item = when {
+                comparison == 0 && now != null && before != null -> {
+                    currentIndex++
+                    previousIndex++
+                    if (now.sizeBytes == before.sizeBytes) null else {
+                        val kind = if (now.sizeBytes > before.sizeBytes) StorageGrowthKind.GROWN else StorageGrowthKind.SHRUNK
+                        StorageGrowthItem(now.path, now.name, kind, before.sizeBytes, now.sizeBytes, now.sizeBytes - before.sizeBytes, before, now)
+                    }
+                }
+                comparison < 0 && now != null -> {
+                    currentIndex++
+                    StorageGrowthItem(now.path, now.name, StorageGrowthKind.ADDED, 0, now.sizeBytes, now.sizeBytes, null, now)
+                }
+                before != null -> {
+                    previousIndex++
+                    StorageGrowthItem(before.path, before.name, StorageGrowthKind.REMOVED, before.sizeBytes, 0, -before.sizeBytes, before, null)
+                }
+                else -> null
+            }
+            if (item != null) items += item
+        }
+        val orderedItems = items.sortedWith(compareByDescending<StorageGrowthItem> { abs(it.deltaBytes) }.thenBy { it.path.lowercase(Locale.ROOT) })
         val timeline = timeline(timelineSessions)
-        val insights = buildInsights(items)
-        return StorageGrowthAnalysis(currentSession, previousSession, items, timeline, insights)
+        val insights = buildInsights(orderedItems)
+        return StorageGrowthAnalysis(currentSession, previousSession, orderedItems, timeline, insights)
+    }
+
+
+    private fun scanPathComparator(): Comparator<ScanEntryEntity> = compareBy<ScanEntryEntity> { it.path.lowercase(Locale.ROOT) }.thenBy { it.path }
+
+    private fun comparePaths(left: String, right: String): Int {
+        val folded = left.lowercase(Locale.ROOT).compareTo(right.lowercase(Locale.ROOT))
+        return if (folded != 0) folded else left.compareTo(right)
+    }
+
+    private fun compatibleSnapshots(currentSession: ScanSessionEntity, previousSession: ScanSessionEntity): Boolean {
+        if (currentSession.id == previousSession.id) return false
+        if (currentSession.rootPath != previousSession.rootPath) return false
+        if (currentSession.optionsJson != previousSession.optionsJson) return false
+        if (currentSession.truncated || previousSession.truncated) return false
+        return currentSession.integrityStatus in COMPLETE_GROWTH_STATUSES &&
+            previousSession.integrityStatus in COMPLETE_GROWTH_STATUSES
     }
 
     fun timeline(sessions: List<ScanSessionEntity>): List<StorageGrowthTimelinePoint> {

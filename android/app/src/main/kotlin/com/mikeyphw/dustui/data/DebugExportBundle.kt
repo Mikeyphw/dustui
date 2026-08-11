@@ -63,6 +63,7 @@ object DebugExportBundleWriter {
     private const val DEBUG_EXPORT_SCHEMA = 1
     private const val FULL_SAMPLE_LIMIT = 32
     private const val PATH_AWARE_SAMPLE_LIMIT = 16
+    private val ABSOLUTE_PATH_PATTERN = Regex("""(?<![A-Za-z0-9_.-])/(?:[^\s,;:"']+)""")
 
     fun write(context: Context, request: DebugExportRequest): DebugExportResult {
         val dir = File(context.cacheDir, "exports").apply { mkdirs() }
@@ -368,14 +369,21 @@ object DebugExportBundleWriter {
         DebugExportMode.FullDiagnostic -> "bounded path samples and detailed metadata; file contents omitted"
     }
 
-    private fun safeValue(value: String): String = when {
-        value.startsWith("/data/adb/modules") -> "/data/adb/modules/…"
-        value.startsWith("/data") -> "/data/…"
-        value.startsWith("/") -> "<path-redacted>"
-        value.contains("token", ignoreCase = true) -> "<redacted>"
-        value.contains("secret", ignoreCase = true) -> "<redacted>"
-        value.contains("authorization", ignoreCase = true) -> "<redacted>"
-        else -> value
+    private fun safeValue(value: String): String {
+        val sensitive = when {
+            value.contains("token", ignoreCase = true) -> "<redacted>"
+            value.contains("secret", ignoreCase = true) -> "<redacted>"
+            value.contains("authorization", ignoreCase = true) -> "<redacted>"
+            else -> value
+        }
+        return ABSOLUTE_PATH_PATTERN.replace(sensitive) { match ->
+            val raw = match.value
+            when {
+                raw.startsWith("/data/adb/modules") -> "/data/adb/modules/…"
+                raw.startsWith("/data") -> "/data/…"
+                else -> "<path-redacted>"
+            }
+        }
     }
 
     private fun pathAwareValue(value: String): String = when {
