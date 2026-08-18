@@ -15,44 +15,58 @@ isolation = true
 [targets.dustui_android]
 type = "android"
 root = "android"
-execution_environment = "auto"
+execution_environment = "native-termux"
 
 [targets.dustui_android.android]
 variant = "debug"
-aapt2_provider = "auto"
-prefer_native_termux = false
+aapt2_provider = "termux"
+instrumentation = "when-device-present"
+prefer_native_termux = true
 
 [targets.dustui_android.gradle]
-max_workers = 1
-parallel = false
-no_daemon = true
+version = "9.7.0"
+provider = "auto"
+max_workers = 2
+parallel = true
+no_daemon = false
+daemon_idle_timeout_ms = 900000
 build_cache = true
-structured_events = true
+structured_events = false
+fail_fast = true
+offline = false
+args = [
+  "-Dorg.gradle.parallel=true",
+  "-Dorg.gradle.vfs.watch=false",
+  "-Pkotlin.incremental=true",
+  "-Pkotlin.compiler.execution.strategy=in-process",
+]
 
 [targets.dustui_android.tasks]
-build = ["assembleDebug"]
-test = ["testDebugUnitTest", "lintDebug"]
-lint = ["lintDebug"]
-clean = ["clean"]
+build = [":app:assembleDebug"]
+test = [":app:testDebugUnitTest"]
+lint = [":app:lintDebug"]
+clean = [":app:clean"]
+instrumentation = [":app:connectedDebugAndroidTest"]
 
 [targets.dustui_android.artifacts]
 required = true
 external_verification = "auto"
 
 [targets.dustui_android.validation]
-android_safe = true
+android_safe = false
 split_gradle = true
-max_workers = 1
+max_workers = 2
 cpu_limit = 2
-parallel = false
-no_daemon = true
-low_priority = true
-memory_guard_mb = 0
-gradle_heap_mb = 768
-gradle_metaspace_mb = 512
+parallel = true
+no_daemon = false
+stop_daemon_after_phase = false
+low_priority = false
+memory_guard_mb = 512
+gradle_heap_mb = 1152
+gradle_metaspace_mb = 640
 gradle_packaging_metaspace_mb = 640
-gradle_lint_metaspace_mb = 512
-
+gradle_lint_metaspace_mb = 640
+affected_module_lint = true
 
 [targets.ubuntu_provisioner]
 type = "python"
@@ -73,5 +87,96 @@ external_verification = "auto"
 
 [targets.ubuntu_provisioner.validation]
 python_safe = true
-low_priority = true
-memory_guard_mb = 0
+low_priority = false
+memory_guard_mb = 256
+
+[targets.dustui_android.validation.phase_profiles.preflight]
+max_workers = 1
+cpu_limit = 1
+gradle_heap_mb = 768
+gradle_metaspace_mb = 640
+memory_guard_mb = 384
+no_daemon = false
+low_priority = false
+
+
+[targets.dustui_android.validation.phase_profiles.compile]
+max_workers = 2
+cpu_limit = 2
+gradle_heap_mb = 1152
+gradle_metaspace_mb = 640
+memory_guard_mb = 512
+no_daemon = false
+low_priority = false
+
+
+[targets.dustui_android.validation.phase_profiles.resources]
+max_workers = 2
+cpu_limit = 2
+gradle_heap_mb = 1152
+gradle_metaspace_mb = 640
+memory_guard_mb = 512
+no_daemon = false
+low_priority = false
+
+
+[targets.dustui_android.validation.phase_profiles.unit-test]
+max_workers = 2
+cpu_limit = 2
+gradle_heap_mb = 1152
+gradle_metaspace_mb = 640
+memory_guard_mb = 512
+no_daemon = false
+low_priority = false
+
+
+[targets.dustui_android.validation.phase_profiles.package]
+max_workers = 2
+cpu_limit = 2
+gradle_heap_mb = 1152
+gradle_metaspace_mb = 640
+memory_guard_mb = 640
+no_daemon = false
+low_priority = false
+
+
+[targets.dustui_android.validation.phase_profiles.lint]
+max_workers = 1
+cpu_limit = 2
+gradle_heap_mb = 1152
+gradle_metaspace_mb = 640
+memory_guard_mb = 640
+no_daemon = false
+low_priority = false
+
+
+[targets.dustui_android.validation.phase_profiles.instrumentation]
+max_workers = 1
+cpu_limit = 2
+gradle_heap_mb = 1024
+gradle_metaspace_mb = 640
+memory_guard_mb = 512
+no_daemon = false
+low_priority = false
+
+
+[targets.dustui_android.validation.phases]
+preflight = [
+  "help",
+]
+compile = [
+  ":app:compileDebugSources",
+]
+resources = [
+  ":app:processDebugResources",
+]
+unit-test = [
+  ":app:testDebugUnitTest",
+]
+package = [
+  ":app:assembleDebug",
+]
+lint = [
+  ":app:lintDebug",
+]
+
