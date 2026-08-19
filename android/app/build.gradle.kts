@@ -7,6 +7,7 @@ plugins {
 android {
     namespace = "com.mikeyphw.dustui"
     compileSdk = 36
+    buildToolsVersion = "36.0.0"
     ndkVersion = "28.2.13676358"
 
     defaultConfig {
@@ -85,6 +86,10 @@ kotlin {
 ksp {
     arg("room.generateKotlin", "true")
     arg("room.schemaLocation", "$projectDir/schemas")
+}
+
+tasks.matching { it.name == "preBuild" }.configureEach {
+    dependsOn(rootProject.tasks.named("verifyStableToolchainBaseline"))
 }
 
 dependencies {

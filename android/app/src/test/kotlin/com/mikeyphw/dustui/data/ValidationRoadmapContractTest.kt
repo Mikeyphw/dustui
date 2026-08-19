@@ -5,7 +5,7 @@ import org.junit.Test
 import java.io.File
 
 class ValidationRoadmapContractTest {
-    private val root = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
+    private val root = generateSequence(File(requireNotNull(System.getProperty("user.dir")) { "user.dir is unavailable" })) { it.parentFile }
         .first { File(it, "app/src/main").exists() }
 
     @Test

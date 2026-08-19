@@ -40,5 +40,6 @@ class CleaningPerformanceContractTest {
     private fun session(id: String, completedAt: Long) = ScanSessionEntity(
         id, null, "/storage/emulated/0", "{}", "COMPLETED", startedAt = completedAt, completedAt = completedAt,
         totalBytes = 100_000_000,
+        integrityStatus = ScanIntegrityStatus.COMPLETE.name,
     )
 }

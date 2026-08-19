@@ -9,7 +9,7 @@ class ReleaseScriptContractTest {
     private val root = locateAndroidRoot()
 
     private fun locateAndroidRoot(): File {
-        val cwd = File(System.getProperty("user.dir"))
+        val cwd = File(requireNotNull(System.getProperty("user.dir")) { "user.dir is unavailable" })
         return sequenceOf(cwd, cwd.parentFile, cwd.parentFile?.parentFile)
             .filterNotNull()
             .first { File(it, "scripts/release-gate.sh").isFile }

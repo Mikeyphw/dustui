@@ -73,7 +73,7 @@ class RootDiagnosticsSourceContractTest {
     }
 
     private fun source(relative: String): String {
-        val root = generateSequence(File(System.getProperty("user.dir")).absoluteFile) { it.parentFile }
+        val root = generateSequence(File(requireNotNull(System.getProperty("user.dir")) { "user.dir is unavailable" }).absoluteFile) { it.parentFile }
             .first { File(it, "app/src/main").isDirectory }
         return File(root, "app/$relative").readText()
     }
