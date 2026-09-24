@@ -1,0 +1,15 @@
+{
+  "overlay": "OV13-hotfix",
+  "name": "ov01_contract_repo_root_hotfix",
+  "gate": "Gate D",
+  "android_buildability": "mandatory",
+  "problem": "Ov01MigrationContractTest resolved repository-relative files from the Android module working directory and failed with false FileNotFound errors.",
+  "resolution": "Use marker-based upward repository-root discovery inside the unit test.",
+  "production_behavior_changed": false,
+  "gate_weakened": false,
+  "unsupported_devtool_jobs_workflows_added": false,
+  "expected_evidence": [
+    "devtool -r $HOME/Code/dustui --target dustui_android validate --task :app:testDebugUnitTest",
+    "devtool -r $HOME/Code/dustui --target dustui_android validate --task verifyDustMigrationContract --task :app:testDebugUnitTest --task :app:lintDebug --task :app:assembleDebug"
+  ]
+}
