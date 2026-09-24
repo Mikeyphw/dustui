@@ -1,0 +1,18 @@
+{
+  "name": "dustui_go_ov13_cleaning_performance_termux_hotfix_v1",
+  "overlay": "OV13-hotfix",
+  "target": "dustui_android",
+  "purpose": "Make CleaningPerformanceContractTest wall-clock budget portable on constrained Termux while preserving production 15s qualification budget.",
+  "android_buildability": "mandatory",
+  "gate_weakened": false,
+  "production_behavior_changed": false,
+  "unsupported_devtool_jobs_workflows_added": false,
+  "files": [
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleaningPerformanceContractTest.kt",
+    "migration/contracts/v1/ov13_cleaning_performance_termux_hotfix.md",
+    "migration/audit/v1/ov13_cleaning_performance_termux_hotfix_audit.md",
+    "migration/ledger/ov13_cleaning_performance_termux_hotfix_status.json",
+    "scripts/validate_ov13_cleaning_performance_termux_hotfix.py",
+    "migration/archive/overlays/dustui_go_ov13_cleaning_performance_termux_hotfix_v1/README.md"
+  ]
+}

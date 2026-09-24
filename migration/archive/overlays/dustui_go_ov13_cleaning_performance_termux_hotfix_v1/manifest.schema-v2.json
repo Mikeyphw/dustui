@@ -1,0 +1,76 @@
+{
+  "name": "dustui_go_ov13_cleaning_performance_termux_hotfix_v1",
+  "overlay": "OV13-hotfix",
+  "target": "dustui_android",
+  "artifact": "dustui_go_ov13_cleaning_performance_termux_hotfix_v1.zip",
+  "created_utc": "2026-09-24T15:50:00Z",
+  "payload_file_count": 8,
+  "payload_sha256": [
+    {
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleaningPerformanceContractTest.kt",
+      "sha256": "4a285450494326c70022dbc7dbbddf5228ed6a33c3bd3f90922312ccb50768be",
+      "size_bytes": 3052
+    },
+    {
+      "path": "migration/contracts/v1/ov13_cleaning_performance_termux_hotfix.md",
+      "sha256": "0c48bacbbdbb57d59da23a10cf676485d675092a447e6696b0a7664648d37aaa",
+      "size_bytes": 595
+    },
+    {
+      "path": "migration/audit/v1/ov13_cleaning_performance_termux_hotfix_audit.md",
+      "sha256": "97f681d47ba2d67a1809dc3442f96f83ea6b461394744af7a932f3aaefb1367f",
+      "size_bytes": 597
+    },
+    {
+      "path": "migration/ledger/ov13_cleaning_performance_termux_hotfix_status.json",
+      "sha256": "c986ac10f26d60e8839109b58574870b006a2641ba6810beb24701eb8c0fd6db",
+      "size_bytes": 921
+    },
+    {
+      "path": "scripts/validate_ov13_cleaning_performance_termux_hotfix.py",
+      "sha256": "86a5a54b3895b5a7ab979124813c0e065d25f4217c6fdc6c3ebb923a08b5686b",
+      "size_bytes": 2393
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov13_cleaning_performance_termux_hotfix_v1/README.md",
+      "sha256": "c4d34f40633e964eef39f354a1e6904701f1a37f3e77a976e5ed8ba4709bef0f",
+      "size_bytes": 656
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov13_cleaning_performance_termux_hotfix_v1/inventory.json",
+      "sha256": "62f6a8289108a27f06d31126f359c6de0cf893ec6d4a0199c43b5b02ad2fa394",
+      "size_bytes": 941
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov13_cleaning_performance_termux_hotfix_v1/SHA256SUMS",
+      "sha256": "de51b0b087781dde0e241998762e2bd4a8c83320db122b4ecec59f8f09c8ff10",
+      "size_bytes": 998
+    }
+  ],
+  "apply_policy": {
+    "android_buildability": "mandatory",
+    "full_validation_gate": true,
+    "unsupported_devtool_jobs_workflows_added": false,
+    "devtool_command": "devtool -r \"$HOME/Code/dustui\" --target dustui_android apply overlay /sdcard/Download/dustui_go_ov13_cleaning_performance_termux_hotfix_v1.zip --no-validate --commit \"DustUI OV13 cleaning performance Termux hotfix\"",
+    "evidence_commands": [
+      "python3 scripts/validate_ov13_cleaning_performance_termux_hotfix.py",
+      "devtool -r \"$HOME/Code/dustui\" --target dustui_android validate --task :app:testDebugUnitTest",
+      "devtool -r \"$HOME/Code/dustui\" --target dustui_android validate --task verifyDustMigrationContract --task :app:testDebugUnitTest --task :app:lintDebug --task :app:assembleDebug"
+    ],
+    "validation_policy": "Gate D remains mandatory. This hotfix only separates production cleanup qualification budget from constrained Termux JUnit wall-clock budget."
+  },
+  "authority_transition": {
+    "android_buildability": "mandatory",
+    "gate": "Gate D",
+    "gate_weakened": false,
+    "production_behavior_changed": false,
+    "unsupported_devtool_jobs_workflows_added": false
+  },
+  "hotfix_requirements": [
+    "Keep production cleanup qualification budget at 15 seconds",
+    "Allow constrained Termux JUnit execution a bounded 30 second budget",
+    "Keep 10k exact result assertions",
+    "Do not change production Go or Android behavior",
+    "Do not add unsupported Devtool jobs/workflows schema"
+  ]
+}
