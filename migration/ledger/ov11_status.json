@@ -1,0 +1,19 @@
+{
+  "phase": "OV11",
+  "name": "Automation and Activity ownership",
+  "android_buildability": "intentionally-suspended",
+  "go_authority": true,
+  "protocol": "dustui.automation.activity.v1",
+  "gate": "none",
+  "automation_scope": [
+    "scan",
+    "status",
+    "cancel",
+    "inspect"
+  ],
+  "hard_blockers": [
+    "scripts/validate_ov11_contract.py --audit-loop",
+    "go test ./..."
+  ],
+  "unsupported_devtool_jobs_workflows": false
+}

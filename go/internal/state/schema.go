@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const SchemaVersion = 7
+const SchemaVersion = 8
 
 var RequiredTables = []string{
 	"scan_sessions",
@@ -43,6 +43,10 @@ var RequiredTables = []string{
 	"cleanup_recommendations",
 	"cleanup_rule_results",
 	"cleanup_plan_conflicts",
+	"automation_admissions",
+	"automation_sources",
+	"notification_actions",
+	"activity_runs",
 }
 
 var SQLitePragmas = []string{
@@ -61,6 +65,8 @@ var QueryIndexes = []string{
 	"CREATE INDEX IF NOT EXISTS idx_cleanup_duplicate_candidates_group ON cleanup_duplicate_candidates(group_id, path);",
 	"CREATE INDEX IF NOT EXISTS idx_cleanup_recommendations_scan ON cleanup_recommendations(scan_id, scan_generation, recommendation_kind);",
 	"CREATE INDEX IF NOT EXISTS idx_cleanup_rule_results_plan ON cleanup_rule_results(plan_id, rule_id, path);",
+	"CREATE INDEX IF NOT EXISTS idx_automation_sources_operation ON automation_sources(operation_id, source);",
+	"CREATE INDEX IF NOT EXISTS idx_activity_runs_state ON activity_runs(active, history, recovery_required, terminal_truth);",
 }
 
 type Table struct {
@@ -105,6 +111,10 @@ var Tables = []Table{
 	{"cleanup_recommendations", `CREATE TABLE IF NOT EXISTS cleanup_recommendations (id TEXT PRIMARY KEY, scan_id TEXT NOT NULL, scan_generation INTEGER NOT NULL, recommendation_kind TEXT NOT NULL, evidence_hash TEXT NOT NULL, proof_json TEXT NOT NULL, bounded_import INTEGER NOT NULL DEFAULT 1, can_authorize INTEGER NOT NULL DEFAULT 0, created_at_ms INTEGER NOT NULL);`},
 	{"cleanup_rule_results", `CREATE TABLE IF NOT EXISTS cleanup_rule_results (plan_id TEXT NOT NULL, rule_id TEXT NOT NULL, path TEXT NOT NULL, pattern_hash TEXT NOT NULL, provenance_json TEXT NOT NULL, bounded_regex INTEGER NOT NULL DEFAULT 1, decision TEXT NOT NULL, actionable_evidence_json TEXT NOT NULL, PRIMARY KEY(plan_id, rule_id, path));`},
 	{"cleanup_plan_conflicts", `CREATE TABLE IF NOT EXISTS cleanup_plan_conflicts (plan_id TEXT NOT NULL, conflict_id TEXT NOT NULL, paths_json TEXT NOT NULL, conflict_kind TEXT NOT NULL, severity TEXT NOT NULL, requires_review INTEGER NOT NULL DEFAULT 1, PRIMARY KEY(plan_id, conflict_id));`},
+	{"automation_admissions", `CREATE TABLE IF NOT EXISTS automation_admissions (operation_id TEXT PRIMARY KEY, request_id TEXT NOT NULL, source TEXT NOT NULL, automation_kind TEXT NOT NULL, generation INTEGER NOT NULL, accepted_not_success INTEGER NOT NULL DEFAULT 1, terminal_truth TEXT NOT NULL, evidence_correlation TEXT NOT NULL, created_at_ms INTEGER NOT NULL, FOREIGN KEY(operation_id) REFERENCES operations(id) ON DELETE CASCADE);`},
+	{"automation_sources", `CREATE TABLE IF NOT EXISTS automation_sources (operation_id TEXT NOT NULL, source TEXT NOT NULL, adapter_role TEXT NOT NULL, thin_adapter INTEGER NOT NULL DEFAULT 1, last_observed_state TEXT NOT NULL, last_observed_sequence INTEGER NOT NULL, terminal_reported INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(operation_id, source), FOREIGN KEY(operation_id) REFERENCES operations(id) ON DELETE CASCADE);`},
+	{"notification_actions", `CREATE TABLE IF NOT EXISTS notification_actions (nonce TEXT PRIMARY KEY, operation_id TEXT NOT NULL, action TEXT NOT NULL, expires_at_ms INTEGER NOT NULL, claimed_at_ms INTEGER, replay_rejected INTEGER NOT NULL DEFAULT 0, operation_binding TEXT NOT NULL, FOREIGN KEY(operation_id) REFERENCES operations(id) ON DELETE CASCADE);`},
+	{"activity_runs", `CREATE TABLE IF NOT EXISTS activity_runs (operation_id TEXT PRIMARY KEY, active INTEGER NOT NULL, history INTEGER NOT NULL, recovery_required INTEGER NOT NULL, terminal_truth TEXT NOT NULL, progress_json TEXT NOT NULL, result_json TEXT NOT NULL, verification_json TEXT NOT NULL, retry_gate TEXT NOT NULL, cancel_gate TEXT NOT NULL, reconcile_gate TEXT NOT NULL, evidence_correlation TEXT NOT NULL, updated_at_ms INTEGER NOT NULL, FOREIGN KEY(operation_id) REFERENCES operations(id) ON DELETE CASCADE);`},
 }
 
 func CreateStatements() []string {
@@ -124,7 +134,7 @@ func ValidateSchemaContract() error {
 			return fmt.Errorf("required table %s missing", table)
 		}
 	}
-	for _, required := range []string{"journal_mode = WAL", "expected_generation", "request_fingerprint", "operation_events", "retained_legacy_quarantine_json", "idx_scan_entries_parent_page", "idx_scan_entries_logical_size", "idx_scan_sessions_history", "runtime_sessions", "shell_routes", "root_runtime_identities", "privileged_admissions", "privileged_events", "no_replay_token", "reconcile_required", "cleanup_actionable_evidence", "cleanup_manifest_entries", "cleanup_capability_claims", "manifest_revision", "scan_context_hash", "root_identity", "claim_state", "exact_descendants_json", "cleanup_mutation_journal", "cleanup_verification_results", "cleanup_recovery_status", "mutation_protocol", "verified_absent", "stale_after_cleanup", "legacy_destructive_executor", "no_replay", "android_package_evidence_snapshots", "android_package_records", "android_storage_evidence", "package_residue_candidates", "package_action_rechecks", "evidence_hash", "package_key", "collection_completeness", "requires_recheck", "derived_from_regex", "cleanup_duplicate_groups", "cleanup_duplicate_candidates", "cleanup_residue_evidence", "cleanup_recommendations", "cleanup_rule_results", "cleanup_plan_conflicts", "verification_state", "canonical_keep_path", "retained_copy_proof", "actionable_evidence_json", "bounded_regex", "provenance_json", "requires_review"} {
+	for _, required := range []string{"journal_mode = WAL", "expected_generation", "request_fingerprint", "operation_events", "retained_legacy_quarantine_json", "idx_scan_entries_parent_page", "idx_scan_entries_logical_size", "idx_scan_sessions_history", "runtime_sessions", "shell_routes", "root_runtime_identities", "privileged_admissions", "privileged_events", "no_replay_token", "reconcile_required", "cleanup_actionable_evidence", "cleanup_manifest_entries", "cleanup_capability_claims", "manifest_revision", "scan_context_hash", "root_identity", "claim_state", "exact_descendants_json", "cleanup_mutation_journal", "cleanup_verification_results", "cleanup_recovery_status", "mutation_protocol", "verified_absent", "stale_after_cleanup", "legacy_destructive_executor", "no_replay", "android_package_evidence_snapshots", "android_package_records", "android_storage_evidence", "package_residue_candidates", "package_action_rechecks", "evidence_hash", "package_key", "collection_completeness", "requires_recheck", "derived_from_regex", "cleanup_duplicate_groups", "cleanup_duplicate_candidates", "cleanup_residue_evidence", "cleanup_recommendations", "cleanup_rule_results", "cleanup_plan_conflicts", "verification_state", "canonical_keep_path", "retained_copy_proof", "actionable_evidence_json", "bounded_regex", "provenance_json", "requires_review", "automation_admissions", "automation_sources", "notification_actions", "activity_runs", "accepted_not_success", "terminal_truth", "evidence_correlation", "thin_adapter", "replay_rejected", "operation_binding", "retry_gate", "cancel_gate", "reconcile_gate"} {
 		if !strings.Contains(joined, required) {
 			return fmt.Errorf("schema contract missing %s", required)
 		}

@@ -1,0 +1,151 @@
+{
+  "apply_policy": {
+    "android_buildability": "intentionally-suspended",
+    "android_buildability_suspended_until": "OV13",
+    "devtool_command": "devtool -r \"$HOME/Code/dustui\" --target dustui_android apply overlay /sdcard/Download/dustui_go_ov11_automation_activity_v1.zip --no-validate --commit \"DustUI OV11 automation Activity ownership\"",
+    "evidence_commands": [
+      "python3 scripts/validate_ov11_contract.py --audit-loop",
+      "cd go && go test ./..."
+    ],
+    "full_validation_gate": false,
+    "unsupported_devtool_jobs_workflows_added": false,
+    "validation_policy": "Non-gate OV11 under Android-suspended roadmap: Go/contracts evidence is hard blocker; Android build/test/lint remains diagnostic until OV13."
+  },
+  "artifact": "dustui_go_ov11_automation_activity_v1.zip",
+  "authority_transition": {
+    "android_buildability": "intentionally-suspended",
+    "android_buildability_suspended_until": "OV13",
+    "automation_scope": [
+      "scan",
+      "status",
+      "cancel",
+      "inspect"
+    ],
+    "go_automation_activity_authority": true,
+    "legacy_android_launch_success_authority": false,
+    "protocol": "dustui.automation.activity.v1",
+    "unsupported_devtool_jobs_workflows_added": false
+  },
+  "created_utc": "2026-09-24T13:00:00Z",
+  "name": "dustui_go_ov11_automation_activity_v1",
+  "ov11_requirements": [
+    "one Go automation admission/ownership path",
+    "WorkManager and Tasker are thin adapters",
+    "accepted/queued/running are not success",
+    "notification nonce expiry replay guards",
+    "cancellation is an operation transition",
+    "process death does not orphan job",
+    "Activity active/history/run-details/progress/result/verification/recovery/retry/cancel/reconcile/evidence correlation",
+    "automation remains non-destructive"
+  ],
+  "overlay": "OV11",
+  "payload_file_count": 22,
+  "payload_sha256": [
+    {
+      "path": ".devtool.toml",
+      "sha256": "670fab3d33277bd7d3494f1efa4750130a1c05090fe6db979b191852683701fe",
+      "size_bytes": 5977
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/go/AutomationActivityContract.kt",
+      "sha256": "4d0e00c1c31a4d79de0fe193ffc7c07235e3ee8e53f300736cbdbe3d2f2c4e0c",
+      "size_bytes": 1226
+    },
+    {
+      "path": "go/cmd/dustui-go/main.go",
+      "sha256": "a2a9c07ffebaa2af32582af7098e43212693d32308c171cbf922d4edf9f9512a",
+      "size_bytes": 4345
+    },
+    {
+      "path": "go/internal/automation/automation.go",
+      "sha256": "3d957a8133748ddd72c5b060990be818b27ecaec41f4fc95409f6b9cb84959d3",
+      "size_bytes": 17111
+    },
+    {
+      "path": "go/internal/automation/automation_test.go",
+      "sha256": "d89366c732f8417fcb0ae7d740d8572b9f06760efca9fd359ed11cbf9fcb9a3d",
+      "size_bytes": 5686
+    },
+    {
+      "path": "go/internal/readiness/readiness.go",
+      "sha256": "0b568869f51ec005235ed03931b7b0ddd7fc91d43058b8ba75ae317554019098",
+      "size_bytes": 2484
+    },
+    {
+      "path": "go/internal/readiness/readiness_test.go",
+      "sha256": "5d09174fec3d5d0b0aa6b5ed4aefefc147051aea22501326bb5ab77516d79c04",
+      "size_bytes": 947
+    },
+    {
+      "path": "go/internal/runtime/spec.go",
+      "sha256": "7a7df5bcedc2aab5429fd78876ea79ed1d7a3d2623dab71b8b5f789e32297d4c",
+      "size_bytes": 8333
+    },
+    {
+      "path": "go/internal/state/schema.go",
+      "sha256": "957d073b81a315b832ed03fbfc7fffe0fd457a486066457ce790efc53b59588e",
+      "size_bytes": 20806
+    },
+    {
+      "path": "go/internal/version/version.go",
+      "sha256": "3335c2ecb1f761fa7d3fc9c33b2fb6118bff2b08c5e3384d538e9fade10a5600",
+      "size_bytes": 223
+    },
+    {
+      "path": "migration/audit/v1/ov11_audit_loop.md",
+      "sha256": "b7ad83843a821ec3701e759b3893c045367eb81e6f220323eb124669f7bcaab4",
+      "size_bytes": 730
+    },
+    {
+      "path": "migration/contracts/v1/authority_transition_ov11.md",
+      "sha256": "1726f787aad7a15c68a2001edec55ab32dcd8bc229541d42c92daa70c36a0a07",
+      "size_bytes": 526
+    },
+    {
+      "path": "migration/contracts/v1/automation_activity_ov11.md",
+      "sha256": "e9f20696782f302ee2e8b5f381fb6834ed695bc97108085824d1c0170bd96cea",
+      "size_bytes": 1097
+    },
+    {
+      "path": "migration/contracts/v1/legacy_paths_ov11.md",
+      "sha256": "e6ccb8fcf924eebea959af0c1d26ed2f4441557d46273825a28d6fa7abac6d1e",
+      "size_bytes": 424
+    },
+    {
+      "path": "migration/contracts/v1/source_token_retirement_ov11.md",
+      "sha256": "9fc279c63fdef386cc3eb7fbfc5725e5a2e352e0f2be0907ddadc80055dec5c5",
+      "size_bytes": 421
+    },
+    {
+      "path": "migration/ledger/findings.json",
+      "sha256": "3aca01869f262b28aaa83a01a7a8c98820ce56375b8aaf42b82046f0f83aa77b",
+      "size_bytes": 23361
+    },
+    {
+      "path": "migration/ledger/ov11_status.json",
+      "sha256": "1fcc2c512f98ea5c02b3109c00e728c09d2c50570f906cb4c8eccb6d1f264010",
+      "size_bytes": 441
+    },
+    {
+      "path": "scripts/validate_ov11_contract.py",
+      "sha256": "da600590fced8271687b21a3e960f8024d3b12ac397ea8daa8bdcaba5516efe6",
+      "size_bytes": 7111
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov11_automation_activity_v1/README.md",
+      "sha256": "a56f0cc38c2d6c5c62b870e845ac915fe94e696b0c32a6cb67bc6445f8f65c88",
+      "size_bytes": 803
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov11_automation_activity_v1/inventory.json",
+      "sha256": "b6216740b6abf834755429d9ad8f3c59870b80a2f081c932c182dc4da9a34a34",
+      "size_bytes": 2042
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov11_automation_activity_v1/manifest.schema-v2.json",
+      "sha256": "0d915697b500181f1692c02b52f8bd12aa8078cec3f6272faa9137cca5690321",
+      "size_bytes": 5990
+    }
+  ],
+  "target": "dustui_android"
+}

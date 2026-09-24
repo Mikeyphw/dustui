@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/mikeyphw/dustui/go/internal/automation"
 	"github.com/mikeyphw/dustui/go/internal/cleanup"
 	"github.com/mikeyphw/dustui/go/internal/intelligence"
 	"github.com/mikeyphw/dustui/go/internal/packageevidence"
@@ -42,6 +43,8 @@ func main() {
 		payload = cleanup.Contract()
 	case "cleanup-intelligence-contract", "intelligence-contract", "duplicates-contract", "residue-contract", "rules-contract":
 		payload = intelligence.Contract()
+	case "automation-contract", "activity-contract", "workmanager-contract", "tasker-contract", "notification-contract":
+		payload = automation.Contract()
 	case "package-storage-contract", "package-contract", "storage-contract":
 		payload = packageevidence.Contract()
 	case "privileged-contract", "root-contract":
@@ -55,7 +58,7 @@ func main() {
 		payload = shell.CurrentContract()
 	case "query-contract":
 		payload = map[string]any{
-			"phase":        "OV10",
+			"phase":        "OV11",
 			"pagination":   "deterministic_offset_token_bound_to_generation",
 			"maxPageLimit": query.MaxPageLimit,
 			"countKinds":   []string{query.CountTotal, query.CountPartial, query.CountUnknown},
@@ -76,7 +79,7 @@ func main() {
 		}
 	case "scan-contract":
 		payload = map[string]any{
-			"phase":                 "OV10",
+			"phase":                 "OV11",
 			"integrityStates":       []scan.IntegrityState{scan.IntegrityComplete, scan.IntegrityPartial, scan.IntegrityTruncated, scan.IntegrityMalformed, scan.IntegrityFailed, scan.IntegrityStaleAfterCleanup},
 			"sourceCompleteness":    []scan.SourceCompleteness{scan.SourceComplete, scan.SourceIncomplete, scan.SourceUnknown},
 			"sizeSemantics":         []scan.SizeSemantics{scan.SizeLogical, scan.SizeAllocated, scan.SizeLogicalAndAllocated},

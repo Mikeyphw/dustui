@@ -20,6 +20,7 @@ type Report struct {
 	MutationAuthority       bool                    `json:"mutationAuthority"`
 	PackageStorageAuthority bool                    `json:"packageStorageAuthority"`
 	CleanupIntelligence     bool                    `json:"cleanupIntelligence"`
+	AutomationActivity      bool                    `json:"automationActivity"`
 	CleanupCapability       bool                    `json:"cleanupCapability"`
 	RequiredTables          []string                `json:"requiredTables"`
 	EnvelopeTypes           []protocol.EnvelopeType `json:"envelopeTypes"`
@@ -41,9 +42,10 @@ func Current() Report {
 		MutationAuthority:       true,
 		PackageStorageAuthority: true,
 		CleanupIntelligence:     true,
+		AutomationActivity:      true,
 		CleanupCapability:       true,
 		RequiredTables:          append([]string{}, state.RequiredTables...),
 		EnvelopeTypes:           protocol.SupportedEnvelopeTypes(),
-		Message:                 "OV10 Go cleanup intelligence owns duplicates, residue, recommendations, and rules; every result is proof-bearing and no specialized label may degrade to a bare path while still appearing verified or safe.",
+		Message:                 "OV11 Go automation and Activity ownership make UI, WorkManager, Tasker, notifications, and recovery observe the same durable operation; accepted, queued, and running are never terminal success.",
 	}
 }

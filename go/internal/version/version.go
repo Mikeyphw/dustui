@@ -2,8 +2,8 @@ package version
 
 const (
 	Name           = "DustUI Go Engine"
-	MigrationPhase = "OV10"
-	Authority      = "go-cleanup-intelligence-authority"
+	MigrationPhase = "OV11"
+	Authority      = "go-automation-activity-authority"
 	Protocol       = "dustui.kernel.v1"
 	SchemaProtocol = "dustui.sqlite.schema.v1"
 )

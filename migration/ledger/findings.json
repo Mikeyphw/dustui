@@ -92,6 +92,7 @@
       "ov02_status": "foundation_established_non_production",
       "ov05_status": "runtime_session_reconnect_contract_added",
       "ov08_status": "go_mutation_journal_recovery_status_and_no_replay_records_added",
+      "ov11_status": "automation_activity_owned_by_go",
       "overlays": [
         "OV02",
         "OV05",
@@ -148,6 +149,7 @@
       "id": "RC-10",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
+      "ov11_status": "automation_activity_owned_by_go",
       "overlays": [
         "OV11"
       ],
@@ -375,6 +377,7 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "foundation_established_non_production",
       "ov05_status": "scan_lifecycle_runtime_session_contract_added",
+      "ov11_status": "automation_activity_owned_by_go",
       "overlays": [
         "OV02",
         "OV05",
@@ -541,6 +544,7 @@
       "id": "ABH-15",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
+      "ov11_status": "automation_activity_owned_by_go",
       "overlays": [
         "OV11"
       ],
@@ -681,6 +685,7 @@
       "id": "RM-08",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
+      "ov11_status": "automation_activity_owned_by_go",
       "overlays": [
         "OV11"
       ],
@@ -714,8 +719,19 @@
       ],
       "source": "Android-suspended roadmap OV04 mapping",
       "title": "GO06"
+    },
+    {
+      "closure_evidence": "Automation and Activity durable operation ownership",
+      "closure_mode": "Implemented in Go",
+      "gate": "fast workflow",
+      "id": "GO13",
+      "ov11_status": "automation_activity_owned_by_go",
+      "overlays": [
+        "OV11"
+      ],
+      "source": "Go migration roadmap"
     }
   ],
-  "phase": "OV10",
+  "phase": "OV11",
   "schema": "dustui.migration.ledger.v1"
 }

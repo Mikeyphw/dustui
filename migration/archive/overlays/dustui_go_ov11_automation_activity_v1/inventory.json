@@ -1,0 +1,83 @@
+{
+  "android_buildability": "intentionally-suspended",
+  "files": [
+    {
+      "category": "source",
+      "path": ".devtool.toml"
+    },
+    {
+      "category": "source",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/go/AutomationActivityContract.kt"
+    },
+    {
+      "category": "source",
+      "path": "go/cmd/dustui-go/main.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/automation/automation.go"
+    },
+    {
+      "category": "test",
+      "path": "go/internal/automation/automation_test.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/readiness/readiness.go"
+    },
+    {
+      "category": "test",
+      "path": "go/internal/readiness/readiness_test.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/runtime/spec.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/state/schema.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/version/version.go"
+    },
+    {
+      "category": "contract",
+      "path": "migration/audit/v1/ov11_audit_loop.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/contracts/v1/authority_transition_ov11.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/contracts/v1/automation_activity_ov11.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/contracts/v1/legacy_paths_ov11.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/contracts/v1/source_token_retirement_ov11.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/ledger/findings.json"
+    },
+    {
+      "category": "contract",
+      "path": "migration/ledger/ov11_status.json"
+    },
+    {
+      "category": "contract",
+      "path": "scripts/validate_ov11_contract.py"
+    }
+  ],
+  "name": "dustui_go_ov11_automation_activity_v1",
+  "no_unrelated_cleanup": true,
+  "overlay": "OV11",
+  "schema": "devtool.overlay.inventory.v1",
+  "target": "dustui_android",
+  "unsupported_devtool_jobs_workflows_added": false
+}

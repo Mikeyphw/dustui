@@ -59,6 +59,7 @@ type Spec struct {
 	PrivilegedBoundary           string     `json:"privilegedBoundary"`
 	PackageStorageAuthority      string     `json:"packageStorageAuthority"`
 	CleanupIntelligenceAuthority string     `json:"cleanupIntelligenceAuthority"`
+	AutomationActivityAuthority  string     `json:"automationActivityAuthority"`
 }
 
 func CurrentSpec() Spec {
@@ -86,6 +87,7 @@ func CurrentSpec() Spec {
 		PrivilegedBoundary:           "go-root-admission-boundary-ov06",
 		PackageStorageAuthority:      "go-package-storage-evidence-authority-ov09",
 		CleanupIntelligenceAuthority: "go-cleanup-intelligence-authority-ov10",
+		AutomationActivityAuthority:  "go-automation-activity-authority-ov11",
 	}
 }
 
