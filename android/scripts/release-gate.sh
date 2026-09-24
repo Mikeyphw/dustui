@@ -2,10 +2,7 @@
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
-./gradlew --no-daemon --max-workers=1 clean testDebugUnitTest lintDebug assembleDebug assembleRelease
-for artifact in app/build/outputs/apk/debug/app-debug.apk; do
-  test -s "$artifact" || { echo "missing release-gate artifact: $artifact" >&2; exit 1; }
-done
+./gradlew --no-daemon --max-workers=1 clean testReleaseUnitTest lintRelease assembleRelease
 release_count="$(find app/build/outputs/apk/release -type f -name '*.apk' 2>/dev/null | wc -l | tr -d ' ')"
 if [[ "$release_count" -lt 1 ]]; then
   echo "missing release-gate artifact: release APK" >&2

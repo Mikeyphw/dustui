@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "artifacts": [
     {
       "applied_at": "2026-07-21T04:11:32.641395Z",
@@ -19015,6 +19015,65 @@
       },
       "manifest": {},
       "history_id": "ab39d1be8e2c4478839f29a61f41d18b"
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T04:29:57.080035Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov01_contract_devtool_containment_v1.zip",
+      "artifact_name": "dustui_go_ov01_contract_devtool_containment_v1.zip",
+      "type": "overlay",
+      "sha256": "d805f4ef5fb977c3409082443b14c6dadbb9ef34fa6d91eac86166d4b4924bee",
+      "content_identity": {
+        "sha256": "d805f4ef5fb977c3409082443b14c6dadbb9ef34fa6d91eac86166d4b4924bee",
+        "size": 59601
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "",
+      "commit_hash": "",
+      "file_count": 29,
+      "change_counts": {
+        "add": 21,
+        "modify": 8
+      },
+      "manifest": {},
+      "operation_id": "c829849ce71040019b02014ac5644be8",
+      "history_id": "0b8c4d4258934619eee3b0ea51ed3ebb",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T042955Z-2534389222e3",
+        "status": "completed"
+      },
+      "validation_plan": {}
     }
   ]
 }

@@ -1,0 +1,49 @@
+finding_id,source,primary_overlays,closure_gate,closure_mode,note
+RC-01,Original bug hunt,OV03;OV05;OV12,Gate B / Gate E,Corrected in Go,ScanAuthority + freshness/action gates
+RC-02,Original bug hunt,OV03,Gate A / Gate E,Corrected in Go,Logical/allocated size semantics
+RC-03,Original bug hunt,OV07;OV10,Gate C / Gate E,Corrected in Go,Proof-bearing actionable evidence
+RC-04,Original bug hunt,OV07;OV08,Gate C,Corrected in Go,Immutable manifest + mutation equivalence
+RC-05,Original bug hunt,OV06;OV08,Gate C,Corrected in Go,Typed bounded root boundary
+RC-06,Original bug hunt,OV02;OV05;OV08;OV11,Gate C / Gate D,Corrected in Go,Durable SQLite operation authority
+RC-07,Original bug hunt,OV04;OV05,Gate B / Gate E,Corrected in Go,Paged queries and scale
+RC-08,Original bug hunt,OV09,Gate D / Gate E,Corrected in Go,User-aware package/storage evidence
+RC-09,Original bug hunt,OV10,Gate D / Gate E,Corrected in Go,Proof-bearing cleanup intelligence
+RC-10,Original bug hunt,OV11,Gate D / Gate E,Corrected in Go,Automation observes durable terminal operation
+RC-11,Original bug hunt,OV01;OV12;OV15,Gate E,Corrected + externalized,Dust evidence in Go; generic release in Devtool
+RC-12,Original bug hunt,OV03;OV04,Gate A / Gate B,Corrected in Go,Semantic history comparability
+RC-13,Original bug hunt,OV03;OV05;OV08;OV13;OV15,Gate E,Corrected test strategy,Behavioral/failure-injection validation
+RC-14,Original bug hunt,OV12;OV15,Gate E,Corrected in Go,Explicit privacy retention/redaction/pruning
+N-01,Post-bughunt concrete finding,OV01,OV01 self-check / Gate A,Corrected,Variant-aware Devtool tasks
+N-02,Post-bughunt concrete finding,OV01,OV01 self-check / Gate A,Corrected,Canonical workspace/targets/workflows/write scopes
+N-03,Post-bughunt concrete finding,OV01;OV02;OV08,Gate C,Corrected/structurally retired,Fail-open publishers contained then removed from authority
+N-04,Post-bughunt concrete finding,OV01;OV06,Gate C,Corrected,Bounded privileged admission
+N-05,Post-bughunt concrete finding,OV03;OV12,Gate E,Corrected,Health cannot equal completion alone
+N-06,Post-bughunt concrete finding,OV07;OV08,Gate C,Corrected,Single-use capability + reconcile
+N-07,Post-bughunt concrete finding,OV01;OV14;OV15,Gate E,Externalized to Devtool,Remove generic release duplication
+N-08,Post-bughunt concrete finding,OV01-OV15,Gate E,Corrected process,Every overlay has manifest/checksum/validation evidence
+ABH-01,Original 16-section bug hunt,OV01;OV05;OV12;OV15,Gate E,Coverage ledger,Cannot close by deletion alone; replacement behavior required
+ABH-02,Original 16-section bug hunt,OV06;OV08,Gate E,Coverage ledger,Cannot close by deletion alone; replacement behavior required
+ABH-03,Original 16-section bug hunt,OV03;OV05,Gate E,Coverage ledger,Cannot close by deletion alone; replacement behavior required
+ABH-04,Original 16-section bug hunt,OV02;OV05;OV11,Gate E,Coverage ledger,Cannot close by deletion alone; replacement behavior required
+ABH-05,Original 16-section bug hunt,OV02;OV03;OV08,Gate E,Coverage ledger,Cannot close by deletion alone; replacement behavior required
+ABH-06,Original 16-section bug hunt,OV04;OV05,Gate E,Coverage ledger,Cannot close by deletion alone; replacement behavior required
+ABH-07,Original 16-section bug hunt,OV04;OV05;OV13,Gate E,Coverage ledger,Cannot close by deletion alone; replacement behavior required
+ABH-08,Original 16-section bug hunt,OV03;OV04;OV13,Gate E,Coverage ledger,Cannot close by deletion alone; replacement behavior required
+ABH-09,Original 16-section bug hunt,OV03;OV04;OV07,Gate E,Coverage ledger,Cannot close by deletion alone; replacement behavior required
+ABH-10,Original 16-section bug hunt,OV10,Gate E,Coverage ledger,Cannot close by deletion alone; replacement behavior required
+ABH-11,Original 16-section bug hunt,OV09;OV10,Gate E,Coverage ledger,Cannot close by deletion alone; replacement behavior required
+ABH-12,Original 16-section bug hunt,OV09,Gate E,Coverage ledger,Cannot close by deletion alone; replacement behavior required
+ABH-13,Original 16-section bug hunt,OV10,Gate E,Coverage ledger,Cannot close by deletion alone; replacement behavior required
+ABH-14,Original 16-section bug hunt,OV07;OV08,Gate E,Coverage ledger,Cannot close by deletion alone; replacement behavior required
+ABH-15,Original 16-section bug hunt,OV11,Gate E,Coverage ledger,Cannot close by deletion alone; replacement behavior required
+ABH-16,Original 16-section bug hunt,OV05;OV12;OV13;OV15,Gate E,Coverage ledger,Cannot close by deletion alone; replacement behavior required
+CP-01,Cross-project support audit,ECO-01,Separate sidecar,Cross-project correction,BKX canonical chrootctl module compatibility
+CP-02,Cross-project support audit,ECO-02,Separate sidecar,Cross-project convergence,XBS/Flowspace build helper -> Devtool
+RM-01,Roadmap audit,OV01-OV15,Gate E,Closed in revised roadmap,EXO made first-class fast/full workflow and gate evidence contract
+RM-02,Roadmap audit,OV01,OV01,Closed in revised roadmap,Minimal go/ skeleton now exists when dustui_go target is introduced
+RM-03,Roadmap audit,OV13;OV14,Gate D,Closed in revised roadmap,Go CLI/TUI parity restored; Python/Textual retired after Gate D
+RM-04,Roadmap audit,OV01;OV05,Gate B,Closed in revised roadmap,ARM64-first ABI/runtime coherence made explicit; x86_64 test-only only with matching Go runtime
+RM-05,Roadmap audit,OV01-OV14,Gate D,Closed in revised roadmap,Source/token tests retire only after subsystem behavioral replacement exists
+RM-06,Roadmap audit,OV02;OV05;OV14,Gate B / Gate D,Closed in revised roadmap,Exact Room v3 one-way import and no-dual-write rule
+RM-07,Roadmap audit,OV01,Gate A,Closed in revised roadmap,Current stable Android toolchain baseline locked unless deliberately changed
+RM-08,Roadmap audit,OV11,Gate D,Closed in revised roadmap,Automation kept non-destructive in this campaign

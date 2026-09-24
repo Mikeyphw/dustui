@@ -66,3 +66,11 @@ val verifyStableToolchainBaseline by tasks.registering {
         check(appBuild.contains("jvmToolchain(21)")) { "DustUI Kotlin JVM toolchain must remain 21." }
     }
 }
+
+
+val verifyDustMigrationContract by tasks.registering(Exec::class) {
+    group = "verification"
+    description = "Verifies DustUI OV01 migration contract, inventories, and containment guards."
+    workingDir = rootDir.parentFile
+    commandLine("python3", "scripts/validate_ov01_contract.py")
+}

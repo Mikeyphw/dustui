@@ -204,8 +204,10 @@ class RootServiceClient(private val context: Context) {
         val temporary = File(directory, "${file.name}.tmp")
         temporary.writeText(review.toExecutionJson(), Charsets.UTF_8)
         if (!temporary.renameTo(file)) {
-            file.writeText(review.toExecutionJson(), Charsets.UTF_8)
             temporary.delete()
+            throw IllegalStateException(
+                "Reviewed cleanup plan publication failed; refusing direct overwrite fallback for ${review.operationId}",
+            )
         }
         return JSONObject()
             .put("operationId", review.operationId)

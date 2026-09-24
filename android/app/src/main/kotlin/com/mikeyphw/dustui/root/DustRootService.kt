@@ -23,13 +23,22 @@ import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Executors
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 class DustRootService : RootService() {
-    private val executor = Executors.newCachedThreadPool()
+    private val executor = ThreadPoolExecutor(
+        MIN_PRIVILEGED_WORKERS,
+        MAX_PRIVILEGED_WORKERS,
+        PRIVILEGED_WORKER_KEEPALIVE_SECONDS,
+        TimeUnit.SECONDS,
+        LinkedBlockingQueue(MAX_PRIVILEGED_QUEUE_DEPTH),
+    ) { runnable ->
+        Thread(runnable, "DustRootService-worker").apply { isDaemon = true }
+    }.apply { allowCoreThreadTimeOut(true) }
     private val scans = ConcurrentHashMap<String, ActiveScan>()
     private val duplicateCancellations = ConcurrentHashMap<String, AtomicBoolean>()
     private val cleanupCancellations = ConcurrentHashMap<String, AtomicBoolean>()
@@ -1222,6 +1231,10 @@ class DustRootService : RootService() {
         const val MAX_DUPLICATE_BUCKET_PATHS = 2_000
         const val DEFAULT_PARTIAL_HASH_BYTES = 64 * 1024
         const val MAX_PARTIAL_HASH_BYTES = 1024 * 1024
+        private const val MIN_PRIVILEGED_WORKERS = 1
+        private const val MAX_PRIVILEGED_WORKERS = 2
+        private const val MAX_PRIVILEGED_QUEUE_DEPTH = 8
+        private const val PRIVILEGED_WORKER_KEEPALIVE_SECONDS = 30L
         const val CLEANUP_PLAN_DIRECTORY = "dustui_cleanup_plans"
         val SHA256_PATTERN = Regex("^[0-9a-f]{64}$")
     }

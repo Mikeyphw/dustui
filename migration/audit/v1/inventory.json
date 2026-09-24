@@ -1,0 +1,216 @@
+{
+  "schema": "dustui.migration.inventory.v1",
+  "phase": "OV01",
+  "android_destinations": [
+    {
+      "id": "SCAN",
+      "label": "Scan",
+      "shortLabel": "Scan"
+    },
+    {
+      "id": "EXPLORER",
+      "label": "Files",
+      "shortLabel": "Files"
+    },
+    {
+      "id": "INSIGHTS",
+      "label": "Storage health",
+      "shortLabel": "Home"
+    },
+    {
+      "id": "RECOMMENDATIONS",
+      "label": "Cleanup",
+      "shortLabel": "Clean"
+    },
+    {
+      "id": "RULES",
+      "label": "Cleanup rules",
+      "shortLabel": "Rules"
+    },
+    {
+      "id": "GROWTH",
+      "label": "Growth history",
+      "shortLabel": "Growth"
+    },
+    {
+      "id": "LARGE_FILES",
+      "label": "Large files",
+      "shortLabel": "Large"
+    },
+    {
+      "id": "DUPLICATES",
+      "label": "Duplicates",
+      "shortLabel": "Dupes"
+    },
+    {
+      "id": "APP_RESIDUE",
+      "label": "App residue",
+      "shortLabel": "Residue"
+    },
+    {
+      "id": "SEARCH",
+      "label": "Root search",
+      "shortLabel": "Search"
+    },
+    {
+      "id": "PACKAGES",
+      "label": "App storage",
+      "shortLabel": "Apps"
+    },
+    {
+      "id": "MODULES",
+      "label": "Modules",
+      "shortLabel": "Modules"
+    },
+    {
+      "id": "CERTIFICATION",
+      "label": "Certification",
+      "shortLabel": "Cert"
+    },
+    {
+      "id": "CLEANUP",
+      "label": "Deletion reports",
+      "shortLabel": "Reports"
+    },
+    {
+      "id": "DEBUG",
+      "label": "Debug workbench",
+      "shortLabel": "Debug"
+    },
+    {
+      "id": "MORE",
+      "label": "Tools",
+      "shortLabel": "Tools"
+    }
+  ],
+  "deep_links": [],
+  "scan_entry_points": [
+    "ScanForegroundService.start",
+    "ScheduledScanWorker.set",
+    "DustTaskerReceiver.onReceive",
+    "RootServiceClient.startScan",
+    "DustRootService.startScan"
+  ],
+  "destructive_entry_points": [
+    "ScanRepository.reviewCleanup",
+    "ScanRepository.executeCleanup",
+    "RootServiceClient.reviewCleanup",
+    "RootServiceClient.executeCleanup",
+    "DustRootService.reviewCleanup",
+    "DustRootService.executeCleanup",
+    "DustRootService.deletePath"
+  ],
+  "automation_entry_points": [
+    "ScheduledScanWorker",
+    "DustTaskerReceiver",
+    "StorageAlertNotifier",
+    "ScanForegroundService notifications"
+  ],
+  "domain_engines": [
+    {
+      "kind": "python_tui",
+      "path": "src/dust_tui",
+      "status": "compatibility oracle until OV13, retire OV14"
+    },
+    {
+      "kind": "cpp_scanner",
+      "path": "android/app/src/main/cpp/dustui_scanner.cpp",
+      "status": "production legacy until Go scan cutover"
+    },
+    {
+      "kind": "kotlin_room_domain",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data",
+      "status": "production legacy until staged Go cutover"
+    },
+    {
+      "kind": "kotlin_root_service",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root",
+      "status": "reachable but constrained in OV01"
+    }
+  ],
+  "room_tables": [
+    {
+      "table": "scan_sessions",
+      "file": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanEntities.kt"
+    },
+    {
+      "table": "scan_entries",
+      "file": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanEntities.kt"
+    },
+    {
+      "table": "cleanup_operations",
+      "file": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupModels.kt"
+    },
+    {
+      "table": "quarantine_entries",
+      "file": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupModels.kt"
+    },
+    {
+      "table": "cleanup_plan_items",
+      "file": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupModels.kt"
+    }
+  ],
+  "release_certification_scripts": [
+    "android/scripts/validate-remediation-full.sh",
+    "android/scripts/final-rc-gate.sh",
+    "android/scripts/device-certify.sh",
+    "android/scripts/install-smoke.sh",
+    "android/scripts/release-gate.sh",
+    "android/scripts/package-rc.sh",
+    "android/scripts/run-multi-user-residue-validation.sh",
+    "android/scripts/run-rooted-destructive-safety-tests.sh",
+    "android/scripts/run-device-scale-performance.sh"
+  ],
+  "raw_adb_callers": [
+    "android/scripts/device-certify.sh",
+    "android/scripts/install-smoke.sh",
+    "android/scripts/validate-root-scan-diagnostics.py",
+    "android/scripts/run-multi-user-residue-validation.sh",
+    "android/scripts/run-rooted-destructive-safety-tests.sh",
+    "android/scripts/run-device-scale-performance.sh",
+    "android/scripts/validate-modern-dark-portrait-ui.py"
+  ],
+  "authoritative_file_publishers": [
+    "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupReportStore.kt",
+    "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupRuleStore.kt",
+    "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DuplicateAnalysisStore.kt",
+    "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanDiagnostics.kt",
+    "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+    "android/app/src/main/kotlin/com/mikeyphw/dustui/root/RootServiceClient.kt"
+  ],
+  "source_token_contract_tests": [
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/AppResidueTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/AppStorageInspectorTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleaningIntelligenceQualificationTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleaningIntelligenceRegressionTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleaningRecoverySourceContractTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleanupRecommendationsTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleanupRulesTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleanupSafetyPolicyTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleanupVerificationTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/DatabaseSchemaContractTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/FinalRcScriptContractTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/LargeFileWorkbenchTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/OperationRecoveryTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleasePackagingTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleaseReadinessTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleaseScriptContractTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootDiagnosticsSourceContractTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootFileSearchTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ValidationRoadmapContractTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/CleaningAccessibilityContractTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchFinalContractTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchSourceContractTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/ModernDarkPortraitFinalContractTest.kt",
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+    "android/scripts/device-certify.sh",
+    "android/scripts/final-rc-gate.sh",
+    "android/scripts/install-smoke.sh",
+    "android/scripts/package-rc.sh",
+    "android/scripts/run-multi-user-residue-validation.sh",
+    "android/scripts/validate-debug-workbench-contract.py",
+    "android/scripts/validate-modern-dark-portrait-ui.py",
+    "android/scripts/validate-root-scan-diagnostics.py"
+  ]
+}

@@ -603,6 +603,9 @@ class ScanRepository(
         retainedEvidenceByPath: Map<String, Pair<String, String>> = emptyMap(),
         packageNameByPath: Map<String, String> = emptyMap(),
     ): CleanupReview {
+        cleanupScanBlockReason(session, entries)?.let { reason ->
+            throw IllegalStateException(reason)
+        }
         val plan = CleanupPlan(
             scanId = session.id,
             rootPath = session.rootPath,
@@ -621,6 +624,20 @@ class ScanRepository(
             },
         ).normalized()
         return rootClient.reviewCleanup(plan)
+    }
+
+    private fun cleanupScanBlockReason(session: ScanSessionEntity, entries: List<ScanEntryEntity>): String? {
+        val completeIntegrity = session.integrityStatus == ScanIntegrityStatus.COMPLETE.name
+        return when {
+            session.status != "COMPLETED" -> "Cleanup requires a completed scan; current status is ${session.status}"
+            session.truncated -> "Cleanup is blocked because the source scan is truncated"
+            !completeIntegrity -> "Cleanup requires COMPLETE scan integrity; current integrity is ${session.integrityStatus}"
+            session.observedEntryCount > 0L && session.persistedEntryCount > 0L && session.observedEntryCount != session.persistedEntryCount ->
+                "Cleanup is blocked because scan persistence is stale: observed ${session.observedEntryCount}, persisted ${session.persistedEntryCount}"
+            entries.isEmpty() -> "Cleanup requires at least one selected entry from the source scan"
+            entries.any { it.scanId != session.id } -> "Cleanup selection contains entries from a different scan"
+            else -> null
+        }
     }
 
     suspend fun executeCleanup(review: CleanupReview): CleanupExecutionResult {

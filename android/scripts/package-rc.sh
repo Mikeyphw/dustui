@@ -15,12 +15,16 @@ dist_root="${DUSTUI_DIST_DIR:-build/release-candidate}"
 out="$dist_root/dustui-$version_name"
 mkdir -p "$out"
 
-tasks=(testDebugUnitTest lintDebug assembleDebug assembleRelease)
+tasks=(testReleaseUnitTest lintRelease assembleRelease)
 if [[ "${DUSTUI_SKIP_BUILD:-0}" != "1" ]]; then
   ./gradlew --no-daemon --max-workers=1 "${tasks[@]}"
 fi
 
-mapfile -t apks < <(find app/build/outputs/apk -type f -name '*.apk' | sort)
+if [[ "${DUSTUI_INCLUDE_DEBUG_APK:-0}" == "1" ]]; then
+  mapfile -t apks < <(find app/build/outputs/apk -type f -name '*.apk' | sort)
+else
+  mapfile -t apks < <(find app/build/outputs/apk/release -type f -name '*.apk' | sort)
+fi
 if [[ "${#apks[@]}" -eq 0 ]]; then
   echo "No APK artifacts found under app/build/outputs/apk" >&2
   exit 1
@@ -94,10 +98,6 @@ printf '  "signedReleasePresent": %s,\n' "$([[ "$signed_release_found" -eq 1 ]] 
 printf '  "cleaningIntelligenceGatePassed": %s\n' "$cleaning_ready" >> "$manifest"
 printf '}\n' >> "$manifest"
 
-if [[ "$debug_found" -ne 1 ]]; then
-  echo "Missing debug APK evidence" >&2
-  exit 1
-fi
 if [[ "$release_found" -ne 1 ]]; then
   echo "Missing release APK evidence" >&2
   exit 1

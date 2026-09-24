@@ -13,6 +13,7 @@ import androidx.work.ForegroundInfo
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import com.mikeyphw.dustui.MainActivity
 import com.mikeyphw.dustui.R
 import java.util.UUID
@@ -21,16 +22,31 @@ import java.util.concurrent.TimeUnit
 class ScheduledScanWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val prefs = applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val raw = prefs.getString(KEY_REQUEST, null) ?: return Result.success()
+        val raw = prefs.getString(KEY_REQUEST, null) ?: return Result.success(
+            workDataOf(KEY_SCAN_STATUS to STATUS_NO_REQUEST),
+        )
         return runCatching {
             val request = ScanRequest.fromJson(raw).copy(scanId = UUID.randomUUID().toString())
             setForeground(createForegroundInfo(request))
             // The worker owns foreground/background admission before delegating to the interactive
             // scan service. This prevents scheduled work from attempting an unqualified background
-            // foreground-service launch.
+            // foreground-service launch. Its WorkManager success result means "launch admitted", not
+            // terminal scan success; the scan itself remains owned by ScanForegroundService/Room.
             ScanForegroundService.start(applicationContext, request, launchedFromForegroundWorker = true)
-            Result.success()
-        }.getOrElse { Result.retry() }
+            prefs.edit {
+                putString(KEY_LAST_SCAN_ID, request.scanId)
+                putString(KEY_LAST_OUTCOME, STATUS_LAUNCHED_NOT_TERMINAL)
+            }
+            Result.success(
+                workDataOf(
+                    KEY_SCAN_ID to request.scanId,
+                    KEY_SCAN_STATUS to STATUS_LAUNCHED_NOT_TERMINAL,
+                ),
+            )
+        }.getOrElse { _ ->
+            prefs.edit { putString(KEY_LAST_OUTCOME, STATUS_RETRY_AFTER_FAILURE) }
+            Result.retry()
+        }
     }
 
     private fun createForegroundInfo(request: ScanRequest): ForegroundInfo {
@@ -59,6 +75,13 @@ class ScheduledScanWorker(context: Context, params: WorkerParameters) : Coroutin
     companion object {
         private const val PREFS = "dustui_schedule"
         private const val KEY_REQUEST = "request"
+        private const val KEY_LAST_SCAN_ID = "last_scan_id"
+        private const val KEY_LAST_OUTCOME = "last_outcome"
+        const val KEY_SCAN_ID = "scan_id"
+        const val KEY_SCAN_STATUS = "scan_status"
+        const val STATUS_NO_REQUEST = "NO_REQUEST"
+        const val STATUS_LAUNCHED_NOT_TERMINAL = "LAUNCHED_NOT_TERMINAL"
+        const val STATUS_RETRY_AFTER_FAILURE = "RETRY_AFTER_FAILURE"
         private const val WORK = "dustui_periodic_scan"
         private const val CHANNEL_ID = "dustui_scheduled_scans"
         private const val NOTIFICATION_ID = 7102
