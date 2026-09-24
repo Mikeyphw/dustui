@@ -100,6 +100,29 @@ func (s *SQLiteStore) initialize(ctx context.Context) error {
 			return fmt.Errorf("create table %s: %w", table.Name, err)
 		}
 	}
+	for _, migration := range []struct {
+		column string
+		ddl    string
+	}{
+		{"preset_id", "ALTER TABLE scan_sessions ADD COLUMN preset_id TEXT"},
+		{"options_json", "ALTER TABLE scan_sessions ADD COLUMN options_json TEXT NOT NULL DEFAULT '{}'"},
+		{"scanned_items", "ALTER TABLE scan_sessions ADD COLUMN scanned_items INTEGER NOT NULL DEFAULT 0"},
+		{"scanned_bytes", "ALTER TABLE scan_sessions ADD COLUMN scanned_bytes INTEGER NOT NULL DEFAULT 0"},
+		{"total_bytes", "ALTER TABLE scan_sessions ADD COLUMN total_bytes INTEGER NOT NULL DEFAULT 0"},
+		{"warning_count", "ALTER TABLE scan_sessions ADD COLUMN warning_count INTEGER NOT NULL DEFAULT 0"},
+		{"current_path", "ALTER TABLE scan_sessions ADD COLUMN current_path TEXT NOT NULL DEFAULT ''"},
+		{"error_message", "ALTER TABLE scan_sessions ADD COLUMN error_message TEXT"},
+	} {
+		present, err := sqliteColumnExists(ctx, tx, "scan_sessions", migration.column)
+		if err != nil {
+			return err
+		}
+		if !present {
+			if _, err := tx.ExecContext(ctx, migration.ddl); err != nil {
+				return fmt.Errorf("migrate scan_sessions.%s: %w", migration.column, err)
+			}
+		}
+	}
 	for _, stmt := range QueryIndexes {
 		if _, err := tx.ExecContext(ctx, stmt); err != nil {
 			return fmt.Errorf("create index: %w", err)
@@ -118,6 +141,27 @@ func (s *SQLiteStore) initialize(ctx context.Context) error {
 		return fmt.Errorf("commit schema migration: %w", err)
 	}
 	return nil
+}
+
+func sqliteColumnExists(ctx context.Context, tx *sql.Tx, table, column string) (bool, error) {
+	rows, err := tx.QueryContext(ctx, "PRAGMA table_info("+table+")")
+	if err != nil {
+		return false, fmt.Errorf("inspect %s columns: %w", table, err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var cid int
+		var name, columnType string
+		var notNull, primaryKey int
+		var defaultValue any
+		if err := rows.Scan(&cid, &name, &columnType, &notNull, &defaultValue, &primaryKey); err != nil {
+			return false, err
+		}
+		if name == column {
+			return true, nil
+		}
+	}
+	return false, rows.Err()
 }
 
 func (s *SQLiteStore) Close() error {

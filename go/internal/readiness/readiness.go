@@ -36,8 +36,8 @@ type Report struct {
 	AndroidRuntimeBound     bool                    `json:"androidRuntimeBound"`
 	GoSQLiteImplemented     bool                    `json:"goSQLiteImplemented"`
 	LegacyAndroidAuthority  bool                    `json:"legacyAndroidAuthority"`
-	PersistenceAuthority   string                  `json:"persistenceAuthority"`
-	PersistenceSchema      int                     `json:"persistenceSchema"`
+	PersistenceAuthority    string                  `json:"persistenceAuthority"`
+	PersistenceSchema       int                     `json:"persistenceSchema"`
 }
 
 func Current() Report {
@@ -65,12 +65,12 @@ func Current() Report {
 		AndroidBuildability:     product.AndroidBuildState,
 		RequiredTables:          append([]string{}, state.RequiredTables...),
 		EnvelopeTypes:           protocol.SupportedEnvelopeTypes(),
-		Message:                 "REM-02: production Android Go runtime now owns a durable SQLite store; Gate D remains reopened for Android domain cutover and legacy retirement.",
+		Message:                 "REM-03: Android scan and cleanup domain state now flows through the Go runtime and Go-owned SQLite; Gate D remains reopened for C++/legacy/runtime retirement.",
 		GateDQualified:          false,
 		AndroidRuntimeBound:     true,
 		GoSQLiteImplemented:     true,
 		LegacyAndroidAuthority:  true,
-		PersistenceAuthority:   "go-sqlite",
-		PersistenceSchema:      state.SchemaVersion,
+		PersistenceAuthority:    "go-sqlite",
+		PersistenceSchema:       state.SchemaVersion,
 	}
 }

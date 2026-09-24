@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_BLOCKERS = sorted([
+PRE_REM03_BLOCKERS = sorted([
     "cpp_scanner_production_active",
     "generic_release_truth_duplicated",
     "legacy_destructive_executor_active",
@@ -14,6 +14,7 @@ EXPECTED_BLOCKERS = sorted([
     "python_legacy_target_present",
     "room_domain_authority_active",
 ])
+POST_REM03_BLOCKERS = sorted(x for x in PRE_REM03_BLOCKERS if x != "room_domain_authority_active")
 
 fail: list[str] = []
 for validator in [
@@ -28,8 +29,12 @@ for validator in [
 
 try:
     status = json.loads((ROOT / "migration/ledger/ov14_legacy_retirement_status.json").read_text())
-    if sorted(status.get("blockers", [])) != EXPECTED_BLOCKERS:
-        fail.append(f"expected six remaining blockers, got {status.get('blockers', [])}")
+    blockers = sorted(status.get("blockers", []))
+    folded = set(status.get("folded_in", []))
+    rem03_folded = "rem03_android_domain_protocol_cutover" in folded
+    expected = POST_REM03_BLOCKERS if rem03_folded else PRE_REM03_BLOCKERS
+    if blockers != expected:
+        fail.append(f"expected {'five post-REM-03' if rem03_folded else 'six pre-REM-03'} remaining blockers, got {status.get('blockers', [])}")
     observed = status.get("observed", {})
     if observed.get("android_go_runtime_binding") != "production":
         fail.append("Android Go runtime binding is not production")
@@ -37,6 +42,8 @@ try:
         fail.append("Go SQLite persistence is not authoritative")
     if observed.get("go_authority") != "product-default-qualified":
         fail.append("Go authority is not product-default-qualified")
+    if rem03_folded and observed.get("room_domain_authority") != "none":
+        fail.append("REM-03 is folded in but Room remains an observed production authority")
     if status.get("status") != "reopened_blocked" or status.get("gate_d_truth") != "reopened":
         fail.append("Gate D truth must remain reopened_blocked")
 except Exception as exc:
@@ -46,4 +53,4 @@ if fail:
     for item in fail:
         print("REM-02 reconciliation failure:", item, file=sys.stderr)
     raise SystemExit(1)
-print("REM-02 reconciliation hotfix PASS (six retirement blockers remain; REM-03 is next)")
+print("REM-02 reconciliation hotfix PASS (successor retirement state remains truthful)")

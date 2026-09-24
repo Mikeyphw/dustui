@@ -90,6 +90,9 @@ abi_policy = "arm64-v8a production first; x86_64 is test-only until a matching G
 release_authority = "devtool"
 gate_d_truth = "reopened-by-ov14-retirement-truth-audit"
 ov15_status = "blocked-on-real-android-go-cutover"
+android_domain_authority = "go-process+go-sqlite"
+legacy_room_authority = false
+go_sqlite_implementation = true
 
 [targets.dustui_go]
 type = "go"
@@ -134,7 +137,9 @@ android_runtime_packaging = "arm64-v8a-only"
 shell_scaffold = true
 production_authority_qualified = false
 android_cutover_complete = false
-go_sqlite_implementation = false
+android_domain_authority = "go-process+go-sqlite"
+legacy_room_authority = false
+go_sqlite_implementation = true
 
 [targets.dustui_go.tasks]
 test = ["go", "test", "./..."]
@@ -283,6 +288,12 @@ root = ".."
 command = ["python3", "scripts/validate_rem02_sqlite_persistence_authority.py"]
 inputs = ["scripts/validate_rem02_sqlite_persistence_authority.py", "go", "android/app/src/main/kotlin/com/mikeyphw/dustui/go"]
 
+[targets.dustui_android.jobs.rem03_domain_cutover]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_rem03_android_domain_cutover.py"]
+inputs = ["scripts/validate_rem03_android_domain_cutover.py", "go", "android/app/src/main/kotlin/com/mikeyphw/dustui", "migration", ".devtool.toml"]
+
 [targets.dustui_android.jobs.gradle_contract]
 gradle_tasks = ["verifyDustMigrationContract"]
 
@@ -305,11 +316,11 @@ gradle_tasks = [":app:assembleDebug"]
 outputs = ["app/build/outputs/apk/debug"]
 
 [targets.dustui_android.workflows]
-fast = ["job:ov13_contract", "job:go_test", "job:android_unit"]
+fast = ["job:rem03_domain_cutover", "job:ov13_contract", "job:go_test", "job:android_unit"]
 unit = ["job:android_unit"]
 cutover_audit = ["job:retirement_audit"]
-gate_d = ["job:retirement_gate", "job:rem02_sqlite", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
-validate = ["job:retirement_gate", "job:rem02_sqlite", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
+gate_d = ["job:retirement_gate", "job:rem02_sqlite", "job:rem03_domain_cutover", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
+validate = ["job:retirement_gate", "job:rem02_sqlite", "job:rem03_domain_cutover", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
 
 [targets.dustui_go.jobs.go_test]
 runner = "command"

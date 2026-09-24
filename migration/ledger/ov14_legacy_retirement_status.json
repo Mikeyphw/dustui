@@ -3,7 +3,7 @@
   "status": "reopened_blocked",
   "gate_d_truth": "reopened",
   "ov15_status": "blocked_until_real_android_go_cutover",
-  "reason": "REM-02 Go SQLite authority and Android child-process binding are present and truth-reconciled. Gate D remains reopened for Room and remaining legacy/runtime retirement blockers.",
+  "reason": "REM-03 routes Android scan/query/history and cleanup metadata through the Go child process and Go-owned SQLite. Room is retained only as a one-way read-only v1-v3 import source. Gate D remains reopened for the five remaining legacy/runtime blockers.",
   "desired": {
     "cpp_scanner_runtime": "none",
     "python_runtime": "none",
@@ -24,15 +24,14 @@
     "legacy_destructive_executor": "active-production",
     "legacy_navigation": "not-proven-retired",
     "python_runtime": "compatibility-only-target-present",
-    "room_domain_authority": "active-production"
+    "room_domain_authority": "none"
   },
   "blockers": [
     "cpp_scanner_production_active",
     "generic_release_truth_duplicated",
     "legacy_destructive_executor_active",
     "legacy_navigation_not_proven_retired",
-    "python_legacy_target_present",
-    "room_domain_authority_active"
+    "python_legacy_target_present"
   ],
   "folded_in": [
     "ov13_cleaning_performance_termux_hotfix_validator_jobs_workflows_fix",
@@ -41,7 +40,8 @@
     "rem01_android_go_runtime_binding_v2_layout_corrected",
     "rem02_go_sqlite_persistence",
     "rem02_sqlite_integrity_hotfix",
-    "rem02_reconciliation_hotfix"
+    "rem02_reconciliation_hotfix",
+    "rem03_android_domain_protocol_cutover"
   ],
-  "next": "rem03_android_domain_protocol_cutover_before_ov15_gate_e"
+  "next": "rem04_privileged_cleanup_mutation_cutover_and_cpp_retirement_before_ov15_gate_e"
 }

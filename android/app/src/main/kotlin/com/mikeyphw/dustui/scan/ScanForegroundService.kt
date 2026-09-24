@@ -36,7 +36,7 @@ class ScanForegroundService : Service() {
     private var scanJob: Job? = null
     @Volatile private var activeScanId: String? = null
     private val container by lazy { (application as DustUiApplication).container }
-    private val dao by lazy { container.database.scanDao() }
+    private val domainStore by lazy { container.goDomainStore }
     private val rootClient by lazy { container.rootServiceClient }
     private val diagnosticStore by lazy { container.scanDiagnosticStore }
     private val notifications by lazy { getSystemService(NotificationManager::class.java) }
@@ -58,7 +58,7 @@ class ScanForegroundService : Service() {
                 }
                 if (scanJob?.isActive == true) {
                     scope.launch {
-                        dao.upsertSession(
+                        domainStore.upsertSession(
                             ScanSessionEntity(
                                 id = request.scanId,
                                 presetId = request.presetId,
@@ -129,8 +129,8 @@ class ScanForegroundService : Service() {
         }
 
         try {
-            dao.deleteEntries(request.scanId)
-            dao.upsertSession(session)
+            domainStore.deleteEntries(request.scanId)
+            domainStore.upsertSession(session)
             saveDiagnostics()
             startForeground(NOTIFICATION_ID, notification(session, running = true))
             foregroundStarted = true
@@ -191,7 +191,7 @@ class ScanForegroundService : Service() {
             }
 
             session = session.copy(status = ScanStatus.RUNNING.name)
-            dao.upsertSession(session)
+            domainStore.upsertSession(session)
             val pending = ArrayList<ScanEntryEntity>(ENTRY_BATCH_SIZE)
             var persistedEntries = 0L
             var terminalEvent = false
@@ -345,7 +345,7 @@ class ScanForegroundService : Service() {
                     }
                     persistedEntries += flush(pending)
                     session = session.copy(persistedEntryCount = persistedEntries)
-                    dao.upsertSession(session)
+                    domainStore.upsertSession(session)
                     notifications.notify(NOTIFICATION_ID, notification(session, running = !terminalEvent))
 
                     val remote = rootClient.scanState(request.scanId)
@@ -375,7 +375,7 @@ class ScanForegroundService : Service() {
                                         )
                                     } else null,
                                 )
-                                dao.upsertSession(session)
+                                domainStore.upsertSession(session)
                                 saveDiagnostics()
                             }
                             break
@@ -394,7 +394,7 @@ class ScanForegroundService : Service() {
                     completedAt = diagnostics.completedAt,
                     integrityStatus = ScanIntegrityStatus.INTERRUPTED.name,
                 )
-                runCatching { dao.upsertSession(session) }
+                runCatching { domainStore.upsertSession(session) }
             }
             throw cancelled
         } catch (error: Throwable) {
@@ -421,13 +421,13 @@ class ScanForegroundService : Service() {
                     ),
                     integrityStatus = ScanIntegrityStatus.FAILED_INTEGRITY.name,
                 )
-                runCatching { dao.upsertSession(session) }
+                runCatching { domainStore.upsertSession(session) }
                 saveDiagnostics()
             }
         } finally {
             withContext(NonCancellable) {
                 if (activeScanId == request.scanId) activeScanId = null
-                if (session.status == ScanStatus.COMPLETED.name) runCatching { StorageAlertNotifier.evaluate(this@ScanForegroundService, dao) }
+                if (session.status == ScanStatus.COMPLETED.name) runCatching { StorageAlertNotifier.evaluate(this@ScanForegroundService, domainStore) }
                 if (foregroundStarted) finishNotification(session)
                 stopSelfResult(startId)
             }
@@ -446,7 +446,7 @@ class ScanForegroundService : Service() {
         if (entries.isEmpty()) return 0L
         val copy = entries.toList()
         entries.clear()
-        dao.upsertEntries(copy)
+        domainStore.upsertEntries(copy)
         return copy.size.toLong()
     }
 

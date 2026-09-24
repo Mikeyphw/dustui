@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const SchemaVersion = 10
+const SchemaVersion = 11
 
 var RequiredTables = []string{
 	"scan_sessions",
@@ -30,6 +30,8 @@ var RequiredTables = []string{
 	"cleanup_manifest_entries",
 	"cleanup_capability_claims",
 	"cleanup_mutation_journal",
+	"android_cleanup_operations",
+	"android_cleanup_plan_items",
 	"cleanup_verification_results",
 	"cleanup_recovery_status",
 	"android_package_evidence_snapshots",
@@ -71,6 +73,8 @@ var QueryIndexes = []string{
 	"CREATE INDEX IF NOT EXISTS idx_scan_entries_allocated_size ON scan_entries(scan_id, allocated_size_bytes DESC, path);",
 	"CREATE INDEX IF NOT EXISTS idx_scan_entries_modified ON scan_entries(scan_id, modified_at_ms DESC, path);",
 	"CREATE INDEX IF NOT EXISTS idx_scan_sessions_history ON scan_sessions(root_path, completed_at_ms, generation);",
+	"CREATE INDEX IF NOT EXISTS idx_android_cleanup_operations_created ON android_cleanup_operations(created_at_ms DESC);",
+	"CREATE INDEX IF NOT EXISTS idx_android_cleanup_plan_operation ON android_cleanup_plan_items(operation_id, path);",
 	"CREATE INDEX IF NOT EXISTS idx_cleanup_duplicate_candidates_group ON cleanup_duplicate_candidates(group_id, path);",
 	"CREATE INDEX IF NOT EXISTS idx_cleanup_recommendations_scan ON cleanup_recommendations(scan_id, scan_generation, recommendation_kind);",
 	"CREATE INDEX IF NOT EXISTS idx_cleanup_rule_results_plan ON cleanup_rule_results(plan_id, rule_id, path);",
@@ -91,7 +95,7 @@ type Table struct {
 
 var Tables = []Table{
 	{"schema_metadata", `CREATE TABLE IF NOT EXISTS schema_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at_ms INTEGER NOT NULL);`},
-	{"scan_sessions", `CREATE TABLE IF NOT EXISTS scan_sessions (id TEXT PRIMARY KEY, room_scan_id TEXT UNIQUE, generation INTEGER NOT NULL, root_path TEXT NOT NULL, options_fingerprint TEXT NOT NULL, backend TEXT NOT NULL, status TEXT NOT NULL, integrity_status TEXT NOT NULL, started_at_ms INTEGER NOT NULL, completed_at_ms INTEGER, observed_entry_count INTEGER NOT NULL DEFAULT 0, persisted_entry_count INTEGER NOT NULL DEFAULT 0, malformed_event_count INTEGER NOT NULL DEFAULT 0, truncated INTEGER NOT NULL DEFAULT 0, expected_generation INTEGER NOT NULL);`},
+	{"scan_sessions", `CREATE TABLE IF NOT EXISTS scan_sessions (id TEXT PRIMARY KEY, room_scan_id TEXT UNIQUE, generation INTEGER NOT NULL, root_path TEXT NOT NULL, preset_id TEXT, options_json TEXT NOT NULL DEFAULT '{}', options_fingerprint TEXT NOT NULL, backend TEXT NOT NULL, status TEXT NOT NULL, integrity_status TEXT NOT NULL, started_at_ms INTEGER NOT NULL, completed_at_ms INTEGER, scanned_items INTEGER NOT NULL DEFAULT 0, scanned_bytes INTEGER NOT NULL DEFAULT 0, total_bytes INTEGER NOT NULL DEFAULT 0, warning_count INTEGER NOT NULL DEFAULT 0, current_path TEXT NOT NULL DEFAULT '', error_message TEXT, observed_entry_count INTEGER NOT NULL DEFAULT 0, persisted_entry_count INTEGER NOT NULL DEFAULT 0, malformed_event_count INTEGER NOT NULL DEFAULT 0, truncated INTEGER NOT NULL DEFAULT 0, expected_generation INTEGER NOT NULL);`},
 	{"scan_entries", `CREATE TABLE IF NOT EXISTS scan_entries (scan_id TEXT NOT NULL, path TEXT NOT NULL, parent_path TEXT NOT NULL, name TEXT NOT NULL, logical_size_bytes INTEGER NOT NULL, allocated_size_bytes INTEGER NOT NULL, is_directory INTEGER NOT NULL, depth INTEGER NOT NULL, modified_at_ms INTEGER NOT NULL, file_count INTEGER NOT NULL DEFAULT 0, source_room_path TEXT, PRIMARY KEY(scan_id, path), FOREIGN KEY(scan_id) REFERENCES scan_sessions(id) ON DELETE CASCADE);`},
 	{"scan_contexts", `CREATE TABLE IF NOT EXISTS scan_contexts (scan_id TEXT PRIMARY KEY, canonical_root TEXT NOT NULL, generation INTEGER NOT NULL, backend_identity TEXT NOT NULL, hidden_policy TEXT NOT NULL, exclusion_policy TEXT NOT NULL, filesystem_boundary_policy TEXT NOT NULL, size_semantics TEXT NOT NULL, FOREIGN KEY(scan_id) REFERENCES scan_sessions(id) ON DELETE CASCADE);`},
 	{"operations", `CREATE TABLE IF NOT EXISTS operations (id TEXT PRIMARY KEY, request_id TEXT NOT NULL UNIQUE, request_fingerprint TEXT NOT NULL, generation INTEGER NOT NULL, state TEXT NOT NULL, last_sequence INTEGER NOT NULL, terminal_sequence INTEGER, recovery_required INTEGER NOT NULL DEFAULT 0, created_at_ms INTEGER NOT NULL, updated_at_ms INTEGER NOT NULL);`},
@@ -113,6 +117,8 @@ var Tables = []Table{
 	{"cleanup_manifest_entries", `CREATE TABLE IF NOT EXISTS cleanup_manifest_entries (manifest_id TEXT NOT NULL, path TEXT NOT NULL, exact_descendants_json TEXT NOT NULL, path_role TEXT NOT NULL, protection TEXT NOT NULL, mount_boundary TEXT NOT NULL, identity_evidence TEXT NOT NULL, retained_copy_satisfied INTEGER NOT NULL, warnings_json TEXT NOT NULL, PRIMARY KEY(manifest_id, path), FOREIGN KEY(manifest_id) REFERENCES cleanup_manifests(id) ON DELETE CASCADE);`},
 	{"cleanup_capability_claims", `CREATE TABLE IF NOT EXISTS cleanup_capability_claims (capability_id TEXT PRIMARY KEY, operation_id TEXT NOT NULL, manifest_hash TEXT NOT NULL, claim_state TEXT NOT NULL, claimed_at_ms INTEGER, expires_at_ms INTEGER NOT NULL, reconcile_required INTEGER NOT NULL DEFAULT 1, status_lookup_key TEXT NOT NULL, FOREIGN KEY(capability_id) REFERENCES cleanup_capabilities(id) ON DELETE CASCADE);`},
 	{"cleanup_mutation_journal", `CREATE TABLE IF NOT EXISTS cleanup_mutation_journal (operation_id TEXT NOT NULL, sequence INTEGER NOT NULL, state TEXT NOT NULL, reason TEXT, path TEXT, mutation_protocol TEXT NOT NULL, created_at_ms INTEGER NOT NULL, PRIMARY KEY(operation_id, sequence), FOREIGN KEY(operation_id) REFERENCES operations(id) ON DELETE CASCADE);`},
+	{"android_cleanup_operations", `CREATE TABLE IF NOT EXISTS android_cleanup_operations (id TEXT PRIMARY KEY, scan_id TEXT NOT NULL, root_path TEXT NOT NULL, status TEXT NOT NULL, selected_count INTEGER NOT NULL, planned_bytes INTEGER NOT NULL, deleted_bytes INTEGER NOT NULL DEFAULT 0, created_at_ms INTEGER NOT NULL, completed_at_ms INTEGER, message TEXT, review_id TEXT NOT NULL DEFAULT '', scan_generation INTEGER NOT NULL DEFAULT 1, plan_hash TEXT NOT NULL DEFAULT '', expires_at_ms INTEGER NOT NULL DEFAULT 0, outcome_certainty TEXT NOT NULL DEFAULT 'CERTAIN');`},
+	{"android_cleanup_plan_items", `CREATE TABLE IF NOT EXISTS android_cleanup_plan_items (operation_id TEXT NOT NULL, path TEXT NOT NULL, role TEXT NOT NULL, item_type TEXT NOT NULL, planned_bytes INTEGER NOT NULL, expected_device INTEGER, expected_mount_id TEXT, expected_inode INTEGER, expected_mode INTEGER, expected_stat_size_bytes INTEGER, expected_modified_at_ms INTEGER, expected_tree_digest TEXT, expected_entry_count INTEGER, expected_sha256 TEXT, retained_path TEXT, retained_sha256 TEXT, package_name TEXT, created_at_ms INTEGER NOT NULL, PRIMARY KEY(operation_id, path), FOREIGN KEY(operation_id) REFERENCES android_cleanup_operations(id) ON DELETE CASCADE);`},
 	{"cleanup_verification_results", `CREATE TABLE IF NOT EXISTS cleanup_verification_results (operation_id TEXT NOT NULL, path TEXT NOT NULL, expected_identity TEXT NOT NULL, verified_absent INTEGER NOT NULL, reclaimed_bytes INTEGER NOT NULL DEFAULT 0, stale_after_cleanup INTEGER NOT NULL DEFAULT 1, certainty TEXT NOT NULL, created_at_ms INTEGER NOT NULL, PRIMARY KEY(operation_id, path), FOREIGN KEY(operation_id) REFERENCES operations(id) ON DELETE CASCADE);`},
 	{"cleanup_recovery_status", `CREATE TABLE IF NOT EXISTS cleanup_recovery_status (operation_id TEXT PRIMARY KEY, reconcile_required INTEGER NOT NULL, recovery_state TEXT NOT NULL, no_replay INTEGER NOT NULL DEFAULT 1, legacy_destructive_executor TEXT NOT NULL, last_checked_at_ms INTEGER NOT NULL, FOREIGN KEY(operation_id) REFERENCES operations(id) ON DELETE CASCADE);`},
 	{"android_package_evidence_snapshots", `CREATE TABLE IF NOT EXISTS android_package_evidence_snapshots (id TEXT PRIMARY KEY, generation INTEGER NOT NULL, collector TEXT NOT NULL, completeness TEXT NOT NULL, degradation_reasons_json TEXT NOT NULL, evidence_hash TEXT NOT NULL UNIQUE, created_at_ms INTEGER NOT NULL);`},

@@ -108,7 +108,7 @@ def observe() -> tuple[dict[str, str], list[str]]:
         "room_domain_authority": "active-production" if room_active else "none",
         "legacy_destructive_executor": "active-production" if destructive_active else "none",
         "legacy_navigation": "not-proven-retired" if legacy_navigation else "none",
-        "go_authority": "go-domain-contracts-present-android-production-unqualified" if (not go_binding or not go_sqlite) else "product-default-qualified",
+        "go_authority": "go-domain-contracts-present-android-production-unqualified" if (not go_binding or not go_sqlite or room_active) else "product-default-qualified",
         "android_go_runtime_binding": "missing-production-binding" if not go_binding else "production",
         "go_sqlite_persistence": "missing-implementation" if not go_sqlite else "go-owned-sqlite",
         "generic_release_truth": "duplicated-app-local" if generic_release_duplication else "devtool-only",

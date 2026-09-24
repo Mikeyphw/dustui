@@ -27,10 +27,11 @@ class Ov14LegacyRetirementContractTest {
         assertTrue(contract.contains("legacy_navigation = none"))
         assertTrue(contract.contains("Observed state"))
         assertTrue(contract.contains("cpp_scanner_runtime = active-production"))
-        assertTrue(contract.contains("go_sqlite_persistence = missing-implementation"))
+        assertTrue(contract.contains("go_sqlite_persistence = missing-implementation")) // historical OV14 observed baseline
         val status = repoFile("migration/ledger/ov14_legacy_retirement_status.json").readText()
         assertTrue(status.contains("\"status\": \"reopened_blocked\""))
-        assertTrue(status.contains("go_android_runtime_binding_missing"))
+        assertTrue(status.contains("\"room_domain_authority\": \"none\""))
+        assertTrue(status.contains("rem03_android_domain_protocol_cutover"))
     }
 
     @Test fun `ov14 keeps supported devtool wrapper jobs`() {

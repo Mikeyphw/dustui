@@ -6,14 +6,14 @@ import android.content.Context
 import android.os.StatFs
 import androidx.core.app.NotificationCompat
 import com.mikeyphw.dustui.R
-import com.mikeyphw.dustui.data.ScanDao
+import com.mikeyphw.dustui.data.GoDomainStore
 import kotlin.math.abs
 import java.util.Locale
 
 object StorageAlertNotifier {
     private const val CHANNEL = "dustui_storage_alerts"
-    suspend fun evaluate(context: Context, dao: ScanDao) {
-        val sessions = dao.completedSessions(2)
+    suspend fun evaluate(context: Context, domainStore: GoDomainStore) {
+        val sessions = domainStore.completedSessions(2)
         val current = sessions.firstOrNull() ?: return
         val previous = sessions.getOrNull(1)
         val manager = context.getSystemService(NotificationManager::class.java)

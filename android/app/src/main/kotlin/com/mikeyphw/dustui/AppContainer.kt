@@ -1,10 +1,10 @@
 package com.mikeyphw.dustui
 
 import android.content.Context
-import androidx.room.Room
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.mikeyphw.dustui.data.DustDatabase
+import com.mikeyphw.dustui.data.GoDomainStore
+import com.mikeyphw.dustui.data.LegacyRoomV3Importer
 import com.mikeyphw.dustui.data.ScanDiagnosticStore
 import com.mikeyphw.dustui.data.ScanRepository
 import com.mikeyphw.dustui.root.RootServiceClient
@@ -12,15 +12,12 @@ import com.mikeyphw.dustui.root.RootServiceClient
 class AppContainer(context: Context) {
     private val appContext = context.applicationContext
 
-    val database: DustDatabase = Room.databaseBuilder(
-        appContext,
-        DustDatabase::class.java,
-        "dustui.db",
-    ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
+    val goDomainStore = GoDomainStore(appContext)
+    val legacyRoomV3Importer = LegacyRoomV3Importer(appContext, goDomainStore)
 
     val rootServiceClient = RootServiceClient(appContext)
     val scanDiagnosticStore = ScanDiagnosticStore(appContext)
-    val scanRepository = ScanRepository(appContext, database.scanDao(), rootServiceClient, scanDiagnosticStore)
+    val scanRepository = ScanRepository(appContext, goDomainStore, rootServiceClient, scanDiagnosticStore)
 
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {

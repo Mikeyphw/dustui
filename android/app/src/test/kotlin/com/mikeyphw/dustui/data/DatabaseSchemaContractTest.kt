@@ -30,7 +30,10 @@ class DatabaseSchemaContractTest {
 
     @Test fun `version one migration is explicit and never destructive`() {
         val container = File(androidRoot, "app/src/main/kotlin/com/mikeyphw/dustui/AppContainer.kt").readText()
-        assertTrue(container.contains("addMigrations(MIGRATION_1_2, MIGRATION_2_3)"))
+        assertFalse(container.contains("Room.databaseBuilder"))
+        val importer = File(androidRoot, "app/src/main/kotlin/com/mikeyphw/dustui/data/LegacyRoomV3Importer.kt").readText()
+        assertTrue(importer.contains("SQLiteDatabase.OPEN_READONLY"))
+        assertTrue(importer.contains("room-v3-imported.marker"))
         assertTrue(container.contains("Migration(1, 2)"))
         assertTrue(container.contains("Migration(2, 3)"))
         assertTrue(container.contains("index_cleanup_operations_scanId"))
@@ -56,11 +59,11 @@ class DatabaseSchemaContractTest {
         val repository = File(androidRoot, "app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt").readText()
         assertTrue(dao.contains("@Insert(onConflict = OnConflictStrategy.IGNORE)"))
         assertTrue(dao.contains("insertCleanupOperationIfAbsent"))
-        assertTrue(repository.contains("val insertedOperation = dao.insertCleanupOperationIfAbsent"))
+        assertTrue(repository.contains("val insertedOperation = domainStore.insertCleanupOperationIfAbsent"))
         assertTrue(repository.contains("if (insertedOperation != -1L)"))
         assertFalse(
             "Execution must not unconditionally upsert REVIEWED before claim; that can resurrect completed operations",
-            repository.contains("dao.upsertCleanupOperation(\n            CleanupOperationEntity(\n                id = review.operationId,\n                scanId = review.scanId,\n                rootPath = review.rootPath,\n                status = CleanupOperationStatus.REVIEWED.name"),
+            repository.contains("domainStore.upsertCleanupOperation(\n            CleanupOperationEntity(\n                id = review.operationId,\n                scanId = review.scanId,\n                rootPath = review.rootPath,\n                status = CleanupOperationStatus.REVIEWED.name"),
         )
     }
 

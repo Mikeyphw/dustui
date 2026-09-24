@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -188,6 +189,14 @@ func serve(databasePath string) error {
 		}
 		if frame.RequestID == "" || frame.Type == "" || frame.Sequence <= 0 || frame.Generation <= 0 {
 			return fmt.Errorf("frame identity required")
+		}
+		payload, dispatchErr := domainPayload(context.Background(), store, frame)
+		if dispatchErr != nil {
+			payload = map[string]any{"ok": false, "error": dispatchErr.Error()}
+		}
+		frame.Payload, err = json.Marshal(payload)
+		if err != nil {
+			return err
 		}
 		encoded, err := json.Marshal(frame)
 		if err != nil {
