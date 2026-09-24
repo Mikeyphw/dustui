@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const SchemaVersion = 8
+const SchemaVersion = 9
 
 var RequiredTables = []string{
 	"scan_sessions",
@@ -47,6 +47,12 @@ var RequiredTables = []string{
 	"automation_sources",
 	"notification_actions",
 	"activity_runs",
+	"evidence_health_generations",
+	"problem_graph_nodes",
+	"diagnostic_events",
+	"significant_problem_records",
+	"privacy_retention_rules",
+	"support_bundles",
 }
 
 var SQLitePragmas = []string{
@@ -67,6 +73,10 @@ var QueryIndexes = []string{
 	"CREATE INDEX IF NOT EXISTS idx_cleanup_rule_results_plan ON cleanup_rule_results(plan_id, rule_id, path);",
 	"CREATE INDEX IF NOT EXISTS idx_automation_sources_operation ON automation_sources(operation_id, source);",
 	"CREATE INDEX IF NOT EXISTS idx_activity_runs_state ON activity_runs(active, history, recovery_required, terminal_truth);",
+	"CREATE INDEX IF NOT EXISTS idx_evidence_health_subject ON evidence_health_generations(subject, generation, health);",
+	"CREATE INDEX IF NOT EXISTS idx_problem_graph_root ON problem_graph_nodes(root_cause_id, severity, risk);",
+	"CREATE INDEX IF NOT EXISTS idx_diagnostic_events_session ON diagnostic_events(session_id, operation_id, area, severity);",
+	"CREATE INDEX IF NOT EXISTS idx_support_bundles_privacy ON support_bundles(privacy_mode, created_at_ms);",
 }
 
 type Table struct {
@@ -115,6 +125,12 @@ var Tables = []Table{
 	{"automation_sources", `CREATE TABLE IF NOT EXISTS automation_sources (operation_id TEXT NOT NULL, source TEXT NOT NULL, adapter_role TEXT NOT NULL, thin_adapter INTEGER NOT NULL DEFAULT 1, last_observed_state TEXT NOT NULL, last_observed_sequence INTEGER NOT NULL, terminal_reported INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(operation_id, source), FOREIGN KEY(operation_id) REFERENCES operations(id) ON DELETE CASCADE);`},
 	{"notification_actions", `CREATE TABLE IF NOT EXISTS notification_actions (nonce TEXT PRIMARY KEY, operation_id TEXT NOT NULL, action TEXT NOT NULL, expires_at_ms INTEGER NOT NULL, claimed_at_ms INTEGER, replay_rejected INTEGER NOT NULL DEFAULT 0, operation_binding TEXT NOT NULL, FOREIGN KEY(operation_id) REFERENCES operations(id) ON DELETE CASCADE);`},
 	{"activity_runs", `CREATE TABLE IF NOT EXISTS activity_runs (operation_id TEXT PRIMARY KEY, active INTEGER NOT NULL, history INTEGER NOT NULL, recovery_required INTEGER NOT NULL, terminal_truth TEXT NOT NULL, progress_json TEXT NOT NULL, result_json TEXT NOT NULL, verification_json TEXT NOT NULL, retry_gate TEXT NOT NULL, cancel_gate TEXT NOT NULL, reconcile_gate TEXT NOT NULL, evidence_correlation TEXT NOT NULL, updated_at_ms INTEGER NOT NULL, FOREIGN KEY(operation_id) REFERENCES operations(id) ON DELETE CASCADE);`},
+	{"evidence_health_generations", `CREATE TABLE IF NOT EXISTS evidence_health_generations (subject TEXT NOT NULL, generation INTEGER NOT NULL, evidence_hash TEXT NOT NULL, health TEXT NOT NULL, derived_from_json TEXT NOT NULL, invalidated_by_json TEXT NOT NULL, completed_alone_healthy INTEGER NOT NULL DEFAULT 0, advanced_at_ms INTEGER NOT NULL, PRIMARY KEY(subject, generation));`},
+	{"problem_graph_nodes", `CREATE TABLE IF NOT EXISTS problem_graph_nodes (problem_id TEXT PRIMARY KEY, root_cause_id TEXT, stable_id TEXT NOT NULL UNIQUE, severity TEXT NOT NULL, risk TEXT NOT NULL, guidance TEXT NOT NULL, suppressed_by_root INTEGER NOT NULL DEFAULT 0, created_at_ms INTEGER NOT NULL);`},
+	{"diagnostic_events", `CREATE TABLE IF NOT EXISTS diagnostic_events (event_id TEXT PRIMARY KEY, session_id TEXT NOT NULL, operation_id TEXT, parent_id TEXT, area TEXT NOT NULL, severity TEXT NOT NULL, action TEXT NOT NULL, result TEXT NOT NULL, values_redacted_json TEXT NOT NULL, raw_values_persisted INTEGER NOT NULL DEFAULT 0, auto_upload INTEGER NOT NULL DEFAULT 0, created_at_ms INTEGER NOT NULL);`},
+	{"significant_problem_records", `CREATE TABLE IF NOT EXISTS significant_problem_records (record_id TEXT PRIMARY KEY, problem_id TEXT NOT NULL, operation_id TEXT, severity TEXT NOT NULL, risk TEXT NOT NULL, guidance TEXT NOT NULL, raw_event_ref TEXT, created_at_ms INTEGER NOT NULL);`},
+	{"privacy_retention_rules", `CREATE TABLE IF NOT EXISTS privacy_retention_rules (privacy_class TEXT PRIMARY KEY, retain_days INTEGER NOT NULL, prune_with_evidence INTEGER NOT NULL DEFAULT 1, export_redaction TEXT NOT NULL, backup_transfer_eligible INTEGER NOT NULL DEFAULT 0);`},
+	{"support_bundles", `CREATE TABLE IF NOT EXISTS support_bundles (bundle_id TEXT PRIMARY KEY, manifest_json TEXT NOT NULL, checksums_json TEXT NOT NULL, privacy_mode TEXT NOT NULL, selected_evidence_json TEXT NOT NULL, includes_file_content INTEGER NOT NULL DEFAULT 0, automatic_upload INTEGER NOT NULL DEFAULT 0, reproducible_export_key TEXT NOT NULL, created_at_ms INTEGER NOT NULL);`},
 }
 
 func CreateStatements() []string {
@@ -134,7 +150,7 @@ func ValidateSchemaContract() error {
 			return fmt.Errorf("required table %s missing", table)
 		}
 	}
-	for _, required := range []string{"journal_mode = WAL", "expected_generation", "request_fingerprint", "operation_events", "retained_legacy_quarantine_json", "idx_scan_entries_parent_page", "idx_scan_entries_logical_size", "idx_scan_sessions_history", "runtime_sessions", "shell_routes", "root_runtime_identities", "privileged_admissions", "privileged_events", "no_replay_token", "reconcile_required", "cleanup_actionable_evidence", "cleanup_manifest_entries", "cleanup_capability_claims", "manifest_revision", "scan_context_hash", "root_identity", "claim_state", "exact_descendants_json", "cleanup_mutation_journal", "cleanup_verification_results", "cleanup_recovery_status", "mutation_protocol", "verified_absent", "stale_after_cleanup", "legacy_destructive_executor", "no_replay", "android_package_evidence_snapshots", "android_package_records", "android_storage_evidence", "package_residue_candidates", "package_action_rechecks", "evidence_hash", "package_key", "collection_completeness", "requires_recheck", "derived_from_regex", "cleanup_duplicate_groups", "cleanup_duplicate_candidates", "cleanup_residue_evidence", "cleanup_recommendations", "cleanup_rule_results", "cleanup_plan_conflicts", "verification_state", "canonical_keep_path", "retained_copy_proof", "actionable_evidence_json", "bounded_regex", "provenance_json", "requires_review", "automation_admissions", "automation_sources", "notification_actions", "activity_runs", "accepted_not_success", "terminal_truth", "evidence_correlation", "thin_adapter", "replay_rejected", "operation_binding", "retry_gate", "cancel_gate", "reconcile_gate"} {
+	for _, required := range []string{"journal_mode = WAL", "expected_generation", "request_fingerprint", "operation_events", "retained_legacy_quarantine_json", "idx_scan_entries_parent_page", "idx_scan_entries_logical_size", "idx_scan_sessions_history", "runtime_sessions", "shell_routes", "root_runtime_identities", "privileged_admissions", "privileged_events", "no_replay_token", "reconcile_required", "cleanup_actionable_evidence", "cleanup_manifest_entries", "cleanup_capability_claims", "manifest_revision", "scan_context_hash", "root_identity", "claim_state", "exact_descendants_json", "cleanup_mutation_journal", "cleanup_verification_results", "cleanup_recovery_status", "mutation_protocol", "verified_absent", "stale_after_cleanup", "legacy_destructive_executor", "no_replay", "android_package_evidence_snapshots", "android_package_records", "android_storage_evidence", "package_residue_candidates", "package_action_rechecks", "evidence_hash", "package_key", "collection_completeness", "requires_recheck", "derived_from_regex", "cleanup_duplicate_groups", "cleanup_duplicate_candidates", "cleanup_residue_evidence", "cleanup_recommendations", "cleanup_rule_results", "cleanup_plan_conflicts", "verification_state", "canonical_keep_path", "retained_copy_proof", "actionable_evidence_json", "bounded_regex", "provenance_json", "requires_review", "automation_admissions", "automation_sources", "notification_actions", "activity_runs", "accepted_not_success", "terminal_truth", "evidence_correlation", "thin_adapter", "replay_rejected", "operation_binding", "retry_gate", "cancel_gate", "reconcile_gate", "evidence_health_generations", "problem_graph_nodes", "diagnostic_events", "significant_problem_records", "privacy_retention_rules", "support_bundles", "completed_alone_healthy", "invalidated_by_json", "stable_id", "suppressed_by_root", "values_redacted_json", "raw_values_persisted", "auto_upload", "export_redaction", "backup_transfer_eligible", "includes_file_content", "reproducible_export_key"} {
 		if !strings.Contains(joined, required) {
 			return fmt.Errorf("schema contract missing %s", required)
 		}

@@ -1,0 +1,83 @@
+{
+  "android_buildability": "intentionally-suspended",
+  "files": [
+    {
+      "category": "source",
+      "path": ".devtool.toml"
+    },
+    {
+      "category": "source",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/go/DiagnosticsEvidenceContract.kt"
+    },
+    {
+      "category": "source",
+      "path": "go/cmd/dustui-go/main.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/diagnostics/diagnostics.go"
+    },
+    {
+      "category": "test",
+      "path": "go/internal/diagnostics/diagnostics_test.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/readiness/readiness.go"
+    },
+    {
+      "category": "test",
+      "path": "go/internal/readiness/readiness_test.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/runtime/spec.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/state/schema.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/version/version.go"
+    },
+    {
+      "category": "contract",
+      "path": "migration/audit/v1/ov12_audit_loop.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/contracts/v1/authority_transition_ov12.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/contracts/v1/diagnostics_evidence_privacy_ov12.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/contracts/v1/legacy_paths_ov12.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/contracts/v1/source_token_retirement_ov12.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/ledger/findings.json"
+    },
+    {
+      "category": "contract",
+      "path": "migration/ledger/ov12_status.json"
+    },
+    {
+      "category": "contract",
+      "path": "scripts/validate_ov12_contract.py"
+    }
+  ],
+  "name": "dustui_go_ov12_diagnostics_evidence_privacy_v1",
+  "no_unrelated_cleanup": true,
+  "overlay": "OV12",
+  "schema": "devtool.overlay.inventory.v1",
+  "target": "dustui_android",
+  "unsupported_devtool_jobs_workflows_added": false
+}

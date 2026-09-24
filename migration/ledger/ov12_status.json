@@ -1,0 +1,20 @@
+{
+  "android_buildability": "intentionally-suspended",
+  "android_buildability_suspended_until": "OV13",
+  "artifact": "dustui_go_ov12_diagnostics_evidence_privacy_v1.zip",
+  "canonical_ux": "System > Diagnostics",
+  "evidence_states": [
+    "missing",
+    "stale",
+    "current",
+    "degraded"
+  ],
+  "go_authorities": [
+    "diagnostics_evidence",
+    "problem_graph",
+    "privacy_retention",
+    "support_bundle"
+  ],
+  "phase": "OV12",
+  "unsupported_devtool_jobs_workflows": false
+}

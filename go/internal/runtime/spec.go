@@ -60,6 +60,7 @@ type Spec struct {
 	PackageStorageAuthority      string     `json:"packageStorageAuthority"`
 	CleanupIntelligenceAuthority string     `json:"cleanupIntelligenceAuthority"`
 	AutomationActivityAuthority  string     `json:"automationActivityAuthority"`
+	DiagnosticsAuthority         string     `json:"diagnosticsAuthority"`
 }
 
 func CurrentSpec() Spec {
@@ -88,6 +89,7 @@ func CurrentSpec() Spec {
 		PackageStorageAuthority:      "go-package-storage-evidence-authority-ov09",
 		CleanupIntelligenceAuthority: "go-cleanup-intelligence-authority-ov10",
 		AutomationActivityAuthority:  "go-automation-activity-authority-ov11",
+		DiagnosticsAuthority:         "go-diagnostics-evidence-privacy-authority-ov12",
 	}
 }
 

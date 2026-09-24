@@ -15,6 +15,7 @@
       "ov02_status": "not_in_ov02_scope",
       "ov03_status": "scan_truth_semantics_established",
       "ov05_status": "go_scan_read_authority_bound_to_runtime_contract",
+      "ov12_status": "diagnostics_evidence_privacy_authority_added",
       "overlays": [
         "OV03",
         "OV05",
@@ -162,6 +163,7 @@
       "id": "RC-11",
       "ov01_status": "mapped",
       "ov02_status": "not_in_ov02_scope",
+      "ov12_status": "diagnostics_evidence_privacy_authority_added",
       "overlays": [
         "OV01",
         "OV12",
@@ -208,6 +210,7 @@
       "id": "RC-14",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
+      "ov12_status": "diagnostics_evidence_privacy_authority_added",
       "overlays": [
         "OV12",
         "OV15"
@@ -276,6 +279,7 @@
       "id": "N-05",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
+      "ov12_status": "diagnostics_evidence_privacy_authority_added",
       "overlays": [
         "OV03",
         "OV12"
@@ -331,6 +335,7 @@
       "ov01_status": "mapped",
       "ov02_status": "not_in_ov02_scope",
       "ov05_status": "android_runtime_packaging_contract_added",
+      "ov12_status": "diagnostics_evidence_privacy_authority_added",
       "overlays": [
         "OV01",
         "OV05",
@@ -558,6 +563,7 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov05_status": "stable_route_identity_shell_scaffold_added",
+      "ov12_status": "diagnostics_evidence_privacy_authority_added",
       "overlays": [
         "OV05",
         "OV12",
@@ -730,8 +736,20 @@
         "OV11"
       ],
       "source": "Go migration roadmap"
+    },
+    {
+      "closure_evidence": "Evidence health, problem graph, retention matrix, sealed support bundles",
+      "closure_mode": "Corrected in Go",
+      "gate": "Gate D/E readiness",
+      "id": "GO14",
+      "ov12_status": "diagnostics_evidence_privacy_authority_added",
+      "overlays": [
+        "OV12"
+      ],
+      "source": "Go migration roadmap",
+      "title": "Diagnostics/evidence/privacy/support bundle"
     }
   ],
-  "phase": "OV11",
+  "phase": "OV12",
   "schema": "dustui.migration.ledger.v1"
 }

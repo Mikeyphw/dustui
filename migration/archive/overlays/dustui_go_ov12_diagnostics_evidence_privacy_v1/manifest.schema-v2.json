@@ -1,0 +1,149 @@
+{
+  "apply_policy": {
+    "android_buildability": "intentionally-suspended",
+    "android_buildability_suspended_until": "OV13",
+    "devtool_command": "devtool -r \"$HOME/Code/dustui\" --target dustui_android apply overlay /sdcard/Download/dustui_go_ov12_diagnostics_evidence_privacy_v1.zip --no-validate --commit \"DustUI OV12 diagnostics evidence privacy\"",
+    "evidence_commands": [
+      "python3 scripts/validate_ov12_contract.py --audit-loop",
+      "cd go && go test ./..."
+    ],
+    "full_validation_gate": false,
+    "unsupported_devtool_jobs_workflows_added": false,
+    "validation_policy": "Non-gate OV12 under Android-suspended roadmap: Go/contracts evidence is hard blocker; Android build/test/lint remains diagnostic until OV13."
+  },
+  "artifact": "dustui_go_ov12_diagnostics_evidence_privacy_v1.zip",
+  "authority_transition": {
+    "android_buildability": "intentionally-suspended",
+    "android_buildability_suspended_until": "OV13",
+    "automatic_upload": false,
+    "completed_alone_healthy": false,
+    "debug_screen_authority": false,
+    "go_diagnostics_evidence_authority": true,
+    "protocol": "dustui.diagnostics.evidence.v1",
+    "support_bundle_privacy_bounded": true,
+    "system_diagnostics_canonical_ux": true,
+    "unsupported_devtool_jobs_workflows_added": false
+  },
+  "created_utc": "2026-09-24T13:00:00Z",
+  "name": "dustui_go_ov12_diagnostics_evidence_privacy_v1",
+  "ov12_requirements": [
+    "missing/stale/current/degraded evidence states",
+    "derived health invalidates when authoritative evidence advances",
+    "COMPLETED alone can never produce healthy",
+    "DustProblemGraph root-cause suppression and stable IDs",
+    "structured persistent diagnostics with redaction before persistence",
+    "privacy retention matrix for raw paths/hashes/package names/root-device metadata",
+    "sealed reproducible support bundle with manifest/checksums/privacy mode and no file content by default",
+    "System > Diagnostics replaces Debug as canonical UX"
+  ],
+  "overlay": "OV12",
+  "payload_file_count": 21,
+  "payload_sha256": [
+    {
+      "path": ".devtool.toml",
+      "sha256": "579c02b8b9a8f020c47fd241e9c71cae31571510b39ab7b13b857ed49ab1d194",
+      "size_bytes": 6118
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/go/DiagnosticsEvidenceContract.kt",
+      "sha256": "5047bfb647aab8340802ddcedfe4dccf6fa60f2e4dce24a89acd4f7e5138db71",
+      "size_bytes": 878
+    },
+    {
+      "path": "go/cmd/dustui-go/main.go",
+      "sha256": "f0ceb71b5039737e03336ed34c930fef8dce361e9e47f3fcf9f86ff0d2d98fdb",
+      "size_bytes": 4574
+    },
+    {
+      "path": "go/internal/diagnostics/diagnostics.go",
+      "sha256": "afca0a3ba9a90e53f1f02ff1ce0dfa0f4b896e26376d998cb64f336d06c676e7",
+      "size_bytes": 11752
+    },
+    {
+      "path": "go/internal/diagnostics/diagnostics_test.go",
+      "sha256": "cb3a6c27212dbcba2c6b1329c079e549587d3b344fa97efb59ab0d6f965df492",
+      "size_bytes": 4412
+    },
+    {
+      "path": "go/internal/readiness/readiness.go",
+      "sha256": "d8a073b9635eaf06ffb4fa86c110b5a8cf76b50c9b6ddf5e3261db086da18d16",
+      "size_bytes": 2708
+    },
+    {
+      "path": "go/internal/readiness/readiness_test.go",
+      "sha256": "ee0455746c20dc617fe11a7f564fe6749f31d95f938cad17dffb43fb2063703f",
+      "size_bytes": 1053
+    },
+    {
+      "path": "go/internal/runtime/spec.go",
+      "sha256": "8f35ae7faf5c1861cd177a9b5fdb2c9e93f21d9f4699c0e30d7f9da95cee3ca6",
+      "size_bytes": 8486
+    },
+    {
+      "path": "go/internal/state/schema.go",
+      "sha256": "9b482b7f22b53b342668d5450f6fb59bfeeeebc44a3868b77751dfa4e8dc9f1a",
+      "size_bytes": 23880
+    },
+    {
+      "path": "go/internal/version/version.go",
+      "sha256": "c5809f5f01675efe2aa5498e9b9d59ff17e45e76c7d45120fbc62df42b8c57f7",
+      "size_bytes": 232
+    },
+    {
+      "path": "migration/audit/v1/ov12_audit_loop.md",
+      "sha256": "6886282d202d49cb3201d7ffd1eadd246d6bab34b0be70e0a7a9284954d9b5bc",
+      "size_bytes": 672
+    },
+    {
+      "path": "migration/contracts/v1/authority_transition_ov12.md",
+      "sha256": "974f0d699ed3897b85d7fd5fc0df53026c9c4d594f3288c41ff0d78c95f7969e",
+      "size_bytes": 504
+    },
+    {
+      "path": "migration/contracts/v1/diagnostics_evidence_privacy_ov12.md",
+      "sha256": "fc16bbce6290060217d6df3a60809d28bff609e8825732e36b0594a9da4d7df1",
+      "size_bytes": 1321
+    },
+    {
+      "path": "migration/contracts/v1/legacy_paths_ov12.md",
+      "sha256": "2f1d07f62f6168d1b3acf63ed6ac800a492e1ef42fa5838e2ae9d287bdc2d437",
+      "size_bytes": 457
+    },
+    {
+      "path": "migration/contracts/v1/source_token_retirement_ov12.md",
+      "sha256": "7204114c611414e4318401fd0a7ba1ff68f1a199348fee74e83fdb7492aead54",
+      "size_bytes": 407
+    },
+    {
+      "path": "migration/ledger/findings.json",
+      "sha256": "b2ea940c3b39ac7a6285247faecffaf712204c6d6b7f2c682605348383b23a73",
+      "size_bytes": 24201
+    },
+    {
+      "path": "migration/ledger/ov12_status.json",
+      "sha256": "ac322b4c90744770f7e41d7ab0fbe9d08536525087089c144b405f0ecdf5ef2c",
+      "size_bytes": 490
+    },
+    {
+      "path": "scripts/validate_ov12_contract.py",
+      "sha256": "42361fee1177e5150b18e49c9342441b6f9192b1d8c07d4b668d7aff8fd589c6",
+      "size_bytes": 8009
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov12_diagnostics_evidence_privacy_v1/README.md",
+      "sha256": "c845e8ce09299279dd931f5b6f0c7b47ef2ef6731d1cb9547206a7ecd3257694",
+      "size_bytes": 480
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov12_diagnostics_evidence_privacy_v1/inventory.json",
+      "sha256": "4b3402a72bc3a87692a1b89d3978a97a80887994897bab5797c35858c3c84225",
+      "size_bytes": 2065
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov12_diagnostics_evidence_privacy_v1/manifest.schema-v2.json",
+      "sha256": "ea2e04e47c04f42801c03de3dbbe63b39524f55a99e86b61a817139c6cbfe07c",
+      "size_bytes": 2112
+    }
+  ],
+  "target": "dustui_android"
+}

@@ -21,6 +21,8 @@ type Report struct {
 	PackageStorageAuthority bool                    `json:"packageStorageAuthority"`
 	CleanupIntelligence     bool                    `json:"cleanupIntelligence"`
 	AutomationActivity      bool                    `json:"automationActivity"`
+	DiagnosticsEvidence     bool                    `json:"diagnosticsEvidence"`
+	PrivacyBoundedSupport   bool                    `json:"privacyBoundedSupport"`
 	CleanupCapability       bool                    `json:"cleanupCapability"`
 	RequiredTables          []string                `json:"requiredTables"`
 	EnvelopeTypes           []protocol.EnvelopeType `json:"envelopeTypes"`
@@ -43,9 +45,11 @@ func Current() Report {
 		PackageStorageAuthority: true,
 		CleanupIntelligence:     true,
 		AutomationActivity:      true,
+		DiagnosticsEvidence:     true,
+		PrivacyBoundedSupport:   true,
 		CleanupCapability:       true,
 		RequiredTables:          append([]string{}, state.RequiredTables...),
 		EnvelopeTypes:           protocol.SupportedEnvelopeTypes(),
-		Message:                 "OV11 Go automation and Activity ownership make UI, WorkManager, Tasker, notifications, and recovery observe the same durable operation; accepted, queued, and running are never terminal success.",
+		Message:                 "OV12 Go diagnostics, evidence health, problem graph, retention matrix, and sealed support bundles replace debug heuristics while Android buildability remains intentionally suspended until OV13.",
 	}
 }
