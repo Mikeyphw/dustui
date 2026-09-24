@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const SchemaVersion = 9
+const SchemaVersion = 10
 
 var RequiredTables = []string{
 	"scan_sessions",
@@ -53,6 +53,9 @@ var RequiredTables = []string{
 	"significant_problem_records",
 	"privacy_retention_rules",
 	"support_bundles",
+	"product_surface_parity",
+	"android_reconnect_evidence",
+	"route_accessibility_contracts",
 }
 
 var SQLitePragmas = []string{
@@ -77,6 +80,8 @@ var QueryIndexes = []string{
 	"CREATE INDEX IF NOT EXISTS idx_problem_graph_root ON problem_graph_nodes(root_cause_id, severity, risk);",
 	"CREATE INDEX IF NOT EXISTS idx_diagnostic_events_session ON diagnostic_events(session_id, operation_id, area, severity);",
 	"CREATE INDEX IF NOT EXISTS idx_support_bundles_privacy ON support_bundles(privacy_mode, created_at_ms);",
+	"CREATE INDEX IF NOT EXISTS idx_android_reconnect_phase ON android_reconnect_evidence(phase, task, status);",
+	"CREATE INDEX IF NOT EXISTS idx_route_accessibility_route ON route_accessibility_contracts(route_id, layout_class);",
 }
 
 type Table struct {
@@ -131,6 +136,9 @@ var Tables = []Table{
 	{"significant_problem_records", `CREATE TABLE IF NOT EXISTS significant_problem_records (record_id TEXT PRIMARY KEY, problem_id TEXT NOT NULL, operation_id TEXT, severity TEXT NOT NULL, risk TEXT NOT NULL, guidance TEXT NOT NULL, raw_event_ref TEXT, created_at_ms INTEGER NOT NULL);`},
 	{"privacy_retention_rules", `CREATE TABLE IF NOT EXISTS privacy_retention_rules (privacy_class TEXT PRIMARY KEY, retain_days INTEGER NOT NULL, prune_with_evidence INTEGER NOT NULL DEFAULT 1, export_redaction TEXT NOT NULL, backup_transfer_eligible INTEGER NOT NULL DEFAULT 0);`},
 	{"support_bundles", `CREATE TABLE IF NOT EXISTS support_bundles (bundle_id TEXT PRIMARY KEY, manifest_json TEXT NOT NULL, checksums_json TEXT NOT NULL, privacy_mode TEXT NOT NULL, selected_evidence_json TEXT NOT NULL, includes_file_content INTEGER NOT NULL DEFAULT 0, automatic_upload INTEGER NOT NULL DEFAULT 0, reproducible_export_key TEXT NOT NULL, created_at_ms INTEGER NOT NULL);`},
+	{"product_surface_parity", `CREATE TABLE IF NOT EXISTS product_surface_parity (surface TEXT NOT NULL, workflow TEXT NOT NULL, shared_engine_semantics INTEGER NOT NULL DEFAULT 1, legacy_python_textual_required INTEGER NOT NULL DEFAULT 0, machine_readable INTEGER NOT NULL DEFAULT 0, smoke_status TEXT NOT NULL, evidence_ref TEXT NOT NULL, PRIMARY KEY(surface, workflow));`},
+	{"android_reconnect_evidence", `CREATE TABLE IF NOT EXISTS android_reconnect_evidence (phase TEXT NOT NULL, task TEXT NOT NULL, status TEXT NOT NULL, source_of_truth TEXT NOT NULL, go_runtime_digest TEXT, apk_digest TEXT, signing_identity TEXT, devtool_run_id TEXT, recorded_at_ms INTEGER NOT NULL, PRIMARY KEY(phase, task));`},
+	{"route_accessibility_contracts", `CREATE TABLE IF NOT EXISTS route_accessibility_contracts (route_id TEXT NOT NULL, layout_class TEXT NOT NULL, semantic_identity TEXT NOT NULL, accessibility_label TEXT NOT NULL, traversal_group TEXT NOT NULL, action_gate TEXT NOT NULL, PRIMARY KEY(route_id, layout_class));`},
 }
 
 func CreateStatements() []string {
@@ -150,7 +158,7 @@ func ValidateSchemaContract() error {
 			return fmt.Errorf("required table %s missing", table)
 		}
 	}
-	for _, required := range []string{"journal_mode = WAL", "expected_generation", "request_fingerprint", "operation_events", "retained_legacy_quarantine_json", "idx_scan_entries_parent_page", "idx_scan_entries_logical_size", "idx_scan_sessions_history", "runtime_sessions", "shell_routes", "root_runtime_identities", "privileged_admissions", "privileged_events", "no_replay_token", "reconcile_required", "cleanup_actionable_evidence", "cleanup_manifest_entries", "cleanup_capability_claims", "manifest_revision", "scan_context_hash", "root_identity", "claim_state", "exact_descendants_json", "cleanup_mutation_journal", "cleanup_verification_results", "cleanup_recovery_status", "mutation_protocol", "verified_absent", "stale_after_cleanup", "legacy_destructive_executor", "no_replay", "android_package_evidence_snapshots", "android_package_records", "android_storage_evidence", "package_residue_candidates", "package_action_rechecks", "evidence_hash", "package_key", "collection_completeness", "requires_recheck", "derived_from_regex", "cleanup_duplicate_groups", "cleanup_duplicate_candidates", "cleanup_residue_evidence", "cleanup_recommendations", "cleanup_rule_results", "cleanup_plan_conflicts", "verification_state", "canonical_keep_path", "retained_copy_proof", "actionable_evidence_json", "bounded_regex", "provenance_json", "requires_review", "automation_admissions", "automation_sources", "notification_actions", "activity_runs", "accepted_not_success", "terminal_truth", "evidence_correlation", "thin_adapter", "replay_rejected", "operation_binding", "retry_gate", "cancel_gate", "reconcile_gate", "evidence_health_generations", "problem_graph_nodes", "diagnostic_events", "significant_problem_records", "privacy_retention_rules", "support_bundles", "completed_alone_healthy", "invalidated_by_json", "stable_id", "suppressed_by_root", "values_redacted_json", "raw_values_persisted", "auto_upload", "export_redaction", "backup_transfer_eligible", "includes_file_content", "reproducible_export_key"} {
+	for _, required := range []string{"journal_mode = WAL", "expected_generation", "request_fingerprint", "operation_events", "retained_legacy_quarantine_json", "idx_scan_entries_parent_page", "idx_scan_entries_logical_size", "idx_scan_sessions_history", "runtime_sessions", "shell_routes", "root_runtime_identities", "privileged_admissions", "privileged_events", "no_replay_token", "reconcile_required", "cleanup_actionable_evidence", "cleanup_manifest_entries", "cleanup_capability_claims", "manifest_revision", "scan_context_hash", "root_identity", "claim_state", "exact_descendants_json", "cleanup_mutation_journal", "cleanup_verification_results", "cleanup_recovery_status", "mutation_protocol", "verified_absent", "stale_after_cleanup", "legacy_destructive_executor", "no_replay", "android_package_evidence_snapshots", "android_package_records", "android_storage_evidence", "package_residue_candidates", "package_action_rechecks", "evidence_hash", "package_key", "collection_completeness", "requires_recheck", "derived_from_regex", "cleanup_duplicate_groups", "cleanup_duplicate_candidates", "cleanup_residue_evidence", "cleanup_recommendations", "cleanup_rule_results", "cleanup_plan_conflicts", "verification_state", "canonical_keep_path", "retained_copy_proof", "actionable_evidence_json", "bounded_regex", "provenance_json", "requires_review", "automation_admissions", "automation_sources", "notification_actions", "activity_runs", "accepted_not_success", "terminal_truth", "evidence_correlation", "thin_adapter", "replay_rejected", "operation_binding", "retry_gate", "cancel_gate", "reconcile_gate", "evidence_health_generations", "problem_graph_nodes", "diagnostic_events", "significant_problem_records", "privacy_retention_rules", "support_bundles", "completed_alone_healthy", "invalidated_by_json", "stable_id", "suppressed_by_root", "values_redacted_json", "raw_values_persisted", "auto_upload", "export_redaction", "backup_transfer_eligible", "includes_file_content", "reproducible_export_key", "product_surface_parity", "android_reconnect_evidence", "route_accessibility_contracts", "legacy_python_textual_required", "shared_engine_semantics", "go_runtime_digest", "apk_digest", "signing_identity", "semantic_identity", "accessibility_label", "traversal_group"} {
 		if !strings.Contains(joined, required) {
 			return fmt.Errorf("schema contract missing %s", required)
 		}

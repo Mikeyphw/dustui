@@ -1,0 +1,96 @@
+{
+  "android_buildability": "mandatory",
+  "files": [
+    {
+      "category": "target-config",
+      "path": ".devtool.toml"
+    },
+    {
+      "category": "source",
+      "path": "android/build.gradle.kts"
+    },
+    {
+      "category": "source",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/go/ProductCutoverContract.kt"
+    },
+    {
+      "category": "test",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/go/ProductCutoverContractTest.kt"
+    },
+    {
+      "category": "source",
+      "path": "go/cmd/dustui-go/main.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/product/product.go"
+    },
+    {
+      "category": "test",
+      "path": "go/internal/product/product_test.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/tui/tui.go"
+    },
+    {
+      "category": "test",
+      "path": "go/internal/tui/tui_test.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/readiness/readiness.go"
+    },
+    {
+      "category": "test",
+      "path": "go/internal/readiness/readiness_test.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/state/schema.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/version/version.go"
+    },
+    {
+      "category": "contract",
+      "path": "migration/audit/v1/ov13_audit_loop.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/contracts/v1/product_cutover_gateD_ov13.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/contracts/v1/authority_transition_ov13.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/contracts/v1/legacy_paths_ov13.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/contracts/v1/source_token_retirement_ov13.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/ledger/findings.json"
+    },
+    {
+      "category": "contract",
+      "path": "migration/ledger/ov13_status.json"
+    },
+    {
+      "category": "contract",
+      "path": "scripts/validate_ov13_contract.py"
+    }
+  ],
+  "gate": "Gate D",
+  "name": "dustui_go_ov13_cli_android_cutover_gateD_v1",
+  "no_unrelated_cleanup": true,
+  "overlay": "OV13",
+  "schema": "devtool.overlay.inventory.v1",
+  "target": "dustui_android",
+  "unsupported_devtool_jobs_workflows_added": false
+}

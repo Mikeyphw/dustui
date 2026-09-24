@@ -2,18 +2,21 @@ package readiness
 
 import "testing"
 
-func TestCurrentIsOV12DiagnosticsEvidenceAuthority(t *testing.T) {
+func TestCurrentIsOV13ProductDefault(t *testing.T) {
 	report := Current()
-	if report.MigrationPhase != "OV12" {
+	if report.MigrationPhase != "OV13" {
 		t.Fatalf("phase = %q", report.MigrationPhase)
 	}
-	if report.ProductionEngine {
-		t.Fatalf("Android production buildability remains suspended until OV13: %+v", report)
+	if !report.ProductionEngine || report.AndroidBuildability != "mandatory" || report.AndroidReconnectGate != "Gate D" {
+		t.Fatalf("Gate D readiness missing: %+v", report)
+	}
+	if !report.GoCLIDefault || !report.GoTUIDefault {
+		t.Fatalf("Go CLI/TUI must be product defaults: %+v", report)
 	}
 	if !report.MutationAuthority || !report.PackageStorageAuthority || !report.CleanupIntelligence || !report.AutomationActivity || !report.DiagnosticsEvidence || !report.PrivacyBoundedSupport || !report.SQLiteAuthorityModel || !report.ReadAuthority || !report.RuntimePackaged || !report.ShellScaffold || !report.PrivilegedBoundary || !report.CleanupCapability {
-		t.Fatalf("OV12 must expose diagnostics/evidence/privacy plus automation/activity, cleanup-intelligence, package-storage, mutation, read, runtime, shell, root-boundary, and cleanup contracts: %+v", report)
+		t.Fatalf("OV13 must retain all prior authorities: %+v", report)
 	}
-	if len(report.RequiredTables) < 45 || len(report.EnvelopeTypes) < 9 {
-		t.Fatalf("OV12 readiness lacks table/protocol coverage: %+v", report)
+	if len(report.RequiredTables) < 48 || len(report.EnvelopeTypes) < 9 {
+		t.Fatalf("OV13 readiness lacks table/protocol coverage: %+v", report)
 	}
 }

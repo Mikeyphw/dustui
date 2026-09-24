@@ -70,7 +70,7 @@ val verifyStableToolchainBaseline by tasks.registering {
 
 val verifyDustMigrationContract by tasks.registering(Exec::class) {
     group = "verification"
-    description = "Verifies DustUI OV01 migration contract, inventories, and containment guards."
+    description = "Verifies DustUI OV13 Gate D product reconnect contract."
     workingDir = rootDir.parentFile
-    commandLine("python3", "scripts/validate_ov01_contract.py")
+    commandLine("python3", "scripts/validate_ov13_contract.py")
 }

@@ -1,6 +1,7 @@
 package readiness
 
 import (
+	"github.com/mikeyphw/dustui/go/internal/product"
 	"github.com/mikeyphw/dustui/go/internal/protocol"
 	"github.com/mikeyphw/dustui/go/internal/state"
 	"github.com/mikeyphw/dustui/go/internal/version"
@@ -24,6 +25,10 @@ type Report struct {
 	DiagnosticsEvidence     bool                    `json:"diagnosticsEvidence"`
 	PrivacyBoundedSupport   bool                    `json:"privacyBoundedSupport"`
 	CleanupCapability       bool                    `json:"cleanupCapability"`
+	GoCLIDefault            bool                    `json:"goCliDefault"`
+	GoTUIDefault            bool                    `json:"goTuiDefault"`
+	AndroidReconnectGate    string                  `json:"androidReconnectGate"`
+	AndroidBuildability     string                  `json:"androidBuildability"`
 	RequiredTables          []string                `json:"requiredTables"`
 	EnvelopeTypes           []protocol.EnvelopeType `json:"envelopeTypes"`
 	Message                 string                  `json:"message"`
@@ -35,7 +40,7 @@ func Current() Report {
 		MigrationPhase:          version.MigrationPhase,
 		Protocol:                version.Protocol,
 		SchemaProtocol:          version.SchemaProtocol,
-		ProductionEngine:        false,
+		ProductionEngine:        true,
 		SQLiteAuthorityModel:    true,
 		ReadAuthority:           true,
 		RuntimePackaged:         true,
@@ -48,8 +53,12 @@ func Current() Report {
 		DiagnosticsEvidence:     true,
 		PrivacyBoundedSupport:   true,
 		CleanupCapability:       true,
+		GoCLIDefault:            true,
+		GoTUIDefault:            true,
+		AndroidReconnectGate:    product.Gate,
+		AndroidBuildability:     product.AndroidBuildState,
 		RequiredTables:          append([]string{}, state.RequiredTables...),
 		EnvelopeTypes:           protocol.SupportedEnvelopeTypes(),
-		Message:                 "OV12 Go diagnostics, evidence health, problem graph, retention matrix, and sealed support bundles replace debug heuristics while Android buildability remains intentionally suspended until OV13.",
+		Message:                 "OV13 makes the Go CLI/TUI and Android semantic shell the product default; Android buildability is mandatory again and legacy domain engines are no longer required.",
 	}
 }

@@ -64,7 +64,7 @@ required = true
 external_verification = "auto"
 
 [targets.dustui_android.validation]
-android_safe = false
+android_safe = true
 split_gradle = true
 max_workers = 2
 cpu_limit = 2
@@ -80,11 +80,10 @@ gradle_lint_metaspace_mb = 640
 affected_module_lint = true
 
 [targets.dustui_android.metadata]
-android_buildability = "intentionally-suspended"
-android_buildability_suspended_until = "OV13"
-gate = "none - Android suspended non-gate"
+android_buildability = "mandatory"
+gate = "Gate D - Android reconnect mandatory"
 primary = true
-migration_phase = "OV12"
+migration_phase = "OV13"
 structured_events = true
 max_gradle_nodes = 1
 abi_policy = "arm64-v8a production first; x86_64 is test-only until a matching Go runtime exists"
@@ -98,9 +97,16 @@ outputs = ["go/bin", "go/build"]
 inputs = ["go"]
 
 [targets.dustui_go.metadata]
-production_authority = false
-migration_phase = "OV12"
+production_authority = true
+migration_phase = "OV13"
 readiness_only = false
+product_default = true
+go_cli_default = true
+go_tui_default = true
+android_reconnect_gate = "Gate D"
+android_buildability = "mandatory"
+legacy_python_textual_production = false
+legacy_kotlin_domain_truth = false
 state_protocol_kernel = true
 query_history_engine = true
 runtime_contract_gate = "Gate B"

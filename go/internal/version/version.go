@@ -2,8 +2,8 @@ package version
 
 const (
 	Name           = "DustUI Go Engine"
-	MigrationPhase = "OV12"
-	Authority      = "go-diagnostics-evidence-privacy-authority"
+	MigrationPhase = "OV13"
+	Authority      = "go-product-default-cli-tui-android-cutover"
 	Protocol       = "dustui.kernel.v1"
 	SchemaProtocol = "dustui.sqlite.schema.v1"
 )

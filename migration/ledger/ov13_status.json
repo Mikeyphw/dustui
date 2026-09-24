@@ -1,0 +1,27 @@
+{
+  "android_buildability": "mandatory",
+  "android_shell_default": true,
+  "artifact": "dustui_go_ov13_cli_android_cutover_gateD_v1.zip",
+  "gate": "Gate D",
+  "go_cli_default": true,
+  "go_tui_default": true,
+  "legacy_domain_engines_required": false,
+  "legacy_python_textual_production": false,
+  "phase": "OV13",
+  "production_engine": "go",
+  "required_gate_evidence": [
+    "go-test",
+    "go-cli-smoke",
+    "go-tui-smoke",
+    "android-compile",
+    "android-unit",
+    "android-lint",
+    "android-package",
+    "install-smoke",
+    "route-instrumentation",
+    "accessibility",
+    "runtime-apk-binding",
+    "devtool-artifact-identity"
+  ],
+  "unsupported_devtool_jobs_workflows": false
+}

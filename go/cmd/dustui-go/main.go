@@ -11,12 +11,14 @@ import (
 	"github.com/mikeyphw/dustui/go/internal/intelligence"
 	"github.com/mikeyphw/dustui/go/internal/packageevidence"
 	"github.com/mikeyphw/dustui/go/internal/privileged"
+	"github.com/mikeyphw/dustui/go/internal/product"
 	"github.com/mikeyphw/dustui/go/internal/query"
 	"github.com/mikeyphw/dustui/go/internal/readiness"
 	runtimecontract "github.com/mikeyphw/dustui/go/internal/runtime"
 	"github.com/mikeyphw/dustui/go/internal/scan"
 	"github.com/mikeyphw/dustui/go/internal/shell"
 	"github.com/mikeyphw/dustui/go/internal/state"
+	"github.com/mikeyphw/dustui/go/internal/tui"
 )
 
 func main() {
@@ -40,6 +42,10 @@ func main() {
 
 	case "runtime-contract":
 		payload = runtimecontract.CurrentSpec()
+	case "product-contract", "cli-contract", "android-cutover-contract", "gate-d-contract":
+		payload = product.CurrentContract()
+	case "tui-contract", "tui-smoke":
+		payload = tui.Smoke()
 	case "diagnostics-contract", "evidence-contract", "problem-contract", "privacy-contract", "support-bundle-contract":
 		payload = diagnostics.Contract()
 	case "cleanup-contract", "manifest-contract", "capability-contract", "mutation-contract":
@@ -61,7 +67,7 @@ func main() {
 		payload = shell.CurrentContract()
 	case "query-contract":
 		payload = map[string]any{
-			"phase":        "OV12",
+			"phase":        "OV13",
 			"pagination":   "deterministic_offset_token_bound_to_generation",
 			"maxPageLimit": query.MaxPageLimit,
 			"countKinds":   []string{query.CountTotal, query.CountPartial, query.CountUnknown},
@@ -82,7 +88,7 @@ func main() {
 		}
 	case "scan-contract":
 		payload = map[string]any{
-			"phase":                 "OV12",
+			"phase":                 "OV13",
 			"integrityStates":       []scan.IntegrityState{scan.IntegrityComplete, scan.IntegrityPartial, scan.IntegrityTruncated, scan.IntegrityMalformed, scan.IntegrityFailed, scan.IntegrityStaleAfterCleanup},
 			"sourceCompleteness":    []scan.SourceCompleteness{scan.SourceComplete, scan.SourceIncomplete, scan.SourceUnknown},
 			"sizeSemantics":         []scan.SizeSemantics{scan.SizeLogical, scan.SizeAllocated, scan.SizeLogicalAndAllocated},
@@ -101,7 +107,7 @@ func main() {
 		}
 		payload = session
 	default:
-		fmt.Fprintf(os.Stderr, "unknown command %q; supported: readiness, version, protocol, schema, runtime-contract, diagnostics-contract, cleanup-contract, mutation-contract, cleanup-intelligence-contract, package-storage-contract, privileged-contract, shell-contract, query-contract, scan-contract, scan [root]\n", command)
+		fmt.Fprintf(os.Stderr, "unknown command %q; supported: readiness, version, protocol, schema, runtime-contract, product-contract, cli-contract, tui-contract, android-cutover-contract, diagnostics-contract, cleanup-contract, mutation-contract, cleanup-intelligence-contract, package-storage-contract, privileged-contract, shell-contract, query-contract, scan-contract, scan [root]\n", command)
 		os.Exit(2)
 	}
 	encoded, err := json.MarshalIndent(payload, "", "  ")

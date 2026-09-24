@@ -16,10 +16,12 @@
       "ov03_status": "scan_truth_semantics_established",
       "ov05_status": "go_scan_read_authority_bound_to_runtime_contract",
       "ov12_status": "diagnostics_evidence_privacy_authority_added",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV03",
         "OV05",
-        "OV12"
+        "OV12",
+        "OV13"
       ],
       "source": "Original bug hunt",
       "title": "Scan truth"
@@ -94,11 +96,13 @@
       "ov05_status": "runtime_session_reconnect_contract_added",
       "ov08_status": "go_mutation_journal_recovery_status_and_no_replay_records_added",
       "ov11_status": "automation_activity_owned_by_go",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV02",
         "OV05",
         "OV08",
-        "OV11"
+        "OV11",
+        "OV13"
       ],
       "source": "Original bug hunt"
     },
@@ -151,8 +155,10 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov11_status": "automation_activity_owned_by_go",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
-        "OV11"
+        "OV11",
+        "OV13"
       ],
       "source": "Original bug hunt"
     },
@@ -164,10 +170,12 @@
       "ov01_status": "mapped",
       "ov02_status": "not_in_ov02_scope",
       "ov12_status": "diagnostics_evidence_privacy_authority_added",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV01",
         "OV12",
-        "OV15"
+        "OV15",
+        "OV13"
       ],
       "source": "Original bug hunt"
     },
@@ -180,9 +188,11 @@
       "ov02_status": "not_in_ov02_scope",
       "ov03_status": "semantic_history_compatibility_established",
       "ov04_status": "history_query_side_uses_semantic_compatibility",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV03",
-        "OV04"
+        "OV04",
+        "OV13"
       ],
       "source": "Original bug hunt",
       "title": "Invalid history comparability"
@@ -194,6 +204,7 @@
       "id": "RC-13",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV03",
         "OV05",
@@ -211,9 +222,11 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov12_status": "diagnostics_evidence_privacy_authority_added",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV12",
-        "OV15"
+        "OV15",
+        "OV13"
       ],
       "source": "Original bug hunt"
     },
@@ -224,8 +237,10 @@
       "id": "N-01",
       "ov01_status": "mapped",
       "ov02_status": "not_in_ov02_scope",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
-        "OV01"
+        "OV01",
+        "OV13"
       ],
       "source": "Post-bughunt concrete finding"
     },
@@ -236,8 +251,10 @@
       "id": "N-02",
       "ov01_status": "mapped",
       "ov02_status": "not_in_ov02_scope",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
-        "OV01"
+        "OV01",
+        "OV13"
       ],
       "source": "Post-bughunt concrete finding"
     },
@@ -249,10 +266,12 @@
       "ov01_status": "mapped",
       "ov02_status": "foundation_established_non_production",
       "ov08_status": "fail_open_cleanup_publication_replaced_by_go_mutation_journal_and_verification",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV01",
         "OV02",
-        "OV08"
+        "OV08",
+        "OV13"
       ],
       "source": "Post-bughunt concrete finding"
     },
@@ -265,10 +284,12 @@
       "ov02_status": "not_in_ov02_scope",
       "ov06_status": "bounded_go_root_admission_finalized_for_pre_cutover",
       "ov08_status": "legacy_destructive_executor_unreachable_after_gateC",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV01",
         "OV06",
-        "OV08"
+        "OV08",
+        "OV13"
       ],
       "source": "Post-bughunt concrete finding"
     },
@@ -280,9 +301,11 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov12_status": "diagnostics_evidence_privacy_authority_added",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV03",
-        "OV12"
+        "OV12",
+        "OV13"
       ],
       "source": "Post-bughunt concrete finding"
     },
@@ -295,9 +318,11 @@
       "ov02_status": "not_in_ov02_scope",
       "ov07_status": "cleanup_evidence_manifest_capability_authority_added_non_mutating",
       "ov08_status": "cleanup_publication_replay_replaced_by_manifest_capability_claim_reconcile",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV07",
-        "OV08"
+        "OV08",
+        "OV13"
       ],
       "source": "Post-bughunt concrete finding"
     },
@@ -308,10 +333,12 @@
       "id": "N-07",
       "ov01_status": "mapped",
       "ov02_status": "not_in_ov02_scope",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV01",
         "OV14",
-        "OV15"
+        "OV15",
+        "OV13"
       ],
       "source": "Post-bughunt concrete finding"
     },
@@ -322,8 +349,10 @@
       "id": "N-08",
       "ov01_status": "mapped",
       "ov02_status": "not_in_ov02_scope",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
-        "OV01-OV15"
+        "OV01-OV15",
+        "OV13"
       ],
       "source": "Post-bughunt concrete finding"
     },
@@ -336,11 +365,13 @@
       "ov02_status": "not_in_ov02_scope",
       "ov05_status": "android_runtime_packaging_contract_added",
       "ov12_status": "diagnostics_evidence_privacy_authority_added",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV01",
         "OV05",
         "OV12",
-        "OV15"
+        "OV15",
+        "OV13"
       ],
       "source": "Original 16-section bug hunt"
     },
@@ -352,9 +383,11 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov06_status": "go_root_protocol_reconcile_and_no_replay_boundary_added",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV06",
-        "OV08"
+        "OV08",
+        "OV13"
       ],
       "source": "Original 16-section bug hunt"
     },
@@ -367,9 +400,11 @@
       "ov02_status": "not_in_ov02_scope",
       "ov03_status": "scanner_contract_foundation",
       "ov05_status": "protocol_session_identity_added",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV03",
-        "OV05"
+        "OV05",
+        "OV13"
       ],
       "source": "Original 16-section bug hunt",
       "title": "Scanner event protocol"
@@ -383,10 +418,12 @@
       "ov02_status": "foundation_established_non_production",
       "ov05_status": "scan_lifecycle_runtime_session_contract_added",
       "ov11_status": "automation_activity_owned_by_go",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV02",
         "OV05",
-        "OV11"
+        "OV11",
+        "OV13"
       ],
       "source": "Original 16-section bug hunt"
     },
@@ -399,10 +436,12 @@
       "ov02_status": "foundation_established_non_production",
       "ov03_status": "scan_generation_integrity_linked",
       "ov08_status": "db_sessions_recovery_extended_with_mutation_journal_verification_recovery_status",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV02",
         "OV03",
-        "OV08"
+        "OV08",
+        "OV13"
       ],
       "source": "Original 16-section bug hunt",
       "title": "DB sessions recovery"
@@ -416,9 +455,11 @@
       "ov02_status": "not_in_ov02_scope",
       "ov04_status": "explorer_search_query_semantics_added",
       "ov05_status": "files_route_read_contract_added",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV04",
-        "OV05"
+        "OV05",
+        "OV13"
       ],
       "source": "Original 16-section bug hunt"
     },
@@ -432,10 +473,12 @@
       "ov03_status": "integrity_completeness_truncation_accounted",
       "ov04_status": "summary_composition_inputs_added",
       "ov05_status": "overview_route_read_contract_added",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV03",
         "OV04",
-        "OV05"
+        "OV05",
+        "OV13"
       ],
       "source": "Original 16-section bug hunt",
       "title": "Scan completeness"
@@ -449,6 +492,7 @@
       "ov02_status": "not_in_ov02_scope",
       "ov03_status": "semantic_history_compatibility_foundation",
       "ov04_status": "growth_history_series_added",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV03",
         "OV04",
@@ -465,10 +509,12 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov04_status": "large_file_query_uses_explicit_size_semantics",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV03",
         "OV04",
-        "OV07"
+        "OV07",
+        "OV13"
       ],
       "source": "Original 16-section bug hunt"
     },
@@ -480,8 +526,10 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov10_status": "cleanup_intelligence_migrated_to_go_with_proof_bearing_outputs",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
-        "OV10"
+        "OV10",
+        "OV13"
       ],
       "source": "Original 16-section bug hunt"
     },
@@ -494,9 +542,11 @@
       "ov02_status": "not_in_ov02_scope",
       "ov09_status": "package_storage_evidence_authority_added_with_action_time_recheck",
       "ov10_status": "cleanup_intelligence_migrated_to_go_with_proof_bearing_outputs",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV09",
-        "OV10"
+        "OV10",
+        "OV13"
       ],
       "source": "Original 16-section bug hunt"
     },
@@ -509,9 +559,11 @@
       "ov02_status": "not_in_ov02_scope",
       "ov04_status": "activity_page_preparation_added",
       "ov09_status": "package_storage_evidence_authority_added_with_action_time_recheck",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV09",
-        "OV04"
+        "OV04",
+        "OV13"
       ],
       "source": "Original 16-section bug hunt"
     },
@@ -523,8 +575,10 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov10_status": "cleanup_intelligence_migrated_to_go_with_proof_bearing_outputs",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
-        "OV10"
+        "OV10",
+        "OV13"
       ],
       "source": "Original 16-section bug hunt"
     },
@@ -536,9 +590,11 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov08_status": "destructive_cleanup_owned_by_go_mutation_engine",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV07",
-        "OV08"
+        "OV08",
+        "OV13"
       ],
       "source": "Original 16-section bug hunt"
     },
@@ -550,8 +606,10 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov11_status": "automation_activity_owned_by_go",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
-        "OV11"
+        "OV11",
+        "OV13"
       ],
       "source": "Original 16-section bug hunt"
     },
@@ -564,6 +622,7 @@
       "ov02_status": "not_in_ov02_scope",
       "ov05_status": "stable_route_identity_shell_scaffold_added",
       "ov12_status": "diagnostics_evidence_privacy_authority_added",
+      "ov13_status": "gate_d_android_cli_tui_product_cutover_bound_to_go_authority",
       "overlays": [
         "OV05",
         "OV12",
@@ -750,6 +809,6 @@
       "title": "Diagnostics/evidence/privacy/support bundle"
     }
   ],
-  "phase": "OV12",
+  "phase": "OV13",
   "schema": "dustui.migration.ledger.v1"
 }

@@ -1,0 +1,166 @@
+{
+  "apply_policy": {
+    "android_buildability": "mandatory",
+    "devtool_command": "devtool -r \"$HOME/Code/dustui\" --target dustui_android apply overlay /sdcard/Download/dustui_go_ov13_cli_android_cutover_gateD_v1.zip --no-validate --commit \"DustUI OV13 CLI Android cutover Gate D\"",
+    "evidence_commands": [
+      "python3 scripts/validate_ov13_contract.py --audit-loop",
+      "cd go && go test ./...",
+      "devtool -r \"$HOME/Code/dustui\" --target dustui_android validate --task verifyDustMigrationContract --task :app:compileDebugSources --task :app:testDebugUnitTest --task :app:lintDebug --task :app:assembleDebug"
+    ],
+    "full_validation_gate": true,
+    "unsupported_devtool_jobs_workflows_added": false,
+    "validation_policy": "Gate D reconnect: Go/contracts evidence plus Android compile/unit/lint/package/install/smoke/route/accessibility/runtime binding become hard gate evidence again."
+  },
+  "artifact": "dustui_go_ov13_cli_android_cutover_gateD_v1.zip",
+  "authority_transition": {
+    "android_buildability": "mandatory",
+    "android_shell_default": true,
+    "gate": "Gate D",
+    "go_cli_default": true,
+    "go_engine_product_default": true,
+    "go_tui_default": true,
+    "legacy_kotlin_domain_truth": false,
+    "legacy_python_textual_production": false,
+    "unsupported_devtool_jobs_workflows_added": false
+  },
+  "created_utc": "2026-09-24T13:30:00Z",
+  "name": "dustui_go_ov13_cli_android_cutover_gateD_v1",
+  "ov13_requirements": [
+    "Go CLI and Go TUI backed by shared Go semantics",
+    "Android semantic shell default with Overview/Files/Clean/Apps/Activity/System routes",
+    "Android buildability mandatory again",
+    "legacy domain engines no longer product blockers",
+    "route identity preserved across phone/tablet layouts",
+    "runtime/APK/Devtool artifact binding required for Gate D closure"
+  ],
+  "overlay": "OV13",
+  "payload_file_count": 25,
+  "payload_sha256": [
+    {
+      "path": ".devtool.toml",
+      "sha256": "34f82aaae1aa2872abd4ddc5f23513eac39d6b54111ae14ad39d3ff16d0f82e1",
+      "size_bytes": 6271
+    },
+    {
+      "path": "android/build.gradle.kts",
+      "sha256": "e30c96264555e5f960cd66a5397a66a9f912aa23673d4ab7726b5fb0fbbba8e7",
+      "size_bytes": 3423
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/go/ProductCutoverContract.kt",
+      "sha256": "1ba9f61487a021fa9868defbe5b38429fbec323864e03bf180b920b99ccb6ac0",
+      "size_bytes": 2196
+    },
+    {
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/go/ProductCutoverContractTest.kt",
+      "sha256": "dee4240ea3d63d285efb834c5279d0363f37dbd0a4301de7315229724c34b5a7",
+      "size_bytes": 1463
+    },
+    {
+      "path": "go/cmd/dustui-go/main.go",
+      "sha256": "5219454cb915c5252017a844c372c905914ae855842ba0899d11d67d942549b4",
+      "size_bytes": 4928
+    },
+    {
+      "path": "go/internal/product/product.go",
+      "sha256": "e97bcb6ac20a31fb272c20b200f99647941914ee444cf5aea64c1ef6e9a1c7c4",
+      "size_bytes": 8913
+    },
+    {
+      "path": "go/internal/product/product_test.go",
+      "sha256": "e2c068aa19e23a4c12b46862164d680f3ee5d00a326a3d72473d6103740ea107",
+      "size_bytes": 912
+    },
+    {
+      "path": "go/internal/tui/tui.go",
+      "sha256": "74ff085f81e2d58ddf8d36b5a0a35d55abc4af21e3a21648c2f0e1ab584d926b",
+      "size_bytes": 2033
+    },
+    {
+      "path": "go/internal/tui/tui_test.go",
+      "sha256": "9e984070146195066bf64b2532ae3fae486fb84eb7897222530bd984097b3b13",
+      "size_bytes": 783
+    },
+    {
+      "path": "go/internal/readiness/readiness.go",
+      "sha256": "22e1671a9a371618dedad703bbb3e815409132c2f7d6f5f1230c9c1d3079be7b",
+      "size_bytes": 3187
+    },
+    {
+      "path": "go/internal/readiness/readiness_test.go",
+      "sha256": "b16e7425286b5f994f91fa480cf04b5b829eec70bbcac39223b6b40cc2d41115",
+      "size_bytes": 1068
+    },
+    {
+      "path": "go/internal/state/schema.go",
+      "sha256": "f2f17740b60685896d13c6fec92f0305c851addd70e81ad3f7476d0b31e91e70",
+      "size_bytes": 25489
+    },
+    {
+      "path": "go/internal/version/version.go",
+      "sha256": "9df68f2909fe2fb27dcb048f1dc198f8606d1a242c4c18212ab1a42324c7c61b",
+      "size_bytes": 233
+    },
+    {
+      "path": "migration/audit/v1/ov13_audit_loop.md",
+      "sha256": "6aee96bb3581b7a1fd1e268417f1503323787f678b635b575b36287f296f7d69",
+      "size_bytes": 954
+    },
+    {
+      "path": "migration/contracts/v1/product_cutover_gateD_ov13.md",
+      "sha256": "02e9fb4b290e6c737e5d4669bd014e6d39e171ff1c8a4b90aec4ffcb4e64860f",
+      "size_bytes": 1360
+    },
+    {
+      "path": "migration/contracts/v1/authority_transition_ov13.md",
+      "sha256": "7e692c54b88c7b7983311d26485ff8d466ec6013edb11145deca57c3ce872bdf",
+      "size_bytes": 606
+    },
+    {
+      "path": "migration/contracts/v1/legacy_paths_ov13.md",
+      "sha256": "801aec505f8c6b9cc9b8c9d24a9e825a7266ae25afc8137f789802fea8a66f5c",
+      "size_bytes": 685
+    },
+    {
+      "path": "migration/contracts/v1/source_token_retirement_ov13.md",
+      "sha256": "fbb8c760ea323aa52900063cd90927e624c642fbefae8259d720f827c1f65754",
+      "size_bytes": 693
+    },
+    {
+      "path": "migration/ledger/findings.json",
+      "sha256": "2c29c16e36475a30d8a239a827c433cf9a7406d073d508f9749eddf362068124",
+      "size_bytes": 27284
+    },
+    {
+      "path": "migration/ledger/ov13_status.json",
+      "sha256": "6f6b8485ed997757725e405e0b4d96416d2412e24c3faa38f8d4f10741ac815d",
+      "size_bytes": 701
+    },
+    {
+      "path": "scripts/validate_ov13_contract.py",
+      "sha256": "72d0acd0885cca44d656d9287607b58a2323b9e87fa9f2b854eb1efa443438e4",
+      "size_bytes": 10155
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov13_cli_android_cutover_gateD_v1/README.md",
+      "sha256": "148ba01fc778a0e5dfde3c9bf24eb575bea3d3d65ba93e9bd26c85c011094198",
+      "size_bytes": 547
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov13_cli_android_cutover_gateD_v1/inventory.json",
+      "sha256": "c2536be9141c2c3f8ad1a833ea235fdcb8c59caeb9fea6ef49fe319086daf78e",
+      "size_bytes": 2343
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov13_cli_android_cutover_gateD_v1/manifest.schema-v2.json",
+      "sha256": "0fa244b8378972998ec4ffadca1617c963c7752ca08e8480d1b2ed143fafcab6",
+      "size_bytes": 6141
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov13_cli_android_cutover_gateD_v1/SHA256SUMS",
+      "sha256": "8d26a5abb31b949c4b69edea7dd5c1fa04494b159fc97e5d29faa8be5234fd97",
+      "size_bytes": 2661
+    }
+  ],
+  "target": "dustui_android"
+}
