@@ -1,6 +1,8 @@
 package scan
 
 import (
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -22,11 +24,23 @@ func TestScanCapturesSizeSemanticsSparseHardlinkAndSymlink(t *testing.T) {
 	if err := f.Close(); err != nil {
 		t.Fatal(err)
 	}
+	hardlinkSupported := true
 	if err := os.Link(sparse, filepath.Join(root, "sparse-hardlink.bin")); err != nil {
-		t.Fatal(err)
+		if errors.Is(err, fs.ErrPermission) || errors.Is(err, fs.ErrInvalid) {
+			hardlinkSupported = false
+			t.Logf("hardlink fixture unsupported on this filesystem; keeping sparse-size assertions active: %v", err)
+		} else {
+			t.Fatal(err)
+		}
 	}
+	symlinkSupported := true
 	if err := os.Symlink("sparse.bin", filepath.Join(root, "sparse-link.bin")); err != nil {
-		t.Fatal(err)
+		if errors.Is(err, fs.ErrPermission) || errors.Is(err, fs.ErrInvalid) {
+			symlinkSupported = false
+			t.Logf("symlink fixture unsupported on this filesystem; keeping sparse-size assertions active: %v", err)
+		} else {
+			t.Fatal(err)
+		}
 	}
 
 	session, err := Scan(root, 7, DefaultOptions())
@@ -54,8 +68,14 @@ func TestScanCapturesSizeSemanticsSparseHardlinkAndSymlink(t *testing.T) {
 			symlinkEntry = e
 		}
 	}
-	if sparseEntry == nil || hardlinkEntry == nil || symlinkEntry == nil {
-		t.Fatalf("missing expected entries: %+v", session.Entries)
+	if sparseEntry == nil {
+		t.Fatalf("missing sparse entry: %+v", session.Entries)
+	}
+	if hardlinkSupported && hardlinkEntry == nil {
+		t.Fatalf("missing hardlink entry on filesystem that accepted hardlink fixture: %+v", session.Entries)
+	}
+	if symlinkSupported && symlinkEntry == nil {
+		t.Fatalf("missing symlink entry on filesystem that accepted symlink fixture: %+v", session.Entries)
 	}
 	if sparseEntry.LogicalSizeBytes <= 8*1024*1024 {
 		t.Fatalf("logical sparse size not captured: %+v", sparseEntry)
@@ -63,11 +83,15 @@ func TestScanCapturesSizeSemanticsSparseHardlinkAndSymlink(t *testing.T) {
 	if sparseEntry.AllocatedSizeBytes <= 0 {
 		t.Fatalf("allocated sparse size not captured: %+v", sparseEntry)
 	}
-	if hardlinkEntry.HardLinkGroup == "" || hardlinkEntry.HardLinkGroup != sparseEntry.HardLinkGroup {
-		t.Fatalf("hard-link group not stable: sparse=%+v hard=%+v", sparseEntry, hardlinkEntry)
+	if hardlinkSupported {
+		if hardlinkEntry.HardLinkGroup == "" || hardlinkEntry.HardLinkGroup != sparseEntry.HardLinkGroup {
+			t.Fatalf("hard-link group not stable: sparse=%+v hard=%+v", sparseEntry, hardlinkEntry)
+		}
 	}
-	if !symlinkEntry.IsSymlink || symlinkEntry.LinkTarget == "" {
-		t.Fatalf("symlink policy not captured: %+v", symlinkEntry)
+	if symlinkSupported {
+		if !symlinkEntry.IsSymlink || symlinkEntry.LinkTarget == "" {
+			t.Fatalf("symlink policy not captured: %+v", symlinkEntry)
+		}
 	}
 	if !session.CanAnalyze() || !session.CanDriveDeletion() || !session.CanDriveDuplicateHashing() || !session.CanExportCompleteData() || !session.CanShowAsFresh() {
 		t.Fatalf("complete scan should be authoritative: %+v", DecideAuthority(session, nil))

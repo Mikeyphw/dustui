@@ -1,0 +1,31 @@
+{
+  "schema": "devtool.overlay.inventory.v1",
+  "name": "dustui_go_ov03_termux_hardlink_test_hotfix_v1",
+  "files": [
+    {
+      "path": "go/internal/scan/scan_test.go",
+      "size_bytes": 5737,
+      "sha256": "444bb04b6616c98c95ab5d90433c5d415bb3ce054af78c5b8b9aa655e2ae55ec"
+    },
+    {
+      "path": "migration/contracts/v1/termux_fixture_portability_ov03.md",
+      "size_bytes": 671,
+      "sha256": "d0e4bf5fde62ddffaa2c4a523bef11a84b859789e3ce69257ff2c0ecb203585a"
+    },
+    {
+      "path": "migration/audit/v1/ov03_termux_hardlink_test_hotfix.md",
+      "size_bytes": 554,
+      "sha256": "31fc28c76561f832da8932a6e6cd9add0daf51e45657ad2263f60762bae74e76"
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov03_termux_hardlink_test_hotfix_v1/README.md",
+      "size_bytes": 272,
+      "sha256": "65099a18ee6c579b8e6c54e1e36c7cbf6908ec3ca2e361c5314df28790e4b996"
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov03_termux_hardlink_test_hotfix_v1/manifest.schema-v2.json",
+      "size_bytes": 2431,
+      "sha256": "773fd1a4a367b21f357e57f02b8e5b379e60c135ea25f93169cb1fc3ad79fdf7"
+    }
+  ]
+}
