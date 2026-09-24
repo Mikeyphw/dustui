@@ -34,9 +34,10 @@ try:
     folded = set(status.get("folded_in", []))
     rem03_folded = "rem03_android_domain_protocol_cutover" in folded
     rem04_folded = "rem04_privileged_cleanup_mutation_cutover_cpp_retirement" in folded
-    expected = POST_REM04_BLOCKERS if rem04_folded else (POST_REM03_BLOCKERS if rem03_folded else PRE_REM03_BLOCKERS)
+    rem05_folded = "rem05_legacy_surface_release_truth_retirement" in folded
+    expected = [] if rem05_folded else POST_REM04_BLOCKERS if rem04_folded else (POST_REM03_BLOCKERS if rem03_folded else PRE_REM03_BLOCKERS)
     if blockers != expected:
-        stage = 'three post-REM-04' if rem04_folded else ('five post-REM-03' if rem03_folded else 'six pre-REM-03')
+        stage = 'zero post-REM-05' if rem05_folded else ('three post-REM-04' if rem04_folded else ('five post-REM-03' if rem03_folded else 'six pre-REM-03'))
         fail.append(f"expected {stage} remaining blockers, got {status.get('blockers', [])}")
     observed = status.get("observed", {})
     if observed.get("android_go_runtime_binding") != "production":
@@ -47,8 +48,10 @@ try:
         fail.append("Go authority is not product-default-qualified")
     if rem03_folded and observed.get("room_domain_authority") != "none":
         fail.append("REM-03 is folded in but Room remains an observed production authority")
-    if status.get("status") != "reopened_blocked" or status.get("gate_d_truth") != "reopened":
-        fail.append("Gate D truth must remain reopened_blocked")
+    expected_status = "closed" if rem05_folded else "reopened_blocked"
+    expected_truth = "closed" if rem05_folded else "reopened"
+    if status.get("status") != expected_status or status.get("gate_d_truth") != expected_truth:
+        fail.append(f"Gate D truth must be {expected_status}/{expected_truth}")
 except Exception as exc:
     fail.append(f"invalid OV14 ledger: {exc}")
 

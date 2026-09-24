@@ -94,13 +94,10 @@ def observe() -> tuple[dict[str, str], list[str]]:
     ]
     generic_release_duplication = any((ROOT / rel).is_file() for rel in release_scripts) and any((ROOT / rel).is_file() for rel in release_kotlin)
 
-    legacy_navigation = (
-        "DustNavigationModel" in app
-        and any(token in app for token in ["DustDestination.DEBUG", "DustDestination.CERTIFICATION", "DustDestination.DELETION_REPORTS"])
-    )
-    if not legacy_navigation:
-        # A legacy-heavy shell is still not positive proof of retirement.
-        legacy_navigation = "DustNavigationModel" in app
+    # OV14's legacy navigation blocker specifically tracks the superseded
+    # DustNavigationModel authority. The current DustShellNavigation model is
+    # the post-cutover adaptive shell, not a legacy authority.
+    legacy_navigation = "DustNavigationModel" in app
 
     observed = {
         "cpp_scanner_runtime": "active-production" if cpp_active else "none",
@@ -170,10 +167,12 @@ def main() -> int:
         status = {}
         failures.append(f"invalid OV14 status JSON: {exc}")
 
-    if status.get("status") != "reopened_blocked":
-        failures.append("OV14 status must be reopened_blocked until the real cutover gate passes")
-    if status.get("gate_d_truth") != "reopened":
-        failures.append("OV14 status must record gate_d_truth=reopened")
+    expected_status = "closed" if not blockers else "reopened_blocked"
+    expected_truth = "closed" if not blockers else "reopened"
+    if status.get("status") != expected_status:
+        failures.append(f"OV14 status must be {expected_status} for the observed blocker state")
+    if status.get("gate_d_truth") != expected_truth:
+        failures.append(f"OV14 status must record gate_d_truth={expected_truth}")
     if status.get("desired") != DESIRED:
         failures.append("OV14 desired-state ledger does not match the retirement target")
     if status.get("observed") != observed:

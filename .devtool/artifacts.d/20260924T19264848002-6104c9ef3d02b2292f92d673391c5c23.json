@@ -1,0 +1,175 @@
+{
+  "schema_version": 3,
+  "applied_at": "2026-09-24T19:26:48.480023Z",
+  "artifact": "/storage/emulated/0/Download/dustui_go_rem05_legacy_surface_release_truth_retirement_v2.zip",
+  "artifact_name": "dustui_go_rem05_legacy_surface_release_truth_retirement_v2.zip",
+  "type": "overlay",
+  "sha256": "9b970953ba0007cdd425f8fe36d7cfcb046d71baca9e03e90958efa88a1b1067",
+  "content_identity": {
+    "sha256": "9b970953ba0007cdd425f8fe36d7cfcb046d71baca9e03e90958efa88a1b1067",
+    "size": 51430
+  },
+  "status": "ok",
+  "validation_status": "not-run",
+  "commit_message": "",
+  "commit_hash": "",
+  "file_count": 12,
+  "change_counts": {
+    "add": 3,
+    "delete": 4,
+    "modify": 9
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "dustui_go_rem05_legacy_surface_release_truth_retirement_v2",
+    "description": "REM-05: retire legacy Python target, superseded navigation authority, and app-local generic release truth; close Gate D and make OV15 Gate E eligible.",
+    "repository": {
+      "name": "dustui"
+    },
+    "target": "dustui_android",
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": ".devtool.toml",
+          "action": "modify",
+          "sha256": "cbac102a4c1a55bcd6250da5ec7dc2d27c0e42408b48e8e136c3fb087ad9f950",
+          "size": 11267,
+          "source_sha256": "195004fb2791f74b926a58139d4a96049956d1448c0ad36a7b4cf77881ad9022"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ReleasePackaging.kt",
+          "action": "delete",
+          "source_sha256": "1064d059b6e896a1edbf2b04fc0bb545388053b707d1834b4336c5adcf3f6ba0"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ReleaseReadiness.kt",
+          "action": "delete",
+          "source_sha256": "4d448d1844a977b011a4f3f6cb0622f3dc75f212efc3f2ea019ac1e240111637"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+          "action": "modify",
+          "sha256": "07490bc608fdab73178b9be1ccd0f4d65bcb8a8fec470433cfaadceb0809e152",
+          "size": 10507,
+          "source_sha256": "4e350d55ce6ba69c95fa39823616fd49bb0bb9e39413dcf06c09db4924613f39"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+          "action": "modify",
+          "sha256": "578831e67a00d68573959ea15c2c70c1134a67bccbae54907c876d586348eeec",
+          "size": 190591,
+          "source_sha256": "94e5bb5812501c7da0d3f6d8cddf7e4dbdb959ebe57fb21b8c590d35033b24a4"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleasePackagingTest.kt",
+          "action": "delete",
+          "source_sha256": "371c234ff650a3723dc00e4dc0940ab0d39e4c9d0a0f0258e44d7b761cc3b03d"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleaseReadinessTest.kt",
+          "action": "delete",
+          "source_sha256": "e89949aa193a499ac404ee4e8ccbddcf070b6aef49bec011fbf5d38467099002"
+        },
+        {
+          "path": "migration/audit/v1/rem05_legacy_surface_release_truth_retirement_audit.md",
+          "action": "add",
+          "sha256": "5f11633afe4ea098fc1ec38efeb0a0fab13281c29e117619a917fcabe964b7d0",
+          "size": 106
+        },
+        {
+          "path": "migration/contracts/v1/rem05_legacy_surface_release_truth_retirement.md",
+          "action": "add",
+          "sha256": "758e8f609199f04318d49f619d694eae181a6135cd0120c9110ea050fb6ee8b1",
+          "size": 668
+        },
+        {
+          "path": "migration/ledger/ov14_legacy_retirement_status.json",
+          "action": "modify",
+          "sha256": "c85364de413b53f91160439b7b0c6cbcb971d11338fdc61399dfc2f209d8acd5",
+          "size": 1714,
+          "source_sha256": "b5e06dcc176d94caf5e113f3841727a3a5b076b230c00ac21a29e1acd467aa58"
+        },
+        {
+          "path": "scripts/validate_ov14_retirement_truth_hotfix.py",
+          "action": "modify",
+          "sha256": "03661fcf6c78483a3f2d4688f2ddc71c315e6d3fdf764b10f793dbca07e3561a",
+          "size": 9827,
+          "source_sha256": "c9d882a73e0ffc00b8ca774c6ccb0631db4115129a2c3adfbce64c3f974440ca"
+        },
+        {
+          "path": "scripts/validate_rem01_android_go_runtime_binding.py",
+          "action": "modify",
+          "sha256": "edcc9b6c9c919c29f9622fd25e868e2b0d0fc1a6759f8353f56d67524037d892",
+          "size": 3039,
+          "source_sha256": "86f67d883025291bf1a66a57fb7d5688be2ba3fa625752370b26f70b8f43b659"
+        },
+        {
+          "path": "scripts/validate_rem02_reconciliation_hotfix.py",
+          "action": "modify",
+          "sha256": "94dc82d0abc5eac3abcfbdef93cd0a43ffe30a44393b779b99cc2cb8ce07d118",
+          "size": 3232,
+          "source_sha256": "d604eae2db3d9773f5f4e3b18d826142a7d0fa5ea09b53ea322572c45e3e42a1"
+        },
+        {
+          "path": "scripts/validate_rem03_android_domain_cutover.py",
+          "action": "modify",
+          "sha256": "887200ee30300fbe6861cb23cca397b52d0ae4cbe72e1c142f4f571de6eaa84c",
+          "size": 5535,
+          "source_sha256": "8dc9f867fe7375270e3f4fd2137ebaf47839643ed13b77747b85065f65cb27c5"
+        },
+        {
+          "path": "scripts/validate_rem04_privileged_cleanup_cutover.py",
+          "action": "modify",
+          "sha256": "8b41ea8bfdc9b5aff55457db700727a4b748c6d6756905e21ef97e60cb7a2eee",
+          "size": 4863,
+          "source_sha256": "0189a41e59886aaba642a5b03f6c644d52068d5ddd4845985f69331970620a96"
+        },
+        {
+          "path": "scripts/validate_rem05_legacy_surface_retirement.py",
+          "action": "add",
+          "sha256": "e360ba938fa26486e15c9648bf025a97416c784bd38a5b81aaaacc560c4095e4",
+          "size": 1367
+        }
+      ]
+    }
+  },
+  "operation_id": "b796b62c67d3414daa895cfeca451b4e",
+  "history_id": "6104c9ef3d02b2292f92d673391c5c23",
+  "rollback_status": "not-needed",
+  "child_outcomes": [
+    {
+      "name": "apply-overlay",
+      "returncode": 0,
+      "skipped": false,
+      "failure_kind": "",
+      "overlay_id": "",
+      "overlay_index": 1,
+      "target": ""
+    },
+    {
+      "name": "apply-verification",
+      "returncode": 0,
+      "skipped": false,
+      "failure_kind": "",
+      "overlay_id": "",
+      "overlay_index": 1,
+      "target": ""
+    },
+    {
+      "name": "artifact-cleanup",
+      "returncode": 0,
+      "skipped": false,
+      "failure_kind": "",
+      "overlay_id": "",
+      "overlay_index": 1,
+      "target": ""
+    }
+  ],
+  "transaction": {
+    "id": "20260924T192647Z-98a3c39d8073",
+    "status": "completed"
+  },
+  "validation_plan": {}
+}

@@ -1,9 +1,9 @@
 {
   "phase": "OV14",
-  "status": "reopened_blocked",
-  "gate_d_truth": "reopened",
-  "ov15_status": "blocked_until_real_android_go_cutover",
-  "reason": "REM-04 moves privileged scanning, immutable cleanup review/capability admission, fd-relative mutation, cancellation, verification, and lost-response reconciliation into the packaged Go root worker. The C++ scanner/JNI bridge and legacy destructive executor are removed. Gate D remains reopened for release-truth, navigation, and Python-target retirement.",
+  "status": "closed",
+  "gate_d_truth": "closed",
+  "ov15_status": "ready_for_gate_e",
+  "reason": "REM-05 retires the legacy Python compatibility target, superseded navigation authority, and app-local generic release truth. All OV14 retirement observations now match the desired Go/Devtool authority state; Gate D is closed and OV15 Gate E may proceed.",
   "desired": {
     "cpp_scanner_runtime": "none",
     "python_runtime": "none",
@@ -16,21 +16,17 @@
     "generic_release_truth": "devtool-only"
   },
   "observed": {
-    "android_go_runtime_binding": "production",
     "cpp_scanner_runtime": "none",
-    "generic_release_truth": "duplicated-app-local",
-    "go_authority": "product-default-qualified",
-    "go_sqlite_persistence": "go-owned-sqlite",
+    "python_runtime": "none",
+    "room_domain_authority": "none",
     "legacy_destructive_executor": "none",
-    "legacy_navigation": "not-proven-retired",
-    "python_runtime": "compatibility-only-target-present",
-    "room_domain_authority": "none"
+    "legacy_navigation": "none",
+    "go_authority": "product-default-qualified",
+    "android_go_runtime_binding": "production",
+    "go_sqlite_persistence": "go-owned-sqlite",
+    "generic_release_truth": "devtool-only"
   },
-  "blockers": [
-    "generic_release_truth_duplicated",
-    "legacy_navigation_not_proven_retired",
-    "python_legacy_target_present"
-  ],
+  "blockers": [],
   "folded_in": [
     "ov13_cleaning_performance_termux_hotfix_validator_jobs_workflows_fix",
     "ov14_validator_syntax_hotfix",
@@ -40,7 +36,8 @@
     "rem02_sqlite_integrity_hotfix",
     "rem02_reconciliation_hotfix",
     "rem03_android_domain_protocol_cutover",
-    "rem04_privileged_cleanup_mutation_cutover_cpp_retirement"
+    "rem04_privileged_cleanup_mutation_cutover_cpp_retirement",
+    "rem05_legacy_surface_release_truth_retirement"
   ],
-  "next": "rem05_android_thin_shell_evidence_automation_diagnostics_convergence_before_ov15_gate_e"
+  "next": "ov15_gate_e_final_qualification"
 }

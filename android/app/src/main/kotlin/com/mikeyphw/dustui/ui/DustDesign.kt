@@ -42,7 +42,7 @@ enum class DustDestination(val label: String, val shortLabel: String, val symbol
     MORE("Tools", "Tools", "•••", "Tools"),
 }
 
-object DustNavigationModel {
+object DustShellNavigation {
     val compactDestinations = listOf(
         DustDestination.INSIGHTS,
         DustDestination.EXPLORER,

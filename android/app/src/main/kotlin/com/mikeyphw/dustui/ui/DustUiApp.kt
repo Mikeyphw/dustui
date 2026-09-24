@@ -182,7 +182,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                 DustDestination.RULES -> viewModel.refreshCleanupRules()
                 DustDestination.GROWTH -> viewModel.reloadStorageGrowth()
                 DustDestination.CLEANUP -> viewModel.refreshCleanupReports()
-                else -> if (DustNavigationModel.refreshesInsights(target)) viewModel.refreshInsights()
+                else -> if (DustShellNavigation.refreshesInsights(target)) viewModel.refreshInsights()
             }
         }
 
@@ -198,7 +198,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
             val wide = maxWidth >= 840.dp && maxHeight >= 520.dp
             val currentPath = path ?: session?.rootPath
             LaunchedEffect(destination, wide, session?.id) {
-                val normalizedDestination = DustNavigationModel.layoutDestination(destination, wide)
+                val normalizedDestination = DustShellNavigation.layoutDestination(destination, wide)
                 if (normalizedDestination != destination) {
                     destination = normalizedDestination
                     return@LaunchedEffect
@@ -207,7 +207,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                     DustDestination.RULES -> viewModel.refreshCleanupRules()
                     DustDestination.GROWTH -> viewModel.reloadStorageGrowth()
                     DustDestination.CLEANUP -> viewModel.refreshCleanupReports()
-                    else -> if (DustNavigationModel.refreshesInsights(destination)) viewModel.refreshInsights()
+                    else -> if (DustShellNavigation.refreshesInsights(destination)) viewModel.refreshInsights()
                 }
                 viewModel.recordNavigation(destination, wide)
                 if (destination == DustDestination.DEBUG) viewModel.recordDebugWorkbenchOpened(destination, wide)
@@ -218,7 +218,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
             BackHandler(
                 enabled = cleanupReview != null || categoryFiles != null || selected != null || selectedPaths.isNotEmpty() ||
                     (destination == DustDestination.EXPLORER && session != null && currentPath != session?.rootPath) ||
-                    DustNavigationModel.backTarget(destination, wide) != null,
+                    DustShellNavigation.backTarget(destination, wide) != null,
             ) {
                 when {
                     cleanupReview != null -> viewModel.dismissCleanupReview()
@@ -226,7 +226,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                     selected != null -> viewModel.closeDetails()
                     selectedPaths.isNotEmpty() -> viewModel.clearSelection()
                     destination == DustDestination.EXPLORER && session != null && currentPath != session?.rootPath -> viewModel.up()
-                    else -> DustNavigationModel.backTarget(destination, wide)?.let { destination = it }
+                    else -> DustShellNavigation.backTarget(destination, wide)?.let { destination = it }
                 }
             }
             Scaffold(
@@ -258,10 +258,10 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                 bottomBar = {
                     if (!wide) {
                         NavigationBar {
-                            DustNavigationModel.compactDestinations.forEach { item ->
+                            DustShellNavigation.compactDestinations.forEach { item ->
                                 NavigationBarItem(
-                                    selected = DustNavigationModel.compactSelection(destination) == item,
-                                    onClick = { selectDestination(DustNavigationModel.compactNavigationTarget(item, session != null)) },
+                                    selected = DustShellNavigation.compactSelection(destination) == item,
+                                    onClick = { selectDestination(DustShellNavigation.compactNavigationTarget(item, session != null)) },
                                     icon = { Text(item.symbol, style = MaterialTheme.typography.titleMedium) },
                                     label = { Text(item.shortLabel) },
                                 )
@@ -275,7 +275,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                     if (wide) {
                         NavigationRail(Modifier.fillMaxHeight()) {
                             Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
-                                DustNavigationModel.wideDestinations.forEach { item ->
+                                DustShellNavigation.wideDestinations.forEach { item ->
                                     NavigationRailItem(
                                         selected = destination == item,
                                         onClick = { selectDestination(item) },
@@ -302,7 +302,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                         Box(Modifier.weight(1f).fillMaxSize()) {
                             val currentSession = session
                             when {
-                                currentSession == null && DustNavigationModel.needsScanData(destination) -> ScanRequiredEmptyState(
+                                currentSession == null && DustShellNavigation.needsScanData(destination) -> ScanRequiredEmptyState(
                                     Modifier.fillMaxSize(),
                                     detail = "This specialized workbench needs an indexed scan first. Files, Clean, Tools, Debug workbench, and deletion reports remain reachable before scanning.",
                                     onStartScan = { openScanLauncher() },

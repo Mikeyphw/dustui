@@ -19074,6 +19074,4219 @@
         "status": "completed"
       },
       "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T05:06:38.031324Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov02_go_state_protocol_kernel_v1.zip",
+      "artifact_name": "dustui_go_ov02_go_state_protocol_kernel_v1.zip",
+      "type": "overlay",
+      "sha256": "95d55dabbee5d4b8863320c70f07c5ba2b28ab63cf8d504868f6ad68ad743bf8",
+      "content_identity": {
+        "sha256": "95d55dabbee5d4b8863320c70f07c5ba2b28ab63cf8d504868f6ad68ad743bf8",
+        "size": 30590
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV02 Go state protocol kernel",
+      "commit_hash": "2374a6e32d205be5d1848b80bb46163db4a015fe",
+      "file_count": 34,
+      "change_counts": {
+        "add": 28,
+        "modify": 6
+      },
+      "manifest": {},
+      "operation_id": "518d7070c52b46e893709778ad9b7749",
+      "history_id": "4b4af56d28abd2aff87051aa1ebb8162",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T050634Z-94a4635115f3",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T11:50:17.631818Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov03_scanner_size_scanauthority_gateA_v1.zip",
+      "artifact_name": "dustui_go_ov03_scanner_size_scanauthority_gateA_v1.zip",
+      "type": "overlay",
+      "sha256": "373783758fddc8da876e0dd4469aa48837ca48ff9f19ef463ba4acc380a2bdf6",
+      "content_identity": {
+        "sha256": "373783758fddc8da876e0dd4469aa48837ca48ff9f19ef463ba4acc380a2bdf6",
+        "size": 22551
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV03 scanner size ScanAuthority Gate A",
+      "commit_hash": "4a7d5a6e2f1ec104952800b97a2e4975415975ae",
+      "file_count": 17,
+      "change_counts": {
+        "add": 13,
+        "modify": 4
+      },
+      "manifest": {},
+      "operation_id": "f1b36c3f2b2b4af4a8f9b064595d5183",
+      "history_id": "ba4dd4eb6c063a2e0ffa4b0f57353302",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T115015Z-8bbff59f8c03",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T11:53:29.939198Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov03_termux_hardlink_test_hotfix_v1.zip",
+      "artifact_name": "dustui_go_ov03_termux_hardlink_test_hotfix_v1.zip",
+      "type": "overlay",
+      "sha256": "3f82a055d492e632ef38c00aa0fc5184cf9511dc027704b7696fad4fbd0103f6",
+      "content_identity": {
+        "sha256": "3f82a055d492e632ef38c00aa0fc5184cf9511dc027704b7696fad4fbd0103f6",
+        "size": 6044
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV03 Termux hardlink fixture hotfix",
+      "commit_hash": "755f6acc17fc7ed8c68a30126ea8608d3febd15f",
+      "file_count": 7,
+      "change_counts": {
+        "add": 6,
+        "modify": 1
+      },
+      "manifest": {},
+      "operation_id": "b919981df9e6476abacb724b2f46d714",
+      "history_id": "34fa1448dbb7ea12784bc73c5946cf45",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T115327Z-c8bd6b2b47f6",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T12:02:12.803387Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov04_query_search_history_v1.zip",
+      "artifact_name": "dustui_go_ov04_query_search_history_v1.zip",
+      "type": "overlay",
+      "sha256": "4b4a3e6f22cd565d6f71d4fb5915191f4589e7fda04f892e5894110e040c4c5e",
+      "content_identity": {
+        "sha256": "4b4a3e6f22cd565d6f71d4fb5915191f4589e7fda04f892e5894110e040c4c5e",
+        "size": 25040
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV04 query search history",
+      "commit_hash": "da6e38bbb8321bccaa9ede4effe3d259e723441b",
+      "file_count": 17,
+      "change_counts": {
+        "add": 12,
+        "modify": 5
+      },
+      "manifest": {},
+      "operation_id": "2175a2811618472eaf24eaa5827b18e5",
+      "history_id": "a6fdae9225a037b81e427c6e1ceecef0",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T120209Z-1c83d7a54517",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T12:10:39.882286Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov05_android_runtime_shell_gateB_v1.zip",
+      "artifact_name": "dustui_go_ov05_android_runtime_shell_gateB_v1.zip",
+      "type": "overlay",
+      "sha256": "52f7fe425fa918bc0569658349ce39bc649329db6e0d32ce655879eee23ef228",
+      "content_identity": {
+        "sha256": "52f7fe425fa918bc0569658349ce39bc649329db6e0d32ce655879eee23ef228",
+        "size": 33872
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV05 Android runtime shell Gate B",
+      "commit_hash": "9ef0d8e0b873a010490318240e6d198b08160a92",
+      "file_count": 28,
+      "change_counts": {
+        "add": 20,
+        "modify": 8
+      },
+      "manifest": {},
+      "operation_id": "a02a321d840247d68010c9b3e142f989",
+      "history_id": "82afb2e30704a6b960444009bc3a85c9",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T121036Z-9c5940eaa9f1",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T12:18:05.187893Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov06_privileged_runtime_protocol_v1.zip",
+      "artifact_name": "dustui_go_ov06_privileged_runtime_protocol_v1.zip",
+      "type": "overlay",
+      "sha256": "ef8eae7c22c48b0ff032d7f97f3b7f3bb8ed179a6feccd23fe65f15b4bae46ff",
+      "content_identity": {
+        "sha256": "ef8eae7c22c48b0ff032d7f97f3b7f3bb8ed179a6feccd23fe65f15b4bae46ff",
+        "size": 31069
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV06 privileged runtime protocol",
+      "commit_hash": "00bfe9e3ebdd679aa0cd681a15cc4dc30bc4b8be",
+      "file_count": 22,
+      "change_counts": {
+        "add": 14,
+        "modify": 8
+      },
+      "manifest": {},
+      "operation_id": "751fc0fb1b174b5b8c3fd9037fcf54a4",
+      "history_id": "736d2f60b3125698e490fd3deadeff89",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T121802Z-98580f0c5254",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T12:27:58.646162Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov07_cleanup_manifest_capability_v1.zip",
+      "artifact_name": "dustui_go_ov07_cleanup_manifest_capability_v1.zip",
+      "type": "overlay",
+      "sha256": "05f39ac97f8363dbb1787d2dd1b827c5c7352480808757351ad1de92a1a301ba",
+      "content_identity": {
+        "sha256": "05f39ac97f8363dbb1787d2dd1b827c5c7352480808757351ad1de92a1a301ba",
+        "size": 29654
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV07 cleanup manifest capability",
+      "commit_hash": "90ef83a17ab8eda66d2af87edff512f92fdd5d76",
+      "file_count": 22,
+      "change_counts": {
+        "add": 13,
+        "modify": 9
+      },
+      "manifest": {},
+      "operation_id": "e1cf2ddd80e344a1879d770d2464fba3",
+      "history_id": "bd7fae49df330a91de631d26a82acd49",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T122755Z-fc5eabf25b46",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T12:34:04.048586Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov08_mutation_recovery_gateC_v1.zip",
+      "artifact_name": "dustui_go_ov08_mutation_recovery_gateC_v1.zip",
+      "type": "overlay",
+      "sha256": "e97f17f3215f6a1bad861496855327e364b168c6c87489285f0e16ad7611335c",
+      "content_identity": {
+        "sha256": "e97f17f3215f6a1bad861496855327e364b168c6c87489285f0e16ad7611335c",
+        "size": 39829
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV08 mutation recovery Gate C",
+      "commit_hash": "93ea9561af1e718b2639dcb5f125a9582a04a864",
+      "file_count": 23,
+      "change_counts": {
+        "add": 12,
+        "modify": 11
+      },
+      "manifest": {},
+      "operation_id": "6fcf5ab58cf245a08c1805b3980b1861",
+      "history_id": "ee2de19cc21579cc64378253bd01d1c4",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T123401Z-169f3503b2d6",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T12:41:36.949115Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov09_package_storage_model_v1.zip",
+      "artifact_name": "dustui_go_ov09_package_storage_model_v1.zip",
+      "type": "overlay",
+      "sha256": "fbe53285bb6b8a5473f026b02f8b572db60e71ee9c0f8d4208af8b20f358eb69",
+      "content_identity": {
+        "sha256": "fbe53285bb6b8a5473f026b02f8b572db60e71ee9c0f8d4208af8b20f358eb69",
+        "size": 30644
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV09 package storage model",
+      "commit_hash": "650fd0391fd9d3ae6bb4c71b08202dce5aa71852",
+      "file_count": 22,
+      "change_counts": {
+        "add": 14,
+        "modify": 8
+      },
+      "manifest": {},
+      "operation_id": "b731200503464771b03f7678d74bdcec",
+      "history_id": "b4d4c2d9e3d1cb4b368c3b3d0faf15e0",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T124133Z-5383aa325207",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T12:49:28.604673Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov10_cleanup_intelligence_v1.zip",
+      "artifact_name": "dustui_go_ov10_cleanup_intelligence_v1.zip",
+      "type": "overlay",
+      "sha256": "8056b8896bf2c7fefd90bf23f539c220e17ba65cbc5623ff1fd9d64281555d87",
+      "content_identity": {
+        "sha256": "8056b8896bf2c7fefd90bf23f539c220e17ba65cbc5623ff1fd9d64281555d87",
+        "size": 31273
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV10 cleanup intelligence",
+      "commit_hash": "f5a8d50e2c27fac58868e38e5a00d671c92c6f0b",
+      "file_count": 22,
+      "change_counts": {
+        "add": 14,
+        "modify": 8
+      },
+      "manifest": {},
+      "operation_id": "672358efc72c43f0a8c9a664510241f9",
+      "history_id": "a4bbed27fff349294076bf31179f5e54",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T124926Z-ba3135e09e57",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T12:55:54.695521Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov11_automation_activity_v1.zip",
+      "artifact_name": "dustui_go_ov11_automation_activity_v1.zip",
+      "type": "overlay",
+      "sha256": "e7be0124e82961bb755702c649f1d1e4a3a9a996a6fb0c07cebd30c9a4966295",
+      "content_identity": {
+        "sha256": "e7be0124e82961bb755702c649f1d1e4a3a9a996a6fb0c07cebd30c9a4966295",
+        "size": 38351
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV11 automation Activity ownership",
+      "commit_hash": "3b7ce9859a5f9887624766cdd3412f567164cd3f",
+      "file_count": 22,
+      "change_counts": {
+        "add": 14,
+        "add-dir": 2,
+        "modify": 8
+      },
+      "manifest": {},
+      "operation_id": "01a7050625534ff38b20210978bf3bfc",
+      "history_id": "726934f69bbe81512451a0219df7f539",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T125552Z-cef1053d436a",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T13:05:51.412159Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov12_diagnostics_evidence_privacy_v1.zip",
+      "artifact_name": "dustui_go_ov12_diagnostics_evidence_privacy_v1.zip",
+      "type": "overlay",
+      "sha256": "6e5adaf0b35ab373086b20b6c343cac612de9f94422db452cf0bc2b4082ab6fb",
+      "content_identity": {
+        "sha256": "6e5adaf0b35ab373086b20b6c343cac612de9f94422db452cf0bc2b4082ab6fb",
+        "size": 32635
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV12 diagnostics evidence privacy",
+      "commit_hash": "e86052ce055711ccd66bb79a67a8407bd5977f36",
+      "file_count": 22,
+      "change_counts": {
+        "add": 13,
+        "modify": 9
+      },
+      "manifest": {},
+      "operation_id": "fda232c827ef4d01a43183327591a197",
+      "history_id": "00b7158baa0b626d7e63c2b5005dcf7b",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T130549Z-ba670c0f85d9",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T13:38:32.799913Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov13_cli_android_cutover_gateD_v1.zip",
+      "artifact_name": "dustui_go_ov13_cli_android_cutover_gateD_v1.zip",
+      "type": "overlay",
+      "sha256": "543ed4d736c0ef37586ee56d2f102115524293af6116ffc112f5917529360f2a",
+      "content_identity": {
+        "sha256": "543ed4d736c0ef37586ee56d2f102115524293af6116ffc112f5917529360f2a",
+        "size": 34084
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV13 CLI Android cutover Gate D",
+      "commit_hash": "eacd664e7307a9d5e44ef8bded456c591f855c0d",
+      "file_count": 25,
+      "change_counts": {
+        "add": 17,
+        "modify": 8
+      },
+      "manifest": {},
+      "operation_id": "b06762dd46fa4bd4afcc7d168a17489a",
+      "history_id": "1191dc4cddf9f7d548ea9263ed207107",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T133829Z-7c6cf4eca502",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T14:16:06.013620Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov13_go_binary_resolution_hotfix_v1.zip",
+      "artifact_name": "dustui_go_ov13_go_binary_resolution_hotfix_v1.zip",
+      "type": "overlay",
+      "sha256": "6c9496d725d631f3e3d806e30068f804f49b42008b67062313362137a5eadd92",
+      "content_identity": {
+        "sha256": "6c9496d725d631f3e3d806e30068f804f49b42008b67062313362137a5eadd92",
+        "size": 8188
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV13 Go binary resolution hotfix",
+      "commit_hash": "cbe5e4925bd1b1cfb52d5891209e9b465daa0733",
+      "file_count": 6,
+      "change_counts": {
+        "add": 5,
+        "add-dir": 1,
+        "modify": 1
+      },
+      "manifest": {},
+      "operation_id": "55aefca83d42435f824581ef8ea310b5",
+      "history_id": "f30880b8407b80dcc847eff36cea3a4c",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T141603Z-cfc82be7c9e3",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T14:47:53.064970Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov13_ov01_contract_repo_root_hotfix_v1.zip",
+      "artifact_name": "dustui_go_ov13_ov01_contract_repo_root_hotfix_v1.zip",
+      "type": "overlay",
+      "sha256": "a84f5309040f81f4f6968a76f1530c03e5ebea51b3b8ea47e024455209078f34",
+      "content_identity": {
+        "sha256": "a84f5309040f81f4f6968a76f1530c03e5ebea51b3b8ea47e024455209078f34",
+        "size": 11595
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV13 fix OV01 contract repo root",
+      "commit_hash": "afa76c1a7fc1f37860c3c94b2635dddd698fb500",
+      "file_count": 9,
+      "change_counts": {
+        "add": 8,
+        "add-dir": 1,
+        "modify": 1
+      },
+      "manifest": {},
+      "operation_id": "91e8427ce63a43f6b073d61ad54b3cb5",
+      "history_id": "c90991e13fe6e3eda9fd90a0edf4ddad",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T144750Z-56c4ac2e6aa3",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T15:04:12.288170Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov13_ov01_contract_repo_root_hotfix_v1.zip",
+      "artifact_name": "dustui_go_ov13_ov01_contract_repo_root_hotfix_v1.zip",
+      "type": "overlay",
+      "sha256": "a84f5309040f81f4f6968a76f1530c03e5ebea51b3b8ea47e024455209078f34",
+      "content_identity": {
+        "sha256": "a84f5309040f81f4f6968a76f1530c03e5ebea51b3b8ea47e024455209078f34",
+        "size": 11595
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV13 fix OV01 contract repo root",
+      "commit_hash": "",
+      "file_count": 9,
+      "change_counts": {
+        "unchanged": 9
+      },
+      "manifest": {},
+      "operation_id": "65dd9183e04c466fbf3d27102090fb1c",
+      "history_id": "0a275c3b802ff3a3e9f532e17f77bcdf",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add-skipped",
+          "returncode": 0,
+          "skipped": true,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit-skipped",
+          "returncode": 0,
+          "skipped": true,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T150411Z-d29431b20902",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T15:24:04.376348Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov13_ov01_readiness_transition_hotfix_v1.zip",
+      "artifact_name": "dustui_go_ov13_ov01_readiness_transition_hotfix_v1.zip",
+      "type": "overlay",
+      "sha256": "201994744b853ebca73d96092e442f64eb73c3908e63e77cf48d8876472b8bd0",
+      "content_identity": {
+        "sha256": "201994744b853ebca73d96092e442f64eb73c3908e63e77cf48d8876472b8bd0",
+        "size": 14477
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV13 fix OV01 readiness transition",
+      "commit_hash": "1d2eeac2624b13708b04c7d5003ae0bb6d581d96",
+      "file_count": 13,
+      "change_counts": {
+        "add": 8,
+        "add-dir": 1,
+        "modify": 1,
+        "unchanged": 4
+      },
+      "manifest": {},
+      "operation_id": "509bcaf2d4e94ff8a685c81b6f2bf462",
+      "history_id": "0d152e7d73cd566180548e496dcdac3e",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T152401Z-4344e5bdfc69",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T15:53:48.331421Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov13_devtool_wrapper_exo_jobs_v1.zip",
+      "artifact_name": "dustui_go_ov13_devtool_wrapper_exo_jobs_v1.zip",
+      "type": "overlay",
+      "sha256": "79bb792fb02e8663fe85fafd4eb0460c33ebf183dd7f0861d09a83b9823b8076",
+      "content_identity": {
+        "sha256": "79bb792fb02e8663fe85fafd4eb0460c33ebf183dd7f0861d09a83b9823b8076",
+        "size": 12812
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV13 Devtool wrapper EXO jobs",
+      "commit_hash": "42115a027fb1113c45859479de79e87501b75855",
+      "file_count": 12,
+      "change_counts": {
+        "add": 10,
+        "modify": 2
+      },
+      "manifest": {},
+      "operation_id": "f6ff9a7417b044c2883606c530e5cbdb",
+      "history_id": "0c6408451c1147e40f3c3a79e4daa14c",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T155345Z-2dd70a60f01e",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T15:57:32.488528Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov13_devtool_wrapper_validator_hotfix_v1.zip",
+      "artifact_name": "dustui_go_ov13_devtool_wrapper_validator_hotfix_v1.zip",
+      "type": "overlay",
+      "sha256": "48985f57f10eedc32d0c593bf5aae7bf19377d61563ec254cba4937978084a57",
+      "content_identity": {
+        "sha256": "48985f57f10eedc32d0c593bf5aae7bf19377d61563ec254cba4937978084a57",
+        "size": 6424
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV13 wrapper EXO validator hotfix",
+      "commit_hash": "f47473d9368d6a0b1904ffc8288c0a363fee7311",
+      "file_count": 8,
+      "change_counts": {
+        "add": 7,
+        "modify": 1
+      },
+      "manifest": {},
+      "operation_id": "360b629778d64516b9ff5b68f30428d9",
+      "history_id": "db2cb8328146bebb53e8fe7dd13a1f91",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T155730Z-5f9fe2a57040",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T16:00:48.184204Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov13_cleaning_performance_termux_hotfix_v1.zip",
+      "artifact_name": "dustui_go_ov13_cleaning_performance_termux_hotfix_v1.zip",
+      "type": "overlay",
+      "sha256": "be255fe48b554a5c7852990dbec411180ec134c40dc7221468e461d777e3621c",
+      "content_identity": {
+        "sha256": "be255fe48b554a5c7852990dbec411180ec134c40dc7221468e461d777e3621c",
+        "size": 8025
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV13 Termux cleaning performance test hotfix",
+      "commit_hash": "85c63be8bcc0936868f380de044a7e58260c8777",
+      "file_count": 9,
+      "change_counts": {
+        "add": 8,
+        "modify": 1
+      },
+      "manifest": {},
+      "operation_id": "68d59a2d2387475586aebca4cca0848d",
+      "history_id": "9e64232a535105f0405f81d396d36237",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T160045Z-ddd14e577158",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T16:07:07.402018Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov14_legacy_retirement_purge_v1.zip",
+      "artifact_name": "dustui_go_ov14_legacy_retirement_purge_v1.zip",
+      "type": "overlay",
+      "sha256": "0736300efe8f7cd219a05cd4d897648efc14e2b0bc98f7f8dde11e0af42bad9d",
+      "content_identity": {
+        "sha256": "0736300efe8f7cd219a05cd4d897648efc14e2b0bc98f7f8dde11e0af42bad9d",
+        "size": 11665
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV14 legacy retirement purge",
+      "commit_hash": "33147b2b716aec714edcf5f473760e20724919a8",
+      "file_count": 13,
+      "change_counts": {
+        "add": 11,
+        "modify": 1,
+        "unchanged": 1
+      },
+      "manifest": {},
+      "operation_id": "fcbbb60a7772435d9f60f45d00648be3",
+      "history_id": "2ea1fe45715af5612657df72b6d58110",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T160704Z-f7ea84b5336e",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T16:10:13.894101Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov14_validator_syntax_hotfix_v1.zip",
+      "artifact_name": "dustui_go_ov14_validator_syntax_hotfix_v1.zip",
+      "type": "overlay",
+      "sha256": "2626ecca63db6266b55bf329ce362e5166b9c655076b3ff96a341e0e6ce47bbf",
+      "content_identity": {
+        "sha256": "2626ecca63db6266b55bf329ce362e5166b9c655076b3ff96a341e0e6ce47bbf",
+        "size": 14942
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV14 validator syntax hotfix",
+      "commit_hash": "9effae410b7baf35736e8777a6c7f4cd8145502b",
+      "file_count": 10,
+      "change_counts": {
+        "add": 8,
+        "modify": 2
+      },
+      "manifest": {},
+      "operation_id": "327f850f6d144e868335d6b8826d5814",
+      "history_id": "b8cd6e1c31d7b73c8328ae4b83d31d69",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T161011Z-87c0f9b1d292",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T16:36:10.299341Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov14_retirement_truth_hotfix_v1.zip",
+      "artifact_name": "dustui_go_ov14_retirement_truth_hotfix_v1.zip",
+      "type": "overlay",
+      "sha256": "55ca030110dd2b7c676e24a25aa0d8b216c38baeed5b8ccb1c4e0f4bfbb92dd9",
+      "content_identity": {
+        "sha256": "55ca030110dd2b7c676e24a25aa0d8b216c38baeed5b8ccb1c4e0f4bfbb92dd9",
+        "size": 36239
+      },
+      "status": "failed",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV14: reopen Gate D on retirement truth audit",
+      "commit_hash": "",
+      "file_count": 22,
+      "change_counts": {
+        "add": 5,
+        "modify": 17
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "dustui_go_ov14_retirement_truth_hotfix_v1",
+        "description": "OV14 truth hotfix: reopen Gate D when real Android/Go cutover and legacy retirement are not source-proven; block OV15 until remediation.",
+        "repository": {
+          "name": "DustUI"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": ".devtool.toml",
+              "sha256": "ae0b5eb817d8bc74d1a43ba254af433659470e4b2132e7b7b8c7352591f2f773",
+              "size": 10441,
+              "action": "modify",
+              "source_sha256": "4e63d3711a42f0584c608becfa42b7b7e931976ed9433015a93f12ecf3a77287"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/migration/Ov14LegacyRetirementContractTest.kt",
+              "sha256": "54a3d407c6b0ea4e993be0aac238dd4c01c6e21e3a8b5d8269b377582a946b32",
+              "size": 2036,
+              "action": "modify",
+              "source_sha256": "95a762e7a54e98701844074be06a99a3e96497d1f9564ed2748d0a02484a9721"
+            },
+            {
+              "path": "go/internal/product/product.go",
+              "sha256": "31c6366933c8f2ce13151907e669356e74b1f8fd1b4b938ee6e1674bd8535e6d",
+              "size": 9998,
+              "action": "modify",
+              "source_sha256": "e97bcb6ac20a31fb272c20b200f99647941914ee444cf5aea64c1ef6e9a1c7c4"
+            },
+            {
+              "path": "go/internal/product/product_test.go",
+              "sha256": "282d278e96908724bc0fd57943928063c91285a9c7b0807641974387707d388b",
+              "size": 1258,
+              "action": "modify",
+              "source_sha256": "e2c068aa19e23a4c12b46862164d680f3ee5d00a326a3d72473d6103740ea107"
+            },
+            {
+              "path": "go/internal/readiness/readiness.go",
+              "sha256": "c1c4bca2e12fb24d61836da9132409fd6bf5790dcb1a48daf25ffb6422406ec4",
+              "size": 3666,
+              "action": "modify",
+              "source_sha256": "22e1671a9a371618dedad703bbb3e815409132c2f7d6f5f1230c9c1d3079be7b"
+            },
+            {
+              "path": "go/internal/readiness/readiness_test.go",
+              "sha256": "7528a3a91e643bf886b15cfcd2c5999984fbe854577023e7b433eac9d8c8556c",
+              "size": 1266,
+              "action": "modify",
+              "source_sha256": "b16e7425286b5f994f91fa480cf04b5b829eec70bbcac39223b6b40cc2d41115"
+            },
+            {
+              "path": "go/internal/retirement/retirement.go",
+              "sha256": "0d48972564e4f8edb54cbfb6575a8077c6eafa7d7c7bb43d9c8908f3d6d0d7c6",
+              "size": 2192,
+              "action": "modify",
+              "source_sha256": "a2720db807bc5bc77394665099db0c21f85a98c6bf6662fef797efb9b76e8d77"
+            },
+            {
+              "path": "go/internal/retirement/retirement_test.go",
+              "sha256": "a4e05e06b32cd85d36be4683c2dcabb72725912f4e4b4bfd491d9232bf89d129",
+              "size": 1363,
+              "action": "modify",
+              "source_sha256": "15ffffade346abc26bbebd6252798f544e90547f51be42358d1c6456ca551e9f"
+            },
+            {
+              "path": "go/internal/runtime/spec.go",
+              "sha256": "3dfa0e5c9538d928b7881fce56539c6c333decfe2d50cc5eb27d8340484711a3",
+              "size": 8475,
+              "action": "modify",
+              "source_sha256": "8f35ae7faf5c1861cd177a9b5fdb2c9e93f21d9f4699c0e30d7f9da95cee3ca6"
+            },
+            {
+              "path": "go/internal/runtime/spec_test.go",
+              "sha256": "3b305e60d4363a91f9e5eecba3b86b713d127247d7374c491e355131fe9a8163",
+              "size": 3726,
+              "action": "modify",
+              "source_sha256": "e9fdaf1a2bc954965d93ca0b551aa9cb8396f3850e3e20d656b2f84f74d7202d"
+            },
+            {
+              "path": "migration/audit/v1/ov14_legacy_retirement_audit.md",
+              "sha256": "e7baa7d033acdad83e565882306ad1ba8f42a28cd6fc6b769b6389b770e53d12",
+              "size": 1841,
+              "action": "modify",
+              "source_sha256": "c09abefd6bb645b930210f86e773253477dc481d76376d467ffc14715ff8ee24"
+            },
+            {
+              "path": "migration/audit/v1/ov14_retirement_truth_hotfix_audit.md",
+              "sha256": "3fea14c87f436b4176af4a5b417372f3645377b91aed892806dfd1aa6a4b9bdb",
+              "size": 488,
+              "action": "add"
+            },
+            {
+              "path": "migration/contracts/v1/android_go_cutover_remediation_roadmap.md",
+              "sha256": "225796b230ea6f1ffba29d1d4ab627eaf7248047fde477d6ce07f8cf4973e67d",
+              "size": 4355,
+              "action": "add"
+            },
+            {
+              "path": "migration/contracts/v1/ov14_legacy_retirement.md",
+              "sha256": "1c4691c179eb9ea3dce6447aead6afcdee47dffd88c7cad52263b3b1ddd45681",
+              "size": 2760,
+              "action": "modify",
+              "source_sha256": "0adf4c8669f388ec3298fdda421607e16a60eee040e7b76b8e86f38b8ffec51c"
+            },
+            {
+              "path": "migration/contracts/v1/ov14_retirement_truth_hotfix.md",
+              "sha256": "963c384b59c3ce305ca171a6503ca034c8bf5bedc75832fe506b9aba31089fc9",
+              "size": 614,
+              "action": "add"
+            },
+            {
+              "path": "migration/ledger/ov13_status.json",
+              "sha256": "455170e747eab1d32d907bb184d9f37bb258663e728386f4add27f45025a5239",
+              "size": 953,
+              "action": "modify",
+              "source_sha256": "6f6b8485ed997757725e405e0b4d96416d2412e24c3faa38f8d4f10741ac815d"
+            },
+            {
+              "path": "migration/ledger/ov14_legacy_retirement_status.json",
+              "sha256": "774e692fa8d5fd7da4d985351c167f3f25e7d4cf80e81c80265ef405a5a80749",
+              "size": 1881,
+              "action": "modify",
+              "source_sha256": "1dcca51ebdc6c6ae2c30327a5f557a480a0047f873599921131924b79225c0a5"
+            },
+            {
+              "path": "migration/ledger/ov14_retirement_truth_hotfix_status.json",
+              "sha256": "41203ab7b39839a6d46ea6ca844ec77cb4dd5aca9918988d37f72ea91fada0a4",
+              "size": 294,
+              "action": "add"
+            },
+            {
+              "path": "scripts/validate_ov13_contract.py",
+              "sha256": "d81b7b5112aac1277b1aa645fd69d19fe5f7065c8b7c22b9514cd88710b26a69",
+              "size": 13061,
+              "action": "modify",
+              "source_sha256": "c8c5614de0347f2da98a78469448dcd6bcae6fde84756dbaff574dab1b7feb8b"
+            },
+            {
+              "path": "scripts/validate_ov13_devtool_wrapper_exo_jobs.py",
+              "sha256": "759638e7000300e7e00a7ca5dc947775941de0909da28f206244bd7e1526d837",
+              "size": 8255,
+              "action": "modify",
+              "source_sha256": "252ba9f6e926bf1560d0f792ff01ded46352fd10b65fef41a7956f0ef9905c76"
+            },
+            {
+              "path": "scripts/validate_ov14_contract.py",
+              "sha256": "5a8f5f1d12573cee80c553c9616ab0169c4f190a3acad1e235eb5aa6abb3a248",
+              "size": 5080,
+              "action": "modify",
+              "source_sha256": "deb4a8edf993d481a2282856e1bb2f8852f046757a1755b6a21452e321356e79"
+            },
+            {
+              "path": "scripts/validate_ov14_retirement_truth_hotfix.py",
+              "sha256": "739d5bae1008752a71fbf9d35236eeb5232e591a6b2ed9c8bc44292848afa305",
+              "size": 9771,
+              "action": "add"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "DustUI OV14: reopen Gate D on retirement truth audit"
+          }
+        },
+        "validation": {
+          "mode": "disabled",
+          "required": false,
+          "allow_deferred": true,
+          "restore": false,
+          "build": false,
+          "test": false
+        }
+      },
+      "operation_id": "ce02e9651fcc498db7444e3ba7953767",
+      "history_id": "aafbfbf7da5c40c502368592ce55318b",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "artifact-manifest",
+          "returncode": 1,
+          "skipped": false,
+          "failure_kind": "artifact_failure",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T16:37:31.538787Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_ov14_retirement_truth_hotfix_v2.zip",
+      "artifact_name": "dustui_go_ov14_retirement_truth_hotfix_v2.zip",
+      "type": "overlay",
+      "sha256": "22c3fa53712dcfb394a9f56b5517b982e9052e5315a2806fe4f7a7689edf7d1f",
+      "content_identity": {
+        "sha256": "22c3fa53712dcfb394a9f56b5517b982e9052e5315a2806fe4f7a7689edf7d1f",
+        "size": 41269
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI OV14: reopen Gate D on retirement truth audit",
+      "commit_hash": "a96af45f6f97f6207968fbdada62884b6cf490e6",
+      "file_count": 22,
+      "change_counts": {
+        "add": 5,
+        "modify": 17
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "dustui_go_ov14_retirement_truth_hotfix_v2",
+        "description": "OV14 truth hotfix: reopen Gate D when real Android/Go cutover and legacy retirement are not source-proven; block OV15 until remediation.",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": ".devtool.toml",
+              "sha256": "ae0b5eb817d8bc74d1a43ba254af433659470e4b2132e7b7b8c7352591f2f773",
+              "size": 10441,
+              "action": "modify",
+              "source_sha256": "4e63d3711a42f0584c608becfa42b7b7e931976ed9433015a93f12ecf3a77287"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/migration/Ov14LegacyRetirementContractTest.kt",
+              "sha256": "54a3d407c6b0ea4e993be0aac238dd4c01c6e21e3a8b5d8269b377582a946b32",
+              "size": 2036,
+              "action": "modify",
+              "source_sha256": "95a762e7a54e98701844074be06a99a3e96497d1f9564ed2748d0a02484a9721"
+            },
+            {
+              "path": "go/internal/product/product.go",
+              "sha256": "31c6366933c8f2ce13151907e669356e74b1f8fd1b4b938ee6e1674bd8535e6d",
+              "size": 9998,
+              "action": "modify",
+              "source_sha256": "e97bcb6ac20a31fb272c20b200f99647941914ee444cf5aea64c1ef6e9a1c7c4"
+            },
+            {
+              "path": "go/internal/product/product_test.go",
+              "sha256": "282d278e96908724bc0fd57943928063c91285a9c7b0807641974387707d388b",
+              "size": 1258,
+              "action": "modify",
+              "source_sha256": "e2c068aa19e23a4c12b46862164d680f3ee5d00a326a3d72473d6103740ea107"
+            },
+            {
+              "path": "go/internal/readiness/readiness.go",
+              "sha256": "c1c4bca2e12fb24d61836da9132409fd6bf5790dcb1a48daf25ffb6422406ec4",
+              "size": 3666,
+              "action": "modify",
+              "source_sha256": "22e1671a9a371618dedad703bbb3e815409132c2f7d6f5f1230c9c1d3079be7b"
+            },
+            {
+              "path": "go/internal/readiness/readiness_test.go",
+              "sha256": "7528a3a91e643bf886b15cfcd2c5999984fbe854577023e7b433eac9d8c8556c",
+              "size": 1266,
+              "action": "modify",
+              "source_sha256": "b16e7425286b5f994f91fa480cf04b5b829eec70bbcac39223b6b40cc2d41115"
+            },
+            {
+              "path": "go/internal/retirement/retirement.go",
+              "sha256": "0d48972564e4f8edb54cbfb6575a8077c6eafa7d7c7bb43d9c8908f3d6d0d7c6",
+              "size": 2192,
+              "action": "modify",
+              "source_sha256": "a2720db807bc5bc77394665099db0c21f85a98c6bf6662fef797efb9b76e8d77"
+            },
+            {
+              "path": "go/internal/retirement/retirement_test.go",
+              "sha256": "a4e05e06b32cd85d36be4683c2dcabb72725912f4e4b4bfd491d9232bf89d129",
+              "size": 1363,
+              "action": "modify",
+              "source_sha256": "15ffffade346abc26bbebd6252798f544e90547f51be42358d1c6456ca551e9f"
+            },
+            {
+              "path": "go/internal/runtime/spec.go",
+              "sha256": "3dfa0e5c9538d928b7881fce56539c6c333decfe2d50cc5eb27d8340484711a3",
+              "size": 8475,
+              "action": "modify",
+              "source_sha256": "8f35ae7faf5c1861cd177a9b5fdb2c9e93f21d9f4699c0e30d7f9da95cee3ca6"
+            },
+            {
+              "path": "go/internal/runtime/spec_test.go",
+              "sha256": "3b305e60d4363a91f9e5eecba3b86b713d127247d7374c491e355131fe9a8163",
+              "size": 3726,
+              "action": "modify",
+              "source_sha256": "e9fdaf1a2bc954965d93ca0b551aa9cb8396f3850e3e20d656b2f84f74d7202d"
+            },
+            {
+              "path": "migration/audit/v1/ov14_legacy_retirement_audit.md",
+              "sha256": "e7baa7d033acdad83e565882306ad1ba8f42a28cd6fc6b769b6389b770e53d12",
+              "size": 1841,
+              "action": "modify",
+              "source_sha256": "c09abefd6bb645b930210f86e773253477dc481d76376d467ffc14715ff8ee24"
+            },
+            {
+              "path": "migration/audit/v1/ov14_retirement_truth_hotfix_audit.md",
+              "sha256": "3fea14c87f436b4176af4a5b417372f3645377b91aed892806dfd1aa6a4b9bdb",
+              "size": 488,
+              "action": "add"
+            },
+            {
+              "path": "migration/contracts/v1/android_go_cutover_remediation_roadmap.md",
+              "sha256": "225796b230ea6f1ffba29d1d4ab627eaf7248047fde477d6ce07f8cf4973e67d",
+              "size": 4355,
+              "action": "add"
+            },
+            {
+              "path": "migration/contracts/v1/ov14_legacy_retirement.md",
+              "sha256": "1c4691c179eb9ea3dce6447aead6afcdee47dffd88c7cad52263b3b1ddd45681",
+              "size": 2760,
+              "action": "modify",
+              "source_sha256": "0adf4c8669f388ec3298fdda421607e16a60eee040e7b76b8e86f38b8ffec51c"
+            },
+            {
+              "path": "migration/contracts/v1/ov14_retirement_truth_hotfix.md",
+              "sha256": "963c384b59c3ce305ca171a6503ca034c8bf5bedc75832fe506b9aba31089fc9",
+              "size": 614,
+              "action": "add"
+            },
+            {
+              "path": "migration/ledger/ov13_status.json",
+              "sha256": "455170e747eab1d32d907bb184d9f37bb258663e728386f4add27f45025a5239",
+              "size": 953,
+              "action": "modify",
+              "source_sha256": "6f6b8485ed997757725e405e0b4d96416d2412e24c3faa38f8d4f10741ac815d"
+            },
+            {
+              "path": "migration/ledger/ov14_legacy_retirement_status.json",
+              "sha256": "774e692fa8d5fd7da4d985351c167f3f25e7d4cf80e81c80265ef405a5a80749",
+              "size": 1881,
+              "action": "modify",
+              "source_sha256": "1dcca51ebdc6c6ae2c30327a5f557a480a0047f873599921131924b79225c0a5"
+            },
+            {
+              "path": "migration/ledger/ov14_retirement_truth_hotfix_status.json",
+              "sha256": "41203ab7b39839a6d46ea6ca844ec77cb4dd5aca9918988d37f72ea91fada0a4",
+              "size": 294,
+              "action": "add"
+            },
+            {
+              "path": "scripts/validate_ov13_contract.py",
+              "sha256": "d81b7b5112aac1277b1aa645fd69d19fe5f7065c8b7c22b9514cd88710b26a69",
+              "size": 13061,
+              "action": "modify",
+              "source_sha256": "c8c5614de0347f2da98a78469448dcd6bcae6fde84756dbaff574dab1b7feb8b"
+            },
+            {
+              "path": "scripts/validate_ov13_devtool_wrapper_exo_jobs.py",
+              "sha256": "759638e7000300e7e00a7ca5dc947775941de0909da28f206244bd7e1526d837",
+              "size": 8255,
+              "action": "modify",
+              "source_sha256": "252ba9f6e926bf1560d0f792ff01ded46352fd10b65fef41a7956f0ef9905c76"
+            },
+            {
+              "path": "scripts/validate_ov14_contract.py",
+              "sha256": "5a8f5f1d12573cee80c553c9616ab0169c4f190a3acad1e235eb5aa6abb3a248",
+              "size": 5080,
+              "action": "modify",
+              "source_sha256": "deb4a8edf993d481a2282856e1bb2f8852f046757a1755b6a21452e321356e79"
+            },
+            {
+              "path": "scripts/validate_ov14_retirement_truth_hotfix.py",
+              "sha256": "739d5bae1008752a71fbf9d35236eeb5232e591a6b2ed9c8bc44292848afa305",
+              "size": 9771,
+              "action": "add"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "DustUI OV14: reopen Gate D on retirement truth audit"
+          }
+        },
+        "validation": {
+          "mode": "disabled",
+          "required": false,
+          "allow_deferred": true,
+          "restore": false,
+          "build": false,
+          "test": false
+        }
+      },
+      "operation_id": "7c84b6b22b7b401cabf85d09bbb6d304",
+      "history_id": "a6e75ab27a32ef7314cc25f4a308e420",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T163728Z-a22b834ec536",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T16:56:39.320667Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_rem01_android_go_runtime_binding_v1.zip",
+      "artifact_name": "dustui_go_rem01_android_go_runtime_binding_v1.zip",
+      "type": "overlay",
+      "sha256": "718b31d6dd688ee31a6f1ac45a7803f1f1f13195fa45d41402deb5a7267f3bf1",
+      "content_identity": {
+        "sha256": "718b31d6dd688ee31a6f1ac45a7803f1f1f13195fa45d41402deb5a7267f3bf1",
+        "size": 15580
+      },
+      "status": "failed",
+      "validation_status": "not-run",
+      "commit_message": "",
+      "commit_hash": "",
+      "file_count": 11,
+      "change_counts": {
+        "add": 7,
+        "modify": 4
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "dustui_go_rem01_android_go_runtime_binding_v1",
+        "description": "REM-01: build/package the arm64 Android Go PIE runtime and bind the Kotlin shell to its bounded readiness/session child-process protocol; Gate D remains open.",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "app/build.gradle.kts",
+              "sha256": "dc2a6985613e7c3a6ec760f19c2855cfe982eee9b147730f991af531f8704ecd",
+              "size": 4162,
+              "action": "modify",
+              "source_sha256": "b77e57a09c33cfe2f22bc62c937650fe9be86f5b15c7da50148d7eec69dce11b"
+            },
+            {
+              "path": "app/src/main/kotlin/com/mikeyphw/dustui/go/GoRuntimeProcess.kt",
+              "sha256": "bbbe2e9266e5afdc99d70a1f213ceaca204cfd81791d3081a9a9f6d3db18a187",
+              "size": 3639,
+              "action": "add"
+            },
+            {
+              "path": "app/src/test/kotlin/com/mikeyphw/dustui/go/GoRuntimeProductionBindingContractTest.kt",
+              "sha256": "5db5b0a88332b7bd62d4e2a26fc43d8387779beab0c9b18bcedfeff09d356c1c",
+              "size": 1111,
+              "action": "add"
+            },
+            {
+              "path": "cmd/dustui-go/main.go",
+              "sha256": "e7399224a4c00c207df67a871beba29acc425831e001a7ced754440865f1409a",
+              "size": 6665,
+              "action": "modify",
+              "source_sha256": "5219454cb915c5252017a844c372c905914ae855842ba0899d11d67d942549b4"
+            },
+            {
+              "path": "go/internal/readiness/readiness.go",
+              "sha256": "cf2b8ae6e634fc41b3c0b3baf3db9f6c9b196be743decb46fbecb82aa50a125e",
+              "size": 3730,
+              "action": "modify",
+              "source_sha256": "c1c4bca2e12fb24d61836da9132409fd6bf5790dcb1a48daf25ffb6422406ec4"
+            },
+            {
+              "path": "go/internal/readiness/readiness_test.go",
+              "sha256": "52c24f59f222d92312866f64bd3f640f47a4c1b381c71157b491b20e2d3000f4",
+              "size": 1267,
+              "action": "modify",
+              "source_sha256": "7528a3a91e643bf886b15cfcd2c5999984fbe854577023e7b433eac9d8c8556c"
+            },
+            {
+              "path": "migration/audit/v1/rem01_android_go_runtime_binding_audit.md",
+              "sha256": "4e5f19b3b156644fd022da647d84f6e9eb30599330b944ce71f23f115cac25c7",
+              "size": 578,
+              "action": "add"
+            },
+            {
+              "path": "migration/contracts/v1/rem01_android_go_runtime_binding.md",
+              "sha256": "f5816fb82747f405f2f9ad2e9bce1e1a8958ca3b9922a84c140ac25b44ad4b8b",
+              "size": 845,
+              "action": "add"
+            },
+            {
+              "path": "migration/ledger/ov14_legacy_retirement_status.json",
+              "sha256": "fda56d2eb737ab145cd95818f73ef42b59ccd5f8cead94603ef71c939a220faa",
+              "size": 1723,
+              "action": "modify",
+              "source_sha256": "774e692fa8d5fd7da4d985351c167f3f25e7d4cf80e81c80265ef405a5a80749"
+            },
+            {
+              "path": "scripts/validate_ov14_retirement_truth_hotfix.py",
+              "sha256": "f2d2e4ef81d0945f0f0812a3e65789e130db4fb9e7a884e9b41557d23972e518",
+              "size": 9696,
+              "action": "modify",
+              "source_sha256": "739d5bae1008752a71fbf9d35236eeb5232e591a6b2ed9c8bc44292848afa305"
+            },
+            {
+              "path": "scripts/validate_rem01_android_go_runtime_binding.py",
+              "sha256": "dfcc56ac86f812617a2121a11357995b2ee9abbec414040e8d3b25da941aac21",
+              "size": 1746,
+              "action": "add"
+            }
+          ]
+        }
+      },
+      "operation_id": "1ebe3ca91d854d55bdfad3a475965f67",
+      "history_id": "cd028588d4d85ca1ef5fb1bd39a9cd05",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "artifact-manifest",
+          "returncode": 1,
+          "skipped": false,
+          "failure_kind": "artifact_failure",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T17:00:41.635871Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_rem01_android_go_runtime_binding_v2.zip",
+      "artifact_name": "dustui_go_rem01_android_go_runtime_binding_v2.zip",
+      "type": "overlay",
+      "sha256": "d9999ea2dd86efdc4a7c85c46d9563d40e34523756e41774719894f20a4070e6",
+      "content_identity": {
+        "sha256": "d9999ea2dd86efdc4a7c85c46d9563d40e34523756e41774719894f20a4070e6",
+        "size": 15884
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI REM-01: bind Android to Go runtime",
+      "commit_hash": "3033d13734620839376c44bf09db441e508aa125",
+      "file_count": 11,
+      "change_counts": {
+        "add": 5,
+        "modify": 5,
+        "unchanged": 1
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "dustui_go_rem01_android_go_runtime_binding_v2",
+        "description": "REM-01 layout-corrected: build/package the arm64 Android Go PIE runtime from go/, bind the Android shell under android/app/, and truthfully reopen Gate D for remaining cutover blockers.",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "android/app/build.gradle.kts",
+              "sha256": "39716ef8f16c6ced2a79e8bad3310a3a7df0af4416c22bf67972c54844b687eb",
+              "size": 4181,
+              "action": "modify",
+              "source_sha256": "b77e57a09c33cfe2f22bc62c937650fe9be86f5b15c7da50148d7eec69dce11b"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/go/GoRuntimeProcess.kt",
+              "sha256": "bbbe2e9266e5afdc99d70a1f213ceaca204cfd81791d3081a9a9f6d3db18a187",
+              "size": 3639,
+              "action": "add"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/go/GoRuntimeProductionBindingContractTest.kt",
+              "sha256": "5db5b0a88332b7bd62d4e2a26fc43d8387779beab0c9b18bcedfeff09d356c1c",
+              "size": 1111,
+              "action": "add"
+            },
+            {
+              "path": "go/cmd/dustui-go/main.go",
+              "sha256": "e7399224a4c00c207df67a871beba29acc425831e001a7ced754440865f1409a",
+              "size": 6665,
+              "action": "modify",
+              "source_sha256": "5219454cb915c5252017a844c372c905914ae855842ba0899d11d67d942549b4"
+            },
+            {
+              "path": "go/internal/readiness/readiness.go",
+              "sha256": "cf2b8ae6e634fc41b3c0b3baf3db9f6c9b196be743decb46fbecb82aa50a125e",
+              "size": 3730,
+              "action": "modify",
+              "source_sha256": "c1c4bca2e12fb24d61836da9132409fd6bf5790dcb1a48daf25ffb6422406ec4"
+            },
+            {
+              "path": "go/internal/readiness/readiness_test.go",
+              "sha256": "52c24f59f222d92312866f64bd3f640f47a4c1b381c71157b491b20e2d3000f4",
+              "size": 1267,
+              "action": "modify",
+              "source_sha256": "7528a3a91e643bf886b15cfcd2c5999984fbe854577023e7b433eac9d8c8556c"
+            },
+            {
+              "path": "migration/audit/v1/rem01_android_go_runtime_binding_audit.md",
+              "sha256": "4e5f19b3b156644fd022da647d84f6e9eb30599330b944ce71f23f115cac25c7",
+              "size": 578,
+              "action": "add"
+            },
+            {
+              "path": "migration/contracts/v1/rem01_android_go_runtime_binding.md",
+              "sha256": "f5816fb82747f405f2f9ad2e9bce1e1a8958ca3b9922a84c140ac25b44ad4b8b",
+              "size": 845,
+              "action": "add"
+            },
+            {
+              "path": "migration/ledger/ov14_legacy_retirement_status.json",
+              "sha256": "c8ccd3dda0301257104f8db066156d63ad15ff84bcc98cc7e60ac69cd98489f9",
+              "size": 1840,
+              "action": "modify",
+              "source_sha256": "774e692fa8d5fd7da4d985351c167f3f25e7d4cf80e81c80265ef405a5a80749"
+            },
+            {
+              "path": "scripts/validate_ov14_retirement_truth_hotfix.py",
+              "sha256": "739d5bae1008752a71fbf9d35236eeb5232e591a6b2ed9c8bc44292848afa305",
+              "size": 9771,
+              "action": "modify",
+              "source_sha256": "739d5bae1008752a71fbf9d35236eeb5232e591a6b2ed9c8bc44292848afa305"
+            },
+            {
+              "path": "scripts/validate_rem01_android_go_runtime_binding.py",
+              "sha256": "df45d2474214e9cccbf857e805133f4cb3a1f71852a0b06265687a28f63c09c2",
+              "size": 1770,
+              "action": "add"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "DustUI REM-01: bind Android to Go runtime"
+          }
+        },
+        "validation": {
+          "mode": "disabled",
+          "required": false,
+          "allow_deferred": true,
+          "restore": false,
+          "build": false,
+          "test": false
+        }
+      },
+      "operation_id": "70bd2792076c4308b88c4135748f79a7",
+      "history_id": "db6e79312305fa6cd0dcf646f905fa90",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T170039Z-6847e5aef384",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T17:18:13.082063Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_rem02_sqlite_persistence_authority_v1.zip",
+      "artifact_name": "dustui_go_rem02_sqlite_persistence_authority_v1.zip",
+      "type": "overlay",
+      "sha256": "a0c7703545808823853ab6504a1ad421c96673a22a22841b0d3221a732b984ae",
+      "content_identity": {
+        "sha256": "a0c7703545808823853ab6504a1ad421c96673a22a22841b0d3221a732b984ae",
+        "size": 19901
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI REM-02: establish Go SQLite persistence authority",
+      "commit_hash": "d0fa82273937d40c9c7f327d2a8e110ccc60e08e",
+      "file_count": 12,
+      "change_counts": {
+        "add": 5,
+        "modify": 6,
+        "unchanged": 1
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "dustui_go_rem02_sqlite_persistence_authority_v1",
+        "description": "REM-02: establish actual Go-owned SQLite persistence for the Android Go runtime while keeping Gate D open until Android domain/legacy authority is retired.",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": ".devtool.toml",
+              "sha256": "ef3b7a984b6bdf4f4187dd6b9dbf99050d3b714c89f0830eb439de96b83b529c",
+              "size": 10764,
+              "action": "modify",
+              "source_sha256": "ae0b5eb817d8bc74d1a43ba254af433659470e4b2132e7b7b8c7352591f2f773"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/go/GoRuntimeProcess.kt",
+              "sha256": "0f8195811277bba4977a5e6d23b239261d517e2083b8931b1720d7f7a470a3fa",
+              "size": 3896,
+              "action": "modify",
+              "source_sha256": "bbbe2e9266e5afdc99d70a1f213ceaca204cfd81791d3081a9a9f6d3db18a187"
+            },
+            {
+              "path": "go/cmd/dustui-go/main.go",
+              "sha256": "200ba20297038d6bb5a25cb63894c0f07e7aae69b27b886cd1235ca2af0dfb80",
+              "size": 7347,
+              "action": "modify",
+              "source_sha256": "e7399224a4c00c207df67a871beba29acc425831e001a7ced754440865f1409a"
+            },
+            {
+              "path": "go/go.mod",
+              "sha256": "213eb109ee85c68651a6698e8e9bdd02749ccd58f2ccc24c7d178e671041b2be",
+              "size": 82,
+              "action": "modify",
+              "source_sha256": "bd6af7c22cf440b8700fef6c766d37d3f7fb48bd0d0e0d7b561bcaa3d3de91fa"
+            },
+            {
+              "path": "go/internal/readiness/readiness.go",
+              "sha256": "ab9949b4dd83f32d73ae65e10421b7d2c2d3ce5a4377b536249a3e2493b20b91",
+              "size": 3850,
+              "action": "modify",
+              "source_sha256": "cf2b8ae6e634fc41b3c0b3baf3db9f6c9b196be743decb46fbecb82aa50a125e"
+            },
+            {
+              "path": "go/internal/state/sqlite_store.go",
+              "sha256": "1d137ffc0759a7eac10baf9a0171aa88fe58aa89ea194b623274a383a5f58660",
+              "size": 9545,
+              "action": "add"
+            },
+            {
+              "path": "go/internal/state/sqlite_store_test.go",
+              "sha256": "e354fd7b448afb339dc5d5ed4595a230c57de1a3b4a753e68f3238484a47fd15",
+              "size": 3431,
+              "action": "add"
+            },
+            {
+              "path": "migration/audit/v1/rem02_go_sqlite_persistence_audit.md",
+              "sha256": "1e17b2e37398258f35b6a8d01d172f0eb09c3712dd65d347390a7fa6746767ff",
+              "size": 475,
+              "action": "add"
+            },
+            {
+              "path": "migration/contracts/v1/rem02_go_sqlite_persistence.md",
+              "sha256": "1b0a9bce3fae1a37e06bc13292eafd0a3e4f4ba64291baae90e96c2d6622ef00",
+              "size": 651,
+              "action": "add"
+            },
+            {
+              "path": "migration/ledger/ov14_legacy_retirement_status.json",
+              "sha256": "f9f21dc0b2b1f615a931aa0db84bb94b2b2406e79ce6bd24f72259c2a3749983",
+              "size": 1830,
+              "action": "modify",
+              "source_sha256": "c8ccd3dda0301257104f8db066156d63ad15ff84bcc98cc7e60ac69cd98489f9"
+            },
+            {
+              "path": "scripts/validate_ov14_retirement_truth_hotfix.py",
+              "sha256": "739d5bae1008752a71fbf9d35236eeb5232e591a6b2ed9c8bc44292848afa305",
+              "size": 9771,
+              "action": "modify",
+              "source_sha256": "739d5bae1008752a71fbf9d35236eeb5232e591a6b2ed9c8bc44292848afa305"
+            },
+            {
+              "path": "scripts/validate_rem02_sqlite_persistence_authority.py",
+              "sha256": "077cef58180c078d4be56fbfdd10ebeff531ae36281c8e3c74405716ed85dc54",
+              "size": 1769,
+              "action": "add"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "DustUI REM-02: establish Go SQLite persistence authority"
+          }
+        },
+        "validation": {
+          "mode": "disabled",
+          "required": false,
+          "allow_deferred": true,
+          "restore": false,
+          "build": false,
+          "test": false
+        }
+      },
+      "operation_id": "6661ad5526ce4c218e23efca6acf1dcb",
+      "history_id": "9b41cb818b90a930aa811851bf1acfff",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T171810Z-edfeac805ffc",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T17:24:38.886107Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_rem02_sqlite_integrity_hotfix_v1.zip",
+      "artifact_name": "dustui_go_rem02_sqlite_integrity_hotfix_v1.zip",
+      "type": "overlay",
+      "sha256": "3ea6cd7b1df8ce974c0e7fbc2fa397b7bac34951c701c8b1ef7c3d793d86755a",
+      "content_identity": {
+        "sha256": "3ea6cd7b1df8ce974c0e7fbc2fa397b7bac34951c701c8b1ef7c3d793d86755a",
+        "size": 9818
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI REM-02: repair SQLite schema integrity",
+      "commit_hash": "88b627dbad1719ac30f097dd3b12a870783e65e0",
+      "file_count": 6,
+      "change_counts": {
+        "add": 2,
+        "modify": 4
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "dustui_go_rem02_sqlite_integrity_hotfix_v1",
+        "description": "Correct REM-02 SQLite schema index and add reproducible modernc module checksums before REM-03.",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "go/go.mod",
+              "sha256": "91199905c701681734ecc6b4975c46a4ea9c806d823e61cc4c4c39020bdba743",
+              "size": 525,
+              "action": "modify",
+              "source_sha256": "213eb109ee85c68651a6698e8e9bdd02749ccd58f2ccc24c7d178e671041b2be"
+            },
+            {
+              "path": "go/go.sum",
+              "sha256": "5fb5708250da9889bd002c216113b53a1cf2ea49e1cd5f83f3675141f18b80cc",
+              "size": 1710,
+              "action": "add"
+            },
+            {
+              "path": "go/internal/state/schema.go",
+              "sha256": "6f6330060dd8a91bdbfc2b5a5ac49ab0426466d719a4e6956787db7bb9ec7f5b",
+              "size": 25484,
+              "action": "modify",
+              "source_sha256": "f2f17740b60685896d13c6fec92f0305c851addd70e81ad3f7476d0b31e91e70"
+            },
+            {
+              "path": "migration/ledger/ov14_legacy_retirement_status.json",
+              "sha256": "b96703b15b846f271fa900c69e9a63f70894a84a17ff9b3f5d520af13b3edc78",
+              "size": 1848,
+              "action": "modify",
+              "source_sha256": "f9f21dc0b2b1f615a931aa0db84bb94b2b2406e79ce6bd24f72259c2a3749983"
+            },
+            {
+              "path": "scripts/validate_rem02_sqlite_integrity_hotfix.py",
+              "sha256": "76322622fe2b707fe24db8e356c6c945fa07fb1c02e6aa25e250e3e97b440106",
+              "size": 571,
+              "action": "add"
+            },
+            {
+              "path": "scripts/validate_rem02_sqlite_persistence_authority.py",
+              "sha256": "be4104a5cf6609cf462e0083e26cd7459f4dcd4be79a59c9719e98ee3b77a0a3",
+              "size": 1924,
+              "action": "modify",
+              "source_sha256": "077cef58180c078d4be56fbfdd10ebeff531ae36281c8e3c74405716ed85dc54"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "DustUI REM-02: repair SQLite schema integrity"
+          }
+        },
+        "validation": {
+          "mode": "disabled",
+          "required": false,
+          "allow_deferred": true,
+          "restore": false,
+          "build": false,
+          "test": false
+        }
+      },
+      "operation_id": "cf3092c30bba485b850a7159535cf3b0",
+      "history_id": "1eb7ca577f6b57ee4ad2645d4acc2e4d",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T172436Z-c49d6ef1730f",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T17:47:33.624803Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_rem02_go_sqlite_persistence_v1.zip",
+      "artifact_name": "dustui_go_rem02_go_sqlite_persistence_v1.zip",
+      "type": "overlay",
+      "sha256": "ffb9f18515b1b55ad77eac0d59dcc8e6df96c65b5b86cf19dd67c4a0c4d9be4a",
+      "content_identity": {
+        "sha256": "ffb9f18515b1b55ad77eac0d59dcc8e6df96c65b5b86cf19dd67c4a0c4d9be4a",
+        "size": 34602
+      },
+      "status": "failed",
+      "validation_status": "not-run",
+      "commit_message": "DustUI REM-02: implement Go-owned SQLite persistence",
+      "commit_hash": "",
+      "file_count": 21,
+      "change_counts": {
+        "add": 2,
+        "modify": 19
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "dustui_go_rem02_go_sqlite_persistence_v1",
+        "description": "REM-02: implement real Go-owned SQLite persistence under the Android Go child process, enforce WAL/schema/runtime readiness, persist/query scans transactionally, repair the scan-history index, and truthfully keep Gate D open for the six remaining legacy-authority blockers.",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "android/app/build.gradle.kts",
+              "sha256": "d03e4c2a1b331bd8ada31b9186148de53c58ccdaaae774e3eaa097459075afba",
+              "size": 6021,
+              "action": "modify",
+              "source_sha256": "39716ef8f16c6ced2a79e8bad3310a3a7df0af4416c22bf67972c54844b687eb"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/go/GoRuntimeProcess.kt",
+              "sha256": "c01357d15834ec4eb7b239ffd455a0e91506aa5417492f079dfe5677283b18ef",
+              "size": 4074,
+              "action": "modify",
+              "source_sha256": "bbbe2e9266e5afdc99d70a1f213ceaca204cfd81791d3081a9a9f6d3db18a187"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/go/GoRuntimeProductionBindingContractTest.kt",
+              "sha256": "afb557891881eb12f7bab86d050474226a9549edfa8fe1002b8cc0a63799352c",
+              "size": 1189,
+              "action": "modify",
+              "source_sha256": "5db5b0a88332b7bd62d4e2a26fc43d8387779beab0c9b18bcedfeff09d356c1c"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/go/GoSQLiteProductionBindingContractTest.kt",
+              "sha256": "b7eca63e6b0909e229f1d99f8347bc0abd35209de3acfb38ba3f477b9d36c5b6",
+              "size": 1303,
+              "action": "add"
+            },
+            {
+              "path": "go/cmd/dustui-go/main.go",
+              "sha256": "469964f3f43b7f42136f14311e598d4841526d12e8fe6be49723f7c3a6cc027a",
+              "size": 10483,
+              "action": "modify",
+              "source_sha256": "e7399224a4c00c207df67a871beba29acc425831e001a7ced754440865f1409a"
+            },
+            {
+              "path": "go/go.mod",
+              "sha256": "9d3108b08410759b18e617679da3d40510a0af0a75dfbc9634223c4e37d9f40f",
+              "size": 92,
+              "action": "modify",
+              "source_sha256": "bd6af7c22cf440b8700fef6c766d37d3f7fb48bd0d0e0d7b561bcaa3d3de91fa"
+            },
+            {
+              "path": "go/go.sum",
+              "sha256": "9eb975c181ebee792e06f732fc13ef81acad0779d94731f75133ad2bba52c5ca",
+              "size": 177,
+              "action": "add"
+            },
+            {
+              "path": "go/internal/readiness/readiness.go",
+              "sha256": "3968273d0b7cb16e90b0d06507011e30d5d38938b0fe1fb674c470e88adfacc1",
+              "size": 3970,
+              "action": "modify",
+              "source_sha256": "cf2b8ae6e634fc41b3c0b3baf3db9f6c9b196be743decb46fbecb82aa50a125e"
+            },
+            {
+              "path": "go/internal/readiness/readiness_test.go",
+              "sha256": "22661193682584addd55d44552b008fd33587999e72d279d4fee1faa58f8488e",
+              "size": 1292,
+              "action": "modify",
+              "source_sha256": "52c24f59f222d92312866f64bd3f640f47a4c1b381c71157b491b20e2d3000f4"
+            },
+            {
+              "path": "go/internal/retirement/retirement.go",
+              "sha256": "4f6e0c81394a5f9e2464066a56d13b08d7f20a96d44f78b64a4955332eaa1e40",
+              "size": 2169,
+              "action": "modify",
+              "source_sha256": "0d48972564e4f8edb54cbfb6575a8077c6eafa7d7c7bb43d9c8908f3d6d0d7c6"
+            },
+            {
+              "path": "go/internal/retirement/retirement_test.go",
+              "sha256": "a7ff20e32d96937df0eca738fe18b02f83219f7eec7f6a0154f1fdb221327649",
+              "size": 1347,
+              "action": "modify",
+              "source_sha256": "a4e05e06b32cd85d36be4683c2dcabb72725912f4e4b4bfd491d9232bf89d129"
+            },
+            {
+              "path": "go/internal/state/schema.go",
+              "sha256": "2d91a593be1a74c7ace5f6043e6b41aa92e27bce3eaead9c58ce3351a422151d",
+              "size": 25486,
+              "action": "modify",
+              "source_sha256": "f2f17740b60685896d13c6fec92f0305c851addd70e81ad3f7476d0b31e91e70"
+            },
+            {
+              "path": "go/internal/state/schema_test.go",
+              "sha256": "6e41e7d8f74c4bd404ba63f654d72868ca2e62334436fb86be91a6c2be7c95e2",
+              "size": 1956,
+              "action": "modify",
+              "source_sha256": "453d82517efbff8755923a887fb6cd17c3e5f0d214ebc1417675035eb5247564"
+            },
+            {
+              "path": "go/internal/state/sqlite_store.go",
+              "sha256": "da26c5feb50eaf51e7a725f502f768ba731453e1b926e9efa050fe25ee386c7c",
+              "size": 14343,
+              "action": "add"
+            },
+            {
+              "path": "go/internal/state/sqlite_store_test.go",
+              "sha256": "0d3212127f56944817141ef7508351fcfabf0f199664249a48d0ac2906464a43",
+              "size": 3677,
+              "action": "add"
+            },
+            {
+              "path": "migration/audit/v1/rem02_go_sqlite_persistence_audit.md",
+              "sha256": "3fc0437920b1b54b788618fbbafc0d2afa201998a8c8c4d7ff0a2dc71c62ede3",
+              "size": 827,
+              "action": "add"
+            },
+            {
+              "path": "migration/contracts/v1/rem02_go_sqlite_persistence.md",
+              "sha256": "dc50a4482cb0018262543830d0179541fc5a48f85ecb48e917ad4debe91ce87a",
+              "size": 956,
+              "action": "add"
+            },
+            {
+              "path": "migration/ledger/ov14_legacy_retirement_status.json",
+              "sha256": "e379b198c96474f01de6df6ebf85acf8f2419e3fd1b4003a6c85652e5b1dc061",
+              "size": 1873,
+              "action": "modify",
+              "source_sha256": "c8ccd3dda0301257104f8db066156d63ad15ff84bcc98cc7e60ac69cd98489f9"
+            },
+            {
+              "path": "scripts/validate_ov14_retirement_truth_hotfix.py",
+              "sha256": "39f00637a7f378c0cc3a180267961fe8a6114bdba054c9d41a745b42d2c712db",
+              "size": 10369,
+              "action": "modify",
+              "source_sha256": "739d5bae1008752a71fbf9d35236eeb5232e591a6b2ed9c8bc44292848afa305"
+            },
+            {
+              "path": "scripts/validate_rem01_android_go_runtime_binding.py",
+              "sha256": "6d2d0899f2ef8eefbe164dcb091f626dad5d74cb28ee0599c84e78ec4f1843e9",
+              "size": 1769,
+              "action": "modify",
+              "source_sha256": "df45d2474214e9cccbf857e805133f4cb3a1f71852a0b06265687a28f63c09c2"
+            },
+            {
+              "path": "scripts/validate_rem02_go_sqlite_persistence.py",
+              "sha256": "8622b9f795d446fd2b28e174aa7611b8fd51a2c3d313bbb1de1183ca654708b4",
+              "size": 3348,
+              "action": "add"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "DustUI REM-02: implement Go-owned SQLite persistence"
+          }
+        },
+        "validation": {
+          "mode": "disabled",
+          "required": false,
+          "allow_deferred": true,
+          "restore": false,
+          "build": false,
+          "test": false
+        }
+      },
+      "operation_id": "3ccb4f9819fd4b4ba12d04e3545d1ac1",
+      "history_id": "4897899992be13d32f5dd1c0ec211601",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "artifact-manifest",
+          "returncode": 1,
+          "skipped": false,
+          "failure_kind": "artifact_failure",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T17:54:24.467566Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_rem02_reconciliation_hotfix_v1.zip",
+      "artifact_name": "dustui_go_rem02_reconciliation_hotfix_v1.zip",
+      "type": "overlay",
+      "sha256": "1d5f021027a6d31b5fc1f5bf26b5d5547cdc755e8fe6204b3c1a9a3aa23e24c1",
+      "content_identity": {
+        "sha256": "1d5f021027a6d31b5fc1f5bf26b5d5547cdc755e8fe6204b3c1a9a3aa23e24c1",
+        "size": 7195
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI REM-02: reconcile SQLite cutover truth",
+      "commit_hash": "9c11e178e85180dd658336ec1cb4c3ccfe0a0e2d",
+      "file_count": 6,
+      "change_counts": {
+        "add": 3,
+        "modify": 3
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "dustui_go_rem02_reconciliation_hotfix_v1",
+        "description": "Reconcile the already-applied REM-02 SQLite authority with OV14 truth and superseded REM-01 validation semantics; keep Gate D open with six blockers and REM-03 next.",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": "migration/ledger/ov14_legacy_retirement_status.json",
+              "sha256": "ab9b92e23867930e9c9e809c51570e6443cefb5c1cf2adbc8db2b1d515737284",
+              "size": 1861,
+              "action": "modify",
+              "source_sha256": "b96703b15b846f271fa900c69e9a63f70894a84a17ff9b3f5d520af13b3edc78"
+            },
+            {
+              "path": "scripts/validate_rem01_android_go_runtime_binding.py",
+              "sha256": "86f67d883025291bf1a66a57fb7d5688be2ba3fa625752370b26f70b8f43b659",
+              "size": 2886,
+              "action": "modify",
+              "source_sha256": "df45d2474214e9cccbf857e805133f4cb3a1f71852a0b06265687a28f63c09c2"
+            },
+            {
+              "path": "scripts/validate_rem02_sqlite_persistence_authority.py",
+              "sha256": "7e56385932b84f3c59b6a9cfbb15f59feb96307a28ba041887ad2be4cc3bb9b3",
+              "size": 2702,
+              "action": "modify",
+              "source_sha256": "be4104a5cf6609cf462e0083e26cd7459f4dcd4be79a59c9719e98ee3b77a0a3"
+            },
+            {
+              "path": "migration/audit/v1/rem02_reconciliation_hotfix_audit.md",
+              "sha256": "3d1ae173a461d8f1d1a751e1d8957188cf7d2fc96193a74fed6e164e64e96968",
+              "size": 663,
+              "action": "add"
+            },
+            {
+              "path": "migration/contracts/v1/rem02_reconciliation_hotfix.md",
+              "sha256": "9d64474378fe5ad9f361989b9ec5d36b67a398dfbbef15f5168c9a7f7393e143",
+              "size": 850,
+              "action": "add"
+            },
+            {
+              "path": "scripts/validate_rem02_reconciliation_hotfix.py",
+              "sha256": "4a065df57122fed221bef569902ac4af9ef4745298f9489daad1a14125e7053c",
+              "size": 2076,
+              "action": "add"
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "DustUI REM-02: reconcile SQLite cutover truth"
+          }
+        },
+        "validation": {
+          "mode": "disabled",
+          "required": false,
+          "allow_deferred": true,
+          "restore": false,
+          "build": false,
+          "test": false
+        }
+      },
+      "operation_id": "af4f2123465b4c63bb4da21892fb1633",
+      "history_id": "5337dca04ba7256d6d451e8486350c3a",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T175422Z-cdb34315a6db",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T18:10:53.963975Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_rem03_android_domain_cutover_v2.zip",
+      "artifact_name": "dustui_go_rem03_android_domain_cutover_v2.zip",
+      "type": "overlay",
+      "sha256": "e8be93ff715617eb24c300e6cc4b42a7eed7932e386fd5e36046f33b2cd6a107",
+      "content_identity": {
+        "sha256": "e8be93ff715617eb24c300e6cc4b42a7eed7932e386fd5e36046f33b2cd6a107",
+        "size": 74820
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI REM-03: cut Android domain authority to Go SQLite",
+      "commit_hash": "cf65e51baa2ec8d34c2a2ac8fbe981955da5264e",
+      "file_count": 27,
+      "change_counts": {
+        "add": 8,
+        "modify": 19
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "dustui_go_rem03_android_domain_cutover_v2",
+        "description": "REM-03: cut Android scan/query/history authority to Go SQLite on the post-reconciliation baseline, with SQL-backed query hot paths.",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": ".devtool.toml",
+              "action": "modify",
+              "sha256": "c329fe37b6d4ae9d8be263a26c1da29b4581746d7252f194ce889538c465568a",
+              "size": 11345,
+              "source_sha256": "ef3b7a984b6bdf4f4187dd6b9dbf99050d3b714c89f0830eb439de96b83b529c"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/AppContainer.kt",
+              "action": "modify",
+              "sha256": "3ad41711f3562b18c79743cc32449096dadd77dea6333f6cadbe644d1eb91b33",
+              "size": 5804,
+              "source_sha256": "a2f91228cade1f00b58ff8ebde17c2808bdf7c4335bdd875b9b68db056d90dad"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/DustUiApplication.kt",
+              "action": "modify",
+              "sha256": "5e229f51e68bb67ae5913e2d1b7522192a75109d81b824ef3fa24243738e81c8",
+              "size": 789,
+              "source_sha256": "262f10c00a7be4ec99ebf3aa51d0e3451cab2307d49c6614c39c6ea4b6663eca"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/GoDomainStore.kt",
+              "action": "add",
+              "sha256": "2c1b530e05f0f9f88fd35e4dbb752985feabfbd56521e12f32eee0ade2b78dd2",
+              "size": 18568
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/LegacyRoomV3Importer.kt",
+              "action": "add",
+              "sha256": "8cc659f978a6151d8dcdcb48d8aee7a27f27086e879a7c39ac0d0c8409e38e35",
+              "size": 7563
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+              "action": "modify",
+              "sha256": "b71f8205a1c12e376b546b855148c5e4a0da77eb69d51126773b5bdb8ec5344f",
+              "size": 47325,
+              "source_sha256": "541b87d1078605096eaf8b1625b5c9c479d58757d1834b830df9f3e704e8c6f0"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/scan/ScanForegroundService.kt",
+              "action": "modify",
+              "sha256": "baf5a17d252e5d749af9c4a984c19ae011f5706dc54ea5ada34f1d235b5a809e",
+              "size": 28060,
+              "source_sha256": "2e53917a2764c372e1cb7bef99c7cb3b9e8b10854bb0c2ac06fe1cd60c0bd47d"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/scan/StorageAlertNotifier.kt",
+              "action": "modify",
+              "sha256": "62c2b0ed73a3f87c472527f11da61ce59bd95b8dc99df75811f6217c21e618dd",
+              "size": 2126,
+              "source_sha256": "1c9478878dc9b68c58f5adec4ad69b1269d0d13521cab438db4d6d207376a76e"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/DatabaseSchemaContractTest.kt",
+              "action": "modify",
+              "sha256": "20f0f53b6dabbf97dd31ce483e55eebe0d518b7df5f4c9ba00e69441be779fab",
+              "size": 14543,
+              "source_sha256": "951cad03c010e3bec6cae758e1cc71467c3e7e974d7e46e17e29c584c10de480"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/migration/Ov14LegacyRetirementContractTest.kt",
+              "action": "modify",
+              "sha256": "cdb0041f03b3b0d66fa8143fb0ee78532f0b2b0f07fb26e0957a8489dcebc984",
+              "size": 2151,
+              "source_sha256": "54a3d407c6b0ea4e993be0aac238dd4c01c6e21e3a8b5d8269b377582a946b32"
+            },
+            {
+              "path": "go/cmd/dustui-go/main.go",
+              "action": "modify",
+              "sha256": "fdc5c667dac18e1a3789c677e03c6fd293157097dd4de8a006178d99c6a24699",
+              "size": 7616,
+              "source_sha256": "200ba20297038d6bb5a25cb63894c0f07e7aae69b27b886cd1235ca2af0dfb80"
+            },
+            {
+              "path": "go/cmd/dustui-go/runtime_domain.go",
+              "action": "add",
+              "sha256": "320004bd0b496788ab54913174539c92e388ccb77cba33a09dc217eeea4d0ec0",
+              "size": 8566
+            },
+            {
+              "path": "go/internal/product/product.go",
+              "action": "modify",
+              "sha256": "0dd5ecce0917325f3ceb6cca383ca41d41ba7dcd31e2d93879b13d31be444d4b",
+              "size": 9998,
+              "source_sha256": "31c6366933c8f2ce13151907e669356e74b1f8fd1b4b938ee6e1674bd8535e6d"
+            },
+            {
+              "path": "go/internal/product/product_test.go",
+              "action": "modify",
+              "sha256": "f68abb61bb731d87d03815069dc6a8907d68530906cab0ac4bbe64264aec6e76",
+              "size": 1311,
+              "source_sha256": "282d278e96908724bc0fd57943928063c91285a9c7b0807641974387707d388b"
+            },
+            {
+              "path": "go/internal/readiness/readiness.go",
+              "action": "modify",
+              "sha256": "63f120a4c7bd8c51ca6da62eb40d5360538218ae4896b67333b3f2c7b8ba9ebd",
+              "size": 3868,
+              "source_sha256": "ab9949b4dd83f32d73ae65e10421b7d2c2d3ce5a4377b536249a3e2493b20b91"
+            },
+            {
+              "path": "go/internal/readiness/readiness_test.go",
+              "action": "modify",
+              "sha256": "87c65f71125d4f0a3eb8c0e0a04bcf23f8fda0301568c3e3a23d910be40b9102",
+              "size": 1268,
+              "source_sha256": "52c24f59f222d92312866f64bd3f640f47a4c1b381c71157b491b20e2d3000f4"
+            },
+            {
+              "path": "go/internal/state/android_domain.go",
+              "action": "add",
+              "sha256": "b68b4163b5be9645bb498f7aac36e5d54d97b4886151b8831a09bc007a63617a",
+              "size": 28833
+            },
+            {
+              "path": "go/internal/state/android_domain_test.go",
+              "action": "add",
+              "sha256": "5fa2c4d8da09c7af53110dada4272b4d6f9aa5d1878a39c7b5089aed28378ace",
+              "size": 5170
+            },
+            {
+              "path": "go/internal/state/schema.go",
+              "action": "modify",
+              "sha256": "928de21983828abbd492d3d9b6573e43c2525db6ec603ef6b351f9bbf21f9a13",
+              "size": 27308,
+              "source_sha256": "6f6330060dd8a91bdbfc2b5a5ac49ab0426466d719a4e6956787db7bb9ec7f5b"
+            },
+            {
+              "path": "go/internal/state/sqlite_store.go",
+              "action": "modify",
+              "sha256": "7a86d9e840ca6cb127c6978d5d07acdab30407612e0b08a608f5126fc1b2eefa",
+              "size": 11251,
+              "source_sha256": "1d137ffc0759a7eac10baf9a0171aa88fe58aa89ea194b623274a383a5f58660"
+            },
+            {
+              "path": "migration/audit/v1/rem03_android_domain_protocol_cutover_audit.md",
+              "action": "add",
+              "sha256": "e59765af3697e9be1b51607e6ab9a6ef48e21c7da027550f6aa8d2c3f349b00f",
+              "size": 916
+            },
+            {
+              "path": "migration/contracts/v1/rem03_android_domain_protocol_cutover.md",
+              "action": "add",
+              "sha256": "d54b6a79d4a71afb31d57d83047fc71670a1d76ab32676b533c2d1aa0a64475c",
+              "size": 1311
+            },
+            {
+              "path": "migration/ledger/ov14_legacy_retirement_status.json",
+              "action": "modify",
+              "sha256": "795cbf0f34834c879cc0f418a38a04f0d0613d222c4ad56d3ae88298573881b6",
+              "size": 1952,
+              "source_sha256": "ab9b92e23867930e9c9e809c51570e6443cefb5c1cf2adbc8db2b1d515737284"
+            },
+            {
+              "path": "scripts/validate_ov13_contract.py",
+              "action": "modify",
+              "sha256": "8df059c13ea952b6bc68d22c560d603ea690dcdc19ea4e99530c105b084615d3",
+              "size": 13066,
+              "source_sha256": "d81b7b5112aac1277b1aa645fd69d19fe5f7065c8b7c22b9514cd88710b26a69"
+            },
+            {
+              "path": "scripts/validate_ov14_retirement_truth_hotfix.py",
+              "action": "modify",
+              "sha256": "c9d882a73e0ffc00b8ca774c6ccb0631db4115129a2c3adfbce64c3f974440ca",
+              "size": 9786,
+              "source_sha256": "739d5bae1008752a71fbf9d35236eeb5232e591a6b2ed9c8bc44292848afa305"
+            },
+            {
+              "path": "scripts/validate_rem02_reconciliation_hotfix.py",
+              "action": "modify",
+              "sha256": "c0504c4867ce58b0754a6ce58443f4feb7571745af4ea1da4053ea02e723ceb3",
+              "size": 2599,
+              "source_sha256": "4a065df57122fed221bef569902ac4af9ef4745298f9489daad1a14125e7053c"
+            },
+            {
+              "path": "scripts/validate_rem03_android_domain_cutover.py",
+              "action": "add",
+              "sha256": "53105f86f83895d85b9c2206d835a9df6d42cb0c2cce41031dd4c58492982007",
+              "size": 5244
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "DustUI REM-03: cut Android domain authority to Go SQLite"
+          }
+        },
+        "validation": {
+          "mode": "disabled",
+          "required": false,
+          "allow_deferred": true,
+          "restore": false,
+          "build": false,
+          "test": false
+        }
+      },
+      "operation_id": "f010dd70c44b42138be9b0d742b5013f",
+      "history_id": "cb08810da561bd3bfe3c827b94a44510",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T181050Z-e3a27a42bc19",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T19:26:30.889026Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_rem04_privileged_cleanup_mutation_cutover_v1.zip",
+      "artifact_name": "dustui_go_rem04_privileged_cleanup_mutation_cutover_v1.zip",
+      "type": "overlay",
+      "sha256": "3e3d5054890cfa0f2fd9ed1cca76a8fe60ff1a5c5b8000d08c73d5207784437c",
+      "content_identity": {
+        "sha256": "3e3d5054890cfa0f2fd9ed1cca76a8fe60ff1a5c5b8000d08c73d5207784437c",
+        "size": 75048
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "DustUI REM-04: cut privileged mutation to Go and retire C++ scanner",
+      "commit_hash": "fedf0258cdb648a02d61d8f111a3e1e24e23867c",
+      "file_count": 27,
+      "change_counts": {
+        "add": 7,
+        "delete": 4,
+        "modify": 20
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "dustui_go_rem04_privileged_cleanup_mutation_cutover_v1",
+        "description": "REM-04: cut privileged scan/cleanup mutation to the packaged Go root worker, add durable capability/journal reconciliation, and retire JNI/C++ production authority.",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": ".devtool.toml",
+              "action": "modify",
+              "sha256": "195004fb2791f74b926a58139d4a96049956d1448c0ad36a7b4cf77881ad9022",
+              "size": 11950,
+              "source_sha256": "c329fe37b6d4ae9d8be263a26c1da29b4581746d7252f194ce889538c465568a"
+            },
+            {
+              "path": "android/app/build.gradle.kts",
+              "action": "modify",
+              "sha256": "71b9aec61a94848089db025ddc992f67097c4410969836c0fee8d27ffc60f2f3",
+              "size": 4063,
+              "source_sha256": "39716ef8f16c6ced2a79e8bad3310a3a7df0af4416c22bf67972c54844b687eb"
+            },
+            {
+              "path": "android/app/proguard-rules.pro",
+              "action": "modify",
+              "sha256": "4c8898e22350aa302af09ab92677baf594b37fca616ae8ed174cb86df26063be",
+              "size": 249,
+              "source_sha256": "32476346c1510526ab16caaf2a2e71489ccdab54f4d423a7573d0e30b1823d42"
+            },
+            {
+              "path": "android/app/src/androidTest/kotlin/com/mikeyphw/dustui/validation/DeviceScalePerformanceInstrumentedTest.kt",
+              "action": "modify",
+              "sha256": "5a4980d35d36b9348e399c0383b5a14b2d3415282b30652bd5eb3263db783407",
+              "size": 3786,
+              "source_sha256": "a0a02abef33885b102f039e62d055c69eba9419fc263d2d914835beeb81be712"
+            },
+            {
+              "path": "android/app/src/androidTest/kotlin/com/mikeyphw/dustui/validation/RootedDestructiveSafetyInstrumentedTest.kt",
+              "action": "modify",
+              "sha256": "9228eed54d048ecfe6efa45a0d1cbbe74c5c4bfe7b1e7144dfe5b768c5d50c24",
+              "size": 5157,
+              "source_sha256": "c48e77e180efd1099fd6d4f61e814fc25c9c25dd619b6e9dc86168e4748c5936"
+            },
+            {
+              "path": "android/app/src/main/aidl/com/mikeyphw/dustui/root/IDustRootService.aidl",
+              "action": "modify",
+              "sha256": "8df8e6bcb6d808235a29e29eee40b101163ea827466937053eceafc35df8d888",
+              "size": 786,
+              "source_sha256": "21406713cfaea0398d5a68dbd6b3157d36a6e85adb440a46547c3e31ff7b18f0"
+            },
+            {
+              "path": "android/app/src/main/cpp/CMakeLists.txt",
+              "action": "delete",
+              "source_sha256": "1252667ceb8c2214ccc9262a28530084c4568e3bb28b50907937a46ca7862131"
+            },
+            {
+              "path": "android/app/src/main/cpp/dustui_scanner.cpp",
+              "action": "delete",
+              "source_sha256": "fe34d845fce046bbf1a4d62fee7f5b225a4eb268e923e7cd644f0eb82df6e49a"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupModels.kt",
+              "action": "modify",
+              "sha256": "11ee81173c75e57d08602c15d4e730e859ae1087192a603f99c0355c4fc44368",
+              "size": 9691,
+              "source_sha256": "5e245519aa741dd2608a1fb0e248edc186cc40dca2be3237f1529c5fc0ace403"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt",
+              "action": "modify",
+              "sha256": "c5322659274b1c0dfa8f03acf67d828050abf9eb82aa101f560457a55be4360b",
+              "size": 37855,
+              "source_sha256": "b20186cb057e0027211652a9bbceddc7122d33f73fc165b8f1b381af5d0d097a"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/GoRootWorker.kt",
+              "action": "add",
+              "sha256": "aa08fdcb0b138181163e2c6f5d8c9a577b27ace94726fa14d62667d452924f62",
+              "size": 6247
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/NativeDustScanner.kt",
+              "action": "delete",
+              "source_sha256": "7e87d0fc129012649f20830a2edd2e1056687e1d98b0b4c642dd452aa7339688"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/RootServiceClient.kt",
+              "action": "modify",
+              "sha256": "d31b82c2ac87524382cd8b68dc39ced25a505944a9e48b521dcac38f90198837",
+              "size": 22898,
+              "source_sha256": "2878fbe596e9d98e66d5ea321e19b6471ce6f0266ec597643b8f6d67561d9cce"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/DatabaseSchemaContractTest.kt",
+              "action": "modify",
+              "sha256": "777568354cd3cabba195c650c19ae64ef699857e5a521f5e6f998d2a0f6dbfbb",
+              "size": 14023,
+              "source_sha256": "20f0f53b6dabbf97dd31ce483e55eebe0d518b7df5f4c9ba00e69441be779fab"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootDiagnosticsSourceContractTest.kt",
+              "action": "modify",
+              "sha256": "f849b4fb5dfd8823e1cdb97da8561a611c9f93639025fe6f67d8677b027a8a36",
+              "size": 5094,
+              "source_sha256": "1a6810c83f40124c13736ab1fd6dbd5b3bdf1ee2870eb1f52a799d85403c3251"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ValidationRoadmapContractTest.kt",
+              "action": "modify",
+              "sha256": "81912125b2502e8f0c2f6a82eb04073551f93d859cc088b6a8711fc60469ee61",
+              "size": 2671,
+              "source_sha256": "4f8e2a8716f2a723e94525c0c5aedfbf35de50eaee29f5c46757ffa1f8d3f816"
+            },
+            {
+              "path": "android/app/src/testNative/scanner_test.cpp",
+              "action": "delete",
+              "source_sha256": "1b3ad1c160d736dfc0f1dd66b3eca4ff90d9ac59509c0bf8d94e57c9cf50b13d"
+            },
+            {
+              "path": "android/scripts/validate-root-scan-diagnostics.py",
+              "action": "modify",
+              "sha256": "882b2db70ea7ba1dd18ba5e4a9ef24ebf7417b89e144c36673a68c4ae020debd",
+              "size": 12366,
+              "source_sha256": "3c3be34e32f5f0289a00c48b157ade29c8026f634e31a48f54d28effb6456d1a"
+            },
+            {
+              "path": "docs/ANDROID_ROOT_SCAN_DIAGNOSTICS.md",
+              "action": "modify",
+              "sha256": "4d1fba95fd0185caf1ba4466d4fc2620eacda5994a27f4d90022dd5365e43a68",
+              "size": 2553,
+              "source_sha256": "37fe43ac029498b6e259d39f02bf6b6f24e0956d2699f928153d06ce9e56d6be"
+            },
+            {
+              "path": "go/cmd/dustui-go/main.go",
+              "action": "modify",
+              "sha256": "79d6be281dcb9a384922fa3d14359401bebb35a13dd8f94843f533e249d16b25",
+              "size": 8484,
+              "source_sha256": "fdc5c667dac18e1a3789c677e03c6fd293157097dd4de8a006178d99c6a24699"
+            },
+            {
+              "path": "go/internal/cleanup/cleanup.go",
+              "action": "modify",
+              "sha256": "23ac24c973e002f6245d2114106bde0d688c6134318181016fdb6e2008e9b1bb",
+              "size": 25868,
+              "source_sha256": "3f3863f41887b39fa043f38fee0c2c0d6eabaa9cab4f680a6b7a337d762eb946"
+            },
+            {
+              "path": "go/internal/rootworker/cleanup.go",
+              "action": "add",
+              "sha256": "4abfd2c489a9dec438601a2812947c5eeabaa0f1bb8f38c62773a68decbe6058",
+              "size": 32264
+            },
+            {
+              "path": "go/internal/rootworker/cleanup_test.go",
+              "action": "add",
+              "sha256": "f557745a9f3df22676b59e6c9b9176b635c51c6f51b127abc60241c669877df3",
+              "size": 6779
+            },
+            {
+              "path": "go/internal/rootworker/scan.go",
+              "action": "add",
+              "sha256": "db45fa839e3ae75a7eaa538dfa1e40e2bfc387de3ffe839ea4b981a4be5b6271",
+              "size": 7808
+            },
+            {
+              "path": "migration/audit/v1/rem04_privileged_cleanup_mutation_cutover_audit.md",
+              "action": "add",
+              "sha256": "834afff60337f40962e09daa511392ac08ff685b5ce1bb0e8beeaf5c3938bb64",
+              "size": 624
+            },
+            {
+              "path": "migration/contracts/v1/rem04_privileged_cleanup_mutation_cutover.md",
+              "action": "add",
+              "sha256": "b05b3b3fdc067cfea80726ad1e7896f84d073720b9a6d79a04ee599c6d1fdd93",
+              "size": 746
+            },
+            {
+              "path": "migration/ledger/ov14_legacy_retirement_status.json",
+              "action": "modify",
+              "sha256": "b5e06dcc176d94caf5e113f3841727a3a5b076b230c00ac21a29e1acd467aa58",
+              "size": 2024,
+              "source_sha256": "795cbf0f34834c879cc0f418a38a04f0d0613d222c4ad56d3ae88298573881b6"
+            },
+            {
+              "path": "scripts/validate_ov13_contract.py",
+              "action": "modify",
+              "sha256": "6b57da27260b4ab7a5ad7a9b0b166c06974e9e7b6cf10e655e4245e53ee9ae8a",
+              "size": 13773,
+              "source_sha256": "8df059c13ea952b6bc68d22c560d603ea690dcdc19ea4e99530c105b084615d3"
+            },
+            {
+              "path": "scripts/validate_rem02_reconciliation_hotfix.py",
+              "action": "modify",
+              "sha256": "d604eae2db3d9773f5f4e3b18d826142a7d0fa5ea09b53ea322572c45e3e42a1",
+              "size": 2940,
+              "source_sha256": "c0504c4867ce58b0754a6ce58443f4feb7571745af4ea1da4053ea02e723ceb3"
+            },
+            {
+              "path": "scripts/validate_rem03_android_domain_cutover.py",
+              "action": "modify",
+              "sha256": "8dc9f867fe7375270e3f4fd2137ebaf47839643ed13b77747b85065f65cb27c5",
+              "size": 5425,
+              "source_sha256": "53105f86f83895d85b9c2206d835a9df6d42cb0c2cce41031dd4c58492982007"
+            },
+            {
+              "path": "scripts/validate_rem04_privileged_cleanup_cutover.py",
+              "action": "add",
+              "sha256": "0189a41e59886aaba642a5b03f6c644d52068d5ddd4845985f69331970620a96",
+              "size": 4825
+            }
+          ]
+        },
+        "apply": {
+          "atomic": true,
+          "conflict_policy": "fail",
+          "path_policy": "repository-relative",
+          "requires_clean_worktree": false,
+          "commit": {
+            "enabled": true,
+            "strategy": "single",
+            "message": "DustUI REM-04: cut privileged mutation to Go and retire C++ scanner"
+          }
+        },
+        "validation": {
+          "mode": "disabled",
+          "required": false,
+          "allow_deferred": true,
+          "restore": false,
+          "build": false,
+          "test": false
+        }
+      },
+      "operation_id": "629f2eb65c2440038b7642cade468833",
+      "history_id": "48e41fb8551ebfefacad2f850fb3c99d",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-add",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-commit",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "git-index-reconcile",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T192627Z-5757b93cf79c",
+        "status": "completed"
+      },
+      "validation_plan": {}
+    },
+    {
+      "schema_version": 3,
+      "applied_at": "2026-09-24T19:26:48.480023Z",
+      "artifact": "/storage/emulated/0/Download/dustui_go_rem05_legacy_surface_release_truth_retirement_v2.zip",
+      "artifact_name": "dustui_go_rem05_legacy_surface_release_truth_retirement_v2.zip",
+      "type": "overlay",
+      "sha256": "9b970953ba0007cdd425f8fe36d7cfcb046d71baca9e03e90958efa88a1b1067",
+      "content_identity": {
+        "sha256": "9b970953ba0007cdd425f8fe36d7cfcb046d71baca9e03e90958efa88a1b1067",
+        "size": 51430
+      },
+      "status": "ok",
+      "validation_status": "not-run",
+      "commit_message": "",
+      "commit_hash": "",
+      "file_count": 12,
+      "change_counts": {
+        "add": 3,
+        "delete": 4,
+        "modify": 9
+      },
+      "manifest": {
+        "schema_version": 2,
+        "type": "overlay",
+        "name": "dustui_go_rem05_legacy_surface_release_truth_retirement_v2",
+        "description": "REM-05: retire legacy Python target, superseded navigation authority, and app-local generic release truth; close Gate D and make OV15 Gate E eligible.",
+        "repository": {
+          "name": "dustui"
+        },
+        "target": "dustui_android",
+        "inventory": {
+          "format": 1,
+          "entries": [
+            {
+              "path": ".devtool.toml",
+              "action": "modify",
+              "sha256": "cbac102a4c1a55bcd6250da5ec7dc2d27c0e42408b48e8e136c3fb087ad9f950",
+              "size": 11267,
+              "source_sha256": "195004fb2791f74b926a58139d4a96049956d1448c0ad36a7b4cf77881ad9022"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ReleasePackaging.kt",
+              "action": "delete",
+              "source_sha256": "1064d059b6e896a1edbf2b04fc0bb545388053b707d1834b4336c5adcf3f6ba0"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ReleaseReadiness.kt",
+              "action": "delete",
+              "source_sha256": "4d448d1844a977b011a4f3f6cb0622f3dc75f212efc3f2ea019ac1e240111637"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt",
+              "action": "modify",
+              "sha256": "07490bc608fdab73178b9be1ccd0f4d65bcb8a8fec470433cfaadceb0809e152",
+              "size": 10507,
+              "source_sha256": "4e350d55ce6ba69c95fa39823616fd49bb0bb9e39413dcf06c09db4924613f39"
+            },
+            {
+              "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+              "action": "modify",
+              "sha256": "578831e67a00d68573959ea15c2c70c1134a67bccbae54907c876d586348eeec",
+              "size": 190591,
+              "source_sha256": "94e5bb5812501c7da0d3f6d8cddf7e4dbdb959ebe57fb21b8c590d35033b24a4"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleasePackagingTest.kt",
+              "action": "delete",
+              "source_sha256": "371c234ff650a3723dc00e4dc0940ab0d39e4c9d0a0f0258e44d7b761cc3b03d"
+            },
+            {
+              "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleaseReadinessTest.kt",
+              "action": "delete",
+              "source_sha256": "e89949aa193a499ac404ee4e8ccbddcf070b6aef49bec011fbf5d38467099002"
+            },
+            {
+              "path": "migration/audit/v1/rem05_legacy_surface_release_truth_retirement_audit.md",
+              "action": "add",
+              "sha256": "5f11633afe4ea098fc1ec38efeb0a0fab13281c29e117619a917fcabe964b7d0",
+              "size": 106
+            },
+            {
+              "path": "migration/contracts/v1/rem05_legacy_surface_release_truth_retirement.md",
+              "action": "add",
+              "sha256": "758e8f609199f04318d49f619d694eae181a6135cd0120c9110ea050fb6ee8b1",
+              "size": 668
+            },
+            {
+              "path": "migration/ledger/ov14_legacy_retirement_status.json",
+              "action": "modify",
+              "sha256": "c85364de413b53f91160439b7b0c6cbcb971d11338fdc61399dfc2f209d8acd5",
+              "size": 1714,
+              "source_sha256": "b5e06dcc176d94caf5e113f3841727a3a5b076b230c00ac21a29e1acd467aa58"
+            },
+            {
+              "path": "scripts/validate_ov14_retirement_truth_hotfix.py",
+              "action": "modify",
+              "sha256": "03661fcf6c78483a3f2d4688f2ddc71c315e6d3fdf764b10f793dbca07e3561a",
+              "size": 9827,
+              "source_sha256": "c9d882a73e0ffc00b8ca774c6ccb0631db4115129a2c3adfbce64c3f974440ca"
+            },
+            {
+              "path": "scripts/validate_rem01_android_go_runtime_binding.py",
+              "action": "modify",
+              "sha256": "edcc9b6c9c919c29f9622fd25e868e2b0d0fc1a6759f8353f56d67524037d892",
+              "size": 3039,
+              "source_sha256": "86f67d883025291bf1a66a57fb7d5688be2ba3fa625752370b26f70b8f43b659"
+            },
+            {
+              "path": "scripts/validate_rem02_reconciliation_hotfix.py",
+              "action": "modify",
+              "sha256": "94dc82d0abc5eac3abcfbdef93cd0a43ffe30a44393b779b99cc2cb8ce07d118",
+              "size": 3232,
+              "source_sha256": "d604eae2db3d9773f5f4e3b18d826142a7d0fa5ea09b53ea322572c45e3e42a1"
+            },
+            {
+              "path": "scripts/validate_rem03_android_domain_cutover.py",
+              "action": "modify",
+              "sha256": "887200ee30300fbe6861cb23cca397b52d0ae4cbe72e1c142f4f571de6eaa84c",
+              "size": 5535,
+              "source_sha256": "8dc9f867fe7375270e3f4fd2137ebaf47839643ed13b77747b85065f65cb27c5"
+            },
+            {
+              "path": "scripts/validate_rem04_privileged_cleanup_cutover.py",
+              "action": "modify",
+              "sha256": "8b41ea8bfdc9b5aff55457db700727a4b748c6d6756905e21ef97e60cb7a2eee",
+              "size": 4863,
+              "source_sha256": "0189a41e59886aaba642a5b03f6c644d52068d5ddd4845985f69331970620a96"
+            },
+            {
+              "path": "scripts/validate_rem05_legacy_surface_retirement.py",
+              "action": "add",
+              "sha256": "e360ba938fa26486e15c9648bf025a97416c784bd38a5b81aaaacc560c4095e4",
+              "size": 1367
+            }
+          ]
+        }
+      },
+      "operation_id": "b796b62c67d3414daa895cfeca451b4e",
+      "history_id": "6104c9ef3d02b2292f92d673391c5c23",
+      "rollback_status": "not-needed",
+      "child_outcomes": [
+        {
+          "name": "apply-overlay",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "apply-verification",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        },
+        {
+          "name": "artifact-cleanup",
+          "returncode": 0,
+          "skipped": false,
+          "failure_kind": "",
+          "overlay_id": "",
+          "overlay_index": 1,
+          "target": ""
+        }
+      ],
+      "transaction": {
+        "id": "20260924T192647Z-98a3c39d8073",
+        "status": "completed"
+      },
+      "validation_plan": {}
     }
   ]
 }

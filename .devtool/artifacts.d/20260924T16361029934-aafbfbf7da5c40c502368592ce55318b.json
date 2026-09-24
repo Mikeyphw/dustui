@@ -1,0 +1,219 @@
+{
+  "schema_version": 3,
+  "applied_at": "2026-09-24T16:36:10.299341Z",
+  "artifact": "/storage/emulated/0/Download/dustui_go_ov14_retirement_truth_hotfix_v1.zip",
+  "artifact_name": "dustui_go_ov14_retirement_truth_hotfix_v1.zip",
+  "type": "overlay",
+  "sha256": "55ca030110dd2b7c676e24a25aa0d8b216c38baeed5b8ccb1c4e0f4bfbb92dd9",
+  "content_identity": {
+    "sha256": "55ca030110dd2b7c676e24a25aa0d8b216c38baeed5b8ccb1c4e0f4bfbb92dd9",
+    "size": 36239
+  },
+  "status": "failed",
+  "validation_status": "not-run",
+  "commit_message": "DustUI OV14: reopen Gate D on retirement truth audit",
+  "commit_hash": "",
+  "file_count": 22,
+  "change_counts": {
+    "add": 5,
+    "modify": 17
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "dustui_go_ov14_retirement_truth_hotfix_v1",
+    "description": "OV14 truth hotfix: reopen Gate D when real Android/Go cutover and legacy retirement are not source-proven; block OV15 until remediation.",
+    "repository": {
+      "name": "DustUI"
+    },
+    "target": "dustui_android",
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": ".devtool.toml",
+          "sha256": "ae0b5eb817d8bc74d1a43ba254af433659470e4b2132e7b7b8c7352591f2f773",
+          "size": 10441,
+          "action": "modify",
+          "source_sha256": "4e63d3711a42f0584c608becfa42b7b7e931976ed9433015a93f12ecf3a77287"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/migration/Ov14LegacyRetirementContractTest.kt",
+          "sha256": "54a3d407c6b0ea4e993be0aac238dd4c01c6e21e3a8b5d8269b377582a946b32",
+          "size": 2036,
+          "action": "modify",
+          "source_sha256": "95a762e7a54e98701844074be06a99a3e96497d1f9564ed2748d0a02484a9721"
+        },
+        {
+          "path": "go/internal/product/product.go",
+          "sha256": "31c6366933c8f2ce13151907e669356e74b1f8fd1b4b938ee6e1674bd8535e6d",
+          "size": 9998,
+          "action": "modify",
+          "source_sha256": "e97bcb6ac20a31fb272c20b200f99647941914ee444cf5aea64c1ef6e9a1c7c4"
+        },
+        {
+          "path": "go/internal/product/product_test.go",
+          "sha256": "282d278e96908724bc0fd57943928063c91285a9c7b0807641974387707d388b",
+          "size": 1258,
+          "action": "modify",
+          "source_sha256": "e2c068aa19e23a4c12b46862164d680f3ee5d00a326a3d72473d6103740ea107"
+        },
+        {
+          "path": "go/internal/readiness/readiness.go",
+          "sha256": "c1c4bca2e12fb24d61836da9132409fd6bf5790dcb1a48daf25ffb6422406ec4",
+          "size": 3666,
+          "action": "modify",
+          "source_sha256": "22e1671a9a371618dedad703bbb3e815409132c2f7d6f5f1230c9c1d3079be7b"
+        },
+        {
+          "path": "go/internal/readiness/readiness_test.go",
+          "sha256": "7528a3a91e643bf886b15cfcd2c5999984fbe854577023e7b433eac9d8c8556c",
+          "size": 1266,
+          "action": "modify",
+          "source_sha256": "b16e7425286b5f994f91fa480cf04b5b829eec70bbcac39223b6b40cc2d41115"
+        },
+        {
+          "path": "go/internal/retirement/retirement.go",
+          "sha256": "0d48972564e4f8edb54cbfb6575a8077c6eafa7d7c7bb43d9c8908f3d6d0d7c6",
+          "size": 2192,
+          "action": "modify",
+          "source_sha256": "a2720db807bc5bc77394665099db0c21f85a98c6bf6662fef797efb9b76e8d77"
+        },
+        {
+          "path": "go/internal/retirement/retirement_test.go",
+          "sha256": "a4e05e06b32cd85d36be4683c2dcabb72725912f4e4b4bfd491d9232bf89d129",
+          "size": 1363,
+          "action": "modify",
+          "source_sha256": "15ffffade346abc26bbebd6252798f544e90547f51be42358d1c6456ca551e9f"
+        },
+        {
+          "path": "go/internal/runtime/spec.go",
+          "sha256": "3dfa0e5c9538d928b7881fce56539c6c333decfe2d50cc5eb27d8340484711a3",
+          "size": 8475,
+          "action": "modify",
+          "source_sha256": "8f35ae7faf5c1861cd177a9b5fdb2c9e93f21d9f4699c0e30d7f9da95cee3ca6"
+        },
+        {
+          "path": "go/internal/runtime/spec_test.go",
+          "sha256": "3b305e60d4363a91f9e5eecba3b86b713d127247d7374c491e355131fe9a8163",
+          "size": 3726,
+          "action": "modify",
+          "source_sha256": "e9fdaf1a2bc954965d93ca0b551aa9cb8396f3850e3e20d656b2f84f74d7202d"
+        },
+        {
+          "path": "migration/audit/v1/ov14_legacy_retirement_audit.md",
+          "sha256": "e7baa7d033acdad83e565882306ad1ba8f42a28cd6fc6b769b6389b770e53d12",
+          "size": 1841,
+          "action": "modify",
+          "source_sha256": "c09abefd6bb645b930210f86e773253477dc481d76376d467ffc14715ff8ee24"
+        },
+        {
+          "path": "migration/audit/v1/ov14_retirement_truth_hotfix_audit.md",
+          "sha256": "3fea14c87f436b4176af4a5b417372f3645377b91aed892806dfd1aa6a4b9bdb",
+          "size": 488,
+          "action": "add"
+        },
+        {
+          "path": "migration/contracts/v1/android_go_cutover_remediation_roadmap.md",
+          "sha256": "225796b230ea6f1ffba29d1d4ab627eaf7248047fde477d6ce07f8cf4973e67d",
+          "size": 4355,
+          "action": "add"
+        },
+        {
+          "path": "migration/contracts/v1/ov14_legacy_retirement.md",
+          "sha256": "1c4691c179eb9ea3dce6447aead6afcdee47dffd88c7cad52263b3b1ddd45681",
+          "size": 2760,
+          "action": "modify",
+          "source_sha256": "0adf4c8669f388ec3298fdda421607e16a60eee040e7b76b8e86f38b8ffec51c"
+        },
+        {
+          "path": "migration/contracts/v1/ov14_retirement_truth_hotfix.md",
+          "sha256": "963c384b59c3ce305ca171a6503ca034c8bf5bedc75832fe506b9aba31089fc9",
+          "size": 614,
+          "action": "add"
+        },
+        {
+          "path": "migration/ledger/ov13_status.json",
+          "sha256": "455170e747eab1d32d907bb184d9f37bb258663e728386f4add27f45025a5239",
+          "size": 953,
+          "action": "modify",
+          "source_sha256": "6f6b8485ed997757725e405e0b4d96416d2412e24c3faa38f8d4f10741ac815d"
+        },
+        {
+          "path": "migration/ledger/ov14_legacy_retirement_status.json",
+          "sha256": "774e692fa8d5fd7da4d985351c167f3f25e7d4cf80e81c80265ef405a5a80749",
+          "size": 1881,
+          "action": "modify",
+          "source_sha256": "1dcca51ebdc6c6ae2c30327a5f557a480a0047f873599921131924b79225c0a5"
+        },
+        {
+          "path": "migration/ledger/ov14_retirement_truth_hotfix_status.json",
+          "sha256": "41203ab7b39839a6d46ea6ca844ec77cb4dd5aca9918988d37f72ea91fada0a4",
+          "size": 294,
+          "action": "add"
+        },
+        {
+          "path": "scripts/validate_ov13_contract.py",
+          "sha256": "d81b7b5112aac1277b1aa645fd69d19fe5f7065c8b7c22b9514cd88710b26a69",
+          "size": 13061,
+          "action": "modify",
+          "source_sha256": "c8c5614de0347f2da98a78469448dcd6bcae6fde84756dbaff574dab1b7feb8b"
+        },
+        {
+          "path": "scripts/validate_ov13_devtool_wrapper_exo_jobs.py",
+          "sha256": "759638e7000300e7e00a7ca5dc947775941de0909da28f206244bd7e1526d837",
+          "size": 8255,
+          "action": "modify",
+          "source_sha256": "252ba9f6e926bf1560d0f792ff01ded46352fd10b65fef41a7956f0ef9905c76"
+        },
+        {
+          "path": "scripts/validate_ov14_contract.py",
+          "sha256": "5a8f5f1d12573cee80c553c9616ab0169c4f190a3acad1e235eb5aa6abb3a248",
+          "size": 5080,
+          "action": "modify",
+          "source_sha256": "deb4a8edf993d481a2282856e1bb2f8852f046757a1755b6a21452e321356e79"
+        },
+        {
+          "path": "scripts/validate_ov14_retirement_truth_hotfix.py",
+          "sha256": "739d5bae1008752a71fbf9d35236eeb5232e591a6b2ed9c8bc44292848afa305",
+          "size": 9771,
+          "action": "add"
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false,
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "DustUI OV14: reopen Gate D on retirement truth audit"
+      }
+    },
+    "validation": {
+      "mode": "disabled",
+      "required": false,
+      "allow_deferred": true,
+      "restore": false,
+      "build": false,
+      "test": false
+    }
+  },
+  "operation_id": "ce02e9651fcc498db7444e3ba7953767",
+  "history_id": "aafbfbf7da5c40c502368592ce55318b",
+  "rollback_status": "not-needed",
+  "child_outcomes": [
+    {
+      "name": "artifact-manifest",
+      "returncode": 1,
+      "skipped": false,
+      "failure_kind": "artifact_failure",
+      "overlay_id": "",
+      "overlay_index": 1,
+      "target": ""
+    }
+  ],
+  "validation_plan": {}
+}

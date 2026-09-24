@@ -1,0 +1,210 @@
+{
+  "schema_version": 3,
+  "applied_at": "2026-09-24T17:47:33.624803Z",
+  "artifact": "/storage/emulated/0/Download/dustui_go_rem02_go_sqlite_persistence_v1.zip",
+  "artifact_name": "dustui_go_rem02_go_sqlite_persistence_v1.zip",
+  "type": "overlay",
+  "sha256": "ffb9f18515b1b55ad77eac0d59dcc8e6df96c65b5b86cf19dd67c4a0c4d9be4a",
+  "content_identity": {
+    "sha256": "ffb9f18515b1b55ad77eac0d59dcc8e6df96c65b5b86cf19dd67c4a0c4d9be4a",
+    "size": 34602
+  },
+  "status": "failed",
+  "validation_status": "not-run",
+  "commit_message": "DustUI REM-02: implement Go-owned SQLite persistence",
+  "commit_hash": "",
+  "file_count": 21,
+  "change_counts": {
+    "add": 2,
+    "modify": 19
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "dustui_go_rem02_go_sqlite_persistence_v1",
+    "description": "REM-02: implement real Go-owned SQLite persistence under the Android Go child process, enforce WAL/schema/runtime readiness, persist/query scans transactionally, repair the scan-history index, and truthfully keep Gate D open for the six remaining legacy-authority blockers.",
+    "repository": {
+      "name": "dustui"
+    },
+    "target": "dustui_android",
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "android/app/build.gradle.kts",
+          "sha256": "d03e4c2a1b331bd8ada31b9186148de53c58ccdaaae774e3eaa097459075afba",
+          "size": 6021,
+          "action": "modify",
+          "source_sha256": "39716ef8f16c6ced2a79e8bad3310a3a7df0af4416c22bf67972c54844b687eb"
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/go/GoRuntimeProcess.kt",
+          "sha256": "c01357d15834ec4eb7b239ffd455a0e91506aa5417492f079dfe5677283b18ef",
+          "size": 4074,
+          "action": "modify",
+          "source_sha256": "bbbe2e9266e5afdc99d70a1f213ceaca204cfd81791d3081a9a9f6d3db18a187"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/go/GoRuntimeProductionBindingContractTest.kt",
+          "sha256": "afb557891881eb12f7bab86d050474226a9549edfa8fe1002b8cc0a63799352c",
+          "size": 1189,
+          "action": "modify",
+          "source_sha256": "5db5b0a88332b7bd62d4e2a26fc43d8387779beab0c9b18bcedfeff09d356c1c"
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/go/GoSQLiteProductionBindingContractTest.kt",
+          "sha256": "b7eca63e6b0909e229f1d99f8347bc0abd35209de3acfb38ba3f477b9d36c5b6",
+          "size": 1303,
+          "action": "add"
+        },
+        {
+          "path": "go/cmd/dustui-go/main.go",
+          "sha256": "469964f3f43b7f42136f14311e598d4841526d12e8fe6be49723f7c3a6cc027a",
+          "size": 10483,
+          "action": "modify",
+          "source_sha256": "e7399224a4c00c207df67a871beba29acc425831e001a7ced754440865f1409a"
+        },
+        {
+          "path": "go/go.mod",
+          "sha256": "9d3108b08410759b18e617679da3d40510a0af0a75dfbc9634223c4e37d9f40f",
+          "size": 92,
+          "action": "modify",
+          "source_sha256": "bd6af7c22cf440b8700fef6c766d37d3f7fb48bd0d0e0d7b561bcaa3d3de91fa"
+        },
+        {
+          "path": "go/go.sum",
+          "sha256": "9eb975c181ebee792e06f732fc13ef81acad0779d94731f75133ad2bba52c5ca",
+          "size": 177,
+          "action": "add"
+        },
+        {
+          "path": "go/internal/readiness/readiness.go",
+          "sha256": "3968273d0b7cb16e90b0d06507011e30d5d38938b0fe1fb674c470e88adfacc1",
+          "size": 3970,
+          "action": "modify",
+          "source_sha256": "cf2b8ae6e634fc41b3c0b3baf3db9f6c9b196be743decb46fbecb82aa50a125e"
+        },
+        {
+          "path": "go/internal/readiness/readiness_test.go",
+          "sha256": "22661193682584addd55d44552b008fd33587999e72d279d4fee1faa58f8488e",
+          "size": 1292,
+          "action": "modify",
+          "source_sha256": "52c24f59f222d92312866f64bd3f640f47a4c1b381c71157b491b20e2d3000f4"
+        },
+        {
+          "path": "go/internal/retirement/retirement.go",
+          "sha256": "4f6e0c81394a5f9e2464066a56d13b08d7f20a96d44f78b64a4955332eaa1e40",
+          "size": 2169,
+          "action": "modify",
+          "source_sha256": "0d48972564e4f8edb54cbfb6575a8077c6eafa7d7c7bb43d9c8908f3d6d0d7c6"
+        },
+        {
+          "path": "go/internal/retirement/retirement_test.go",
+          "sha256": "a7ff20e32d96937df0eca738fe18b02f83219f7eec7f6a0154f1fdb221327649",
+          "size": 1347,
+          "action": "modify",
+          "source_sha256": "a4e05e06b32cd85d36be4683c2dcabb72725912f4e4b4bfd491d9232bf89d129"
+        },
+        {
+          "path": "go/internal/state/schema.go",
+          "sha256": "2d91a593be1a74c7ace5f6043e6b41aa92e27bce3eaead9c58ce3351a422151d",
+          "size": 25486,
+          "action": "modify",
+          "source_sha256": "f2f17740b60685896d13c6fec92f0305c851addd70e81ad3f7476d0b31e91e70"
+        },
+        {
+          "path": "go/internal/state/schema_test.go",
+          "sha256": "6e41e7d8f74c4bd404ba63f654d72868ca2e62334436fb86be91a6c2be7c95e2",
+          "size": 1956,
+          "action": "modify",
+          "source_sha256": "453d82517efbff8755923a887fb6cd17c3e5f0d214ebc1417675035eb5247564"
+        },
+        {
+          "path": "go/internal/state/sqlite_store.go",
+          "sha256": "da26c5feb50eaf51e7a725f502f768ba731453e1b926e9efa050fe25ee386c7c",
+          "size": 14343,
+          "action": "add"
+        },
+        {
+          "path": "go/internal/state/sqlite_store_test.go",
+          "sha256": "0d3212127f56944817141ef7508351fcfabf0f199664249a48d0ac2906464a43",
+          "size": 3677,
+          "action": "add"
+        },
+        {
+          "path": "migration/audit/v1/rem02_go_sqlite_persistence_audit.md",
+          "sha256": "3fc0437920b1b54b788618fbbafc0d2afa201998a8c8c4d7ff0a2dc71c62ede3",
+          "size": 827,
+          "action": "add"
+        },
+        {
+          "path": "migration/contracts/v1/rem02_go_sqlite_persistence.md",
+          "sha256": "dc50a4482cb0018262543830d0179541fc5a48f85ecb48e917ad4debe91ce87a",
+          "size": 956,
+          "action": "add"
+        },
+        {
+          "path": "migration/ledger/ov14_legacy_retirement_status.json",
+          "sha256": "e379b198c96474f01de6df6ebf85acf8f2419e3fd1b4003a6c85652e5b1dc061",
+          "size": 1873,
+          "action": "modify",
+          "source_sha256": "c8ccd3dda0301257104f8db066156d63ad15ff84bcc98cc7e60ac69cd98489f9"
+        },
+        {
+          "path": "scripts/validate_ov14_retirement_truth_hotfix.py",
+          "sha256": "39f00637a7f378c0cc3a180267961fe8a6114bdba054c9d41a745b42d2c712db",
+          "size": 10369,
+          "action": "modify",
+          "source_sha256": "739d5bae1008752a71fbf9d35236eeb5232e591a6b2ed9c8bc44292848afa305"
+        },
+        {
+          "path": "scripts/validate_rem01_android_go_runtime_binding.py",
+          "sha256": "6d2d0899f2ef8eefbe164dcb091f626dad5d74cb28ee0599c84e78ec4f1843e9",
+          "size": 1769,
+          "action": "modify",
+          "source_sha256": "df45d2474214e9cccbf857e805133f4cb3a1f71852a0b06265687a28f63c09c2"
+        },
+        {
+          "path": "scripts/validate_rem02_go_sqlite_persistence.py",
+          "sha256": "8622b9f795d446fd2b28e174aa7611b8fd51a2c3d313bbb1de1183ca654708b4",
+          "size": 3348,
+          "action": "add"
+        }
+      ]
+    },
+    "apply": {
+      "atomic": true,
+      "conflict_policy": "fail",
+      "path_policy": "repository-relative",
+      "requires_clean_worktree": false,
+      "commit": {
+        "enabled": true,
+        "strategy": "single",
+        "message": "DustUI REM-02: implement Go-owned SQLite persistence"
+      }
+    },
+    "validation": {
+      "mode": "disabled",
+      "required": false,
+      "allow_deferred": true,
+      "restore": false,
+      "build": false,
+      "test": false
+    }
+  },
+  "operation_id": "3ccb4f9819fd4b4ba12d04e3545d1ac1",
+  "history_id": "4897899992be13d32f5dd1c0ec211601",
+  "rollback_status": "not-needed",
+  "child_outcomes": [
+    {
+      "name": "artifact-manifest",
+      "returncode": 1,
+      "skipped": false,
+      "failure_kind": "artifact_failure",
+      "overlay_id": "",
+      "overlay_index": 1,
+      "target": ""
+    }
+  ],
+  "validation_plan": {}
+}

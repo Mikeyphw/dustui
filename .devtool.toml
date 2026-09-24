@@ -146,32 +146,6 @@ test = ["go", "test", "./..."]
 build = ["go", "build", "./cmd/dustui-go"]
 readiness = ["go", "run", "./cmd/dustui-go", "readiness"]
 
-[targets.dust_tui_legacy]
-type = "python"
-root = "."
-execution_environment = "auto"
-
-[targets.dust_tui_legacy.metadata]
-compatibility_only = true
-retire_by = "OV14"
-parity_oracle_until = "OV13"
-
-[targets.dust_tui_legacy.tasks]
-test = ["pytest"]
-lint = ["ruff", "check", "src", "tests"]
-format_check = ["ruff", "format", "--check", "src", "tests"]
-docs_check = ["python", "-m", "dust_tui", "--help"]
-build = ["python", "-m", "build", "--no-isolation"]
-smoke = ["python", "-m", "dust_tui", "--help"]
-
-[targets.dust_tui_legacy.artifacts]
-required = false
-external_verification = "auto"
-
-[targets.dust_tui_legacy.validation]
-python_safe = true
-low_priority = false
-memory_guard_mb = 256
 
 [targets.dustui_android.validation.phase_profiles.preflight]
 max_workers = 1

@@ -1,0 +1,123 @@
+{
+  "schema_version": 3,
+  "applied_at": "2026-09-24T16:56:39.320667Z",
+  "artifact": "/storage/emulated/0/Download/dustui_go_rem01_android_go_runtime_binding_v1.zip",
+  "artifact_name": "dustui_go_rem01_android_go_runtime_binding_v1.zip",
+  "type": "overlay",
+  "sha256": "718b31d6dd688ee31a6f1ac45a7803f1f1f13195fa45d41402deb5a7267f3bf1",
+  "content_identity": {
+    "sha256": "718b31d6dd688ee31a6f1ac45a7803f1f1f13195fa45d41402deb5a7267f3bf1",
+    "size": 15580
+  },
+  "status": "failed",
+  "validation_status": "not-run",
+  "commit_message": "",
+  "commit_hash": "",
+  "file_count": 11,
+  "change_counts": {
+    "add": 7,
+    "modify": 4
+  },
+  "manifest": {
+    "schema_version": 2,
+    "type": "overlay",
+    "name": "dustui_go_rem01_android_go_runtime_binding_v1",
+    "description": "REM-01: build/package the arm64 Android Go PIE runtime and bind the Kotlin shell to its bounded readiness/session child-process protocol; Gate D remains open.",
+    "repository": {
+      "name": "dustui"
+    },
+    "target": "dustui_android",
+    "inventory": {
+      "format": 1,
+      "entries": [
+        {
+          "path": "app/build.gradle.kts",
+          "sha256": "dc2a6985613e7c3a6ec760f19c2855cfe982eee9b147730f991af531f8704ecd",
+          "size": 4162,
+          "action": "modify",
+          "source_sha256": "b77e57a09c33cfe2f22bc62c937650fe9be86f5b15c7da50148d7eec69dce11b"
+        },
+        {
+          "path": "app/src/main/kotlin/com/mikeyphw/dustui/go/GoRuntimeProcess.kt",
+          "sha256": "bbbe2e9266e5afdc99d70a1f213ceaca204cfd81791d3081a9a9f6d3db18a187",
+          "size": 3639,
+          "action": "add"
+        },
+        {
+          "path": "app/src/test/kotlin/com/mikeyphw/dustui/go/GoRuntimeProductionBindingContractTest.kt",
+          "sha256": "5db5b0a88332b7bd62d4e2a26fc43d8387779beab0c9b18bcedfeff09d356c1c",
+          "size": 1111,
+          "action": "add"
+        },
+        {
+          "path": "cmd/dustui-go/main.go",
+          "sha256": "e7399224a4c00c207df67a871beba29acc425831e001a7ced754440865f1409a",
+          "size": 6665,
+          "action": "modify",
+          "source_sha256": "5219454cb915c5252017a844c372c905914ae855842ba0899d11d67d942549b4"
+        },
+        {
+          "path": "go/internal/readiness/readiness.go",
+          "sha256": "cf2b8ae6e634fc41b3c0b3baf3db9f6c9b196be743decb46fbecb82aa50a125e",
+          "size": 3730,
+          "action": "modify",
+          "source_sha256": "c1c4bca2e12fb24d61836da9132409fd6bf5790dcb1a48daf25ffb6422406ec4"
+        },
+        {
+          "path": "go/internal/readiness/readiness_test.go",
+          "sha256": "52c24f59f222d92312866f64bd3f640f47a4c1b381c71157b491b20e2d3000f4",
+          "size": 1267,
+          "action": "modify",
+          "source_sha256": "7528a3a91e643bf886b15cfcd2c5999984fbe854577023e7b433eac9d8c8556c"
+        },
+        {
+          "path": "migration/audit/v1/rem01_android_go_runtime_binding_audit.md",
+          "sha256": "4e5f19b3b156644fd022da647d84f6e9eb30599330b944ce71f23f115cac25c7",
+          "size": 578,
+          "action": "add"
+        },
+        {
+          "path": "migration/contracts/v1/rem01_android_go_runtime_binding.md",
+          "sha256": "f5816fb82747f405f2f9ad2e9bce1e1a8958ca3b9922a84c140ac25b44ad4b8b",
+          "size": 845,
+          "action": "add"
+        },
+        {
+          "path": "migration/ledger/ov14_legacy_retirement_status.json",
+          "sha256": "fda56d2eb737ab145cd95818f73ef42b59ccd5f8cead94603ef71c939a220faa",
+          "size": 1723,
+          "action": "modify",
+          "source_sha256": "774e692fa8d5fd7da4d985351c167f3f25e7d4cf80e81c80265ef405a5a80749"
+        },
+        {
+          "path": "scripts/validate_ov14_retirement_truth_hotfix.py",
+          "sha256": "f2d2e4ef81d0945f0f0812a3e65789e130db4fb9e7a884e9b41557d23972e518",
+          "size": 9696,
+          "action": "modify",
+          "source_sha256": "739d5bae1008752a71fbf9d35236eeb5232e591a6b2ed9c8bc44292848afa305"
+        },
+        {
+          "path": "scripts/validate_rem01_android_go_runtime_binding.py",
+          "sha256": "dfcc56ac86f812617a2121a11357995b2ee9abbec414040e8d3b25da941aac21",
+          "size": 1746,
+          "action": "add"
+        }
+      ]
+    }
+  },
+  "operation_id": "1ebe3ca91d854d55bdfad3a475965f67",
+  "history_id": "cd028588d4d85ca1ef5fb1bd39a9cd05",
+  "rollback_status": "not-needed",
+  "child_outcomes": [
+    {
+      "name": "artifact-manifest",
+      "returncode": 1,
+      "skipped": false,
+      "failure_kind": "artifact_failure",
+      "overlay_id": "",
+      "overlay_index": 1,
+      "target": ""
+    }
+  ],
+  "validation_plan": {}
+}

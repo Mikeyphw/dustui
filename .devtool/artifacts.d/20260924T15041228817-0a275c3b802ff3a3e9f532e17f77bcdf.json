@@ -1,0 +1,76 @@
+{
+  "schema_version": 3,
+  "applied_at": "2026-09-24T15:04:12.288170Z",
+  "artifact": "/storage/emulated/0/Download/dustui_go_ov13_ov01_contract_repo_root_hotfix_v1.zip",
+  "artifact_name": "dustui_go_ov13_ov01_contract_repo_root_hotfix_v1.zip",
+  "type": "overlay",
+  "sha256": "a84f5309040f81f4f6968a76f1530c03e5ebea51b3b8ea47e024455209078f34",
+  "content_identity": {
+    "sha256": "a84f5309040f81f4f6968a76f1530c03e5ebea51b3b8ea47e024455209078f34",
+    "size": 11595
+  },
+  "status": "ok",
+  "validation_status": "not-run",
+  "commit_message": "DustUI OV13 fix OV01 contract repo root",
+  "commit_hash": "",
+  "file_count": 9,
+  "change_counts": {
+    "unchanged": 9
+  },
+  "manifest": {},
+  "operation_id": "65dd9183e04c466fbf3d27102090fb1c",
+  "history_id": "0a275c3b802ff3a3e9f532e17f77bcdf",
+  "rollback_status": "not-needed",
+  "child_outcomes": [
+    {
+      "name": "apply-overlay",
+      "returncode": 0,
+      "skipped": false,
+      "failure_kind": "",
+      "overlay_id": "",
+      "overlay_index": 1,
+      "target": ""
+    },
+    {
+      "name": "git-add-skipped",
+      "returncode": 0,
+      "skipped": true,
+      "failure_kind": "",
+      "overlay_id": "",
+      "overlay_index": 1,
+      "target": ""
+    },
+    {
+      "name": "git-commit-skipped",
+      "returncode": 0,
+      "skipped": true,
+      "failure_kind": "",
+      "overlay_id": "",
+      "overlay_index": 1,
+      "target": ""
+    },
+    {
+      "name": "apply-verification",
+      "returncode": 0,
+      "skipped": false,
+      "failure_kind": "",
+      "overlay_id": "",
+      "overlay_index": 1,
+      "target": ""
+    },
+    {
+      "name": "artifact-cleanup",
+      "returncode": 0,
+      "skipped": false,
+      "failure_kind": "",
+      "overlay_id": "",
+      "overlay_index": 1,
+      "target": ""
+    }
+  ],
+  "transaction": {
+    "id": "20260924T150411Z-d29431b20902",
+    "status": "completed"
+  },
+  "validation_plan": {}
+}

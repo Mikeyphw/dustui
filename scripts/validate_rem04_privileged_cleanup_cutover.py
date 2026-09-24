@@ -43,7 +43,8 @@ for token in ['TestReplacementAfterReviewFailsClosed','TestAddedDescendantAfterR
     require(token in tests,f'Go rootworker regression test missing {token}')
 status=json.loads(read('migration/ledger/ov14_legacy_retirement_status.json'))
 blockers=sorted(status.get('blockers',[])); folded=set(status.get('folded_in',[]))
-expected=sorted(['generic_release_truth_duplicated','legacy_navigation_not_proven_retired','python_legacy_target_present'])
+rem05_folded='rem05_legacy_surface_release_truth_retirement' in folded
+expected=[] if rem05_folded else sorted(['generic_release_truth_duplicated','legacy_navigation_not_proven_retired','python_legacy_target_present'])
 require('rem04_privileged_cleanup_mutation_cutover_cpp_retirement' in folded,'REM-04 not folded into truth ledger')
 require(blockers==expected,f'REM-04 should leave exactly three blockers, got {status.get("blockers",[])}')
 obs=status.get('observed',{})
@@ -56,4 +57,4 @@ for name in ['fast','gate_d','validate']:
 if fail:
     for x in fail: print('REM-04 failure:',x,file=sys.stderr)
     raise SystemExit(1)
-print('REM-04 privileged Go scan/mutation cutover PASS (C++ scanner and legacy destructive executor retired; Gate D remains open with three blockers)')
+print('REM-04 privileged Go scan/mutation cutover PASS (successor retirement state accepted)')

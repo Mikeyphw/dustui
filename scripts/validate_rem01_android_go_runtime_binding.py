@@ -62,8 +62,10 @@ if status.get("observed", {}).get("android_go_runtime_binding") != "production":
     fail.append("truth ledger does not record production Android Go binding")
 if "go_android_runtime_binding_missing" in status.get("blockers", []):
     fail.append("runtime binding blocker still present")
-if status.get("status") != "reopened_blocked":
-    fail.append("REM-01 must not close Gate D")
+folded=set(status.get("folded_in",[]))
+rem05_folded="rem05_legacy_surface_release_truth_retirement" in folded
+if status.get("status") != ("closed" if rem05_folded else "reopened_blocked"):
+    fail.append("REM-01 successor Gate D status mismatch")
 
 # Go execution is an EXO target-local job. Keeping it there avoids duplicated,
 # environment-sensitive dependency fetches inside a static contract validator.
