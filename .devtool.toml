@@ -81,7 +81,7 @@ affected_module_lint = true
 
 [targets.dustui_android.metadata]
 primary = true
-migration_phase = "OV01"
+migration_phase = "OV02"
 structured_events = true
 max_gradle_nodes = 1
 abi_policy = "arm64-v8a production first; x86_64 is test-only until a matching Go runtime exists"
@@ -96,8 +96,9 @@ inputs = ["go"]
 
 [targets.dustui_go.metadata]
 production_authority = false
-migration_phase = "OV01"
-readiness_only = true
+migration_phase = "OV02"
+readiness_only = false
+state_protocol_kernel = true
 
 [targets.dustui_go.tasks]
 test = ["go", "test", "./..."]

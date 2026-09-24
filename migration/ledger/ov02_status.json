@@ -1,0 +1,24 @@
+{
+  "schema": "dustui.migration.overlay_status.v1",
+  "overlay": "OV02",
+  "title": "Go state, SQLite, protocol, and operation kernel",
+  "status": "foundation_established_non_production",
+  "closes_now": [],
+  "establishes": [
+    "RC-06 durable SQLite operation authority foundation",
+    "ABH-04 scan lifecycle protocol/state foundation",
+    "ABH-05 DB/session/recovery foundation",
+    "N-03 final fail-open authority removal preparation",
+    "RM-06 Room v3 one-way import contract"
+  ],
+  "authority": {
+    "production_cutover": false,
+    "go_sqlite_model_present": true,
+    "go_mutation_authority": false,
+    "room_dual_write_allowed": false
+  },
+  "validation": [
+    "python3 scripts/validate_ov02_contract.py --audit-loop",
+    "cd go && go test ./..."
+  ]
+}

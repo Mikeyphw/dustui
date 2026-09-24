@@ -2,15 +2,18 @@ package readiness
 
 import "testing"
 
-func TestCurrentIsNonAuthoritativeOV01(t *testing.T) {
+func TestCurrentIsOV02StateProtocolKernelWithoutProductionCutover(t *testing.T) {
 	report := Current()
-	if report.MigrationPhase != "OV01" {
+	if report.MigrationPhase != "OV02" {
 		t.Fatalf("phase = %q", report.MigrationPhase)
 	}
-	if report.ProductionEngine || report.SQLiteAuthority || report.MutationAuthority {
-		t.Fatalf("OV01 readiness skeleton must not claim production authority: %+v", report)
+	if report.ProductionEngine || report.MutationAuthority {
+		t.Fatalf("OV02 must not claim production/mutation authority: %+v", report)
 	}
-	if report.Protocol == "" || report.Message == "" {
-		t.Fatalf("readiness report must expose protocol and message: %+v", report)
+	if !report.SQLiteAuthorityModel {
+		t.Fatalf("OV02 must expose Go SQLite authority model: %+v", report)
+	}
+	if len(report.RequiredTables) < 13 || len(report.EnvelopeTypes) < 9 {
+		t.Fatalf("OV02 readiness lacks table/protocol coverage: %+v", report)
 	}
 }

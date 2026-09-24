@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/mikeyphw/dustui/go/internal/readiness"
+	"github.com/mikeyphw/dustui/go/internal/state"
 )
 
 func main() {
@@ -13,14 +14,26 @@ func main() {
 	if len(os.Args) > 1 {
 		command = os.Args[1]
 	}
-	if command != "readiness" && command != "version" {
-		fmt.Fprintf(os.Stderr, "unknown command %q; supported: readiness, version\n", command)
+
+	var payload any
+	switch command {
+	case "readiness", "version", "protocol":
+		payload = readiness.Current()
+	case "schema":
+		payload = map[string]any{
+			"schemaVersion":    state.SchemaVersion,
+			"requiredTables":   state.RequiredTables,
+			"createStatements": state.CreateStatements(),
+			"roomV3ImportPlan": state.RoomV3ImportPlan(),
+		}
+	default:
+		fmt.Fprintf(os.Stderr, "unknown command %q; supported: readiness, version, protocol, schema\n", command)
 		os.Exit(2)
 	}
-	payload, err := json.MarshalIndent(readiness.Current(), "", "  ")
+	encoded, err := json.MarshalIndent(payload, "", "  ")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "encode readiness: %v\n", err)
+		fmt.Fprintf(os.Stderr, "encode %s: %v\n", command, err)
 		os.Exit(1)
 	}
-	fmt.Println(string(payload))
+	fmt.Println(string(encoded))
 }

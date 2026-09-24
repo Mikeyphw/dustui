@@ -1,0 +1,197 @@
+{
+  "schema": "devtool.overlay.schema.v2",
+  "schema_version": 2,
+  "name": "dustui_go_ov02_go_state_protocol_kernel_v1",
+  "artifact": "dustui_go_ov02_go_state_protocol_kernel_v1.zip",
+  "target": "dustui_android",
+  "secondary_targets": [
+    "dustui_go",
+    "dust_tui_legacy"
+  ],
+  "repository": "~/Code/dustui",
+  "overlay": "OV02",
+  "title": "Go state, SQLite, protocol, and operation kernel",
+  "created_utc": "2026-09-24T05:05:17Z",
+  "apply_policy": {
+    "devtool_command": "devtool -r \"$HOME/Code/dustui\" --target dustui_android apply overlay /sdcard/Download/dustui_go_ov02_go_state_protocol_kernel_v1.zip --no-validate --commit \"DustUI OV02 Go state protocol kernel\"",
+    "validation_policy": "non-gate overlay; apply with --no-validate, then run OV02 fast evidence commands; Devtool target-local EXO jobs/workflows deferred to gate",
+    "fast_evidence_commands": [
+      "python3 scripts/validate_ov02_contract.py --audit-loop",
+      "cd go && go test ./...",
+      "devtool -r \"$HOME/Code/dustui\" --target dustui_android test"
+    ],
+    "full_validation_gate": false
+  },
+  "roadmap_requirements": [
+    "schema-v2/current Devtool overlay manifest",
+    "checksums and explicit inventory",
+    "target declaration",
+    "migration-ledger updates",
+    "tests for overlay promises",
+    "authority-transition notes",
+    "reachable/unreachable legacy-path notes",
+    "source-token retirement notes",
+    "no unrelated cleanup or aesthetic refactors"
+  ],
+  "authority_transition": {
+    "go_production_authority": false,
+    "go_sqlite_authority_model": true,
+    "go_mutation_authority": false,
+    "legacy_production_remains_reachable": true,
+    "room_go_dual_write_allowed": false,
+    "unsupported_devtool_jobs_workflows_added": false
+  },
+  "payload_file_count": 30,
+  "payload_sha256": [
+    {
+      "path": ".devtool.toml",
+      "size_bytes": 5069,
+      "sha256": "b23ac7741ca64dc6d71baa61fb080c9e90cc39678ec7548161e3cb1d2e8170eb"
+    },
+    {
+      "path": "go/cmd/dustui-go/main.go",
+      "size_bytes": 900,
+      "sha256": "5ed556a6a5e6c803f147e23407df6be06f9fe538ffd3913662f22e3e7aabea64"
+    },
+    {
+      "path": "go/internal/cleanup/cleanup.go",
+      "size_bytes": 336,
+      "sha256": "a665148ea162b4d6f3ee17f03adfc5c56a732cf45f7f8c43e58fde3aac029b8f"
+    },
+    {
+      "path": "go/internal/diagnostics/diagnostics.go",
+      "size_bytes": 291,
+      "sha256": "bdad51de0a8f18e721389a391662720078df708f82bcb6d591632dc8adfbaa12"
+    },
+    {
+      "path": "go/internal/engine/engine.go",
+      "size_bytes": 264,
+      "sha256": "84f7994263c0053432a8279bc4b165c879cbd3dd8d6cb4d74c3ae2a99d60b3f4"
+    },
+    {
+      "path": "go/internal/evidence/evidence.go",
+      "size_bytes": 296,
+      "sha256": "abcf9bfcf5fbad11f6ead4d215e55bbf06d0951ce8e70ff6a7a30347b70f66f5"
+    },
+    {
+      "path": "go/internal/operations/state.go",
+      "size_bytes": 6274,
+      "sha256": "746ca490ee7a7e5490ec754a6923dff166153c2f0722f4aee964b7d79b37ec2b"
+    },
+    {
+      "path": "go/internal/operations/state_test.go",
+      "size_bytes": 3592,
+      "sha256": "fc808f8576c4922700dfae81914584145551199bc50cb0b9d1b32f5657c782bb"
+    },
+    {
+      "path": "go/internal/platform/platform.go",
+      "size_bytes": 195,
+      "sha256": "37eba4fdf18cf86c3b5694159a12090b03268be3056b564fa5b1d2f6ae3c37f7"
+    },
+    {
+      "path": "go/internal/protocol/envelope.go",
+      "size_bytes": 2513,
+      "sha256": "52e108cc89358fe915d4a0d8edb7b1e85d8f23dcf34180bae3f4617ceb8094b1"
+    },
+    {
+      "path": "go/internal/protocol/reason.go",
+      "size_bytes": 1591,
+      "sha256": "884a4108cba854e49647ad2da80be0eeb327303137246bce9f667d45c202bc78"
+    },
+    {
+      "path": "go/internal/query/query.go",
+      "size_bytes": 270,
+      "sha256": "3edf253682069e89160ad431a507c75e0a8a09de2f7d06a923c9b46b38116ad5"
+    },
+    {
+      "path": "go/internal/readiness/readiness.go",
+      "size_bytes": 1457,
+      "sha256": "d55842e48a2bf05e56419dce6b2362229c282aeebaff79486dd75e3134d11609"
+    },
+    {
+      "path": "go/internal/readiness/readiness_test.go",
+      "size_bytes": 623,
+      "sha256": "af67765ce28a3a538221fd72bb075db263ff5e2642de2e43b5482d78cfe92f31"
+    },
+    {
+      "path": "go/internal/scan/scan.go",
+      "size_bytes": 205,
+      "sha256": "5ce2543e34f0d7edb6dc3a67d068d47dda5b1ed16782ed3d1be83c6222bd041c"
+    },
+    {
+      "path": "go/internal/state/generation.go",
+      "size_bytes": 518,
+      "sha256": "33a8e3262d712986e28197b4c882b9a85dd2f0e3b663402938bad58bf9c7bbc3"
+    },
+    {
+      "path": "go/internal/state/generation_test.go",
+      "size_bytes": 579,
+      "sha256": "7c8140bba079fb3a5e62a4b9b54eaca938e48b1cd77e5ecee92ed865b94ff301"
+    },
+    {
+      "path": "go/internal/state/migration.go",
+      "size_bytes": 1200,
+      "sha256": "4b8d6f62d274c5498e886b7c87a0260be01c11d5d90deeac5ee263ea7e9f76f8"
+    },
+    {
+      "path": "go/internal/state/room_import.go",
+      "size_bytes": 2041,
+      "sha256": "8edc83a106aec65feca481b1c07b23905e1b5122d34fd4cc227034fd01431a11"
+    },
+    {
+      "path": "go/internal/state/schema.go",
+      "size_bytes": 5979,
+      "sha256": "df0b0ca23845fb722c53acaa47d93f28166394f9b66781919e1f0aa88ff0e102"
+    },
+    {
+      "path": "go/internal/state/schema_test.go",
+      "size_bytes": 1753,
+      "sha256": "453d82517efbff8755923a887fb6cd17c3e5f0d214ebc1417675035eb5247564"
+    },
+    {
+      "path": "go/internal/version/version.go",
+      "size_bytes": 212,
+      "sha256": "11aa6505ceafe8020ee3613c3d87a659970fd27a7c2e53ad196bb69d2b077ad2"
+    },
+    {
+      "path": "migration/audit/v1/ov02_audit_loop.md",
+      "size_bytes": 988,
+      "sha256": "9ac1c5f62a0c2d1ff39db288d1508e98805fe985a3afa54b669609e47fca9272"
+    },
+    {
+      "path": "migration/contracts/v1/authority_transition_ov02.md",
+      "size_bytes": 1065,
+      "sha256": "0fbbb83edfa97e1c4cfbc16bc21cb9787dd2bc18a7ac64cee7be10e4a7081d3e"
+    },
+    {
+      "path": "migration/contracts/v1/legacy_paths_ov02.md",
+      "size_bytes": 848,
+      "sha256": "57c6ee65d8e683afcd91c27ffd8845a967f9b1c7d751fc82e5adf89a439b6b0f"
+    },
+    {
+      "path": "migration/contracts/v1/room_v3_import_ov02.md",
+      "size_bytes": 734,
+      "sha256": "3b8c076f2ceb1af251828c3dcf768d638afdabeeddbaca1bfdac72ea088f4821"
+    },
+    {
+      "path": "migration/contracts/v1/source_token_retirement_ov02.md",
+      "size_bytes": 796,
+      "sha256": "80c2df332a3e1b23f58474bd3a6f3d24a66fd92187f324b9361a9b40472a8e48"
+    },
+    {
+      "path": "migration/ledger/findings.json",
+      "size_bytes": 18173,
+      "sha256": "168cde82ced5aed04e709cb6aa0d02d7082d7a78a3a0bde29ced49748f3f2fc3"
+    },
+    {
+      "path": "migration/ledger/ov02_status.json",
+      "size_bytes": 774,
+      "sha256": "ef2b57840a635f75b8a5332fd20cd84e2d43b8cdf231e3eb3bc5375940778b0f"
+    },
+    {
+      "path": "scripts/validate_ov02_contract.py",
+      "size_bytes": 6374,
+      "sha256": "eb5869689f8cda81072a4689b054d22ce828f6be483a0da1d502cf4d5f175d69"
+    }
+  ]
+}
