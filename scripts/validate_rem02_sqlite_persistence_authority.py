@@ -15,6 +15,7 @@ checks={
  "modernc sqlite driver missing":"modernc.org/sqlite" in go_mod and '_ "modernc.org/sqlite"' in store,
  "database/sql authority missing":'"database/sql"' in store and "sql.Open(" in store,
  "WAL/schema initialization missing":"SQLitePragmas" in store and "SchemaVersion" in store,
+ "scan history index references wrong column":"scan_sessions(root_path, completed_at_ms, generation)" in (ROOT/"go/internal/state/schema.go").read_text(),
  "transactional scan replace missing":"ReplaceScanGeneration" in store and "BeginTx" in store and "tx.Commit()" in store,
  "durable cleanup journal missing":"RecordCleanupMutation" in store and "cleanup_mutation_journal" in store,
  "Android app-private DB binding missing":'"serve",' in kotlin and '"--db",' in kotlin and '"go-state"' in kotlin,

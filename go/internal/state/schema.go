@@ -70,7 +70,7 @@ var QueryIndexes = []string{
 	"CREATE INDEX IF NOT EXISTS idx_scan_entries_logical_size ON scan_entries(scan_id, logical_size_bytes DESC, path);",
 	"CREATE INDEX IF NOT EXISTS idx_scan_entries_allocated_size ON scan_entries(scan_id, allocated_size_bytes DESC, path);",
 	"CREATE INDEX IF NOT EXISTS idx_scan_entries_modified ON scan_entries(scan_id, modified_at_ms DESC, path);",
-	"CREATE INDEX IF NOT EXISTS idx_scan_sessions_history ON scan_sessions(canonical_root, completed_at_ms, generation);",
+	"CREATE INDEX IF NOT EXISTS idx_scan_sessions_history ON scan_sessions(root_path, completed_at_ms, generation);",
 	"CREATE INDEX IF NOT EXISTS idx_cleanup_duplicate_candidates_group ON cleanup_duplicate_candidates(group_id, path);",
 	"CREATE INDEX IF NOT EXISTS idx_cleanup_recommendations_scan ON cleanup_recommendations(scan_id, scan_generation, recommendation_kind);",
 	"CREATE INDEX IF NOT EXISTS idx_cleanup_rule_results_plan ON cleanup_rule_results(plan_id, rule_id, path);",

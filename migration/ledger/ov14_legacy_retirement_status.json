@@ -3,7 +3,7 @@
   "status": "reopened_blocked",
   "gate_d_truth": "reopened",
   "ov15_status": "blocked_until_real_android_go_cutover",
-  "reason": "REM-02 installs the real Go-owned SQLite persistence authority. Gate D remains reopened while Android Room/C++/legacy production authority and remaining retirement blockers still exist.",
+  "reason": "REM-02 SQLite authority is retained with corrected scan-history index and reproducible module checksums. Gate D remains reopened for Android domain/legacy retirement.",
   "desired": {
     "cpp_scanner_runtime": "none",
     "python_runtime": "none",
@@ -39,7 +39,8 @@
     "ov14_validator_syntax_hotfix",
     "ov14_retirement_truth_hotfix",
     "rem01_android_go_runtime_binding_v2_layout_corrected",
-    "rem02_go_sqlite_persistence"
+    "rem02_go_sqlite_persistence",
+    "rem02_sqlite_integrity_hotfix"
   ],
   "next": "rem03_android_domain_protocol_cutover_before_ov15_gate_e"
 }
