@@ -12,6 +12,7 @@ interface IDustRootService {
     String reviewCleanup(String planJson);
     String executeCleanup(String planJson);
     String cancelCleanup(String operationId);
+    String reconcileCleanup(String operationId);
     String verifyDuplicates(String requestJson);
     String cancelDuplicateVerification(String scanId);
     String installedPackages();

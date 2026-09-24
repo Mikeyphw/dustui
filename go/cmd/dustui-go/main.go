@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/mikeyphw/dustui/go/internal/automation"
 	"github.com/mikeyphw/dustui/go/internal/cleanup"
@@ -17,6 +19,7 @@ import (
 	"github.com/mikeyphw/dustui/go/internal/product"
 	"github.com/mikeyphw/dustui/go/internal/query"
 	"github.com/mikeyphw/dustui/go/internal/readiness"
+	"github.com/mikeyphw/dustui/go/internal/rootworker"
 	runtimecontract "github.com/mikeyphw/dustui/go/internal/runtime"
 	"github.com/mikeyphw/dustui/go/internal/scan"
 	"github.com/mikeyphw/dustui/go/internal/shell"
@@ -28,6 +31,32 @@ func main() {
 	command := "readiness"
 	if len(os.Args) > 1 {
 		command = os.Args[1]
+	}
+
+	if strings.HasPrefix(command, "root-") {
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stop()
+		var err error
+		switch command {
+		case "root-worker-version":
+			fmt.Println("dustui-go-root-worker-v1")
+			return
+		case "root-scan":
+			err = rootworker.RunScanStream(ctx, os.Stdin, os.Stdout)
+		case "root-cleanup-review":
+			err = rootworker.ReviewCleanup(os.Stdin, os.Stdout)
+		case "root-cleanup-execute":
+			err = rootworker.ExecuteCleanup(ctx, os.Stdin, os.Stdout)
+		case "root-cleanup-reconcile":
+			err = rootworker.ReconcileCleanup(os.Stdin, os.Stdout)
+		default:
+			err = fmt.Errorf("unknown root worker command %q", command)
+		}
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%s: %v\n", command, err)
+			os.Exit(1)
+		}
+		return
 	}
 
 	if command == "serve" {

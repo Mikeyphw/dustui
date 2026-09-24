@@ -8,15 +8,15 @@ The privileged service reports and the UI retains:
 
 - UID, GID, and PID;
 - detected KernelSU, Magisk, APatch, or generic-su backend;
-- native scanner version;
+- packaged Go root-worker version;
 - SELinux enforcing state and process context;
 - mount namespace identity.
 
-The service is considered ready only when it is running as UID 0 and the native scanner is available. A normal app shell with a separate interactive `su` grant is not reported as ready.
+The service is considered ready only when it is running as UID 0 and the packaged Go root worker is available. A normal app shell with a separate interactive `su` grant is not reported as ready.
 
 ## Scan-root preflight
 
-Every scan is checked twice, once by the foreground pipeline and again by the root service immediately before native execution. The preflight verifies:
+Every scan is checked twice, once by the foreground pipeline and again by the root service immediately before Go root-worker execution. The preflight verifies:
 
 - absolute normalized path;
 - successful `lstat`;

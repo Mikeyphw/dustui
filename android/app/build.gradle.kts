@@ -47,13 +47,6 @@ android {
         compose = true
     }
 
-    externalNativeBuild {
-        cmake {
-            path = file("src/main/cpp/CMakeLists.txt")
-            version = "3.22.1"
-        }
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
@@ -94,7 +87,7 @@ ksp {
 
 val buildGoAndroidRuntime by tasks.registering(Exec::class) {
     group = "build"
-    description = "Build the production arm64 Android Go runtime packaged as libdustui_go.so"
+    description = "Build the production arm64 Android Go runtime and privileged root worker packaged as libdustui_go.so"
     val goRoot = rootProject.projectDir.parentFile.resolve("go")
     val output = layout.buildDirectory.file("generated/goRuntime/jniLibs/arm64-v8a/libdustui_go.so")
     inputs.files(fileTree(goRoot) { include("**/*.go", "go.mod", "go.sum") })

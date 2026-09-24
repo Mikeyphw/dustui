@@ -23,6 +23,7 @@ import com.mikeyphw.dustui.data.RootPathInspection
 import org.json.JSONArray
 import com.topjohnwu.superuser.ipc.RootService
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -233,7 +234,19 @@ class RootServiceClient(private val context: Context) {
             withContext(Dispatchers.IO) { block(service()) }
         }
     } catch (error: TimeoutCancellationException) {
-        runCatching { service().cancelCleanup(operationId) }
+        val reconciled = withContext(NonCancellable + Dispatchers.IO) {
+            runCatching {
+                val root = service()
+                runCatching { root.cancelCleanup(operationId) }
+                root.reconcileCleanup(operationId)
+            }.getOrNull()
+        }
+        if (!reconciled.isNullOrBlank()) {
+            val parsed = runCatching { JSONObject(reconciled) }.getOrNull()
+            if (parsed != null && parsed.optString("operationId") == operationId && parsed.optString("status").isNotBlank()) {
+                return reconciled
+            }
+        }
         dropConnection()
         throw error
     }
@@ -306,6 +319,9 @@ class RootServiceClient(private val context: Context) {
             },
             plannedBytes = json.optLong("plannedBytes"),
             message = json.optString("message").takeIf(String::isNotBlank),
+            goManifestJson = json.optJSONObject("goManifest")?.toString(),
+            goCapabilityJson = json.optJSONObject("goCapability")?.toString(),
+            mutationProtocol = json.optString("mutationProtocol"),
         )
     }
 

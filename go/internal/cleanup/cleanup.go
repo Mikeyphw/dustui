@@ -1,6 +1,7 @@
 package cleanup
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -431,6 +432,8 @@ type MutationRequest struct {
 	CapabilityID string
 	Now          time.Time
 	Filesystem   MutationFS
+	Context      context.Context
+	OnEvent      func(MutationResult)
 }
 
 type Executor struct {
@@ -478,9 +481,29 @@ func (e *Executor) Reconcile(operationID string) (MutationResult, bool) {
 
 func executeMutation(store *CapabilityStore, req MutationRequest) (MutationResult, error) {
 	result := MutationResult{Protocol: MutationProtocol, OperationID: req.Manifest.OperationID, CapabilityID: req.CapabilityID, State: MutationReviewed, Certainty: "none", StaleAfterCleanup: true}
+	ctx := req.Context
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	appendEvent := func(state MutationState, reason, path string) {
-		result.Journal = append(result.Journal, MutationJournalEvent{State: state, Reason: reason, Path: path, UnixMillis: req.Now.UnixMilli()})
+		result.Journal = append(result.Journal, MutationJournalEvent{State: state, Reason: reason, Path: path, UnixMillis: time.Now().UnixMilli()})
 		result.State = state
+		if req.OnEvent != nil {
+			req.OnEvent(result)
+		}
+	}
+	interrupted := func(reason string) (MutationResult, error) {
+		appendEvent(MutationInterrupted, reason, "")
+		result.ReconcileRequired = true
+		if result.ReclaimedBytes > 0 {
+			result.Certainty = "ambiguous"
+		} else {
+			result.Certainty = "failed_closed"
+		}
+		return result, ErrMutationInterrupted
+	}
+	if err := ctx.Err(); err != nil {
+		return interrupted("context_cancelled_before_claim")
 	}
 	appendEvent(MutationReviewed, "immutable_manifest_loaded", "")
 	if store == nil || req.Filesystem == nil || req.CapabilityID == "" {
@@ -499,6 +522,9 @@ func executeMutation(store *CapabilityStore, req MutationRequest) (MutationResul
 	appendEvent(MutationClaimed, "capability_single_use_claimed", "")
 	result.ReconcileRequired = claim.ReconcileRequired
 	appendEvent(MutationAdmitted, "go_mutation_authority_admitted", "")
+	if err := ctx.Err(); err != nil {
+		return interrupted("context_cancelled_before_preflight")
+	}
 	if err := validateMutationPreconditions(req.Manifest, req.Filesystem); err != nil {
 		appendEvent(MutationRecoveryRequired, err.Error(), "")
 		result.Certainty = "failed_closed"
@@ -506,6 +532,9 @@ func executeMutation(store *CapabilityStore, req MutationRequest) (MutationResul
 	}
 	appendEvent(MutationExecuting, "exact_manifest_execution_started", "")
 	for _, entry := range req.Manifest.Entries {
+		if err := ctx.Err(); err != nil {
+			return interrupted("context_cancelled_during_mutation")
+		}
 		if err := req.Filesystem.RemoveExact(entry.Evidence.Path); err != nil {
 			appendEvent(MutationInterrupted, "remove_failed:"+err.Error(), entry.Evidence.Path)
 			result.ReconcileRequired = true
@@ -517,6 +546,9 @@ func executeMutation(store *CapabilityStore, req MutationRequest) (MutationResul
 	}
 	appendEvent(MutationVerifying, "post_mutation_verification_started", "")
 	for i, entry := range req.Manifest.Entries {
+		if err := ctx.Err(); err != nil {
+			return interrupted("context_cancelled_during_verification")
+		}
 		_, exists, err := req.Filesystem.Identity(entry.Evidence.Path)
 		if err != nil || exists {
 			appendEvent(MutationCleanupDebt, "verification_mismatch", entry.Evidence.Path)
@@ -620,7 +652,7 @@ func Contract() map[string]any {
 		"mutationProtocol":         MutationProtocol,
 		"mutationAuthority":        true,
 		"productionExecutor":       true,
-		"cutoverOverlay":           "OV08",
+		"cutoverOverlay":           "REM-04",
 		"legacyExecutorAuthority":  "none",
 		"activityRunView":          "canonical",
 		"actionableEvidenceFields": []string{"path", "scanId", "scanGeneration", "sourceSurface", "sourceKind", "expectedHash", "expectedIdentity", "retainedCopyConstraint", "packageName", "userHandle", "bucket", "protectedState", "duplicateGroupId", "ruleId", "recommendationId", "deletionEligible"},

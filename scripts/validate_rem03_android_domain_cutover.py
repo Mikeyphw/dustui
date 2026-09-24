@@ -47,7 +47,9 @@ require('sqliteColumnExists' in sqlite and 'ALTER TABLE scan_sessions ADD COLUMN
 status=json.loads(read('migration/ledger/ov14_legacy_retirement_status.json'))
 require(status.get('observed',{}).get('room_domain_authority')=='none','truth ledger does not retire Room authority')
 require('room_domain_authority_active' not in status.get('blockers',[]),'Room authority blocker remains in ledger')
-require(len(status.get('blockers',[]))==5,'REM-03 should leave exactly five observed retirement blockers')
+rem04_folded='rem04_privileged_cleanup_mutation_cutover_cpp_retirement' in set(status.get('folded_in',[]))
+expected_count=3 if rem04_folded else 5
+require(len(status.get('blockers',[]))==expected_count,f'REM-03 successor state should leave {expected_count} observed retirement blockers')
 cfg=tomllib.loads(read('.devtool.toml'))
 android=cfg.get('targets',{}).get('dustui_android',{})
 jobs=android.get('jobs',{}); flows=android.get('workflows',{})

@@ -9,7 +9,6 @@ import android.system.Os
 import android.system.OsConstants
 import com.mikeyphw.dustui.scan.ScanRequest
 import com.mikeyphw.dustui.data.CleanupSafetyPolicy
-import com.mikeyphw.dustui.data.PathSafety
 import com.topjohnwu.superuser.ipc.RootService
 import org.json.JSONArray
 import org.json.JSONObject
@@ -18,9 +17,6 @@ import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.nio.file.FileVisitResult
-import java.nio.file.SimpleFileVisitor
-import java.nio.file.attribute.BasicFileAttributes
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
@@ -42,26 +38,27 @@ class DustRootService : RootService() {
     private val scans = ConcurrentHashMap<String, ActiveScan>()
     private val duplicateCancellations = ConcurrentHashMap<String, AtomicBoolean>()
     private val cleanupCancellations = ConcurrentHashMap<String, AtomicBoolean>()
+    private val cleanupProcesses = ConcurrentHashMap<String, java.lang.Process>()
 
     private val binder = object : IDustRootService.Stub() {
         override fun serviceInfo(): String {
             val uid = Process.myUid()
-            val scanner = runCatching { NativeDustScanner.version() }.getOrDefault("")
-            val ready = uid == 0 && scanner.isNotBlank()
+            val worker = runCatching { GoRootWorker.version(this@DustRootService) }.getOrDefault("")
+            val ready = uid == 0 && worker == "dustui-go-root-worker-v1"
             return JSONObject()
                 .put("ok", ready)
                 .put("uid", uid)
                 .put("gid", runCatching { Os.getgid() }.getOrDefault(-1))
                 .put("pid", Process.myPid())
-                .put("scanner", scanner)
+                .put("scanner", worker)
                 .put("backend", detectRootBackend())
                 .put("selinuxEnforcing", readSelinuxEnforcing())
                 .put("selinuxContext", readSelinuxContext())
                 .put("mountNamespace", readMountNamespace())
                 .put("message", when {
                     uid != 0 -> "Root service is running as UID $uid instead of UID 0"
-                    scanner.isBlank() -> "Native scanner library did not report a version"
-                    else -> "Root service is ready"
+                    worker != "dustui-go-root-worker-v1" -> "Go root worker is unavailable"
+                    else -> "Root service is ready with Go scan/mutation authority"
                 })
                 .toString()
         }
@@ -85,9 +82,7 @@ class DustRootService : RootService() {
             }
             val ownedFdResult = runCatching { ParcelFileDescriptor.dup(output.fileDescriptor).detachFd() }
             runCatching { output.close() }
-            val ownedFd = ownedFdResult.getOrElse {
-                return failure(it.message ?: "Unable to duplicate output descriptor")
-            }
+            val ownedFd = ownedFdResult.getOrElse { return failure(it.message ?: "Unable to duplicate output descriptor") }
             pruneCompletedScans()
             val active = ActiveScan(request.scanId)
             if (scans.putIfAbsent(request.scanId, active) != null) {
@@ -96,37 +91,26 @@ class DustRootService : RootService() {
             }
             active.status.set("running")
             active.future = runCatching { executor.submit {
-                val exitCode = runCatching {
-                    NativeDustScanner.scan(
-                        request.scanId,
-                        request.rootPath,
-                        ownedFd,
-                        request.maxDepth,
-                        request.includeHidden,
-                        request.apparentSize,
-                        request.sameFilesystem,
-                        request.mode.nativeValue,
-                        request.minSize,
-                        request.maxEntries,
-                        request.excludes.toTypedArray(),
-                    )
-                }.getOrElse { error ->
-                    active.error.set(error.message ?: error.javaClass.simpleName)
-                    -1
-                }
-                active.exitCode.set(exitCode)
+                val result = GoRootWorker.runScan(
+                    context = this@DustRootService,
+                    requestJson = requestJson,
+                    ownedOutputFd = ownedFd,
+                ) { process -> active.process.set(process) }
+                active.exitCode.set(result.exitCode)
+                if (result.error.isNotBlank()) active.error.set(result.error)
                 active.status.set(
                     when {
-                        exitCode == 0 -> "completed"
-                        exitCode == 130 -> "cancelled"
+                        result.exitCode == 0 -> "completed"
+                        result.exitCode == 130 || active.status.get() == "cancelling" -> "cancelled"
                         else -> "failed"
                     },
                 )
                 active.completedAt.set(System.currentTimeMillis())
+                active.process.set(null)
             } }.getOrElse { error ->
                 runCatching { ParcelFileDescriptor.adoptFd(ownedFd).close() }
                 scans.remove(request.scanId)
-                return failure(error.message ?: "Unable to schedule native scan")
+                return failure(error.message ?: "Unable to schedule Go root scan")
             }
             return state(active)
         }
@@ -136,214 +120,79 @@ class DustRootService : RootService() {
 
         override fun cancelScan(scanId: String): String {
             val active = scans[scanId] ?: return failure("Unknown scan identifier")
-            val accepted = NativeDustScanner.cancel(scanId)
-            if (accepted) active.status.set("cancelling")
+            val process = active.process.get()
+            val accepted = process?.isAlive == true
+            if (accepted) {
+                active.status.set("cancelling")
+                process?.destroy()
+            }
             return state(active).let { raw -> JSONObject(raw).put("cancelAccepted", accepted).toString() }
         }
 
-
-        override fun reviewCleanup(planJson: String): String = reviewPlan(planJson).toString()
+        override fun reviewCleanup(planJson: String): String {
+            val enriched = runCatching {
+                JSONObject(planJson)
+                    .put("packageInventory", JSONObject(installedPackageInventory()))
+                    .toString()
+            }.getOrElse { error -> return failure(error.message ?: "Invalid cleanup review") }
+            val result = GoRootWorker.reviewCleanup(this@DustRootService, enriched)
+            return result.output.takeIf(String::isNotBlank)
+                ?: deletionFailure(JSONObject(planJson).optString("id"), result.error.ifBlank { "Go cleanup review failed" })
+        }
 
         override fun executeCleanup(planJson: String): String {
             val request = runCatching { JSONObject(planJson) }.getOrElse { error ->
                 return failure(error.message ?: "Invalid deletion plan request")
             }
-            val requestedOperationId = request.optString("operationId")
-            val execution = runCatching { loadCleanupExecutionPlan(request) }.getOrElse { error ->
-                return deletionFailure(requestedOperationId, error.message ?: "Unable to load reviewed deletion plan")
-            }
-            val operationId = execution.optString("operationId")
-            val scanId = execution.optString("scanId")
-            val rootPath = runCatching { Paths.get(execution.getString("rootPath")).normalize() }.getOrElse { error ->
-                return deletionFailure(operationId, error.message ?: "Invalid deletion root")
-            }
-            val accepted = execution.optJSONArray("accepted") ?: JSONArray()
-            if (operationId.isBlank() || scanId.isBlank() || !rootPath.isAbsolute || accepted.length() == 0) {
-                return deletionFailure(operationId, "Deletion requires a reviewed operation, scan, root, and at least one approved item")
-            }
-
-            return executeCleanupReviewedPlan(operationId, rootPath, accepted)
-        }
-
-        override fun cancelCleanup(operationId: String): String {
-            val cancellation = cleanupCancellations[operationId]
-            val nativeAccepted = runCatching { NativeDustScanner.cancelDeletion(operationId) }.getOrDefault(false)
-            val accepted = cancellation?.let { it.set(true); true } ?: nativeAccepted
-            return JSONObject()
-                .put("ok", accepted)
-                .put("operationId", operationId)
-                .put("cancelAccepted", accepted)
-                .put("message", if (accepted) "Cleanup cancellation requested" else "Cleanup operation is not active")
-                .toString()
-        }
-
-        private fun executeCleanupReviewedPlan(operationId: String, rootPath: Path, accepted: JSONArray): String {
+            val operationId = request.optString("operationId")
+            if (operationId.isBlank()) return deletionFailure(operationId, "Cleanup operation identifier is required")
             val cancellation = AtomicBoolean(false)
             if (cleanupCancellations.putIfAbsent(operationId, cancellation) != null) {
                 return deletionFailure(operationId, "Cleanup operation is already executing")
             }
-            try {
-                val prepared = mutableListOf<PreparedDeletion>()
-                for (index in 0 until accepted.length()) {
-                    if (cancellation.get()) return deletionCancelled(operationId)
-                    val item = accepted.getJSONObject(index)
-                    val rawPath = item.optString("path")
-                    val plannedBytes = item.optLong("plannedBytes")
-                    val target = runCatching { Paths.get(rawPath).normalize() }.getOrNull()
-                    val retainedReason = target?.let {
-                        retainedCopyBlockReason(
-                            it,
-                            rootPath,
-                            item.optString("retainedPath").takeIf(String::isNotBlank),
-                            item.optString("retainedSha256").takeIf(String::isNotBlank),
-                        )
-                    }
-                    val packageReason = packageInstalledBlockReason(item.optString("packageName").takeIf(String::isNotBlank))
-                    val rejection = when {
-                        target == null -> "Invalid path"
-                        CleanupSafetyPolicy.blockReason(target.toString(), rootPath.toString()) != null ->
-                            CleanupSafetyPolicy.blockReason(target.toString(), rootPath.toString())
-                        !Files.exists(target, LinkOption.NOFOLLOW_LINKS) -> "Path no longer exists"
-                        Files.isSymbolicLink(target) -> "Selected symbolic links are not deleted"
-                        !fingerprintMatches(target, rootPath, item.optJSONObject("fingerprint")) ->
-                            "Path contents changed after review; create a new deletion plan"
-                        retainedReason != null -> retainedReason
-                        packageReason != null -> packageReason
-                        else -> null
-                    }
-                    prepared += PreparedDeletion(rawPath, plannedBytes, target, item, rejection)
+            return try {
+                val execution = runCatching { claimCleanupExecutionPlan(request) }.getOrElse { error ->
+                    return deletionFailure(operationId, error.message ?: "Unable to claim reviewed deletion plan")
                 }
-
-                val blocked = prepared.filter { it.rejection != null }
-                if (blocked.isNotEmpty()) {
-                    val results = JSONArray()
-                    prepared.forEach { preparedItem ->
-                        val status = if (preparedItem.rejection == null) "SKIPPED" else "BLOCKED"
-                        val message = preparedItem.rejection ?: "Plan validation stopped before deletion because another reviewed item changed"
-                        results.put(
-                            JSONObject()
-                                .put("path", preparedItem.rawPath)
-                                .put("plannedBytes", preparedItem.plannedBytes)
-                                .put("deletedBytes", 0)
-                                .put("status", status)
-                                .put("message", message),
-                        )
-                    }
-                    return JSONObject()
-                        .put("ok", false)
-                        .put("operationId", operationId)
-                        .put("status", "BLOCKED")
-                        .put("deletedBytes", 0)
-                        .put("failedCount", blocked.size)
-                        .put("items", results)
-                        .put("message", "Deletion blocked before mutation because ${blocked.size} reviewed item(s) changed or became unsafe")
-                        .toString()
+                execution
+                    .put("packageInventory", JSONObject(installedPackageInventory()))
+                    .put("journalPath", cleanupJournalFile(operationId).absolutePath)
+                val result = GoRootWorker.executeCleanup(this@DustRootService, execution.toString()) { process ->
+                    cleanupProcesses[operationId] = process
+                    if (cancellation.get()) process.destroy()
                 }
-
-                val finalBlocked = prepared.mapNotNull { preparedItem ->
-                    if (cancellation.get()) return deletionCancelled(operationId)
-                    val target = preparedItem.target
-                    val item = preparedItem.item
-                    val retainedReason = target?.let {
-                        retainedCopyBlockReason(
-                            it,
-                            rootPath,
-                            item.optString("retainedPath").takeIf(String::isNotBlank),
-                            item.optString("retainedSha256").takeIf(String::isNotBlank),
-                        )
-                    }
-                    val packageReason = packageInstalledBlockReason(item.optString("packageName").takeIf(String::isNotBlank))
-                    val reason = when {
-                        target == null -> "Invalid path"
-                        !Files.exists(target, LinkOption.NOFOLLOW_LINKS) -> "Path no longer exists"
-                        Files.isSymbolicLink(target) -> "Selected symbolic links are not deleted"
-                        !fingerprintMatches(target, rootPath, item.optJSONObject("fingerprint")) ->
-                            "Path contents changed after final preflight; no items were deleted"
-                        retainedReason != null -> retainedReason
-                        packageReason != null -> packageReason
-                        else -> null
-                    }
-                    reason?.let { preparedItem to it }
-                }
-                if (finalBlocked.isNotEmpty()) {
-                    val results = JSONArray()
-                    prepared.forEach { preparedItem ->
-                        val reason = finalBlocked.firstOrNull { it.first === preparedItem }?.second
-                        results.put(
-                            JSONObject()
-                                .put("path", preparedItem.rawPath)
-                                .put("plannedBytes", preparedItem.plannedBytes)
-                                .put("deletedBytes", 0)
-                                .put("status", if (reason == null) "SKIPPED" else "BLOCKED")
-                                .put("message", reason ?: "Plan validation stopped before deletion because another reviewed item changed"),
-                        )
-                    }
-                    return JSONObject()
-                        .put("ok", false)
-                        .put("operationId", operationId)
-                        .put("status", "BLOCKED")
-                        .put("deletedBytes", 0)
-                        .put("failedCount", finalBlocked.size)
-                        .put("items", results)
-                        .put("message", "Deletion blocked at final preflight; no approved items were deleted")
-                        .toString()
-                }
-
-                val results = JSONArray()
-                var deletedBytes = 0L
-                var failedCount = 0
-                var unknownOutcome = false
-                for (preparedItem in prepared) {
-                    if (cancellation.get()) return deletionCancelled(operationId, results, deletedBytes)
-                    val target = preparedItem.target
-                    val outcome = if (target == null) {
-                        DeleteOutcome(0, false, message = "Invalid path")
-                    } else {
-                        deletePath(operationId, target, rootPath, cancellation, preparedItem.item.optJSONObject("fingerprint"))
-                    }
-                    if (outcome.unknownOutcome) unknownOutcome = true
-                    val itemStatus = when {
-                        outcome.complete -> "DELETED"
-                        outcome.unknownOutcome -> "UNKNOWN_OUTCOME"
-                        outcome.deletedBytes > 0 -> "PARTIAL"
-                        else -> "FAILED"
-                    }
-                    if (!outcome.complete) failedCount++
-                    deletedBytes += outcome.deletedBytes
-                    results.put(
-                        JSONObject()
-                            .put("path", preparedItem.rawPath)
-                            .put("plannedBytes", preparedItem.plannedBytes)
-                            .put("deletedBytes", outcome.deletedBytes)
-                            .put("status", itemStatus)
-                            .put("message", outcome.message),
-                    )
-                }
-
-                val status = when {
-                    unknownOutcome -> "UNKNOWN_OUTCOME"
-                    failedCount == 0 -> "COMPLETED"
-                    deletedBytes > 0 -> "PARTIAL"
-                    else -> "FAILED"
-                }
-                val message = when (status) {
-                    "COMPLETED" -> "Permanent deletion completed"
-                    "UNKNOWN_OUTCOME" -> "Cleanup outcome is ambiguous after cancellation or transport loss; reverify the deletion report"
-                    "PARTIAL" -> "$failedCount item(s) were not fully deleted"
-                    else -> "No approved items were deleted"
-                }
-                return JSONObject()
-                    .put("ok", failedCount == 0)
-                    .put("operationId", operationId)
-                    .put("status", status)
-                    .put("deletedBytes", deletedBytes)
-                    .put("failedCount", failedCount)
-                    .put("items", results)
-                    .put("message", message)
-                    .toString()
+                result.output.takeIf(String::isNotBlank)
+                    ?: runCatching { cleanupJournalFile(operationId).readText() }.getOrNull()
+                    ?: deletionFailure(operationId, result.error.ifBlank { "Go cleanup worker exited without a reconciliable result" })
             } finally {
+                cleanupProcesses.remove(operationId)
                 cleanupCancellations.remove(operationId, cancellation)
             }
+        }
+
+        override fun cancelCleanup(operationId: String): String {
+            val cancellation = cleanupCancellations[operationId]
+            val process = cleanupProcesses[operationId]
+            val accepted = cancellation != null || process?.isAlive == true
+            cancellation?.set(true)
+            if (process?.isAlive == true) process.destroy()
+            return JSONObject()
+                .put("ok", accepted)
+                .put("operationId", operationId)
+                .put("cancelAccepted", accepted)
+                .put("message", if (accepted) "Go cleanup cancellation requested" else "Cleanup operation is not active")
+                .toString()
+        }
+
+        override fun reconcileCleanup(operationId: String): String {
+            if (operationId.isBlank()) return deletionFailure(operationId, "Cleanup operation identifier is required")
+            val request = JSONObject()
+                .put("operationId", operationId)
+                .put("journalPath", cleanupJournalFile(operationId).absolutePath)
+                .toString()
+            val result = GoRootWorker.reconcileCleanup(this@DustRootService, request)
+            return result.output.takeIf(String::isNotBlank)
+                ?: deletionFailure(operationId, result.error.ifBlank { "Cleanup reconciliation journal unavailable" })
         }
 
         override fun verifyDuplicates(requestJson: String): String = runCatching {
@@ -720,271 +569,38 @@ class DustRootService : RootService() {
     override fun onBind(intent: Intent): IBinder = binder
 
     override fun onDestroy() {
-        scans.keys.forEach(NativeDustScanner::cancel)
+        scans.values.forEach { active -> active.process.get()?.destroy() }
+        cleanupProcesses.values.forEach { process -> process.destroy() }
         executor.shutdownNow()
         super.onDestroy()
     }
 
-    private fun loadCleanupExecutionPlan(request: JSONObject): JSONObject {
-        if (request.has("accepted")) return request
-        val operationId = request.optString("operationId").takeIf { it.isNotBlank() }
-            ?: throw IllegalArgumentException("Cleanup execution requires an operation id")
-        val explicitPath = request.optString("planPath").takeIf { it.isNotBlank() }
-        val planFile = explicitPath?.let(::File)
-            ?: File(File(cacheDir, CLEANUP_PLAN_DIRECTORY), "${safeOperationFileName(operationId)}.json")
-        require(planFile.isFile) { "Reviewed cleanup plan $operationId was not found; create a new plan" }
-        val plan = JSONObject(planFile.readText(Charsets.UTF_8))
-        require(plan.optString("operationId") == operationId) { "Reviewed cleanup plan id mismatch" }
-        require(plan.has("accepted")) { "Reviewed cleanup plan does not contain approved items" }
-        return plan
+    private fun claimCleanupExecutionPlan(request: JSONObject): JSONObject {
+        val operationId = request.optString("operationId")
+        require(operationId.isNotBlank()) { "Cleanup execution requires an operation identifier" }
+        val directory = File(cacheDir, CLEANUP_PLAN_DIRECTORY)
+        val source = File(directory, "${safeOperationFileName(operationId)}.json")
+        require(source.isFile) { "Reviewed cleanup plan is missing, expired, or already claimed" }
+        require(source.length() in 1..MAX_CLEANUP_PLAN_BYTES) { "Reviewed cleanup plan size is invalid" }
+        val claimed = File(directory, "${source.name}.claimed-${System.nanoTime()}")
+        require(source.renameTo(claimed)) { "Unable to atomically claim reviewed cleanup plan" }
+        return try {
+            JSONObject(claimed.readText(Charsets.UTF_8)).also { execution ->
+                require(execution.optString("operationId") == operationId) { "Reviewed cleanup operation mismatch" }
+            }
+        } finally {
+            claimed.delete()
+        }
+    }
+
+    private fun cleanupJournalFile(operationId: String): File {
+        val directory = File(cacheDir, CLEANUP_JOURNAL_DIRECTORY).apply { mkdirs() }
+        return File(directory, "${safeOperationFileName(operationId)}.json")
     }
 
     private fun safeOperationFileName(operationId: String): String = operationId.map { character ->
         if (character.isLetterOrDigit() || character == '-' || character == '_') character else '_'
     }.joinToString("").take(120).ifBlank { "operation" }
-
-    private fun reviewPlan(planJson: String): JSONObject = runCatching {
-        val plan = JSONObject(planJson)
-        val operationId = plan.getString("id")
-        val rootPath = Paths.get(plan.getString("rootPath")).normalize()
-        require(rootPath.isAbsolute) { "Deletion root must be absolute" }
-        require(Files.exists(rootPath, LinkOption.NOFOLLOW_LINKS)) { "Scan root no longer exists" }
-        val accepted = JSONArray()
-        val blocked = JSONArray()
-        val items = plan.getJSONArray("items")
-        var plannedBytes = 0L
-        for (index in 0 until items.length()) {
-            val item = items.getJSONObject(index)
-            val rawPath = item.getString("path")
-            val path = runCatching { Paths.get(rawPath).normalize() }.getOrNull()
-            val plannedDirectory = item.optBoolean("directory")
-            val plannedModifiedAt = item.optLong("modifiedAt")
-            val plannedItemBytes = item.optLong("sizeBytes")
-            val expectedHashRaw = item.optString("expectedSha256").takeIf { it.isNotBlank() }
-            val expectedHash = expectedHashRaw?.lowercase()
-            val retainedPath = item.optString("retainedPath").takeIf { it.isNotBlank() }
-            val retainedSha256 = item.optString("retainedSha256").takeIf { it.isNotBlank() }?.lowercase()
-            val packageName = item.optString("packageName").takeIf { it.isNotBlank() }
-            val policyReason = if (path == null) "Invalid path" else CleanupSafetyPolicy.blockReason(path.toString(), rootPath.toString())
-            val selectedSymlink = path != null && Files.isSymbolicLink(path)
-            val inspection = if (policyReason == null && path != null && !selectedSymlink) inspectDeletionTree(path, rootPath) else null
-            val preliminaryReason = when {
-                policyReason != null -> policyReason
-                selectedSymlink -> "Selected symbolic links are not deleted"
-                inspection == null -> "Path no longer exists or cannot be inspected"
-                inspection.error != null -> inspection.error
-                inspection.isDirectory != plannedDirectory -> "Path type changed since scan"
-                plannedModifiedAt > 0 && inspection.modifiedAt != plannedModifiedAt -> "Path changed since scan"
-                !inspection.isDirectory && plannedItemBytes >= 0 && inspection.statSizeBytes != plannedItemBytes -> "File size changed since scan"
-                expectedHashRaw != null && !SHA256_PATTERN.matches(expectedHash.orEmpty()) -> "Invalid expected duplicate hash"
-                expectedHash != null && inspection.isDirectory -> "Duplicate hash cannot be attached to a directory"
-                else -> null
-            }
-            val contentReason = if (preliminaryReason == null && expectedHash != null && path != null) {
-                runCatching { hashWholeFile(path).hash }
-                    .fold(
-                        onSuccess = { actual -> if (actual == expectedHash) null else "File content changed since duplicate verification" },
-                        onFailure = { error -> error.message ?: "Unable to reverify duplicate content" },
-                    )
-            } else null
-            val retainedReason = if (preliminaryReason == null && contentReason == null && path != null) {
-                retainedCopyBlockReason(path, rootPath, retainedPath, retainedSha256)
-            } else null
-            val packageReason = if (preliminaryReason == null && contentReason == null && retainedReason == null) {
-                packageInstalledBlockReason(packageName)
-            } else null
-            val reason = preliminaryReason ?: contentReason ?: retainedReason ?: packageReason
-            if (reason == null && path != null && inspection != null) {
-                accepted.put(
-                    JSONObject()
-                        .put("path", path.toString())
-                        .put("plannedBytes", inspection.contentBytes)
-                        .put("directory", inspection.isDirectory)
-                        .put("fingerprint", inspection.toJson(expectedHash))
-                        .apply { retainedPath?.let { put("retainedPath", it) } }
-                        .apply { retainedSha256?.let { put("retainedSha256", it) } }
-                        .apply { packageName?.let { put("packageName", it) } },
-                )
-                plannedBytes += inspection.contentBytes
-            } else {
-                blocked.put(JSONObject().put("path", rawPath).put("reason", reason ?: "Unable to plan deletion"))
-            }
-        }
-        JSONObject()
-            .put("ok", true)
-            .put("operationId", operationId)
-            .put("accepted", accepted)
-            .put("blocked", blocked)
-            .put("plannedBytes", plannedBytes)
-    }.getOrElse { error ->
-        JSONObject()
-            .put("ok", false)
-            .put("operationId", "")
-            .put("accepted", JSONArray())
-            .put("blocked", JSONArray())
-            .put("plannedBytes", 0)
-            .put("message", error.message ?: error.javaClass.simpleName)
-    }
-
-    private fun inspectDeletionTree(target: Path, rootPath: Path): TreeFingerprint? {
-        if (!Files.exists(target, LinkOption.NOFOLLOW_LINKS) || Files.isSymbolicLink(target)) return null
-        val rootDevice = runCatching { Os.lstat(rootPath.toString()).st_dev }.getOrNull() ?: return null
-        val rootMount = mountIdentityFor(rootPath.toString())
-        val topStat = runCatching { Os.lstat(target.toString()) }.getOrNull() ?: return null
-        val targetMount = mountIdentityFor(target.toString())
-        if (topStat.st_dev != rootDevice || !sameMount(rootMount, targetMount)) {
-            return TreeFingerprint.from(
-                topStat,
-                Files.isDirectory(target, LinkOption.NOFOLLOW_LINKS),
-                mountId = targetMount?.id,
-                error = "Selected path crosses a filesystem or mount boundary",
-            )
-        }
-        val digest = MessageDigest.getInstance("SHA-256")
-        var entryCount = 0L
-        var contentBytes = 0L
-        var error: String? = null
-        runCatching {
-            Files.walkFileTree(target, object : SimpleFileVisitor<Path>() {
-                private fun record(path: Path, stat: android.system.StructStat, regularFile: Boolean) {
-                    val pathMount = mountIdentityFor(path.toString())
-                    if (stat.st_dev != rootDevice || !sameMount(rootMount, pathMount)) {
-                        throw java.io.IOException("Nested filesystem or mount boundary: $path")
-                    }
-                    entryCount++
-                    if (entryCount > MAX_DELETE_PLAN_ENTRIES) throw java.io.IOException("Selection exceeds $MAX_DELETE_PLAN_ENTRIES planned entries; choose smaller items")
-                    val relative = if (path == target) "." else target.relativize(path).toString()
-                    val marker = "$relative\u0000${stat.st_dev}\u0000${stat.st_ino}\u0000${stat.st_mode}\u0000${stat.st_size}\u0000${stat.st_mtime}\n"
-                    digest.update(marker.toByteArray(Charsets.UTF_8))
-                    if (regularFile) contentBytes += stat.st_size.coerceAtLeast(0L)
-                }
-
-                override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
-                    record(dir, Os.lstat(dir.toString()), regularFile = false)
-                    return FileVisitResult.CONTINUE
-                }
-
-                override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-                    val stat = Os.lstat(file.toString())
-                    record(file, stat, regularFile = attrs.isRegularFile)
-                    return FileVisitResult.CONTINUE
-                }
-
-                override fun visitFileFailed(file: Path, exc: java.io.IOException): FileVisitResult {
-                    throw java.io.IOException("Unable to inspect $file: ${exc.message ?: exc.javaClass.simpleName}", exc)
-                }
-            })
-        }.onFailure { failure -> error = failure.message ?: failure.javaClass.simpleName }
-        return TreeFingerprint.from(
-            stat = topStat,
-            isDirectory = Files.isDirectory(target, LinkOption.NOFOLLOW_LINKS),
-            treeDigest = digest.digest().joinToString("") { byte -> (byte.toInt() and 0xff).toString(16).padStart(2, '0') },
-            entryCount = entryCount,
-            contentBytes = contentBytes,
-            mountId = targetMount?.id,
-            error = error,
-        )
-    }
-
-    private fun packageInstalledBlockReason(packageName: String?): String? {
-        if (packageName.isNullOrBlank()) return null
-        if (!PACKAGE_NAME_PATTERN.matches(packageName)) return "Invalid residue package name"
-        val inventory = runCatching { JSONObject(installedPackageInventory()) }.getOrElse { error ->
-            return error.message ?: "Unable to verify current package state"
-        }
-        if (!inventory.optBoolean("ok") || !inventory.optBoolean("complete")) {
-            return inventory.optString("message").takeIf { it.isNotBlank() }
-                ?: "Package inventory unavailable; cannot safely delete app residue"
-        }
-        val users = inventory.optJSONArray("users") ?: return "Package inventory unavailable; cannot safely delete app residue"
-        for (userIndex in 0 until users.length()) {
-            val packages = users.getJSONObject(userIndex).optJSONArray("packages") ?: continue
-            for (packageIndex in 0 until packages.length()) {
-                if (packages.getString(packageIndex) == packageName) {
-                    return "Package $packageName is installed now; app residue must be replanned"
-                }
-            }
-        }
-        return null
-    }
-
-    private fun retainedCopyBlockReason(target: Path, rootPath: Path, retainedPathRaw: String?, retainedSha256: String?): String? {
-        if (retainedPathRaw == null && retainedSha256 == null) return null
-        if (retainedPathRaw.isNullOrBlank() || retainedSha256.isNullOrBlank()) return "Duplicate cleanup requires retained-copy evidence"
-        if (!SHA256_PATTERN.matches(retainedSha256)) return "Invalid retained duplicate hash"
-        val retained = runCatching { Paths.get(retainedPathRaw).normalize() }.getOrNull()
-            ?: return "Invalid retained duplicate path"
-        if (!retained.isAbsolute) return "Retained duplicate path must be absolute"
-        if (!PathSafety.isSameOrDescendant(retained.toString(), rootPath.toString())) {
-            return "Retained duplicate is outside the reviewed scan root"
-        }
-        if (!Files.exists(retained, LinkOption.NOFOLLOW_LINKS)) return "Retained duplicate copy is missing"
-        if (Files.isSymbolicLink(retained)) return "Retained duplicate copy is a symbolic link"
-        if (!Files.isRegularFile(retained, LinkOption.NOFOLLOW_LINKS)) return "Retained duplicate copy is not a regular file"
-        val targetStat = runCatching { Os.lstat(target.toString()) }.getOrNull()
-            ?: return "Unable to inspect deletion target identity"
-        val retainedStat = runCatching { Os.lstat(retained.toString()) }.getOrNull()
-            ?: return "Unable to inspect retained duplicate identity"
-        if (targetStat.st_dev == retainedStat.st_dev && targetStat.st_ino == retainedStat.st_ino) {
-            return "Retained duplicate is the same filesystem object as the deletion target"
-        }
-        val actualHash = runCatching { hashWholeFile(retained).hash }.getOrElse { error ->
-            return error.message ?: "Unable to hash retained duplicate copy"
-        }
-        return if (actualHash == retainedSha256) null else "Retained duplicate copy changed or no longer matches the expected hash"
-    }
-
-    private fun fingerprintMatches(path: Path, rootPath: Path, expected: JSONObject?): Boolean {
-        if (expected == null) return false
-        val actual = inspectDeletionTree(path, rootPath) ?: return false
-        if (actual.error != null) return false
-        val expectedMountId = expected.optString("mountId").takeIf(String::isNotBlank)
-        val metadataMatches = actual.device == expected.optLong("device") &&
-            (expectedMountId == null || actual.mountId == expectedMountId) &&
-            actual.inode == expected.optLong("inode") &&
-            actual.mode == expected.optInt("mode") &&
-            actual.statSizeBytes == expected.optLong("statSizeBytes") &&
-            actual.modifiedAt == expected.optLong("modifiedAt") &&
-            actual.treeDigest == expected.optString("treeDigest") &&
-            actual.entryCount == expected.optLong("entryCount")
-        if (!metadataMatches) return false
-        val expectedContentHash = expected.optString("contentSha256").takeIf { it.isNotBlank() } ?: return true
-        return runCatching { hashWholeFile(path).hash == expectedContentHash }.getOrDefault(false)
-    }
-
-    private fun deletePath(operationId: String, target: Path, rootPath: Path, cancellation: AtomicBoolean, expected: JSONObject?): DeleteOutcome {
-        if (cancellation.get()) return DeleteOutcome(0, false, message = "Cleanup cancellation requested")
-        if (expected == null) return DeleteOutcome(0, false, message = "Deletion requires a reviewed filesystem fingerprint")
-        val relative = runCatching { rootPath.normalize().relativize(target.normalize()).toString() }.getOrElse { error ->
-            return DeleteOutcome(0, false, message = error.message ?: "Unable to bind target relative to reviewed root")
-        }
-        if (relative.isBlank() || relative == "." || relative.startsWith("..")) {
-            return DeleteOutcome(0, false, message = "Native deletion refuses the scan root or a path outside it")
-        }
-        val nativeResult = runCatching {
-            NativeDustScanner.deleteReviewedPath(
-                operationId = operationId,
-                rootPath = rootPath.toString(),
-                relativePath = relative,
-                expectedDevice = expected.optLong("device"),
-                expectedInode = expected.optLong("inode"),
-                expectedMode = expected.optInt("mode"),
-                expectedSize = expected.optLong("statSizeBytes"),
-                expectedModifiedAt = expected.optLong("modifiedAt"),
-            )
-        }.getOrElse { error ->
-            return DeleteOutcome(0, false, message = error.message ?: error.javaClass.simpleName)
-        }
-        val json = runCatching { JSONObject(nativeResult) }.getOrElse { error ->
-            return DeleteOutcome(0, false, message = error.message ?: "Native deletion returned an invalid response")
-        }
-        return DeleteOutcome(
-            deletedBytes = json.optLong("deletedBytes"),
-            complete = json.optBoolean("complete"),
-            unknownOutcome = json.optBoolean("unknownOutcome"),
-            message = json.optString("message").takeIf { it.isNotBlank() },
-        )
-    }
 
     private fun deletionFailure(operationId: String, message: String): String = JSONObject()
         .put("ok", false)
@@ -995,17 +611,6 @@ class DustRootService : RootService() {
         .put("items", JSONArray())
         .put("message", message)
         .toString()
-
-    private fun deletionCancelled(operationId: String, items: JSONArray = JSONArray(), deletedBytes: Long = 0L): String = JSONObject()
-        .put("ok", false)
-        .put("operationId", operationId)
-        .put("status", if (deletedBytes > 0) "UNKNOWN_OUTCOME" else "BLOCKED")
-        .put("deletedBytes", deletedBytes)
-        .put("failedCount", 0)
-        .put("items", items)
-        .put("message", if (deletedBytes > 0) "Cleanup cancellation was requested after filesystem mutation; reverify the operation outcome" else "Cleanup cancellation requested before deletion")
-        .toString()
-
 
     private fun state(scan: ActiveScan): String = JSONObject()
         .put("ok", true)
@@ -1103,65 +708,6 @@ class DustRootService : RootService() {
         val deletionBlockReason: String?,
     )
 
-    private data class TreeFingerprint(
-        val device: Long,
-        val mountId: String?,
-        val inode: Long,
-        val mode: Int,
-        val statSizeBytes: Long,
-        val modifiedAt: Long,
-        val isDirectory: Boolean,
-        val treeDigest: String,
-        val entryCount: Long,
-        val contentBytes: Long,
-        val error: String?,
-    ) {
-        fun toJson(contentSha256: String? = null): JSONObject = JSONObject()
-            .put("device", device)
-            .apply { mountId?.let { put("mountId", it) } }
-            .put("inode", inode)
-            .put("mode", mode)
-            .put("statSizeBytes", statSizeBytes)
-            .put("modifiedAt", modifiedAt)
-            .put("treeDigest", treeDigest)
-            .put("entryCount", entryCount)
-            .apply { contentSha256?.let { put("contentSha256", it) } }
-
-        companion object {
-            fun from(
-                stat: android.system.StructStat,
-                isDirectory: Boolean,
-                mountId: String? = null,
-                treeDigest: String = "",
-                entryCount: Long = 0,
-                contentBytes: Long = 0,
-                error: String? = null,
-            ): TreeFingerprint = TreeFingerprint(
-                device = stat.st_dev,
-                mountId = mountId,
-                inode = stat.st_ino,
-                mode = stat.st_mode,
-                statSizeBytes = stat.st_size,
-                modifiedAt = stat.st_mtime,
-                isDirectory = isDirectory,
-                treeDigest = treeDigest,
-                entryCount = entryCount,
-                contentBytes = contentBytes,
-                error = error,
-            )
-        }
-    }
-
-    private data class PreparedDeletion(
-        val rawPath: String,
-        val plannedBytes: Long,
-        val target: Path?,
-        val item: JSONObject,
-        val rejection: String?,
-    )
-
-    private data class DeleteOutcome(val deletedBytes: Long, val complete: Boolean, val message: String?, val unknownOutcome: Boolean = false)
-
     private data class FixedCommandResult(val ok: Boolean, val output: String)
 
     private class ActiveScan(val scanId: String) {
@@ -1169,34 +715,10 @@ class DustRootService : RootService() {
         val exitCode = AtomicReference<Int?>(null)
         val error = AtomicReference<String?>(null)
         val completedAt = AtomicReference<Long?>(null)
+        val process = AtomicReference<java.lang.Process?>(null)
         val startedAt = System.currentTimeMillis()
         @Volatile var future: java.util.concurrent.Future<*>? = null
     }
-
-    private data class MountIdentity(val id: String, val mountPoint: String)
-
-    private fun mountIdentityFor(path: String): MountIdentity? = runCatching {
-        File("/proc/self/mountinfo").readLines().mapNotNull { line ->
-            val parts = line.split(' ')
-            if (parts.size < 5) return@mapNotNull null
-            val mountPoint = decodeMountInfoPath(parts[4])
-            val id = parts[0]
-            if (path == mountPoint || path.startsWith(mountPoint.trimEnd('/') + "/")) {
-                MountIdentity(id = id, mountPoint = mountPoint)
-            } else {
-                null
-            }
-        }.maxByOrNull { it.mountPoint.length }
-    }.getOrNull()
-
-    private fun sameMount(expected: MountIdentity?, actual: MountIdentity?): Boolean =
-        expected == null || actual == null || expected.id == actual.id
-
-    private fun decodeMountInfoPath(value: String): String = value
-        .replace("\\040", " ")
-        .replace("\\011", "\t")
-        .replace("\\012", "\n")
-        .replace("\\134", "\\")
 
     private fun mountFor(path: String): JSONObject? = runCatching {
         File("/proc/mounts").readLines().mapNotNull { line ->
@@ -1227,7 +749,6 @@ class DustRootService : RootService() {
         val PACKAGE_NAME_PATTERN = Regex("^[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z0-9_]+)+$")
         const val FIXED_COMMAND_TIMEOUT_SECONDS = 15L
         const val COMPLETED_RETENTION_MS = 24 * 60 * 60 * 1000L
-        const val MAX_DELETE_PLAN_ENTRIES = 100_000L
         const val MAX_DUPLICATE_BUCKET_PATHS = 2_000
         const val DEFAULT_PARTIAL_HASH_BYTES = 64 * 1024
         const val MAX_PARTIAL_HASH_BYTES = 1024 * 1024
@@ -1236,6 +757,7 @@ class DustRootService : RootService() {
         private const val MAX_PRIVILEGED_QUEUE_DEPTH = 8
         private const val PRIVILEGED_WORKER_KEEPALIVE_SECONDS = 30L
         const val CLEANUP_PLAN_DIRECTORY = "dustui_cleanup_plans"
-        val SHA256_PATTERN = Regex("^[0-9a-f]{64}$")
+        const val CLEANUP_JOURNAL_DIRECTORY = "dustui_cleanup_journals"
+        const val MAX_CLEANUP_PLAN_BYTES = 8 * 1024 * 1024L
     }
 }

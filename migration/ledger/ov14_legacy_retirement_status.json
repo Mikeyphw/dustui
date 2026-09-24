@@ -3,7 +3,7 @@
   "status": "reopened_blocked",
   "gate_d_truth": "reopened",
   "ov15_status": "blocked_until_real_android_go_cutover",
-  "reason": "REM-03 routes Android scan/query/history and cleanup metadata through the Go child process and Go-owned SQLite. Room is retained only as a one-way read-only v1-v3 import source. Gate D remains reopened for the five remaining legacy/runtime blockers.",
+  "reason": "REM-04 moves privileged scanning, immutable cleanup review/capability admission, fd-relative mutation, cancellation, verification, and lost-response reconciliation into the packaged Go root worker. The C++ scanner/JNI bridge and legacy destructive executor are removed. Gate D remains reopened for release-truth, navigation, and Python-target retirement.",
   "desired": {
     "cpp_scanner_runtime": "none",
     "python_runtime": "none",
@@ -17,19 +17,17 @@
   },
   "observed": {
     "android_go_runtime_binding": "production",
-    "cpp_scanner_runtime": "active-production",
+    "cpp_scanner_runtime": "none",
     "generic_release_truth": "duplicated-app-local",
     "go_authority": "product-default-qualified",
     "go_sqlite_persistence": "go-owned-sqlite",
-    "legacy_destructive_executor": "active-production",
+    "legacy_destructive_executor": "none",
     "legacy_navigation": "not-proven-retired",
     "python_runtime": "compatibility-only-target-present",
     "room_domain_authority": "none"
   },
   "blockers": [
-    "cpp_scanner_production_active",
     "generic_release_truth_duplicated",
-    "legacy_destructive_executor_active",
     "legacy_navigation_not_proven_retired",
     "python_legacy_target_present"
   ],
@@ -41,7 +39,8 @@
     "rem02_go_sqlite_persistence",
     "rem02_sqlite_integrity_hotfix",
     "rem02_reconciliation_hotfix",
-    "rem03_android_domain_protocol_cutover"
+    "rem03_android_domain_protocol_cutover",
+    "rem04_privileged_cleanup_mutation_cutover_cpp_retirement"
   ],
-  "next": "rem04_privileged_cleanup_mutation_cutover_and_cpp_retirement_before_ov15_gate_e"
+  "next": "rem05_android_thin_shell_evidence_automation_diagnostics_convergence_before_ov15_gate_e"
 }

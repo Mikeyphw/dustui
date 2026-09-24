@@ -27,9 +27,9 @@ class ValidationRoadmapContractTest {
     fun rootedAndScaleInstrumentationSuitesExist() {
         listOf(
             "app/src/androidTest/kotlin/com/mikeyphw/dustui/validation/DustDatabaseMigrationInstrumentedTest.kt" to listOf("MigrationTestHelper", "MIGRATION_1_2", "MIGRATION_2_3"),
-            "app/src/androidTest/kotlin/com/mikeyphw/dustui/validation/RootedDestructiveSafetyInstrumentedTest.kt" to listOf("deleteReviewedPath", "mount --bind", "fdRelativeDeletionBlocksTopLevelIdentityReplacement"),
+            "app/src/androidTest/kotlin/com/mikeyphw/dustui/validation/RootedDestructiveSafetyInstrumentedTest.kt" to listOf("Go manifest/capability", "mount --bind", "fdRelativeDeletionBlocksTopLevelIdentityReplacement"),
             "app/src/androidTest/kotlin/com/mikeyphw/dustui/validation/MultiUserResidueValidationInstrumentedTest.kt" to listOf("pm list users", "InstalledPackageInventory", "dustui.requireMultiUser"),
-            "app/src/androidTest/kotlin/com/mikeyphw/dustui/validation/DeviceScalePerformanceInstrumentedTest.kt" to listOf("dustui.entries", "100_000", "NativeDustScanner.scan"),
+            "app/src/androidTest/kotlin/com/mikeyphw/dustui/validation/DeviceScalePerformanceInstrumentedTest.kt" to listOf("dustui.entries", "100_000", "RootServiceClient"),
         ).forEach { (relative, markers) ->
             val text = root.resolve(relative).readText()
             markers.forEach { marker -> assertTrue("$relative missing $marker", text.contains(marker)) }

@@ -10,7 +10,7 @@ class RootDiagnosticsSourceContractTest {
         val aidl = source("src/main/aidl/com/mikeyphw/dustui/root/IDustRootService.aidl")
         val service = source("src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt")
         assertTrue(aidl.contains("String preflightScan(String requestJson)"))
-        assertTrue(service.contains("Process.myUid() == 0"))
+        assertTrue(service.contains("val uid = Process.myUid()"))
         assertTrue(service.contains("/proc/self/attr/current"))
         assertTrue(service.contains("/proc/self/ns/mnt"))
         assertTrue(service.contains("errnoCode(\"ROOT_OPEN\""))
@@ -23,15 +23,15 @@ class RootDiagnosticsSourceContractTest {
         assertFalse(service.contains(".put(\"ok\", true)\n            .put(\"uid\""))
     }
 
-    @Test fun `native scanner treats root open failure as fatal and reports result limits`() {
-        val scanner = source("src/main/cpp/dustui_scanner.cpp")
+    @Test fun `go root scanner treats root open failure as fatal and reports result limits`() {
+        val scanner = File(sourceRoot(), "../go/internal/rootworker/scan.go").canonicalFile.readText()
         assertTrue(scanner.contains("ROOT_OPEN_FAILED"))
         assertTrue(scanner.contains("root-preflight"))
         assertTrue(scanner.contains("emittedFiles"))
         assertTrue(scanner.contains("emittedDirectories"))
         assertTrue(scanner.contains("depthLimitedDirectories"))
         assertTrue(scanner.contains("skippedFilesystemEntries"))
-        assertTrue(scanner.contains("context.fatal ? 8"))
+        assertTrue(scanner.contains("s.fatal"))
     }
 
     @Test fun `scan and module screens expose actionable diagnostics instead of zero values`() {
@@ -72,9 +72,8 @@ class RootDiagnosticsSourceContractTest {
         assertFalse(tasker.contains("Bundle().apply"))
     }
 
-    private fun source(relative: String): String {
-        val root = generateSequence(File(requireNotNull(System.getProperty("user.dir")) { "user.dir is unavailable" }).absoluteFile) { it.parentFile }
-            .first { File(it, "app/src/main").isDirectory }
-        return File(root, "app/$relative").readText()
-    }
+    private fun sourceRoot(): File = generateSequence(File(requireNotNull(System.getProperty("user.dir")) { "user.dir is unavailable" }).absoluteFile) { it.parentFile }
+        .first { File(it, "app/src/main").isDirectory }
+
+    private fun source(relative: String): String = File(sourceRoot(), "app/$relative").readText()
 }

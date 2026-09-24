@@ -294,6 +294,12 @@ root = ".."
 command = ["python3", "scripts/validate_rem03_android_domain_cutover.py"]
 inputs = ["scripts/validate_rem03_android_domain_cutover.py", "go", "android/app/src/main/kotlin/com/mikeyphw/dustui", "migration", ".devtool.toml"]
 
+[targets.dustui_android.jobs.rem04_privileged_cutover]
+runner = "command"
+command = ["python3", "scripts/validate_rem04_privileged_cleanup_cutover.py"]
+inputs = ["scripts/validate_rem04_privileged_cleanup_cutover.py", "go/internal/rootworker", "go/internal/cleanup", "go/cmd/dustui-go", "android/app/src/main/kotlin/com/mikeyphw/dustui/root", "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupModels.kt", "android/app/src/main/aidl", "android/app/build.gradle.kts", "migration", ".devtool.toml"]
+
+
 [targets.dustui_android.jobs.gradle_contract]
 gradle_tasks = ["verifyDustMigrationContract"]
 
@@ -316,11 +322,11 @@ gradle_tasks = [":app:assembleDebug"]
 outputs = ["app/build/outputs/apk/debug"]
 
 [targets.dustui_android.workflows]
-fast = ["job:rem03_domain_cutover", "job:ov13_contract", "job:go_test", "job:android_unit"]
+fast = ["job:rem04_privileged_cutover", "job:rem03_domain_cutover", "job:ov13_contract", "job:go_test", "job:android_unit"]
 unit = ["job:android_unit"]
 cutover_audit = ["job:retirement_audit"]
-gate_d = ["job:retirement_gate", "job:rem02_sqlite", "job:rem03_domain_cutover", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
-validate = ["job:retirement_gate", "job:rem02_sqlite", "job:rem03_domain_cutover", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
+gate_d = ["job:retirement_gate", "job:rem02_sqlite", "job:rem03_domain_cutover", "job:rem04_privileged_cutover", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
+validate = ["job:retirement_gate", "job:rem02_sqlite", "job:rem03_domain_cutover", "job:rem04_privileged_cutover", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
 
 [targets.dustui_go.jobs.go_test]
 runner = "command"

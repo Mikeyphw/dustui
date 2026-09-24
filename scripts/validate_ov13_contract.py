@@ -46,9 +46,16 @@ def validate(audit_loop: bool = False) -> list[str]:
     workflows = android.get('workflows', {})
     for job in ['retirement_audit', 'retirement_gate', 'ov13_contract', 'gradle_contract', 'go_test', 'android_unit', 'android_lint', 'android_assemble']:
         require(job in jobs, f'DustUI android target-local EXO job missing: {job}', failures)
-    require(workflows.get('fast') == ['job:ov13_contract', 'job:go_test', 'job:android_unit'], 'DustUI fast workflow must use target-local jobs', failures)
+    fast = workflows.get('fast', [])
+    fast_base = ['job:ov13_contract', 'job:go_test', 'job:android_unit']
+    require(len(fast) >= len(fast_base) and fast[-len(fast_base):] == fast_base and all(item.startswith('job:') for item in fast), 'DustUI fast workflow must use target-local jobs and retain the OV13 base tail', failures)
+    require(all(item.startswith('job:rem') for item in fast[:-len(fast_base)]), 'DustUI fast workflow successor prefixes must be REM target-local jobs', failures)
     require(workflows.get('cutover_audit') == ['job:retirement_audit'], 'DustUI cutover_audit workflow must expose the non-sealing truth audit', failures)
-    require(workflows.get('gate_d') == ['job:retirement_gate', 'job:ov13_contract', 'job:go_test', 'job:gradle_contract', 'job:android_unit', 'job:android_lint', 'job:android_assemble'], 'DustUI Gate D workflow must begin with the retirement truth gate', failures)
+    gate = workflows.get('gate_d', [])
+    gate_tail = ['job:ov13_contract', 'job:go_test', 'job:gradle_contract', 'job:android_unit', 'job:android_lint', 'job:android_assemble']
+    require(bool(gate) and gate[0] == 'job:retirement_gate', 'DustUI Gate D workflow must begin with the retirement truth gate', failures)
+    require(len(gate) >= 1 + len(gate_tail) and gate[-len(gate_tail):] == gate_tail, 'DustUI Gate D workflow must retain the OV13 validation tail', failures)
+    require(all(item.startswith('job:rem') for item in gate[1:-len(gate_tail)]), 'DustUI Gate D successor jobs must remain target-local REM jobs', failures)
     go_jobs = go.get('jobs', {})
     go_workflows = go.get('workflows', {})
     for job in ['go_test', 'product_contract', 'tui_smoke', 'schema_contract']:

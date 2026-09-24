@@ -40,7 +40,7 @@ def resolve_roots(candidate: Path) -> tuple[Path, Path]:
 
 def validate(repository_root: Path, root: Path) -> None:
     aidl = read(root, "app/src/main/aidl/com/mikeyphw/dustui/root/IDustRootService.aidl")
-    native = read(root, "app/src/main/cpp/dustui_scanner.cpp")
+    go_scanner = read(repository_root, "go/internal/rootworker/scan.go")
     service = read(root, "app/src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt")
     client = read(root, "app/src/main/kotlin/com/mikeyphw/dustui/root/RootServiceClient.kt")
     diagnostics = read(root, "app/src/main/kotlin/com/mikeyphw/dustui/data/ScanDiagnostics.kt")
@@ -81,20 +81,21 @@ def validate(repository_root: Path, root: Path) -> None:
     require(service, 'preflightFailure("INVALID_REQUEST", "", error.message ?: "Invalid scan request").toString()', "Preflight binder return type")
 
     for marker in (
-        "dustui-native-root/3",
-        'emitError(output, "ROOT_OPEN_FAILED"',
-        'emitError(output, "ROOT_LSTAT_FAILED"',
-        'emitError(output, "ROOT_SYMLINK"',
-        'emitError(output, "ROOT_NOT_DIRECTORY"',
-        'emitWarning(context, "DIRECTORY_OPEN_FAILED"',
+        '"backend": "dustui-go-root-v1"',
+        '"code": "ROOT_OPEN_FAILED"',
+        '"code": "ROOT_LSTAT_FAILED"',
+        '"code": "ROOT_SYMLINK"',
+        '"code": "ROOT_NOT_DIRECTORY"',
+        's.warning("DIRECTORY_OPEN_FAILED"',
         "emittedFiles",
         "emittedDirectories",
         "depthLimitedDirectories",
         "skippedFilesystemEntries",
         "rootOpened",
-        "context.fatal ? 8",
+        "s.fatal",
+        "bufio.NewWriterSize",
     ):
-        require(native, marker, "Native scanner")
+        require(go_scanner, marker, "Go root scanner")
 
     for marker in (
         "data class RootServiceInfo(",
@@ -122,7 +123,7 @@ def validate(repository_root: Path, root: Path) -> None:
 
     for marker in (
         "ScanDiagnosticStore(appContext)",
-        "ScanRepository(appContext, database.scanDao(), rootServiceClient, scanDiagnosticStore)",
+        "ScanRepository(appContext, goDomainStore, rootServiceClient, scanDiagnosticStore)",
     ):
         require(app_container, marker, "Application container")
 
@@ -211,7 +212,7 @@ def validate(repository_root: Path, root: Path) -> None:
         'Text("Check access")',
         '"Failure diagnostic"',
         '"Exact scanner and root-service diagnostics retained for this scan."',
-        'Text("Scan /data/adb/modules")',
+        'Scan /data/adb/modules',
         'ModuleDiagnosticStatus.WRONG_SCAN_ROOT',
         'ModuleDiagnosticStatus.ROOT_ACCESS_FAILED',
         'ModuleDiagnosticStatus.SCAN_FAILED',
@@ -226,14 +227,14 @@ def validate(repository_root: Path, root: Path) -> None:
 
     for marker in (
         "preflights identity path and selinux context",
-        "native scanner treats root open failure as fatal",
+        "go root scanner treats root open failure as fatal and reports result limits",
         "scan and module screens expose actionable diagnostics",
         "diagnostics integration uses available coroutine and compose APIs",
         'import androidx.core.net.toUri',
         'assertFalse(repository.contains("Uri.parse(',
         'assertTrue(tasker.contains("import androidx.core.os.bundleOf"))',
         'assertFalse(tasker.contains("Bundle().apply"))',
-        'File(root, "app/$relative")',
+        'File(sourceRoot(), "app/$relative")',
     ):
         require(source_contract, marker, "Source contract tests")
 

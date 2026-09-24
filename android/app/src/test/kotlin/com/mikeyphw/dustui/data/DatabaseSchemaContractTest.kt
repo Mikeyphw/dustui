@@ -81,10 +81,10 @@ class DatabaseSchemaContractTest {
         assertTrue(service.contains("stopSelfResult(startId)"))
         assertTrue(service.contains("onTimeout"))
         assertTrue(worker.contains("setForeground(createForegroundInfo(request))"))
-        assertTrue(root.contains("Deletion blocked at final preflight; no approved items were deleted"))
-        assertTrue(root.contains("retainedCopyBlockReason"))
-        assertTrue(root.contains("packageInstalledBlockReason"))
-        assertTrue(root.contains("loadCleanupExecutionPlan"))
+        assertTrue(root.contains("GoRootWorker.reviewCleanup"))
+        assertTrue(root.contains("GoRootWorker.executeCleanup"))
+        assertTrue(root.contains("claimCleanupExecutionPlan"))
+        assertTrue(root.contains("cleanupJournalFile"))
         assertTrue(client.contains("writeCleanupExecutionPlan(review)"))
         assertTrue(client.contains("CLEANUP_PLAN_DIRECTORY"))
         assertTrue(client.contains(".put(\"operationId\", review.operationId)"))
@@ -92,21 +92,25 @@ class DatabaseSchemaContractTest {
         assertFalse(client.contains("it.executeCleanup(review.toExecutionJson())"))
     }
 
-    @Test fun `cleanup root execution has mount identity and cancellation contracts`() {
+    @Test fun `cleanup root execution is Go owned cancellable and reconciliable`() {
         val aidl = File(androidRoot, "app/src/main/aidl/com/mikeyphw/dustui/root/IDustRootService.aidl").readText()
         val root = File(androidRoot, "app/src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt").readText()
         val client = File(androidRoot, "app/src/main/kotlin/com/mikeyphw/dustui/root/RootServiceClient.kt").readText()
         val models = File(androidRoot, "app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupModels.kt").readText()
+        val worker = File(androidRoot.parentFile, "go/internal/rootworker/cleanup.go").readText()
         assertTrue(aidl.contains("String cancelCleanup(String operationId);"))
-        assertTrue(root.contains("cleanupCancellations"))
-        assertTrue(root.contains("override fun cancelCleanup"))
-        assertTrue(root.contains("mountIdentityFor"))
-        assertTrue(root.contains("Nested filesystem or mount boundary"))
-        assertTrue(root.contains("deletePath(operationId, target, rootPath, cancellation"))
-        assertTrue(root.contains("NativeDustScanner.deleteReviewedPath"))
-        assertTrue(client.contains("cleanupExecutionCall(review.operationId"))
+        assertTrue(aidl.contains("String reconcileCleanup(String operationId);"))
+        assertTrue(root.contains("GoRootWorker.executeCleanup"))
+        assertTrue(root.contains("cleanupProcesses"))
+        assertTrue(root.contains("claimCleanupExecutionPlan"))
+        assertTrue(worker.contains("mount_boundary_changed"))
+        assertTrue(worker.contains("unreviewed_descendant"))
+        assertTrue(worker.contains("syscall.Openat"))
+        assertTrue(worker.contains("SYS_UNLINKAT"))
         assertTrue(client.contains("service().cancelCleanup(operationId)"))
-        assertTrue(models.contains("val mountId: String? = null"))
+        assertTrue(client.contains("root.reconcileCleanup(operationId)"))
+        assertTrue(models.contains("goManifestJson"))
+        assertTrue(models.contains("dustui.cleanup.mutation.v1"))
     }
 
     @Test fun `ui async requests are generation and request owned`() {
@@ -131,19 +135,18 @@ class DatabaseSchemaContractTest {
         assertTrue(viewModel.contains("repository.cleanupRecommendations(scanId, residueAnalysis, analysisEntries)"))
     }
 
-    @Test fun `native deletion uses fd relative openat unlinkat contract`() {
-        val native = File(androidRoot, "app/src/main/cpp/dustui_scanner.cpp").readText()
-        val bridge = File(androidRoot, "app/src/main/kotlin/com/mikeyphw/dustui/root/NativeDustScanner.kt").readText()
+    @Test fun `go deletion uses fd relative openat unlinkat contract`() {
+        val worker = File(androidRoot.parentFile, "go/internal/rootworker/cleanup.go").readText()
         val root = File(androidRoot, "app/src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt").readText()
-        assertTrue(bridge.contains("external fun deleteReviewedPath"))
-        assertTrue(native.contains("Java_com_mikeyphw_dustui_root_NativeDustScanner_deleteReviewedPath"))
-        assertTrue(native.contains("openat(parentFd"))
-        assertTrue(native.contains("fstatat(parentFd"))
-        assertTrue(native.contains("AT_SYMLINK_NOFOLLOW"))
-        assertTrue(native.contains("unlinkat(parentFd"))
-        assertTrue(native.contains("O_NOFOLLOW"))
-        assertTrue(root.contains("NativeDustScanner.deleteReviewedPath"))
-        assertFalse(root.contains("Files.walkFileTree(target, object : SimpleFileVisitor<Path>() {\n                override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {\n                    if (cancellation.get())"))
+        val gradle = File(androidRoot, "app/build.gradle.kts").readText()
+        assertTrue(worker.contains("syscall.Openat"))
+        assertTrue(worker.contains("O_NOFOLLOW"))
+        assertTrue(worker.contains("syscall.Unlinkat"))
+        assertTrue(worker.contains("SYS_UNLINKAT"))
+        assertTrue(worker.contains("unreviewed_descendant"))
+        assertTrue(root.contains("GoRootWorker.executeCleanup"))
+        assertFalse(root.contains("NativeDustScanner"))
+        assertFalse(gradle.contains("externalNativeBuild"))
     }
 
     @Test fun `duplicate verification has per operation cancellation identity`() {
@@ -158,19 +161,17 @@ class DatabaseSchemaContractTest {
         assertTrue(root.contains("duplicateCancellations.remove(operationId, cancellation)"))
     }
 
-    @Test fun `native deletion cancellation is operation owned and unknown outcome aware`() {
-        val native = File(androidRoot, "app/src/main/cpp/dustui_scanner.cpp").readText()
-        val bridge = File(androidRoot, "app/src/main/kotlin/com/mikeyphw/dustui/root/NativeDustScanner.kt").readText()
+    @Test fun `go deletion cancellation is operation owned and unknown outcome aware`() {
+        val worker = File(androidRoot.parentFile, "go/internal/rootworker/cleanup.go").readText()
+        val cleanup = File(androidRoot.parentFile, "go/internal/cleanup/cleanup.go").readText()
         val root = File(androidRoot, "app/src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt").readText()
         val viewModel = File(androidRoot, "app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt").readText()
-        assertTrue(bridge.contains("external fun cancelDeletion"))
-        assertTrue(native.contains("Java_com_mikeyphw_dustui_root_NativeDustScanner_cancelDeletion"))
-        assertTrue(native.contains("requestCancellationFlag(operationId)"))
-        assertTrue(native.contains("Native deletion cancellation requested after filesystem mutation"))
-        assertTrue(native.contains("unknownOutcome"))
-        assertTrue(root.contains("NativeDustScanner.cancelDeletion(operationId)"))
-        assertTrue(root.contains("outcome.unknownOutcome -> \"UNKNOWN_OUTCOME\""))
-        assertTrue(viewModel.contains("result.status == \"UNKNOWN_OUTCOME\""))
+        assertTrue(cleanup.contains("context_cancelled_during_mutation"))
+        assertTrue(cleanup.contains("MutationInterrupted"))
+        assertTrue(worker.contains("reconcileRequired"))
+        assertTrue(root.contains("process.destroy()"))
+        assertTrue(root.contains("cleanupJournalFile"))
+        assertTrue(viewModel.contains("result.status == "UNKNOWN_OUTCOME""))
     }
 
     @Test fun `broader ui async surfaces are request owned`() {
@@ -188,12 +189,12 @@ class DatabaseSchemaContractTest {
         assertTrue(viewModel.contains("invalidateScanScopedRequests()"))
     }
 
-    @Test fun `native scanner output is buffered instead of flushed per entry`() {
-        val native = File(androidRoot, "app/src/main/cpp/dustui_scanner.cpp").readText()
-        assertTrue(native.contains("kOutputBufferBytes"))
-        assertTrue(native.contains("_IOFBF"))
-        assertTrue(native.contains("void finishEvent(FILE* output, bool flush = false)"))
-        assertFalse(native.contains("void finishEvent(FILE* output) {\n    std::fputc('\\n', output);\n    std::fflush(output);"))
+    @Test fun `go scanner output is buffered instead of flushed per entry`() {
+        val scanner = File(androidRoot.parentFile, "go/internal/rootworker/scan.go").readText()
+        assertTrue(scanner.contains("bufio.NewWriterSize"))
+        assertTrue(scanner.contains("progressInterval"))
+        assertTrue(scanner.contains("if flush"))
+        assertFalse(scanner.contains("Flush()") && scanner.contains("type\":\"entry") && scanner.contains("true"))
     }
 
     private fun locateAndroidRoot(): File {

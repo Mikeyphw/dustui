@@ -15,6 +15,7 @@ PRE_REM03_BLOCKERS = sorted([
     "room_domain_authority_active",
 ])
 POST_REM03_BLOCKERS = sorted(x for x in PRE_REM03_BLOCKERS if x != "room_domain_authority_active")
+POST_REM04_BLOCKERS = sorted(x for x in POST_REM03_BLOCKERS if x not in {"cpp_scanner_production_active", "legacy_destructive_executor_active"})
 
 fail: list[str] = []
 for validator in [
@@ -32,9 +33,11 @@ try:
     blockers = sorted(status.get("blockers", []))
     folded = set(status.get("folded_in", []))
     rem03_folded = "rem03_android_domain_protocol_cutover" in folded
-    expected = POST_REM03_BLOCKERS if rem03_folded else PRE_REM03_BLOCKERS
+    rem04_folded = "rem04_privileged_cleanup_mutation_cutover_cpp_retirement" in folded
+    expected = POST_REM04_BLOCKERS if rem04_folded else (POST_REM03_BLOCKERS if rem03_folded else PRE_REM03_BLOCKERS)
     if blockers != expected:
-        fail.append(f"expected {'five post-REM-03' if rem03_folded else 'six pre-REM-03'} remaining blockers, got {status.get('blockers', [])}")
+        stage = 'three post-REM-04' if rem04_folded else ('five post-REM-03' if rem03_folded else 'six pre-REM-03')
+        fail.append(f"expected {stage} remaining blockers, got {status.get('blockers', [])}")
     observed = status.get("observed", {})
     if observed.get("android_go_runtime_binding") != "production":
         fail.append("Android Go runtime binding is not production")
