@@ -70,6 +70,7 @@
       "id": "RC-05",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
+      "ov06_status": "go_privileged_runtime_boundary_added_bounded_allowlisted_reconcile",
       "overlays": [
         "OV06",
         "OV08"
@@ -247,6 +248,7 @@
       "id": "N-04",
       "ov01_status": "mapped",
       "ov02_status": "not_in_ov02_scope",
+      "ov06_status": "bounded_go_root_admission_finalized_for_pre_cutover",
       "overlays": [
         "OV01",
         "OV06"
@@ -328,6 +330,7 @@
       "id": "ABH-02",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
+      "ov06_status": "go_root_protocol_reconcile_and_no_replay_boundary_added",
       "overlays": [
         "OV06",
         "OV08"
@@ -692,6 +695,6 @@
       "title": "GO06"
     }
   ],
-  "phase": "OV05",
+  "phase": "OV06",
   "schema": "dustui.migration.ledger.v1"
 }

@@ -1,0 +1,102 @@
+{
+  "generated_utc": "2026-09-24T12:55:00Z",
+  "name": "dustui_go_ov06_privileged_runtime_protocol_v1",
+  "notes": [
+    "No unsupported Devtool jobs/workflows schema added",
+    "Android buildability remains intentionally suspended",
+    "OV06 does not grant production destructive authority"
+  ],
+  "overlay": "OV06",
+  "payload_files": [
+    {
+      "path": ".devtool.toml",
+      "sha256": "9b39966cff96b732e273d9d32f8c1b794050b46207c4e5cfa9a280459bbc1a90",
+      "size_bytes": 5433
+    },
+    {
+      "path": "go/cmd/dustui-go/main.go",
+      "sha256": "bbfbdd397574128d81035a787fecea01b392631558dc205920f9599b1d5c4abe",
+      "size_bytes": 3487
+    },
+    {
+      "path": "go/internal/privileged/boundary.go",
+      "sha256": "b439c0779b7282f793dad32f2974a67fb227836fc3e7d33ad155b60e29597a93",
+      "size_bytes": 20397
+    },
+    {
+      "path": "go/internal/privileged/boundary_test.go",
+      "sha256": "83d9fb497a97e580d2f5e354780031333fc96800d3376ba23d2f327505dfeb0d",
+      "size_bytes": 6315
+    },
+    {
+      "path": "go/internal/readiness/readiness.go",
+      "sha256": "3309c3ace1357af194ee01faa5a762fe9171671f451bd2790b89a56adbea05f4",
+      "size_bytes": 1869
+    },
+    {
+      "path": "go/internal/readiness/readiness_test.go",
+      "sha256": "f9bbd6f8613077fee282f8ea9c2a4c14b1f7eff8e0f17f6c9c2754b3e00cfadd",
+      "size_bytes": 759
+    },
+    {
+      "path": "go/internal/runtime/spec.go",
+      "sha256": "730fbb6347108c48a9ad1681c7dd4ef50fe3f9ccbf6115c364344b07fc28ea37",
+      "size_bytes": 7685
+    },
+    {
+      "path": "go/internal/state/schema.go",
+      "sha256": "4ceddceb8a6ee27d45dbbd086cbfa0b99a4e04259b613ada9613db72df4d6cdc",
+      "size_bytes": 8793
+    },
+    {
+      "path": "go/internal/version/version.go",
+      "sha256": "a3e0130c37344205132762b0b8b206340df093f9f8e11d2d97c74d8dcf0515b6",
+      "size_bytes": 236
+    },
+    {
+      "path": "migration/audit/v1/ov06_audit_loop.md",
+      "sha256": "6cae52ab345864106ee0be060f113c074eafa3ad6ddcebcc4798cdc2fb788bfd",
+      "size_bytes": 895
+    },
+    {
+      "path": "migration/contracts/v1/authority_transition_ov06.md",
+      "sha256": "d018efbe05c6db0509c17aad7cff04fa86a0224557b17165a2f1c124ac25b228",
+      "size_bytes": 538
+    },
+    {
+      "path": "migration/contracts/v1/legacy_paths_ov06.md",
+      "sha256": "1212bcad445a30d3a5a7bdeb347aa18dc5f6bbb6742971bf91fd9efedc168506",
+      "size_bytes": 524
+    },
+    {
+      "path": "migration/contracts/v1/privileged_runtime_protocol_ov06.md",
+      "sha256": "d34e94985c3534a2079cefdf8b52c837ba87865959a6d55526362d372e6ed8ca",
+      "size_bytes": 1283
+    },
+    {
+      "path": "migration/contracts/v1/root_boundary_ov06.md",
+      "sha256": "917e511eebf927a99e3e4388de4814e136036b239b12f25a20c2eb2505a636bc",
+      "size_bytes": 944
+    },
+    {
+      "path": "migration/contracts/v1/source_token_retirement_ov06.md",
+      "sha256": "a51849899b5b84e166121c14923764b4bd548b30be44f3b5485f45e04061a4bc",
+      "size_bytes": 483
+    },
+    {
+      "path": "migration/ledger/findings.json",
+      "sha256": "5ba6e5caa63b9f457134b4287b3eb1ec9c238808d126d6ca283c483f88e49378",
+      "size_bytes": 20933
+    },
+    {
+      "path": "migration/ledger/ov06_status.json",
+      "sha256": "69589a562449803131239923e1fc5ea8caca1905e2593807193623987d7530ce",
+      "size_bytes": 595
+    },
+    {
+      "path": "scripts/validate_ov06_contract.py",
+      "sha256": "fe27448a577d216651f2e14623bac0c964a2fd9474dbbb92291b6b62da1c36bc",
+      "size_bytes": 8501
+    }
+  ]
+}

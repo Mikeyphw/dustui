@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/mikeyphw/dustui/go/internal/privileged"
 	"github.com/mikeyphw/dustui/go/internal/query"
 	"github.com/mikeyphw/dustui/go/internal/readiness"
 	runtimecontract "github.com/mikeyphw/dustui/go/internal/runtime"
@@ -34,11 +35,18 @@ func main() {
 
 	case "runtime-contract":
 		payload = runtimecontract.CurrentSpec()
+	case "privileged-contract", "root-contract":
+		controller, err := privileged.NewController(privileged.DefaultConfig())
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "privileged contract: %v\n", err)
+			os.Exit(1)
+		}
+		payload = controller.Diagnostics()
 	case "shell-contract":
 		payload = shell.CurrentContract()
 	case "query-contract":
 		payload = map[string]any{
-			"phase":        "OV05",
+			"phase":        "OV06",
 			"pagination":   "deterministic_offset_token_bound_to_generation",
 			"maxPageLimit": query.MaxPageLimit,
 			"countKinds":   []string{query.CountTotal, query.CountPartial, query.CountUnknown},
@@ -59,7 +67,7 @@ func main() {
 		}
 	case "scan-contract":
 		payload = map[string]any{
-			"phase":                 "OV05",
+			"phase":                 "OV06",
 			"integrityStates":       []scan.IntegrityState{scan.IntegrityComplete, scan.IntegrityPartial, scan.IntegrityTruncated, scan.IntegrityMalformed, scan.IntegrityFailed, scan.IntegrityStaleAfterCleanup},
 			"sourceCompleteness":    []scan.SourceCompleteness{scan.SourceComplete, scan.SourceIncomplete, scan.SourceUnknown},
 			"sizeSemantics":         []scan.SizeSemantics{scan.SizeLogical, scan.SizeAllocated, scan.SizeLogicalAndAllocated},
@@ -78,7 +86,7 @@ func main() {
 		}
 		payload = session
 	default:
-		fmt.Fprintf(os.Stderr, "unknown command %q; supported: readiness, version, protocol, schema, runtime-contract, shell-contract, query-contract, scan-contract, scan [root]\n", command)
+		fmt.Fprintf(os.Stderr, "unknown command %q; supported: readiness, version, protocol, schema, runtime-contract, privileged-contract, shell-contract, query-contract, scan-contract, scan [root]\n", command)
 		os.Exit(2)
 	}
 	encoded, err := json.MarshalIndent(payload, "", "  ")

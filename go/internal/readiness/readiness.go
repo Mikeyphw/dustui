@@ -16,6 +16,7 @@ type Report struct {
 	ReadAuthority        bool                    `json:"readAuthority"`
 	RuntimePackaged      bool                    `json:"runtimePackaged"`
 	ShellScaffold        bool                    `json:"shellScaffold"`
+	PrivilegedBoundary   bool                    `json:"privilegedBoundary"`
 	MutationAuthority    bool                    `json:"mutationAuthority"`
 	RequiredTables       []string                `json:"requiredTables"`
 	EnvelopeTypes        []protocol.EnvelopeType `json:"envelopeTypes"`
@@ -33,9 +34,10 @@ func Current() Report {
 		ReadAuthority:        true,
 		RuntimePackaged:      true,
 		ShellScaffold:        true,
+		PrivilegedBoundary:   true,
 		MutationAuthority:    false,
 		RequiredTables:       append([]string{}, state.RequiredTables...),
 		EnvelopeTypes:        protocol.SupportedEnvelopeTypes(),
-		Message:              "OV05 Go runtime/read-authority contract is present; Android buildability remains intentionally suspended until OV13 reconnect.",
+		Message:              "OV06 privileged runtime boundary is present; mutation authority remains dry-run/non-production until OV08.",
 	}
 }

@@ -1,0 +1,20 @@
+{
+  "phase": "OV06",
+  "overlay": "dustui_go_ov06_privileged_runtime_protocol_v1",
+  "android_buildability": "intentionally-suspended",
+  "gate": "non-gate-after-Gate-B",
+  "hard_blockers": [
+    "scripts/validate_ov06_contract.py --audit-loop",
+    "cd go && go test ./..."
+  ],
+  "claims": {
+    "privileged_protocol": "dustui.privileged.runtime.v1",
+    "bounded_queue": true,
+    "bounded_workers": true,
+    "destructive_single_flight": true,
+    "no_generic_shell": true,
+    "durable_reconcile": true,
+    "no_replay_after_restart": true,
+    "production_mutation_authority": false
+  }
+}

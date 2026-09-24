@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const SchemaVersion = 2
+const SchemaVersion = 3
 
 var RequiredTables = []string{
 	"scan_sessions",
@@ -23,6 +23,9 @@ var RequiredTables = []string{
 	"run_history",
 	"runtime_sessions",
 	"shell_routes",
+	"root_runtime_identities",
+	"privileged_admissions",
+	"privileged_events",
 }
 
 var SQLitePragmas = []string{
@@ -62,6 +65,9 @@ var Tables = []Table{
 	{"run_history", `CREATE TABLE IF NOT EXISTS run_history (id TEXT PRIMARY KEY, kind TEXT NOT NULL, status TEXT NOT NULL, started_at_ms INTEGER NOT NULL, completed_at_ms INTEGER, summary_json TEXT NOT NULL);`},
 	{"runtime_sessions", `CREATE TABLE IF NOT EXISTS runtime_sessions (id TEXT PRIMARY KEY, abi TEXT NOT NULL, executable_path TEXT NOT NULL, readiness_protocol TEXT NOT NULL, process_state TEXT NOT NULL, last_sequence INTEGER NOT NULL DEFAULT 0, started_at_ms INTEGER NOT NULL, last_ready_at_ms INTEGER, died_at_ms INTEGER);`},
 	{"shell_routes", `CREATE TABLE IF NOT EXISTS shell_routes (id TEXT PRIMARY KEY, route_id TEXT NOT NULL, entity_id TEXT, generation INTEGER NOT NULL, state TEXT NOT NULL, restored_at_ms INTEGER NOT NULL);`},
+	{"root_runtime_identities", `CREATE TABLE IF NOT EXISTS root_runtime_identities (id TEXT PRIMARY KEY, root_namespace TEXT NOT NULL, runtime_identity TEXT NOT NULL, boot_id TEXT NOT NULL, process_id TEXT NOT NULL, started_at_ms INTEGER NOT NULL, scope_json TEXT NOT NULL);`},
+	{"privileged_admissions", `CREATE TABLE IF NOT EXISTS privileged_admissions (id TEXT PRIMARY KEY, request_id TEXT NOT NULL UNIQUE, operation TEXT NOT NULL, operation_class TEXT NOT NULL, capability_class TEXT NOT NULL, target_scope TEXT NOT NULL, request_hash TEXT NOT NULL, transport_epoch INTEGER NOT NULL, boot_id TEXT NOT NULL, process_id TEXT NOT NULL, status TEXT NOT NULL, reason TEXT, no_replay_token TEXT NOT NULL, reconcile_required INTEGER NOT NULL DEFAULT 0, created_at_ms INTEGER NOT NULL, updated_at_ms INTEGER NOT NULL);`},
+	{"privileged_events", `CREATE TABLE IF NOT EXISTS privileged_events (admission_id TEXT NOT NULL, sequence INTEGER NOT NULL, event_kind TEXT NOT NULL, reason TEXT, event_json TEXT NOT NULL, created_at_ms INTEGER NOT NULL, PRIMARY KEY(admission_id, sequence), FOREIGN KEY(admission_id) REFERENCES privileged_admissions(id) ON DELETE CASCADE);`},
 }
 
 func CreateStatements() []string {
@@ -81,7 +87,7 @@ func ValidateSchemaContract() error {
 			return fmt.Errorf("required table %s missing", table)
 		}
 	}
-	for _, required := range []string{"journal_mode = WAL", "expected_generation", "request_fingerprint", "operation_events", "retained_legacy_quarantine_json", "idx_scan_entries_parent_page", "idx_scan_entries_logical_size", "idx_scan_sessions_history", "runtime_sessions", "shell_routes"} {
+	for _, required := range []string{"journal_mode = WAL", "expected_generation", "request_fingerprint", "operation_events", "retained_legacy_quarantine_json", "idx_scan_entries_parent_page", "idx_scan_entries_logical_size", "idx_scan_sessions_history", "runtime_sessions", "shell_routes", "root_runtime_identities", "privileged_admissions", "privileged_events", "no_replay_token", "reconcile_required"} {
 		if !strings.Contains(joined, required) {
 			return fmt.Errorf("schema contract missing %s", required)
 		}

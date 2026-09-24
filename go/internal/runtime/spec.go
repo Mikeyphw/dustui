@@ -56,6 +56,7 @@ type Spec struct {
 	AndroidReconnectGate string     `json:"androidReconnectGate"`
 	ScanReadAuthority    string     `json:"scanReadAuthority"`
 	CleanupAuthority     string     `json:"cleanupAuthority"`
+	PrivilegedBoundary   string     `json:"privilegedBoundary"`
 }
 
 func CurrentSpec() Spec {
@@ -80,6 +81,7 @@ func CurrentSpec() Spec {
 		AndroidReconnectGate: "OV13",
 		ScanReadAuthority:    "go-sqlite",
 		CleanupAuthority:     "legacy-constrained-until-OV08",
+		PrivilegedBoundary:   "go-root-admission-boundary-ov06",
 	}
 }
 
