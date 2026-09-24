@@ -1,0 +1,21 @@
+{
+  "schema": 2,
+  "overlay": "dustui_go_ov14_validator_syntax_hotfix_v1",
+  "target": "dustui_android",
+  "phase": "OV14",
+  "files": [
+    "migration/archive/overlays/dustui_go_ov14_validator_syntax_hotfix_v1/README.md",
+    "migration/audit/v1/ov14_validator_syntax_hotfix_audit.md",
+    "migration/contracts/v1/ov14_validator_syntax_hotfix.md",
+    "migration/ledger/ov14_validator_syntax_hotfix_status.json",
+    "scripts/__pycache__/validate_ov13_cleaning_performance_termux_hotfix.cpython-313.pyc",
+    "scripts/__pycache__/validate_ov14_contract.cpython-313.pyc",
+    "scripts/validate_ov13_cleaning_performance_termux_hotfix.py",
+    "scripts/validate_ov14_contract.py",
+    "scripts/validate_ov14_validator_syntax_hotfix.py"
+  ],
+  "notes": [
+    "validator syntax hotfix only",
+    "no product behavior changes"
+  ]
+}

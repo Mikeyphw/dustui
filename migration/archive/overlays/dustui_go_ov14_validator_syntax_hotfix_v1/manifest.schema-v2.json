@@ -1,0 +1,17 @@
+{
+  "schema": 2,
+  "name": "dustui_go_ov14_validator_syntax_hotfix_v1",
+  "target": "dustui_android",
+  "phase": "OV14",
+  "kind": "hotfix",
+  "description": "Fix Python syntax errors in OV14 validator scripts",
+  "android_buildability": "mandatory",
+  "requires": [
+    "dustui_go_ov14_legacy_retirement_purge_v1"
+  ],
+  "validations": [
+    "python3 scripts/validate_ov14_validator_syntax_hotfix.py",
+    "python3 scripts/validate_ov14_contract.py --audit-loop",
+    "python3 scripts/validate_ov13_cleaning_performance_termux_hotfix.py"
+  ]
+}

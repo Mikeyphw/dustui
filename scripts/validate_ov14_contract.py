@@ -59,7 +59,7 @@ def main() -> int:
             "stale unsupported jobs rejection still present in OV13 performance validator", failures)
     require("unsupported Devtool workflows schema must not be added" not in perf_text,
             "stale unsupported workflows rejection still present in OV13 performance validator", failures)
-    require("wrapper.get("schema") == 1" in perf_text,
+    require('wrapper.get("schema") == 1' in perf_text,
             "OV13 performance validator must accept supported wrapper jobs only with wrapper schema=1", failures)
 
     if (ROOT / ".devtool.toml").is_file():

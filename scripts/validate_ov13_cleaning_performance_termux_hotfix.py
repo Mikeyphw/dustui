@@ -27,7 +27,7 @@ require("largeDatasetUnitTestBudgetMillis()" in source,
         "test runner budget helper missing")
 require("TERMUX_GATE_LARGE_DATASET_DURATION_MILLIS = 30_000L" in source,
         "Termux/constrained runner budget missing")
-require("System.getenv("HOME")" in source and "System.getenv("PREFIX")" in source,
+require('System.getenv("HOME")' in source and 'System.getenv("PREFIX")' in source,
         "Termux environment detection missing")
 require("Runtime.getRuntime().availableProcessors() <= 2" in source,
         "constrained CPU detection missing")
