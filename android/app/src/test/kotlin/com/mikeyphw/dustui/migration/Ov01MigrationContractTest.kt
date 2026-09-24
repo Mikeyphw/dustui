@@ -74,10 +74,31 @@ class Ov01MigrationContractTest {
         assertFalse(packageRc.contains("testDebugUnitTest"))
     }
 
-    @Test fun `go readiness target is present but not authoritative`() {
+    @Test fun `go readiness authority matches migration phase`() {
         val readiness = repoFile("go/internal/readiness/readiness.go").readText()
-        assertTrue(readiness.contains("ProductionEngine:  false"))
-        assertTrue(readiness.contains("SQLiteAuthority:   false"))
-        assertTrue(readiness.contains("MutationAuthority: false"))
+        val devtool = repoFile(".devtool.toml").readText()
+        val gateDCutover = devtool.contains("migration_phase = \"OV13\"") ||
+            readiness.contains("GoCLIDefault") ||
+            readiness.contains("GoCLIDefault:")
+
+        if (gateDCutover) {
+            assertTrue(
+                "OV13 Gate D makes Go the product engine",
+                Regex("ProductionEngine:\\s+true").containsMatchIn(readiness),
+            )
+            assertTrue(
+                "OV13 Gate D makes Go SQLite/read authority the product model",
+                Regex("SQLiteAuthority(Model)?:\\s+true").containsMatchIn(readiness) ||
+                    Regex("ReadAuthority:\\s+true").containsMatchIn(readiness),
+            )
+            assertTrue(
+                "OV13 Gate D keeps mutation authority in Go",
+                Regex("MutationAuthority:\\s+true").containsMatchIn(readiness),
+            )
+        } else {
+            assertTrue(readiness.contains("ProductionEngine:  false"))
+            assertTrue(readiness.contains("SQLiteAuthority:   false"))
+            assertTrue(readiness.contains("MutationAuthority: false"))
+        }
     }
 }

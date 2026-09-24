@@ -1,0 +1,15 @@
+{
+  "overlay": "OV13-hotfix",
+  "name": "dustui_go_ov13_ov01_readiness_transition_hotfix_v1",
+  "gate": "Gate D",
+  "purpose": "Update the OV01 Android unit contract so Go readiness authority expectations match OV13 Gate D cutover.",
+  "android_buildability": "mandatory",
+  "production_behavior_changed": false,
+  "test_contract_changed": true,
+  "unsupported_devtool_jobs_workflows_added": false,
+  "expected_next_evidence": [
+    "python3 scripts/validate_ov13_ov01_readiness_transition_hotfix.py",
+    "devtool -r $HOME/Code/dustui --target dustui_android validate --task :app:testDebugUnitTest",
+    "devtool -r $HOME/Code/dustui --target dustui_android validate --task verifyDustMigrationContract --task :app:testDebugUnitTest --task :app:lintDebug --task :app:assembleDebug"
+  ]
+}

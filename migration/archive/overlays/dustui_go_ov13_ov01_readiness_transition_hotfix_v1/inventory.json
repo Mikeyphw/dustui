@@ -1,0 +1,18 @@
+{
+  "android_buildability": "mandatory",
+  "files": [
+    "android/app/src/test/kotlin/com/mikeyphw/dustui/migration/Ov01MigrationContractTest.kt",
+    "migration/contracts/v1/ov13_ov01_readiness_transition_hotfix.md",
+    "migration/audit/v1/ov13_ov01_readiness_transition_hotfix_audit.md",
+    "migration/ledger/ov13_ov01_readiness_transition_hotfix_status.json",
+    "scripts/validate_ov13_ov01_readiness_transition_hotfix.py",
+    "migration/archive/overlays/dustui_go_ov13_ov01_readiness_transition_hotfix_v1/README.md"
+  ],
+  "gate_weakened": false,
+  "name": "dustui_go_ov13_ov01_readiness_transition_hotfix_v1",
+  "overlay": "OV13-hotfix",
+  "production_behavior_changed": false,
+  "purpose": "Update stale OV01 readiness unit contract to match OV13 Gate D Go authority cutover.",
+  "target": "dustui_android",
+  "unsupported_devtool_jobs_workflows_added": false
+}

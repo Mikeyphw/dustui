@@ -1,0 +1,75 @@
+{
+  "apply_policy": {
+    "android_buildability": "mandatory",
+    "devtool_command": "devtool -r \"$HOME/Code/dustui\" --target dustui_android apply overlay /sdcard/Download/dustui_go_ov13_ov01_readiness_transition_hotfix_v1.zip --no-validate --commit \"DustUI OV13 fix OV01 readiness transition\"",
+    "evidence_commands": [
+      "python3 scripts/validate_ov13_ov01_readiness_transition_hotfix.py",
+      "devtool -r \"$HOME/Code/dustui\" --target dustui_android validate --task :app:testDebugUnitTest",
+      "devtool -r \"$HOME/Code/dustui\" --target dustui_android validate --task verifyDustMigrationContract --task :app:testDebugUnitTest --task :app:lintDebug --task :app:assembleDebug"
+    ],
+    "full_validation_gate": true,
+    "unsupported_devtool_jobs_workflows_added": false,
+    "validation_policy": "Gate D remains mandatory. This hotfix only repairs a stale OV01 Android unit test contract after OV13 cutover."
+  },
+  "artifact": "dustui_go_ov13_ov01_readiness_transition_hotfix_v1.zip",
+  "authority_transition": {
+    "android_buildability": "mandatory",
+    "gate": "Gate D",
+    "gate_weakened": false,
+    "production_behavior_changed": false,
+    "unsupported_devtool_jobs_workflows_added": false
+  },
+  "created_utc": "2026-09-24T15:30:00Z",
+  "hotfix_requirements": [
+    "Update stale OV01 readiness assertion after OV13 Gate D Go authority cutover",
+    "Preserve pre-Gate-D OV01 non-authoritative expectation when applicable",
+    "Do not change production Go or Android behavior",
+    "Do not add unsupported Devtool jobs/workflows schema"
+  ],
+  "name": "dustui_go_ov13_ov01_readiness_transition_hotfix_v1",
+  "overlay": "OV13-hotfix",
+  "payload_file_count": 9,
+  "payload_sha256": [
+    {
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/migration/Ov01MigrationContractTest.kt",
+      "sha256": "2a21dd4e113f242955e9f8d0c124df1127c8b74c383b9e70eb7a5d32937abd77",
+      "size_bytes": 5261
+    },
+    {
+      "path": "migration/contracts/v1/ov13_ov01_readiness_transition_hotfix.md",
+      "sha256": "baab965e43f7d2f3ed10fe4200bbb70e9a8a6f82c0438384ce80549e94f16e04",
+      "size_bytes": 676
+    },
+    {
+      "path": "migration/audit/v1/ov13_ov01_readiness_transition_hotfix_audit.md",
+      "sha256": "ccbca5ca6f5e89493e88759af218103976aa181e1bd96e5f4bb12426fa62fe34",
+      "size_bytes": 722
+    },
+    {
+      "path": "migration/ledger/ov13_ov01_readiness_transition_hotfix_status.json",
+      "sha256": "a147a9d662237bca0d5097e63552dd0e3fa2431b4d80d49a731617c511f19eb4",
+      "size_bytes": 788
+    },
+    {
+      "path": "scripts/validate_ov13_ov01_readiness_transition_hotfix.py",
+      "sha256": "e4a92128314fac12df660935d7338ad07029d8b4a5d11b3bbc6662874181fd6b",
+      "size_bytes": 1440
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov13_ov01_readiness_transition_hotfix_v1/README.md",
+      "sha256": "fd09277c6f0c39b2e3278e1a6906b73e1f5ed2f2ec1b3f715707b3b150c648a3",
+      "size_bytes": 216
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov13_ov01_readiness_transition_hotfix_v1/inventory.json",
+      "sha256": "feaa861238e27746a9bc4281b788d2861ab1acf6fd0e091d589a90259e6b4330",
+      "size_bytes": 873
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov13_ov01_readiness_transition_hotfix_v1/SHA256SUMS",
+      "sha256": "c448334a97d88c6deb694a3c5b910b20d2323bf255f205d202730507fd8045f9",
+      "size_bytes": 985
+    }
+  ],
+  "target": "dustui_android"
+}
