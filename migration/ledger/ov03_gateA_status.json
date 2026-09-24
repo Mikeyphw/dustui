@@ -1,0 +1,14 @@
+{
+  "phase": "OV03",
+  "gate": "Gate A",
+  "android_buildability": "intentionally-suspended",
+  "android_buildability_suspended_until": "OV13",
+  "go_scanner_authority": "migration-authoritative",
+  "go_mutation_authority": false,
+  "legacy_android_authority": "reference/reconnect scaffolding only",
+  "exo_gate_evidence": "deferred-to-gate; no unsupported target-local jobs/workflows introduced",
+  "hard_blockers": [
+    "python3 scripts/validate_ov03_contract.py --audit-loop",
+    "cd go && go test ./..."
+  ]
+}

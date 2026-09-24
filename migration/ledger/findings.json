@@ -1,172 +1,180 @@
 {
-  "schema": "dustui.migration.ledger.v1",
-  "phase": "OV02",
   "coverage": {
     "ABH": 16,
-    "RC": 14,
+    "CP": 2,
     "N": 8,
-    "CP": 2
+    "RC": 14
   },
   "findings": [
     {
+      "closure_evidence": "ScanAuthority + freshness/action gates",
+      "closure_mode": "Corrected in Go",
+      "gate": "Gate B / Gate E",
       "id": "RC-01",
-      "source": "Original bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
+      "ov03_status": "scan_truth_semantics_established",
       "overlays": [
         "OV03",
         "OV05",
         "OV12"
       ],
-      "gate": "Gate B / Gate E",
-      "closure_mode": "Corrected in Go",
-      "closure_evidence": "ScanAuthority + freshness/action gates",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original bug hunt",
+      "title": "Scan truth"
     },
     {
+      "closure_evidence": "Logical/allocated size semantics",
+      "closure_mode": "Corrected in Go",
+      "gate": "Gate A / Gate E",
       "id": "RC-02",
-      "source": "Original bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
+      "ov03_status": "logical_allocated_semantics_tested",
       "overlays": [
         "OV03"
       ],
-      "gate": "Gate A / Gate E",
-      "closure_mode": "Corrected in Go",
-      "closure_evidence": "Logical/allocated size semantics",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original bug hunt",
+      "title": "Size semantics"
     },
     {
+      "closure_evidence": "Proof-bearing actionable evidence",
+      "closure_mode": "Corrected in Go",
+      "gate": "Gate C / Gate E",
       "id": "RC-03",
-      "source": "Original bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV07",
         "OV10"
       ],
-      "gate": "Gate C / Gate E",
-      "closure_mode": "Corrected in Go",
-      "closure_evidence": "Proof-bearing actionable evidence",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original bug hunt"
     },
     {
+      "closure_evidence": "Immutable manifest + mutation equivalence",
+      "closure_mode": "Corrected in Go",
+      "gate": "Gate C",
       "id": "RC-04",
-      "source": "Original bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV07",
         "OV08"
       ],
-      "gate": "Gate C",
-      "closure_mode": "Corrected in Go",
-      "closure_evidence": "Immutable manifest + mutation equivalence",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original bug hunt"
     },
     {
+      "closure_evidence": "Typed bounded root boundary",
+      "closure_mode": "Corrected in Go",
+      "gate": "Gate C",
       "id": "RC-05",
-      "source": "Original bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV06",
         "OV08"
       ],
-      "gate": "Gate C",
-      "closure_mode": "Corrected in Go",
-      "closure_evidence": "Typed bounded root boundary",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original bug hunt"
     },
     {
+      "closure_evidence": "Durable SQLite operation authority",
+      "closure_mode": "Corrected in Go",
+      "gate": "Gate C / Gate D",
       "id": "RC-06",
-      "source": "Original bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "foundation_established_non_production",
       "overlays": [
         "OV02",
         "OV05",
         "OV08",
         "OV11"
       ],
-      "gate": "Gate C / Gate D",
-      "closure_mode": "Corrected in Go",
-      "closure_evidence": "Durable SQLite operation authority",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "foundation_established_non_production"
+      "source": "Original bug hunt"
     },
     {
+      "closure_evidence": "Paged queries and scale",
+      "closure_mode": "Corrected in Go",
+      "gate": "Gate B / Gate E",
       "id": "RC-07",
-      "source": "Original bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV04",
         "OV05"
       ],
-      "gate": "Gate B / Gate E",
-      "closure_mode": "Corrected in Go",
-      "closure_evidence": "Paged queries and scale",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original bug hunt"
     },
     {
+      "closure_evidence": "User-aware package/storage evidence",
+      "closure_mode": "Corrected in Go",
+      "gate": "Gate D / Gate E",
       "id": "RC-08",
-      "source": "Original bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV09"
       ],
-      "gate": "Gate D / Gate E",
-      "closure_mode": "Corrected in Go",
-      "closure_evidence": "User-aware package/storage evidence",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original bug hunt"
     },
     {
+      "closure_evidence": "Proof-bearing cleanup intelligence",
+      "closure_mode": "Corrected in Go",
+      "gate": "Gate D / Gate E",
       "id": "RC-09",
-      "source": "Original bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV10"
       ],
-      "gate": "Gate D / Gate E",
-      "closure_mode": "Corrected in Go",
-      "closure_evidence": "Proof-bearing cleanup intelligence",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original bug hunt"
     },
     {
+      "closure_evidence": "Automation observes durable terminal operation",
+      "closure_mode": "Corrected in Go",
+      "gate": "Gate D / Gate E",
       "id": "RC-10",
-      "source": "Original bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV11"
       ],
-      "gate": "Gate D / Gate E",
-      "closure_mode": "Corrected in Go",
-      "closure_evidence": "Automation observes durable terminal operation",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original bug hunt"
     },
     {
+      "closure_evidence": "Dust evidence in Go; generic release in Devtool",
+      "closure_mode": "Corrected + externalized",
+      "gate": "Gate E",
       "id": "RC-11",
-      "source": "Original bug hunt",
+      "ov01_status": "mapped",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV01",
         "OV12",
         "OV15"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Corrected + externalized",
-      "closure_evidence": "Dust evidence in Go; generic release in Devtool",
-      "ov01_status": "mapped",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original bug hunt"
     },
     {
+      "closure_evidence": "Semantic history comparability",
+      "closure_mode": "Corrected in Go",
+      "gate": "Gate A / Gate B",
       "id": "RC-12",
-      "source": "Original bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
+      "ov03_status": "semantic_history_compatibility_established",
       "overlays": [
         "OV03",
         "OV04"
       ],
-      "gate": "Gate A / Gate B",
-      "closure_mode": "Corrected in Go",
-      "closure_evidence": "Semantic history comparability",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original bug hunt",
+      "title": "Invalid history comparability"
     },
     {
+      "closure_evidence": "Behavioral/failure-injection validation",
+      "closure_mode": "Corrected test strategy",
+      "gate": "Gate E",
       "id": "RC-13",
-      "source": "Original bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV03",
         "OV05",
@@ -174,464 +182,486 @@
         "OV13",
         "OV15"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Corrected test strategy",
-      "closure_evidence": "Behavioral/failure-injection validation",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original bug hunt"
     },
     {
+      "closure_evidence": "Explicit privacy retention/redaction/pruning",
+      "closure_mode": "Corrected in Go",
+      "gate": "Gate E",
       "id": "RC-14",
-      "source": "Original bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV12",
         "OV15"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Corrected in Go",
-      "closure_evidence": "Explicit privacy retention/redaction/pruning",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original bug hunt"
     },
     {
-      "id": "N-01",
-      "source": "Post-bughunt concrete finding",
-      "overlays": [
-        "OV01"
-      ],
-      "gate": "OV01 self-check / Gate A",
-      "closure_mode": "Corrected",
       "closure_evidence": "Variant-aware Devtool tasks",
+      "closure_mode": "Corrected",
+      "gate": "OV01 self-check / Gate A",
+      "id": "N-01",
       "ov01_status": "mapped",
-      "ov02_status": "not_in_ov02_scope"
-    },
-    {
-      "id": "N-02",
-      "source": "Post-bughunt concrete finding",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV01"
       ],
-      "gate": "OV01 self-check / Gate A",
-      "closure_mode": "Corrected",
-      "closure_evidence": "Canonical workspace/targets/workflows/write scopes",
-      "ov01_status": "mapped",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Post-bughunt concrete finding"
     },
     {
+      "closure_evidence": "Canonical workspace/targets/workflows/write scopes",
+      "closure_mode": "Corrected",
+      "gate": "OV01 self-check / Gate A",
+      "id": "N-02",
+      "ov01_status": "mapped",
+      "ov02_status": "not_in_ov02_scope",
+      "overlays": [
+        "OV01"
+      ],
+      "source": "Post-bughunt concrete finding"
+    },
+    {
+      "closure_evidence": "Fail-open publishers contained then removed from authority",
+      "closure_mode": "Corrected/structurally retired",
+      "gate": "Gate C",
       "id": "N-03",
-      "source": "Post-bughunt concrete finding",
+      "ov01_status": "mapped",
+      "ov02_status": "foundation_established_non_production",
       "overlays": [
         "OV01",
         "OV02",
         "OV08"
       ],
-      "gate": "Gate C",
-      "closure_mode": "Corrected/structurally retired",
-      "closure_evidence": "Fail-open publishers contained then removed from authority",
-      "ov01_status": "mapped",
-      "ov02_status": "foundation_established_non_production"
+      "source": "Post-bughunt concrete finding"
     },
     {
+      "closure_evidence": "Bounded privileged admission",
+      "closure_mode": "Corrected",
+      "gate": "Gate C",
       "id": "N-04",
-      "source": "Post-bughunt concrete finding",
+      "ov01_status": "mapped",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV01",
         "OV06"
       ],
-      "gate": "Gate C",
-      "closure_mode": "Corrected",
-      "closure_evidence": "Bounded privileged admission",
-      "ov01_status": "mapped",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Post-bughunt concrete finding"
     },
     {
+      "closure_evidence": "Health cannot equal completion alone",
+      "closure_mode": "Corrected",
+      "gate": "Gate E",
       "id": "N-05",
-      "source": "Post-bughunt concrete finding",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV03",
         "OV12"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Corrected",
-      "closure_evidence": "Health cannot equal completion alone",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Post-bughunt concrete finding"
     },
     {
+      "closure_evidence": "Single-use capability + reconcile",
+      "closure_mode": "Corrected",
+      "gate": "Gate C",
       "id": "N-06",
-      "source": "Post-bughunt concrete finding",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV07",
         "OV08"
       ],
-      "gate": "Gate C",
-      "closure_mode": "Corrected",
-      "closure_evidence": "Single-use capability + reconcile",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Post-bughunt concrete finding"
     },
     {
+      "closure_evidence": "Remove generic release duplication",
+      "closure_mode": "Externalized to Devtool",
+      "gate": "Gate E",
       "id": "N-07",
-      "source": "Post-bughunt concrete finding",
+      "ov01_status": "mapped",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV01",
         "OV14",
         "OV15"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Externalized to Devtool",
-      "closure_evidence": "Remove generic release duplication",
-      "ov01_status": "mapped",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Post-bughunt concrete finding"
     },
     {
+      "closure_evidence": "Every overlay has manifest/checksum/validation evidence",
+      "closure_mode": "Corrected process",
+      "gate": "Gate E",
       "id": "N-08",
-      "source": "Post-bughunt concrete finding",
+      "ov01_status": "mapped",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV01-OV15"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Corrected process",
-      "closure_evidence": "Every overlay has manifest/checksum/validation evidence",
-      "ov01_status": "mapped",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Post-bughunt concrete finding"
     },
     {
+      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
+      "closure_mode": "Coverage ledger",
+      "gate": "Gate E",
       "id": "ABH-01",
-      "source": "Original 16-section bug hunt",
+      "ov01_status": "mapped",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV01",
         "OV05",
         "OV12",
         "OV15"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Coverage ledger",
-      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
-      "ov01_status": "mapped",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original 16-section bug hunt"
     },
     {
+      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
+      "closure_mode": "Coverage ledger",
+      "gate": "Gate E",
       "id": "ABH-02",
-      "source": "Original 16-section bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV06",
         "OV08"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Coverage ledger",
-      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original 16-section bug hunt"
     },
     {
+      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
+      "closure_mode": "Coverage ledger",
+      "gate": "Gate E",
       "id": "ABH-03",
-      "source": "Original 16-section bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
+      "ov03_status": "scanner_contract_foundation",
       "overlays": [
         "OV03",
         "OV05"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Coverage ledger",
-      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original 16-section bug hunt",
+      "title": "Scanner event protocol"
     },
     {
+      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
+      "closure_mode": "Coverage ledger",
+      "gate": "Gate E",
       "id": "ABH-04",
-      "source": "Original 16-section bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "foundation_established_non_production",
       "overlays": [
         "OV02",
         "OV05",
         "OV11"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Coverage ledger",
-      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "foundation_established_non_production"
+      "source": "Original 16-section bug hunt"
     },
     {
+      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
+      "closure_mode": "Coverage ledger",
+      "gate": "Gate E",
       "id": "ABH-05",
-      "source": "Original 16-section bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "foundation_established_non_production",
+      "ov03_status": "scan_generation_integrity_linked",
       "overlays": [
         "OV02",
         "OV03",
         "OV08"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Coverage ledger",
-      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "foundation_established_non_production"
+      "source": "Original 16-section bug hunt",
+      "title": "DB sessions recovery"
     },
     {
+      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
+      "closure_mode": "Coverage ledger",
+      "gate": "Gate E",
       "id": "ABH-06",
-      "source": "Original 16-section bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV04",
         "OV05"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Coverage ledger",
-      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original 16-section bug hunt"
     },
     {
+      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
+      "closure_mode": "Coverage ledger",
+      "gate": "Gate E",
       "id": "ABH-07",
-      "source": "Original 16-section bug hunt",
-      "overlays": [
-        "OV04",
-        "OV05",
-        "OV13"
-      ],
-      "gate": "Gate E",
-      "closure_mode": "Coverage ledger",
-      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
       "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "ov02_status": "not_in_ov02_scope",
+      "ov03_status": "integrity_completeness_truncation_accounted",
+      "overlays": [
+        "OV03"
+      ],
+      "source": "Original 16-section bug hunt",
+      "title": "Scan completeness"
     },
     {
+      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
+      "closure_mode": "Coverage ledger",
+      "gate": "Gate E",
       "id": "ABH-08",
-      "source": "Original 16-section bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
+      "ov03_status": "semantic_history_compatibility_foundation",
       "overlays": [
         "OV03",
         "OV04",
         "OV13"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Coverage ledger",
-      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original 16-section bug hunt",
+      "title": "Growth history"
     },
     {
+      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
+      "closure_mode": "Coverage ledger",
+      "gate": "Gate E",
       "id": "ABH-09",
-      "source": "Original 16-section bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV03",
         "OV04",
         "OV07"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Coverage ledger",
-      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original 16-section bug hunt"
     },
     {
+      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
+      "closure_mode": "Coverage ledger",
+      "gate": "Gate E",
       "id": "ABH-10",
-      "source": "Original 16-section bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV10"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Coverage ledger",
-      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original 16-section bug hunt"
     },
     {
+      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
+      "closure_mode": "Coverage ledger",
+      "gate": "Gate E",
       "id": "ABH-11",
-      "source": "Original 16-section bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV09",
         "OV10"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Coverage ledger",
-      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original 16-section bug hunt"
     },
     {
+      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
+      "closure_mode": "Coverage ledger",
+      "gate": "Gate E",
       "id": "ABH-12",
-      "source": "Original 16-section bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV09"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Coverage ledger",
-      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original 16-section bug hunt"
     },
     {
+      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
+      "closure_mode": "Coverage ledger",
+      "gate": "Gate E",
       "id": "ABH-13",
-      "source": "Original 16-section bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV10"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Coverage ledger",
-      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original 16-section bug hunt"
     },
     {
+      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
+      "closure_mode": "Coverage ledger",
+      "gate": "Gate E",
       "id": "ABH-14",
-      "source": "Original 16-section bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV07",
         "OV08"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Coverage ledger",
-      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original 16-section bug hunt"
     },
     {
+      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
+      "closure_mode": "Coverage ledger",
+      "gate": "Gate E",
       "id": "ABH-15",
-      "source": "Original 16-section bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV11"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Coverage ledger",
-      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original 16-section bug hunt"
     },
     {
+      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
+      "closure_mode": "Coverage ledger",
+      "gate": "Gate E",
       "id": "ABH-16",
-      "source": "Original 16-section bug hunt",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV05",
         "OV12",
         "OV13",
         "OV15"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Coverage ledger",
-      "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Original 16-section bug hunt"
     },
     {
+      "closure_evidence": "BKX canonical chrootctl module compatibility",
+      "closure_mode": "Cross-project correction",
+      "gate": "Separate sidecar",
       "id": "CP-01",
-      "source": "Cross-project support audit",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "ECO-01"
       ],
-      "gate": "Separate sidecar",
-      "closure_mode": "Cross-project correction",
-      "closure_evidence": "BKX canonical chrootctl module compatibility",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Cross-project support audit"
     },
     {
+      "closure_evidence": "XBS/Flowspace build helper -> Devtool",
+      "closure_mode": "Cross-project convergence",
+      "gate": "Separate sidecar",
       "id": "CP-02",
-      "source": "Cross-project support audit",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "ECO-02"
       ],
-      "gate": "Separate sidecar",
-      "closure_mode": "Cross-project convergence",
-      "closure_evidence": "XBS/Flowspace build helper -> Devtool",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Cross-project support audit"
     },
     {
+      "closure_evidence": "EXO made first-class fast/full workflow and gate evidence contract",
+      "closure_mode": "Closed in revised roadmap",
+      "gate": "Gate E",
       "id": "RM-01",
-      "source": "Roadmap audit",
+      "ov01_status": "mapped",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV01-OV15"
       ],
-      "gate": "Gate E",
-      "closure_mode": "Closed in revised roadmap",
-      "closure_evidence": "EXO made first-class fast/full workflow and gate evidence contract",
-      "ov01_status": "mapped",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Roadmap audit"
     },
     {
+      "closure_evidence": "Minimal go/ skeleton now exists when dustui_go target is introduced",
+      "closure_mode": "Closed in revised roadmap",
+      "gate": "OV01",
       "id": "RM-02",
-      "source": "Roadmap audit",
+      "ov01_status": "mapped",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV01"
       ],
-      "gate": "OV01",
-      "closure_mode": "Closed in revised roadmap",
-      "closure_evidence": "Minimal go/ skeleton now exists when dustui_go target is introduced",
-      "ov01_status": "mapped",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Roadmap audit"
     },
     {
+      "closure_evidence": "Go CLI/TUI parity restored; Python/Textual retired after Gate D",
+      "closure_mode": "Closed in revised roadmap",
+      "gate": "Gate D",
       "id": "RM-03",
-      "source": "Roadmap audit",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV13",
         "OV14"
       ],
-      "gate": "Gate D",
-      "closure_mode": "Closed in revised roadmap",
-      "closure_evidence": "Go CLI/TUI parity restored; Python/Textual retired after Gate D",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Roadmap audit"
     },
     {
+      "closure_evidence": "ARM64-first ABI/runtime coherence made explicit; x86_64 test-only only with matching Go runtime",
+      "closure_mode": "Closed in revised roadmap",
+      "gate": "Gate B",
       "id": "RM-04",
-      "source": "Roadmap audit",
+      "ov01_status": "mapped",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV01",
         "OV05"
       ],
-      "gate": "Gate B",
-      "closure_mode": "Closed in revised roadmap",
-      "closure_evidence": "ARM64-first ABI/runtime coherence made explicit; x86_64 test-only only with matching Go runtime",
-      "ov01_status": "mapped",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Roadmap audit"
     },
     {
+      "closure_evidence": "Source/token tests retire only after subsystem behavioral replacement exists",
+      "closure_mode": "Closed in revised roadmap",
+      "gate": "Gate D",
       "id": "RM-05",
-      "source": "Roadmap audit",
+      "ov01_status": "mapped",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV01-OV14"
       ],
-      "gate": "Gate D",
-      "closure_mode": "Closed in revised roadmap",
-      "closure_evidence": "Source/token tests retire only after subsystem behavioral replacement exists",
-      "ov01_status": "mapped",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Roadmap audit"
     },
     {
+      "closure_evidence": "Exact Room v3 one-way import and no-dual-write rule",
+      "closure_mode": "Closed in revised roadmap",
+      "gate": "Gate B / Gate D",
       "id": "RM-06",
-      "source": "Roadmap audit",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "foundation_established_non_production",
       "overlays": [
         "OV02",
         "OV05",
         "OV14"
       ],
-      "gate": "Gate B / Gate D",
-      "closure_mode": "Closed in revised roadmap",
-      "closure_evidence": "Exact Room v3 one-way import and no-dual-write rule",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "foundation_established_non_production"
+      "source": "Roadmap audit"
     },
     {
+      "closure_evidence": "Current stable Android toolchain baseline locked unless deliberately changed",
+      "closure_mode": "Closed in revised roadmap",
+      "gate": "Gate A",
       "id": "RM-07",
-      "source": "Roadmap audit",
+      "ov01_status": "mapped",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV01"
       ],
-      "gate": "Gate A",
-      "closure_mode": "Closed in revised roadmap",
-      "closure_evidence": "Current stable Android toolchain baseline locked unless deliberately changed",
-      "ov01_status": "mapped",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Roadmap audit"
     },
     {
+      "closure_evidence": "Automation kept non-destructive in this campaign",
+      "closure_mode": "Closed in revised roadmap",
+      "gate": "Gate D",
       "id": "RM-08",
-      "source": "Roadmap audit",
+      "ov01_status": "mapped_to_future_overlay",
+      "ov02_status": "not_in_ov02_scope",
       "overlays": [
         "OV11"
       ],
-      "gate": "Gate D",
-      "closure_mode": "Closed in revised roadmap",
-      "closure_evidence": "Automation kept non-destructive in this campaign",
-      "ov01_status": "mapped_to_future_overlay",
-      "ov02_status": "not_in_ov02_scope"
+      "source": "Roadmap audit"
+    },
+    {
+      "android_status": "intentionally_suspended",
+      "id": "GO04",
+      "ov03_status": "gateA_established",
+      "overlays": [
+        "OV03"
+      ],
+      "title": "Go scanner semantics"
+    },
+    {
+      "android_status": "intentionally_suspended",
+      "id": "GO05",
+      "ov03_status": "gateA_established",
+      "overlays": [
+        "OV03"
+      ],
+      "title": "Go ScanAuthority and size truth"
     }
-  ]
+  ],
+  "phase": "OV03",
+  "schema": "dustui.migration.ledger.v1"
 }

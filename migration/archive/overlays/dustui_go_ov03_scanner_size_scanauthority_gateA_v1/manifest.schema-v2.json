@@ -1,0 +1,128 @@
+{
+  "schema": "devtool.overlay.schema.v2",
+  "schema_version": 2,
+  "name": "dustui_go_ov03_scanner_size_scanauthority_gateA_v1",
+  "artifact": "dustui_go_ov03_scanner_size_scanauthority_gateA_v1.zip",
+  "target": "dustui_android",
+  "secondary_targets": [
+    "dustui_go",
+    "dust_tui_legacy"
+  ],
+  "repository": "~/Code/dustui",
+  "overlay": "OV03",
+  "title": "Go scanner, size semantics, ScanAuthority, and Gate A Android suspension",
+  "created_utc": "2026-09-24T05:13:42Z",
+  "apply_policy": {
+    "devtool_command": "devtool -r \"$HOME/Code/dustui\" --target dustui_android apply overlay /sdcard/Download/dustui_go_ov03_scanner_size_scanauthority_gateA_v1.zip --no-validate --commit \"DustUI OV03 scanner size ScanAuthority Gate A\"",
+    "validation_policy": "Gate A overlay under Android-suspended roadmap: apply with commit, then run Go/contracts gate evidence. Android build/test/lint/package are diagnostic until OV13.",
+    "gate_evidence_commands": [
+      "python3 scripts/validate_ov03_contract.py --audit-loop",
+      "cd go && go test ./...",
+      "python3 scripts/validate_ov02_contract.py --audit-loop || true  # diagnostic only after phase advances",
+      "devtool -r \"$HOME/Code/dustui\" --target dustui_android test || true  # diagnostic while Android is intentionally suspended"
+    ],
+    "full_validation_gate": true,
+    "android_buildability": "intentionally-suspended",
+    "android_buildability_suspended_until": "OV13",
+    "unsupported_devtool_jobs_workflows_added": false
+  },
+  "roadmap_requirements": [
+    "schema-v2/current Devtool overlay manifest",
+    "checksums and explicit inventory",
+    "target declaration",
+    "migration-ledger updates",
+    "tests for overlay promises",
+    "authority-transition notes",
+    "reachable/unreachable legacy-path notes",
+    "source-token retirement notes",
+    "explicit Android buildability suspension declaration",
+    "no unrelated cleanup or aesthetic refactors"
+  ],
+  "authority_transition": {
+    "go_scan_authority": "migration-authoritative",
+    "go_sqlite_authority_model": true,
+    "go_mutation_authority": false,
+    "android_buildability": "intentionally-suspended",
+    "legacy_scan_authority": "reference-only",
+    "legacy_destructive_paths_newly_reachable": false,
+    "unsupported_devtool_jobs_workflows_added": false
+  },
+  "gate_a_requirements": [
+    "scanner filesystem fixtures",
+    "logical and allocated size semantics",
+    "sparse/hard-link/symlink/truncation/stale fixtures",
+    "semantic history compatibility",
+    "Android buildability suspension contract",
+    "legacy scan/Room/C++ authority quarantine proof",
+    "full audit-loop note",
+    "canonical EXO evidence recorded/deferred at gate if unavailable"
+  ],
+  "payload_file_count": 13,
+  "payload_sha256": [
+    {
+      "path": ".devtool.toml",
+      "size_bytes": 5185,
+      "sha256": "e87d8fe7c4d11fd0e397e9f30104b7a61808096d791e997a17d45259b2e0a3ed"
+    },
+    {
+      "path": "go/cmd/dustui-go/main.go",
+      "size_bytes": 1897,
+      "sha256": "6392ad8972503e1ec2e67ade01685251647984ac78705e9ebcb3d22866479b9b"
+    },
+    {
+      "path": "go/internal/scan/scan.go",
+      "size_bytes": 14683,
+      "sha256": "0221cb32319841825dd29630cd8bf17a5302eab2f3debc63554cbb98564c11a6"
+    },
+    {
+      "path": "go/internal/scan/authority.go",
+      "size_bytes": 1744,
+      "sha256": "aca393eacd89b0a1ff7e09a79c333a33cdab4ed999c96cf6fadd2cba572cbde9"
+    },
+    {
+      "path": "go/internal/scan/scan_test.go",
+      "size_bytes": 4899,
+      "sha256": "de239d170aaf76f9f198ae9bcbe479d7902c056de9e10b63d00e16e32475cd6a"
+    },
+    {
+      "path": "migration/contracts/v1/android_buildability_suspension_ov03.md",
+      "size_bytes": 1012,
+      "sha256": "25afe71f52c2711e3b6756f084d945317d5a3720dab3cc805e4239ca15eadb63"
+    },
+    {
+      "path": "migration/contracts/v1/authority_transition_ov03.md",
+      "size_bytes": 1677,
+      "sha256": "9f9fffe4b5b8f445359608a252844424dd2e65c3e18dee41ef10a54bf42d32a1"
+    },
+    {
+      "path": "migration/contracts/v1/legacy_paths_ov03.md",
+      "size_bytes": 893,
+      "sha256": "3304d83b47f0e515e9bc7e8a7503dd61752f4ce2d05c8de9c7642e0cdad7cf73"
+    },
+    {
+      "path": "migration/contracts/v1/source_token_retirement_ov03.md",
+      "size_bytes": 634,
+      "sha256": "fab94d9a89c0fda626e78f6ccc7c036c5170fc203532d4a4b312224736a56d93"
+    },
+    {
+      "path": "migration/audit/v1/ov03_gateA_audit_loop.md",
+      "size_bytes": 1075,
+      "sha256": "17793381423467c7ccb82e5bf05b9de9c6192834320a840b5760df47b68a1a64"
+    },
+    {
+      "path": "migration/ledger/findings.json",
+      "size_bytes": 19253,
+      "sha256": "ce7affec4c56a6456f9ceec73a7dbddec3d9726ff7b7d917f99dbf18c6e5c88b"
+    },
+    {
+      "path": "migration/ledger/ov03_gateA_status.json",
+      "size_bytes": 517,
+      "sha256": "f4332fe46406f3a9af31613a6090834f47b13e03c363aad1c180ae3b0fa247b9"
+    },
+    {
+      "path": "scripts/validate_ov03_contract.py",
+      "size_bytes": 6384,
+      "sha256": "89fd0b8a174c910357c9fcdd84adbec4f18d512909651c77969257fe02d278c4"
+    }
+  ]
+}

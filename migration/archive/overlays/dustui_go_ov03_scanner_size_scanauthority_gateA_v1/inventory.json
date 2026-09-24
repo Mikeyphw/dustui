@@ -1,0 +1,81 @@
+{
+  "schema": "devtool.overlay.inventory.v1",
+  "name": "dustui_go_ov03_scanner_size_scanauthority_gateA_v1",
+  "files": [
+    {
+      "path": ".devtool.toml",
+      "size_bytes": 5185,
+      "sha256": "e87d8fe7c4d11fd0e397e9f30104b7a61808096d791e997a17d45259b2e0a3ed"
+    },
+    {
+      "path": "go/cmd/dustui-go/main.go",
+      "size_bytes": 1897,
+      "sha256": "6392ad8972503e1ec2e67ade01685251647984ac78705e9ebcb3d22866479b9b"
+    },
+    {
+      "path": "go/internal/scan/scan.go",
+      "size_bytes": 14683,
+      "sha256": "0221cb32319841825dd29630cd8bf17a5302eab2f3debc63554cbb98564c11a6"
+    },
+    {
+      "path": "go/internal/scan/authority.go",
+      "size_bytes": 1744,
+      "sha256": "aca393eacd89b0a1ff7e09a79c333a33cdab4ed999c96cf6fadd2cba572cbde9"
+    },
+    {
+      "path": "go/internal/scan/scan_test.go",
+      "size_bytes": 4899,
+      "sha256": "de239d170aaf76f9f198ae9bcbe479d7902c056de9e10b63d00e16e32475cd6a"
+    },
+    {
+      "path": "migration/contracts/v1/android_buildability_suspension_ov03.md",
+      "size_bytes": 1012,
+      "sha256": "25afe71f52c2711e3b6756f084d945317d5a3720dab3cc805e4239ca15eadb63"
+    },
+    {
+      "path": "migration/contracts/v1/authority_transition_ov03.md",
+      "size_bytes": 1677,
+      "sha256": "9f9fffe4b5b8f445359608a252844424dd2e65c3e18dee41ef10a54bf42d32a1"
+    },
+    {
+      "path": "migration/contracts/v1/legacy_paths_ov03.md",
+      "size_bytes": 893,
+      "sha256": "3304d83b47f0e515e9bc7e8a7503dd61752f4ce2d05c8de9c7642e0cdad7cf73"
+    },
+    {
+      "path": "migration/contracts/v1/source_token_retirement_ov03.md",
+      "size_bytes": 634,
+      "sha256": "fab94d9a89c0fda626e78f6ccc7c036c5170fc203532d4a4b312224736a56d93"
+    },
+    {
+      "path": "migration/audit/v1/ov03_gateA_audit_loop.md",
+      "size_bytes": 1075,
+      "sha256": "17793381423467c7ccb82e5bf05b9de9c6192834320a840b5760df47b68a1a64"
+    },
+    {
+      "path": "migration/ledger/findings.json",
+      "size_bytes": 19253,
+      "sha256": "ce7affec4c56a6456f9ceec73a7dbddec3d9726ff7b7d917f99dbf18c6e5c88b"
+    },
+    {
+      "path": "migration/ledger/ov03_gateA_status.json",
+      "size_bytes": 517,
+      "sha256": "f4332fe46406f3a9af31613a6090834f47b13e03c363aad1c180ae3b0fa247b9"
+    },
+    {
+      "path": "scripts/validate_ov03_contract.py",
+      "size_bytes": 6384,
+      "sha256": "89fd0b8a174c910357c9fcdd84adbec4f18d512909651c77969257fe02d278c4"
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov03_scanner_size_scanauthority_gateA_v1/README.md",
+      "size_bytes": 564,
+      "sha256": "da9cda7575c318a3a9a46e860fab604a54077013f9b5953dff79cfeee219f521"
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov03_scanner_size_scanauthority_gateA_v1/manifest.schema-v2.json",
+      "size_bytes": 5086,
+      "sha256": "367a36faac873aa8e6e1ae791e572df0b93b270531a2944d9135ddd1af92950d"
+    }
+  ]
+}
