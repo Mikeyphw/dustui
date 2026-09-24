@@ -1,0 +1,13 @@
+{
+  "overlay": "dustui_go_ov13_devtool_wrapper_exo_jobs_v1",
+  "files": [
+    ".devtool.toml",
+    "devtoolw",
+    "devtoolw.cmd",
+    "migration/audit/v1/ov13_devtool_wrapper_exo_jobs_audit.md",
+    "migration/contracts/v1/ov13_devtool_wrapper_exo_jobs.md",
+    "migration/ledger/ov13_devtool_wrapper_exo_jobs_status.json",
+    "scripts/validate_ov13_contract.py",
+    "scripts/validate_ov13_devtool_wrapper_exo_jobs.py"
+  ]
+}

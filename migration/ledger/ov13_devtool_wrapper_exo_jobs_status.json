@@ -1,0 +1,10 @@
+{
+  "phase": "OV13",
+  "overlay": "dustui_go_ov13_devtool_wrapper_exo_jobs_v1",
+  "devtool_wrapper": "enabled",
+  "exo_target_local_jobs": "enabled",
+  "android_buildability": "mandatory",
+  "gate": "Gate D",
+  "unsupported_jobs_workflows_policy": "retired because uploaded Devtool snapshot supports target-local jobs",
+  "performance_budget_hotfix_included": false
+}

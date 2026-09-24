@@ -254,3 +254,105 @@ lint = [
   ":app:lintDebug",
 ]
 
+[targets.dustui_android.jobs.ov13_contract]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_ov13_contract.py", "--audit-loop"]
+inputs = ["scripts/validate_ov13_contract.py", "go", "migration", ".devtool.toml"]
+
+[targets.dustui_android.jobs.gradle_contract]
+gradle_tasks = ["verifyDustMigrationContract"]
+
+[targets.dustui_android.jobs.go_test]
+runner = "command"
+root = "../go"
+command = ["go", "test", "./..."]
+inputs = ["."]
+
+[targets.dustui_android.jobs.android_unit]
+gradle_tasks = [":app:testDebugUnitTest"]
+outputs = ["app/build/test-results", "app/build/reports/tests"]
+
+[targets.dustui_android.jobs.android_lint]
+gradle_tasks = [":app:lintDebug"]
+outputs = ["app/build/reports/lint-results-debug.html", "app/build/reports/lint-results-debug.xml"]
+
+[targets.dustui_android.jobs.android_assemble]
+gradle_tasks = [":app:assembleDebug"]
+outputs = ["app/build/outputs/apk/debug"]
+
+[targets.dustui_android.workflows]
+fast = ["job:ov13_contract", "job:go_test", "job:android_unit"]
+unit = ["job:android_unit"]
+gate_d = ["job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
+validate = ["job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
+
+[targets.dustui_go.jobs.go_test]
+runner = "command"
+command = ["go", "test", "./..."]
+inputs = ["."]
+
+[targets.dustui_go.jobs.product_contract]
+runner = "command"
+command = ["go", "run", "./cmd/dustui-go", "product-contract"]
+inputs = ["."]
+
+[targets.dustui_go.jobs.tui_smoke]
+runner = "command"
+command = ["go", "run", "./cmd/dustui-go", "tui-smoke"]
+inputs = ["."]
+
+[targets.dustui_go.jobs.schema_contract]
+runner = "command"
+command = ["go", "run", "./cmd/dustui-go", "schema"]
+inputs = ["."]
+
+[targets.dustui_go.workflows]
+fast = ["job:go_test", "job:product_contract", "job:tui_smoke", "job:schema_contract"]
+validate = ["job:go_test", "job:product_contract", "job:tui_smoke", "job:schema_contract"]
+
+[wrapper]
+schema = 1
+default_command = "gate-d"
+
+[wrapper.commands.gate-d]
+description = "Run DustUI Gate D through EXO target-local jobs"
+workflow = "gate_d"
+target = "dustui_android"
+aliases = ["gate", "validate-gate"]
+
+[wrapper.commands.fast]
+description = "Run the DustUI fast OV13 evidence workflow"
+workflow = "fast"
+target = "dustui_android"
+aliases = ["f"]
+
+[wrapper.commands.unit]
+description = "Run Android debug unit tests through the EXO target-local unit job"
+workflow = "unit"
+target = "dustui_android"
+aliases = ["test-unit"]
+
+[wrapper.commands.go-fast]
+description = "Run Go product contract, schema, TUI smoke, and go test evidence"
+workflow = "fast"
+target = "dustui_go"
+aliases = ["go"]
+
+[wrapper.commands.build]
+description = "Build the Android debug target using Devtool"
+devtool = "build"
+target = "dustui_android"
+allow_passthrough = true
+
+[wrapper.commands.test]
+description = "Run the Android target test action using Devtool"
+devtool = "test"
+target = "dustui_android"
+allow_passthrough = true
+
+[wrapper.commands.lint]
+description = "Run Android lint using Devtool"
+devtool = "lint"
+target = "dustui_android"
+

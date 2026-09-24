@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate DustUI OV13 Gate D product reconnect contracts."""
 from __future__ import annotations
-import argparse, json, os, shutil, subprocess, sys, tomllib
+import argparse, json, subprocess, sys, tomllib
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -12,33 +12,8 @@ def require(cond: bool, msg: str, failures: list[str]) -> None:
     if not cond:
         failures.append(msg)
 
-def resolve_go() -> str:
-    candidates = [
-        os.environ.get('DUSTUI_GO'),
-        shutil.which('go'),
-        '/data/data/com.termux/files/usr/bin/go',
-        '/usr/bin/go',
-        '/usr/local/go/bin/go',
-    ]
-    for candidate in candidates:
-        if not candidate:
-            continue
-        path = Path(candidate)
-        if path.is_file() and os.access(path, os.X_OK):
-            return str(path)
-    raise RuntimeError(
-        'Go executable not found for OV13 validator. '
-        'Set DUSTUI_GO=/path/to/go or install Go in Termux. '
-        f'PATH={os.environ.get("PATH", "")}'
-    )
-
 def run_json(args: list[str]) -> dict:
-    env = os.environ.copy()
-    termux_bin = '/data/data/com.termux/files/usr/bin'
-    env['PATH'] = termux_bin + os.pathsep + env.get('PATH', '')
-    if args and args[0] == 'go':
-        args = [resolve_go(), *args[1:]]
-    proc = subprocess.run(args, cwd=ROOT / 'go', env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.run(args, cwd=ROOT / 'go', text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if proc.returncode != 0:
         raise RuntimeError(proc.stderr or proc.stdout)
     return json.loads(proc.stdout)
@@ -61,7 +36,25 @@ def validate(audit_loop: bool = False) -> list[str]:
     require(gm.get('android_reconnect_gate') == 'Gate D', 'Android reconnect gate metadata mismatch', failures)
     require(gm.get('legacy_python_textual_production') is False, 'legacy Python/Textual must not be production after Gate D', failures)
     require(gm.get('legacy_kotlin_domain_truth') is False, 'legacy Kotlin domain truth must be false after Gate D', failures)
-    require('jobs' not in android and 'workflows' not in android, 'unsupported Devtool jobs/workflows must not be reintroduced', failures)
+    wrapper = devtool.get('wrapper', {})
+    require(wrapper.get('schema') == 1, 'DustUI devtool wrapper schema=1 missing', failures)
+    require(wrapper.get('default_command') == 'gate-d', 'DustUI wrapper default command must be gate-d', failures)
+    wrapper_commands = wrapper.get('commands', {})
+    for command in ['gate-d', 'fast', 'unit', 'go-fast', 'build', 'test', 'lint']:
+        require(command in wrapper_commands, f'DustUI wrapper command missing: {command}', failures)
+    jobs = android.get('jobs', {})
+    workflows = android.get('workflows', {})
+    for job in ['ov13_contract', 'gradle_contract', 'go_test', 'android_unit', 'android_lint', 'android_assemble']:
+        require(job in jobs, f'DustUI android target-local EXO job missing: {job}', failures)
+    require(workflows.get('fast') == ['job:ov13_contract', 'job:go_test', 'job:android_unit'], 'DustUI fast workflow must use target-local jobs', failures)
+    require(workflows.get('gate_d') == ['job:ov13_contract', 'job:go_test', 'job:gradle_contract', 'job:android_unit', 'job:android_lint', 'job:android_assemble'], 'DustUI Gate D workflow must use target-local jobs', failures)
+    go_jobs = go.get('jobs', {})
+    go_workflows = go.get('workflows', {})
+    for job in ['go_test', 'product_contract', 'tui_smoke', 'schema_contract']:
+        require(job in go_jobs, f'DustUI Go target-local EXO job missing: {job}', failures)
+    require(go_workflows.get('fast') == ['job:go_test', 'job:product_contract', 'job:tui_smoke', 'job:schema_contract'], 'DustUI Go fast workflow must use target-local jobs', failures)
+    require((ROOT / 'devtoolw').is_file(), 'devtoolw launcher missing', failures)
+    require((ROOT / 'devtoolw.cmd').is_file(), 'devtoolw.cmd launcher missing', failures)
     for rel in [
         'go/internal/product/product.go',
         'go/internal/product/product_test.go',
@@ -126,7 +119,6 @@ def validate(audit_loop: bool = False) -> list[str]:
         'migration/contracts/v1/source_token_retirement_ov13.md',
         'migration/audit/v1/ov13_audit_loop.md',
         'migration/ledger/ov13_status.json',
-        'migration/contracts/v1/ov13_go_binary_resolution_hotfix.md',
     ]:
         require((ROOT / rel).is_file(), f'OV13 contract missing: {rel}', failures)
     findings = json.loads(read('migration/ledger/findings.json'))
