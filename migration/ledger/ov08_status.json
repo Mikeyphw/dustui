@@ -1,0 +1,12 @@
+{
+  "phase": "OV08",
+  "gate": "Gate C destructive safety",
+  "android_buildability": "intentionally-suspended-until-OV13",
+  "go_mutation_authority": true,
+  "legacy_destructive_executor": "none",
+  "local_evidence": [
+    "python3 scripts/validate_ov08_contract.py --audit-loop",
+    "go test ./..."
+  ],
+  "canonical_exo_evidence": "gate dependency when supported; do not invent unsupported Devtool job/workflow schema"
+}

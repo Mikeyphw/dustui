@@ -36,10 +36,10 @@ func Current() Report {
 		RuntimePackaged:      true,
 		ShellScaffold:        true,
 		PrivilegedBoundary:   true,
-		MutationAuthority:    false,
+		MutationAuthority:    true,
 		CleanupCapability:    true,
 		RequiredTables:       append([]string{}, state.RequiredTables...),
 		EnvelopeTypes:        protocol.SupportedEnvelopeTypes(),
-		Message:              "OV07 immutable cleanup manifest and single-use capability authority are present; mutation execution remains non-production until OV08.",
+		Message:              "OV08 Go mutation engine is the sole destructive authority; execution is review-equivalent, single-use, recoverable, verified, and legacy destructive executors are unreachable.",
 	}
 }

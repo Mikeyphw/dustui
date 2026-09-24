@@ -59,6 +59,7 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov07_status": "cleanup_evidence_manifest_capability_authority_added_non_mutating",
+      "ov08_status": "go_mutation_executes_exact_immutable_manifest_after_single_use_capability_claim",
       "overlays": [
         "OV07",
         "OV08"
@@ -73,6 +74,7 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov06_status": "go_privileged_runtime_boundary_added_bounded_allowlisted_reconcile",
+      "ov08_status": "go_privileged_cleanup_execute_allowlisted_bounded_and_reconcile_required",
       "overlays": [
         "OV06",
         "OV08"
@@ -82,11 +84,12 @@
     {
       "closure_evidence": "Durable SQLite operation authority",
       "closure_mode": "Corrected in Go",
-      "gate": "Gate C / Gate D",
+      "gate": "Gate C",
       "id": "RC-06",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "foundation_established_non_production",
       "ov05_status": "runtime_session_reconnect_contract_added",
+      "ov08_status": "go_mutation_journal_recovery_status_and_no_replay_records_added",
       "overlays": [
         "OV02",
         "OV05",
@@ -236,6 +239,7 @@
       "id": "N-03",
       "ov01_status": "mapped",
       "ov02_status": "foundation_established_non_production",
+      "ov08_status": "fail_open_cleanup_publication_replaced_by_go_mutation_journal_and_verification",
       "overlays": [
         "OV01",
         "OV02",
@@ -251,9 +255,11 @@
       "ov01_status": "mapped",
       "ov02_status": "not_in_ov02_scope",
       "ov06_status": "bounded_go_root_admission_finalized_for_pre_cutover",
+      "ov08_status": "legacy_destructive_executor_unreachable_after_gateC",
       "overlays": [
         "OV01",
-        "OV06"
+        "OV06",
+        "OV08"
       ],
       "source": "Post-bughunt concrete finding"
     },
@@ -278,6 +284,7 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov07_status": "cleanup_evidence_manifest_capability_authority_added_non_mutating",
+      "ov08_status": "cleanup_publication_replay_replaced_by_manifest_capability_claim_reconcile",
       "overlays": [
         "OV07",
         "OV08"
@@ -374,11 +381,12 @@
     {
       "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
       "closure_mode": "Coverage ledger",
-      "gate": "Gate E",
+      "gate": "Gate C",
       "id": "ABH-05",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "foundation_established_non_production",
       "ov03_status": "scan_generation_integrity_linked",
+      "ov08_status": "db_sessions_recovery_extended_with_mutation_journal_verification_recovery_status",
       "overlays": [
         "OV02",
         "OV03",
@@ -506,10 +514,11 @@
     {
       "closure_evidence": "Cannot close by deletion alone; replacement behavior required",
       "closure_mode": "Coverage ledger",
-      "gate": "Gate E",
+      "gate": "Gate C",
       "id": "ABH-14",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
+      "ov08_status": "destructive_cleanup_owned_by_go_mutation_engine",
       "overlays": [
         "OV07",
         "OV08"
@@ -698,6 +707,6 @@
       "title": "GO06"
     }
   ],
-  "phase": "OV07",
+  "phase": "OV08",
   "schema": "dustui.migration.ledger.v1"
 }

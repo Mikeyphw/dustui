@@ -361,15 +361,272 @@ func PrepareReview(manifest Manifest) (ReviewFlow, error) {
 	return ReviewFlow{ExactPaths: paths, ExactLogicalBytes: logical, ExactAllocatedBytes: allocated, Reasons: reasons, Warnings: warnings, RequiredAcks: ackList, CanCreateCapability: true}, nil
 }
 
+const MutationProtocol = "dustui.cleanup.mutation.v1"
+
+type MutationState string
+
+const (
+	MutationReviewed         MutationState = "reviewed"
+	MutationClaimed          MutationState = "claimed"
+	MutationAdmitted         MutationState = "admitted"
+	MutationExecuting        MutationState = "executing"
+	MutationVerifying        MutationState = "verifying"
+	MutationComplete         MutationState = "complete"
+	MutationFailed           MutationState = "failed"
+	MutationInterrupted      MutationState = "interrupted"
+	MutationRecoveryRequired MutationState = "recovery_required"
+	MutationCleanupDebt      MutationState = "cleanup_debt"
+)
+
+var (
+	ErrMutationDenied       = errors.New("mutation_denied")
+	ErrMutationInterrupted  = errors.New("mutation_interrupted")
+	ErrMutationSingleFlight = errors.New("mutation_single_flight")
+	ErrVerificationMismatch = errors.New("mutation_verification_mismatch")
+)
+
+type MutationJournalEvent struct {
+	State      MutationState `json:"state"`
+	Reason     string        `json:"reason,omitempty"`
+	Path       string        `json:"path,omitempty"`
+	UnixMillis int64         `json:"unixMillis"`
+}
+
+type MutationEntryResult struct {
+	Path           string        `json:"path"`
+	State          MutationState `json:"state"`
+	LogicalBytes   int64         `json:"logicalBytes"`
+	AllocatedBytes int64         `json:"allocatedBytes"`
+	Reason         string        `json:"reason,omitempty"`
+}
+
+type MutationResult struct {
+	Protocol          string                 `json:"protocol"`
+	OperationID       string                 `json:"operationId"`
+	CapabilityID      string                 `json:"capabilityId"`
+	State             MutationState          `json:"state"`
+	ReclaimedBytes    int64                  `json:"reclaimedBytes"`
+	Certainty         string                 `json:"certainty"`
+	StaleAfterCleanup bool                   `json:"staleAfterCleanup"`
+	ReconcileRequired bool                   `json:"reconcileRequired"`
+	Entries           []MutationEntryResult  `json:"entries"`
+	Journal           []MutationJournalEvent `json:"journal"`
+}
+
+type IdentityProvider interface {
+	Identity(path string) (identity string, exists bool, err error)
+}
+
+type ExactMutator interface {
+	RemoveExact(path string) error
+}
+
+type MutationFS interface {
+	IdentityProvider
+	ExactMutator
+}
+
+type MutationRequest struct {
+	Manifest     Manifest
+	CapabilityID string
+	Now          time.Time
+	Filesystem   MutationFS
+}
+
+type Executor struct {
+	mu      sync.Mutex
+	running bool
+	results map[string]MutationResult
+}
+
+func NewExecutor() *Executor {
+	return &Executor{results: map[string]MutationResult{}}
+}
+
+func (e *Executor) Execute(store *CapabilityStore, req MutationRequest) (MutationResult, error) {
+	if req.Now.IsZero() {
+		req.Now = time.Now()
+	}
+	e.mu.Lock()
+	if e.running {
+		e.mu.Unlock()
+		return MutationResult{Protocol: MutationProtocol, State: MutationRecoveryRequired, ReconcileRequired: true, Certainty: "ambiguous"}, ErrMutationSingleFlight
+	}
+	e.running = true
+	e.mu.Unlock()
+	defer func() {
+		e.mu.Lock()
+		e.running = false
+		e.mu.Unlock()
+	}()
+
+	result, err := executeMutation(store, req)
+	e.mu.Lock()
+	if result.OperationID != "" {
+		e.results[result.OperationID] = result
+	}
+	e.mu.Unlock()
+	return result, err
+}
+
+func (e *Executor) Reconcile(operationID string) (MutationResult, bool) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	result, ok := e.results[operationID]
+	return result, ok
+}
+
+func executeMutation(store *CapabilityStore, req MutationRequest) (MutationResult, error) {
+	result := MutationResult{Protocol: MutationProtocol, OperationID: req.Manifest.OperationID, CapabilityID: req.CapabilityID, State: MutationReviewed, Certainty: "none", StaleAfterCleanup: true}
+	appendEvent := func(state MutationState, reason, path string) {
+		result.Journal = append(result.Journal, MutationJournalEvent{State: state, Reason: reason, Path: path, UnixMillis: req.Now.UnixMilli()})
+		result.State = state
+	}
+	appendEvent(MutationReviewed, "immutable_manifest_loaded", "")
+	if store == nil || req.Filesystem == nil || req.CapabilityID == "" {
+		appendEvent(MutationFailed, "store_filesystem_capability_required", "")
+		return result, fmt.Errorf("%w:store_filesystem_capability_required", ErrMutationDenied)
+	}
+	if err := req.Manifest.Validate(); err != nil {
+		appendEvent(MutationFailed, "manifest_invalid", "")
+		return result, err
+	}
+	claim, err := store.Claim(req.CapabilityID, req.Manifest, req.Now)
+	if err != nil {
+		appendEvent(MutationFailed, "capability_claim_failed", "")
+		return result, err
+	}
+	appendEvent(MutationClaimed, "capability_single_use_claimed", "")
+	result.ReconcileRequired = claim.ReconcileRequired
+	appendEvent(MutationAdmitted, "go_mutation_authority_admitted", "")
+	if err := validateMutationPreconditions(req.Manifest, req.Filesystem); err != nil {
+		appendEvent(MutationRecoveryRequired, err.Error(), "")
+		result.Certainty = "failed_closed"
+		return result, err
+	}
+	appendEvent(MutationExecuting, "exact_manifest_execution_started", "")
+	for _, entry := range req.Manifest.Entries {
+		if err := req.Filesystem.RemoveExact(entry.Evidence.Path); err != nil {
+			appendEvent(MutationInterrupted, "remove_failed:"+err.Error(), entry.Evidence.Path)
+			result.ReconcileRequired = true
+			result.Certainty = "ambiguous"
+			return result, ErrMutationInterrupted
+		}
+		result.ReclaimedBytes += entry.Evidence.AllocatedSizeBytes
+		result.Entries = append(result.Entries, MutationEntryResult{Path: entry.Evidence.Path, State: MutationExecuting, LogicalBytes: entry.Evidence.LogicalSizeBytes, AllocatedBytes: entry.Evidence.AllocatedSizeBytes})
+	}
+	appendEvent(MutationVerifying, "post_mutation_verification_started", "")
+	for i, entry := range req.Manifest.Entries {
+		_, exists, err := req.Filesystem.Identity(entry.Evidence.Path)
+		if err != nil || exists {
+			appendEvent(MutationCleanupDebt, "verification_mismatch", entry.Evidence.Path)
+			result.Certainty = "verification_failed"
+			if i < len(result.Entries) {
+				result.Entries[i].State = MutationCleanupDebt
+				result.Entries[i].Reason = "verification_mismatch"
+			}
+			return result, ErrVerificationMismatch
+		}
+		if i < len(result.Entries) {
+			result.Entries[i].State = MutationComplete
+		}
+	}
+	appendEvent(MutationComplete, "all_manifest_entries_verified_absent", "")
+	result.Certainty = "verified"
+	return result, nil
+}
+
+func validateMutationPreconditions(manifest Manifest, fs IdentityProvider) error {
+	for _, entry := range manifest.Entries {
+		if !entry.Evidence.DeletionEligible {
+			return fmt.Errorf("%w:not_deletion_eligible:%s", ErrMutationDenied, entry.Evidence.Path)
+		}
+		if entry.Evidence.ProtectedState != ProtectedStateUnprotected || entry.Protection != ProtectedStateUnprotected {
+			return fmt.Errorf("%w:protected_descendant:%s", ErrMutationDenied, entry.Evidence.Path)
+		}
+		if entry.MountBoundary != "same_mount" {
+			return fmt.Errorf("%w:mount_boundary:%s", ErrMutationDenied, entry.Evidence.Path)
+		}
+		if entry.Evidence.RetainedCopyConstraint != "" && !entry.RetainedCopySatisfied {
+			return fmt.Errorf("%w:retained_copy:%s", ErrMutationDenied, entry.Evidence.Path)
+		}
+		identity, exists, err := fs.Identity(entry.Evidence.Path)
+		if err != nil {
+			return fmt.Errorf("%w:identity_error:%s", ErrMutationDenied, entry.Evidence.Path)
+		}
+		if !exists {
+			return fmt.Errorf("%w:path_missing_before_mutation:%s", ErrMutationDenied, entry.Evidence.Path)
+		}
+		if identity != entry.Evidence.ExpectedIdentity {
+			return fmt.Errorf("%w:identity_changed:%s", ErrMutationDenied, entry.Evidence.Path)
+		}
+	}
+	return nil
+}
+
+type InMemoryMutationFS struct {
+	mu                sync.Mutex
+	identities        map[string]string
+	removeErrors      map[string]error
+	verificationGhost map[string]string
+}
+
+func NewInMemoryMutationFS(identities map[string]string) *InMemoryMutationFS {
+	copyIDs := map[string]string{}
+	for k, v := range identities {
+		copyIDs[k] = v
+	}
+	return &InMemoryMutationFS{identities: copyIDs, removeErrors: map[string]error{}, verificationGhost: map[string]string{}}
+}
+
+func (fs *InMemoryMutationFS) SetRemoveError(path string, err error) {
+	fs.mu.Lock()
+	defer fs.mu.Unlock()
+	fs.removeErrors[path] = err
+}
+
+func (fs *InMemoryMutationFS) SetVerificationGhost(path, identity string) {
+	fs.mu.Lock()
+	defer fs.mu.Unlock()
+	fs.verificationGhost[path] = identity
+}
+
+func (fs *InMemoryMutationFS) Identity(path string) (string, bool, error) {
+	fs.mu.Lock()
+	defer fs.mu.Unlock()
+	if ghost, ok := fs.verificationGhost[path]; ok {
+		return ghost, true, nil
+	}
+	identity, ok := fs.identities[path]
+	return identity, ok, nil
+}
+
+func (fs *InMemoryMutationFS) RemoveExact(path string) error {
+	fs.mu.Lock()
+	defer fs.mu.Unlock()
+	if err := fs.removeErrors[path]; err != nil {
+		return err
+	}
+	if _, ok := fs.identities[path]; !ok {
+		return fmt.Errorf("path_not_found:%s", path)
+	}
+	delete(fs.identities, path)
+	return nil
+}
+
 func Contract() map[string]any {
 	return map[string]any{
 		"protocol":                 Protocol,
-		"mutationAuthority":        false,
-		"productionExecutor":       false,
+		"mutationProtocol":         MutationProtocol,
+		"mutationAuthority":        true,
+		"productionExecutor":       true,
 		"cutoverOverlay":           "OV08",
+		"legacyExecutorAuthority":  "none",
+		"activityRunView":          "canonical",
 		"actionableEvidenceFields": []string{"path", "scanId", "scanGeneration", "sourceSurface", "sourceKind", "expectedHash", "expectedIdentity", "retainedCopyConstraint", "packageName", "userHandle", "bucket", "protectedState", "duplicateGroupId", "ruleId", "recommendationId", "deletionEligible"},
 		"manifestFields":           []string{"exactDescendants", "pathRole", "protection", "mountBoundary", "identityEvidence", "manifestHash", "manifestRevision", "sourceContextHash", "rootIdentity"},
 		"capabilityFields":         []string{"capabilityId", "operationId", "scanId", "scanGeneration", "scanContextHash", "manifestHash", "manifestRevision", "rootIdentity", "reviewedAt", "expiresAt", "claimState"},
-		"safetyRules":              []string{"identity_change_invalidates_authorization", "added_descendant_after_review_not_approved", "capability_single_use", "expired_capability_fails", "lost_response_requires_status_reconcile", "bare_paths_cannot_claim_specialized_labels"},
+		"mutationStates":           []MutationState{MutationReviewed, MutationClaimed, MutationAdmitted, MutationExecuting, MutationVerifying, MutationComplete, MutationFailed, MutationInterrupted, MutationRecoveryRequired, MutationCleanupDebt},
+		"safetyRules":              []string{"identity_change_invalidates_authorization", "added_descendant_after_review_not_approved", "capability_single_use", "expired_capability_fails", "lost_response_requires_status_reconcile", "bare_paths_cannot_claim_specialized_labels", "pre_mutation_identity_revalidation", "mount_boundary_enforced", "protected_descendant_rejected", "retained_copy_required", "no_unreviewed_recursive_expansion", "post_mutation_verification", "stale_after_cleanup", "global_destructive_single_flight", "legacy_destructive_executor_unreachable"},
 	}
 }

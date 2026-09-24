@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const SchemaVersion = 4
+const SchemaVersion = 5
 
 var RequiredTables = []string{
 	"scan_sessions",
@@ -29,6 +29,9 @@ var RequiredTables = []string{
 	"cleanup_actionable_evidence",
 	"cleanup_manifest_entries",
 	"cleanup_capability_claims",
+	"cleanup_mutation_journal",
+	"cleanup_verification_results",
+	"cleanup_recovery_status",
 }
 
 var SQLitePragmas = []string{
@@ -74,6 +77,9 @@ var Tables = []Table{
 	{"cleanup_actionable_evidence", `CREATE TABLE IF NOT EXISTS cleanup_actionable_evidence (id TEXT PRIMARY KEY, path TEXT NOT NULL, scan_id TEXT NOT NULL, scan_generation INTEGER NOT NULL, source_surface TEXT NOT NULL, source_kind TEXT NOT NULL, expected_hash TEXT, expected_identity TEXT NOT NULL, retained_copy_constraint TEXT, package_name TEXT, user_handle TEXT, bucket TEXT, protected_state TEXT NOT NULL, duplicate_group_id TEXT, rule_id TEXT, recommendation_id TEXT, deletion_eligible INTEGER NOT NULL, evidence_json TEXT NOT NULL, created_at_ms INTEGER NOT NULL);`},
 	{"cleanup_manifest_entries", `CREATE TABLE IF NOT EXISTS cleanup_manifest_entries (manifest_id TEXT NOT NULL, path TEXT NOT NULL, exact_descendants_json TEXT NOT NULL, path_role TEXT NOT NULL, protection TEXT NOT NULL, mount_boundary TEXT NOT NULL, identity_evidence TEXT NOT NULL, retained_copy_satisfied INTEGER NOT NULL, warnings_json TEXT NOT NULL, PRIMARY KEY(manifest_id, path), FOREIGN KEY(manifest_id) REFERENCES cleanup_manifests(id) ON DELETE CASCADE);`},
 	{"cleanup_capability_claims", `CREATE TABLE IF NOT EXISTS cleanup_capability_claims (capability_id TEXT PRIMARY KEY, operation_id TEXT NOT NULL, manifest_hash TEXT NOT NULL, claim_state TEXT NOT NULL, claimed_at_ms INTEGER, expires_at_ms INTEGER NOT NULL, reconcile_required INTEGER NOT NULL DEFAULT 1, status_lookup_key TEXT NOT NULL, FOREIGN KEY(capability_id) REFERENCES cleanup_capabilities(id) ON DELETE CASCADE);`},
+	{"cleanup_mutation_journal", `CREATE TABLE IF NOT EXISTS cleanup_mutation_journal (operation_id TEXT NOT NULL, sequence INTEGER NOT NULL, state TEXT NOT NULL, reason TEXT, path TEXT, mutation_protocol TEXT NOT NULL, created_at_ms INTEGER NOT NULL, PRIMARY KEY(operation_id, sequence), FOREIGN KEY(operation_id) REFERENCES operations(id) ON DELETE CASCADE);`},
+	{"cleanup_verification_results", `CREATE TABLE IF NOT EXISTS cleanup_verification_results (operation_id TEXT NOT NULL, path TEXT NOT NULL, expected_identity TEXT NOT NULL, verified_absent INTEGER NOT NULL, reclaimed_bytes INTEGER NOT NULL DEFAULT 0, stale_after_cleanup INTEGER NOT NULL DEFAULT 1, certainty TEXT NOT NULL, created_at_ms INTEGER NOT NULL, PRIMARY KEY(operation_id, path), FOREIGN KEY(operation_id) REFERENCES operations(id) ON DELETE CASCADE);`},
+	{"cleanup_recovery_status", `CREATE TABLE IF NOT EXISTS cleanup_recovery_status (operation_id TEXT PRIMARY KEY, reconcile_required INTEGER NOT NULL, recovery_state TEXT NOT NULL, no_replay INTEGER NOT NULL DEFAULT 1, legacy_destructive_executor TEXT NOT NULL, last_checked_at_ms INTEGER NOT NULL, FOREIGN KEY(operation_id) REFERENCES operations(id) ON DELETE CASCADE);`},
 }
 
 func CreateStatements() []string {
@@ -93,7 +99,7 @@ func ValidateSchemaContract() error {
 			return fmt.Errorf("required table %s missing", table)
 		}
 	}
-	for _, required := range []string{"journal_mode = WAL", "expected_generation", "request_fingerprint", "operation_events", "retained_legacy_quarantine_json", "idx_scan_entries_parent_page", "idx_scan_entries_logical_size", "idx_scan_sessions_history", "runtime_sessions", "shell_routes", "root_runtime_identities", "privileged_admissions", "privileged_events", "no_replay_token", "reconcile_required", "cleanup_actionable_evidence", "cleanup_manifest_entries", "cleanup_capability_claims", "manifest_revision", "scan_context_hash", "root_identity", "claim_state", "exact_descendants_json", "cleanup_actionable_evidence", "cleanup_manifest_entries", "cleanup_capability_claims", "manifest_revision", "scan_context_hash", "root_identity", "claim_state", "exact_descendants_json"} {
+	for _, required := range []string{"journal_mode = WAL", "expected_generation", "request_fingerprint", "operation_events", "retained_legacy_quarantine_json", "idx_scan_entries_parent_page", "idx_scan_entries_logical_size", "idx_scan_sessions_history", "runtime_sessions", "shell_routes", "root_runtime_identities", "privileged_admissions", "privileged_events", "no_replay_token", "reconcile_required", "cleanup_actionable_evidence", "cleanup_manifest_entries", "cleanup_capability_claims", "manifest_revision", "scan_context_hash", "root_identity", "claim_state", "exact_descendants_json", "cleanup_mutation_journal", "cleanup_verification_results", "cleanup_recovery_status", "mutation_protocol", "verified_absent", "stale_after_cleanup", "legacy_destructive_executor", "no_replay"} {
 		if !strings.Contains(joined, required) {
 			return fmt.Errorf("schema contract missing %s", required)
 		}

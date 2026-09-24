@@ -172,3 +172,21 @@ func TestResponseAndEventFramesAreBounded(t *testing.T) {
 		t.Fatalf("event bound reason = %v", err)
 	}
 }
+
+func TestOV08ProductionCleanupMutationIsAllowlistedAndBounded(t *testing.T) {
+	c := controller(t)
+	admission, err := c.Admit(request(t, func(m map[string]any) {
+		m["requestId"] = "prod-mut-1"
+		m["operation"] = "cleanup.execute"
+		m["capabilityClass"] = string(CapabilityDestructive)
+		m["targetScope"] = "cleanup-production"
+		m["payload"] = map[string]any{"manifestId": "m1", "manifestHash": "hash", "capabilityId": "cap", "operationId": "op", "generation": 8, "scope": "cleanup-production"}
+	}))
+	if err != nil || !admission.Destructive || admission.Operation != "cleanup.execute" {
+		t.Fatalf("production mutation admission failed: %+v %v", admission, err)
+	}
+	diag := c.Diagnostics()
+	if !diag.ProductionMutation || diag.GenericShell {
+		t.Fatalf("diagnostics must expose production mutation without shell: %+v", diag)
+	}
+}

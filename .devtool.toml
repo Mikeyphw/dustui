@@ -82,9 +82,9 @@ affected_module_lint = true
 [targets.dustui_android.metadata]
 android_buildability = "intentionally-suspended"
 android_buildability_suspended_until = "OV13"
-gate = "post-Gate-B non-gate"
+gate = "Gate C destructive safety"
 primary = true
-migration_phase = "OV07"
+migration_phase = "OV08"
 structured_events = true
 max_gradle_nodes = 1
 abi_policy = "arm64-v8a production first; x86_64 is test-only until a matching Go runtime exists"
@@ -99,14 +99,16 @@ inputs = ["go"]
 
 [targets.dustui_go.metadata]
 production_authority = false
-migration_phase = "OV07"
+migration_phase = "OV08"
 readiness_only = false
 state_protocol_kernel = true
 query_history_engine = true
 runtime_contract_gate = "Gate B"
 privileged_runtime_boundary = true
 cleanup_manifest_capability = true
-mutation_authority = false
+mutation_authority = true
+mutation_gate = "Gate C"
+legacy_destructive_executor = "none"
 root_protocol = "dustui.privileged.runtime.v1"
 read_authority = "go-sqlite"
 android_runtime_packaging = "arm64-v8a-only"

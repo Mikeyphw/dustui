@@ -1,0 +1,123 @@
+{
+  "generated_utc": "2026-09-24T12:55:00Z",
+  "name": "dustui_go_ov08_mutation_recovery_gateC_v1",
+  "notes": [
+    "Gate C destructive safety under Android-suspended roadmap",
+    "Go is the only destructive authority",
+    "legacy destructive executor is unreachable",
+    "No unsupported Devtool jobs/workflows schema added"
+  ],
+  "overlay": "OV08",
+  "payload_files": [
+    {
+      "path": ".devtool.toml",
+      "sha256": "eee2e5f824e126d4b98582ce43ef6fdcf244a6c150e49fdaaed4a38b729b6fe6",
+      "size_bytes": 5561
+    },
+    {
+      "path": "go/cmd/dustui-go/main.go",
+      "sha256": "8f65c7ecaf23c954ff1eb48fdb8ff972cb0b7c543286f7bb8cb8398bfa746a59",
+      "size_bytes": 3696
+    },
+    {
+      "path": "go/internal/cleanup/cleanup.go",
+      "sha256": "3f3863f41887b39fa043f38fee0c2c0d6eabaa9cab4f680a6b7a337d762eb946",
+      "size_bytes": 24967
+    },
+    {
+      "path": "go/internal/cleanup/mutation_test.go",
+      "sha256": "9fc587ddcfee0944d453ce6de3ac24be40a36091eb0218fb2403f01a67548fdf",
+      "size_bytes": 7374
+    },
+    {
+      "path": "go/internal/privileged/boundary.go",
+      "sha256": "d2027940d492184a89dace75f0d594acc9400c0750eaf723a127922026ae3a5c",
+      "size_bytes": 20684
+    },
+    {
+      "path": "go/internal/privileged/boundary_test.go",
+      "sha256": "d2b107a715734a9e67739164b5008aa4f44d956e9fecb7e8e156dfe35e576f78",
+      "size_bytes": 7146
+    },
+    {
+      "path": "go/internal/readiness/readiness.go",
+      "sha256": "bd6c6a738d4cb917ae6f615fcf1900c0404cc017d043646a219c2554541a8f46",
+      "size_bytes": 2040
+    },
+    {
+      "path": "go/internal/readiness/readiness_test.go",
+      "sha256": "683f927c2fd7fc3b732a015249a602320ba9dfe60613e7917180b5f8d0b3e90b",
+      "size_bytes": 783
+    },
+    {
+      "path": "go/internal/runtime/spec.go",
+      "sha256": "121dd2e27c312505b8da39041b6a90922f0bb857e4436843541e48ccf2b0a9cb",
+      "size_bytes": 7693
+    },
+    {
+      "path": "go/internal/state/schema.go",
+      "sha256": "cd491aebab4c3a07aae981f57df61e38a20232035d24ec93cd6f0b2c48c0da80",
+      "size_bytes": 12394
+    },
+    {
+      "path": "go/internal/version/version.go",
+      "sha256": "fc746dfdaa6b7e3130adf3863631d6e5718073596c55814a86c387931b05f522",
+      "size_bytes": 231
+    },
+    {
+      "path": "migration/audit/v1/ov08_audit_loop.md",
+      "sha256": "523728590557cb89225257b6adf9bbdc9a039389648ff59cd5005ea1d6b97b2f",
+      "size_bytes": 829
+    },
+    {
+      "path": "migration/contracts/v1/authority_transition_ov08.md",
+      "sha256": "af489b0c595f833bbcfaef62ce1e111918c9920057d3801505b593deb2c857f6",
+      "size_bytes": 572
+    },
+    {
+      "path": "migration/contracts/v1/legacy_paths_ov08.md",
+      "sha256": "c325398156fb7d66cb7eaa0c69ba8b69a96d5dc4d5b869fc90dd7696b55c76bd",
+      "size_bytes": 656
+    },
+    {
+      "path": "migration/contracts/v1/mutation_recovery_gateC_ov08.md",
+      "sha256": "51790c5d586c473b09578b452787ec9786ae455a991ddcf3bff08fa133c74a67",
+      "size_bytes": 1354
+    },
+    {
+      "path": "migration/contracts/v1/source_token_retirement_ov08.md",
+      "sha256": "382dcff1bed01160d21c9e266017537054d48c869488d3ba24c529aa1b895203",
+      "size_bytes": 501
+    },
+    {
+      "path": "migration/ledger/findings.json",
+      "sha256": "6129a7a72647572f66dd10bc7166b273521d08d34aa103752da1b7b6d29841c6",
+      "size_bytes": 21954
+    },
+    {
+      "path": "migration/ledger/ov08_status.json",
+      "sha256": "4fafe8f66af15504a3482305c2b4ac649b47b19bfdf88e2b645d1b0edc73cbf8",
+      "size_bytes": 425
+    },
+    {
+      "path": "scripts/validate_ov08_contract.py",
+      "sha256": "fc99a2de808e2fcc17bd1011c07b10423931d4681070e4d7c963dca94c2eb32c",
+      "size_bytes": 7508
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov08_mutation_recovery_gateC_v1/README.md",
+      "sha256": "9cc4ebd2b9ffd202218afdc4d861f372aef3ecd18650bf790d5cf9851846163e",
+      "size_bytes": 573
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov08_mutation_recovery_gateC_v1/manifest.schema-v2.json",
+      "sha256": "97ce32ac5a8f8c887903c7104aa50a45f20a709fbbaeb81dde000f50dc4a14da",
+      "size_bytes": 6816
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov08_mutation_recovery_gateC_v1/inventory.json",
+      "sha256": "16ed2e52383917210a7850336ec5d6e8bc297c5f227fe637f66a79be5b217fba",
+      "size_bytes": 4155
+    }
+  ]
+}

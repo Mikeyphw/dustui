@@ -202,7 +202,8 @@ func DefaultOperationSpecs() []OperationSpec {
 		{Name: "root.status", Class: ClassReadOnly, CapabilityClasses: []CapabilityClass{CapabilityReadOnly, CapabilityPrivilegedRead}, AllowedPayloadFields: []string{"operationId"}, Description: "durable privileged status lookup"},
 		{Name: "root.reconcile", Class: ClassReadOnly, CapabilityClasses: []CapabilityClass{CapabilityPrivilegedRead}, AllowedPayloadFields: []string{"operationId", "transportEpoch", "lastSeenSequence"}, Description: "durable reconcile after lost transport/process death"},
 		{Name: "cleanup.preview", Class: ClassReadOnly, CapabilityClasses: []CapabilityClass{CapabilityDryRunMutation}, AllowedPayloadFields: []string{"manifestId", "generation", "scope"}, Description: "dry-run cleanup preview only; no mutation"},
-		{Name: "cleanup.execute.dry_run", Class: ClassDestructive, CapabilityClasses: []CapabilityClass{CapabilityDryRunMutation}, AllowedPayloadFields: []string{"manifestId", "generation", "scope", "dryRun"}, Description: "destructive-class admission simulator; production mutation remains disabled until OV08"},
+		{Name: "cleanup.execute.dry_run", Class: ClassDestructive, CapabilityClasses: []CapabilityClass{CapabilityDryRunMutation}, AllowedPayloadFields: []string{"manifestId", "generation", "scope", "dryRun"}, Description: "destructive-class admission simulator"},
+		{Name: "cleanup.execute", Class: ClassDestructive, CapabilityClasses: []CapabilityClass{CapabilityDestructive}, AllowedPayloadFields: []string{"manifestId", "manifestHash", "capabilityId", "operationId", "generation", "scope"}, Description: "production cleanup mutation through Go manifest/capability executor"},
 	}
 }
 
@@ -211,7 +212,7 @@ func DefaultConfig() Config {
 	return Config{
 		RootNamespace:    DefaultRootNamespace,
 		RuntimeIdentity:  DefaultRuntimeIdentity,
-		AllowedScopes:    []string{"app-owned-cache", "app-owned-runtime", "android-data-readonly", "cleanup-dry-run"},
+		AllowedScopes:    []string{"app-owned-cache", "app-owned-runtime", "android-data-readonly", "cleanup-dry-run", "cleanup-production"},
 		Operations:       DefaultOperationSpecs(),
 		MaxPayloadBytes:  DefaultMaxPayloadBytes,
 		MaxResponseBytes: DefaultMaxResponseBytes,
@@ -282,7 +283,7 @@ func (c *Controller) Diagnostics() Diagnostics {
 	sort.Slice(ops, func(i, j int) bool { return ops[i].Name < ops[j].Name })
 	scopes := append([]string{}, c.cfg.AllowedScopes...)
 	sort.Strings(scopes)
-	return Diagnostics{Protocol: ProtocolName, KernelProtocol: version.Protocol, RootNamespace: c.cfg.RootNamespace, RuntimeIdentity: c.cfg.RuntimeIdentity, Boot: c.cfg.Boot, AllowedScopes: scopes, Operations: ops, MaxPayloadBytes: c.cfg.MaxPayloadBytes, MaxResponseBytes: c.cfg.MaxResponseBytes, MaxEventBytes: c.cfg.MaxEventBytes, MaxQueueDepth: c.cfg.MaxQueueDepth, MaxWorkers: c.cfg.MaxWorkers, Queued: c.queued, RunningDestructive: c.runningDestructive, GenericShell: false, ProductionMutation: false}
+	return Diagnostics{Protocol: ProtocolName, KernelProtocol: version.Protocol, RootNamespace: c.cfg.RootNamespace, RuntimeIdentity: c.cfg.RuntimeIdentity, Boot: c.cfg.Boot, AllowedScopes: scopes, Operations: ops, MaxPayloadBytes: c.cfg.MaxPayloadBytes, MaxResponseBytes: c.cfg.MaxResponseBytes, MaxEventBytes: c.cfg.MaxEventBytes, MaxQueueDepth: c.cfg.MaxQueueDepth, MaxWorkers: c.cfg.MaxWorkers, Queued: c.queued, RunningDestructive: c.runningDestructive, GenericShell: false, ProductionMutation: true}
 }
 
 func (c *Controller) Admit(raw []byte) (Admission, error) {
