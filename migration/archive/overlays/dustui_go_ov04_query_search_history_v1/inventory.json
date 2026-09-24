@@ -1,0 +1,77 @@
+{
+  "name": "dustui_go_ov04_query_search_history_v1",
+  "overlay": "OV04",
+  "target": "dustui_android",
+  "payload_files": [
+    {
+      "path": ".devtool.toml",
+      "size_bytes": 5215,
+      "sha256": "b4c05363b1917eb708f417b5cc4ca4e1c0055bc5a684cf012f35574bcdd3b7db"
+    },
+    {
+      "path": "go/cmd/dustui-go/main.go",
+      "size_bytes": 2755,
+      "sha256": "e6d8ce24518ea0e725063dc80d7f485264cb6c646893b9dcaa6d202d37751b86"
+    },
+    {
+      "path": "go/internal/query/query.go",
+      "size_bytes": 14127,
+      "sha256": "84941461187ff14e5c095acff7a1516b77c4884ec0c788936ffdf05ce5aa76ac"
+    },
+    {
+      "path": "go/internal/query/query_test.go",
+      "size_bytes": 7710,
+      "sha256": "efb789e31015e124fbc2945acc6140cda923fdc94fb3ac00406347aa43e33b26"
+    },
+    {
+      "path": "go/internal/state/schema.go",
+      "size_bytes": 6834,
+      "sha256": "4fb7c2ef3a094646abc61217539cbe57f95aa19c4a88a373ee03f12ba80d4a7d"
+    },
+    {
+      "path": "migration/audit/v1/ov04_audit_loop.md",
+      "size_bytes": 868,
+      "sha256": "9875e44b1b3841e7c5d57883799bb6e7400cf9ef616136a067351ae53760885a"
+    },
+    {
+      "path": "migration/contracts/v1/authority_transition_ov04.md",
+      "size_bytes": 1474,
+      "sha256": "5f386d7f3ba83e31558c61cde5ad33f659b926d9d2c50ae7e7a9b7ca6758e431"
+    },
+    {
+      "path": "migration/contracts/v1/legacy_paths_ov04.md",
+      "size_bytes": 859,
+      "sha256": "bfaeee2493fed1ec224b410aa6b9e4b0ca120759b277e2afc9b080cc76c33f9e"
+    },
+    {
+      "path": "migration/contracts/v1/query_search_history_ov04.md",
+      "size_bytes": 770,
+      "sha256": "eaa9e9b7e77c623770878f5c2b60a2aeae72098b7f357ce62b1c820336e77538"
+    },
+    {
+      "path": "migration/contracts/v1/source_token_retirement_ov04.md",
+      "size_bytes": 707,
+      "sha256": "695026a1f3469590aea8a05dd784eab57b4e2eb3f1a8f7b170b2583dc8ff7e64"
+    },
+    {
+      "path": "migration/ledger/findings.json",
+      "size_bytes": 20092,
+      "sha256": "47016cc77448c9b14372a7c0e7438b71ad13c4b3bf82f4824e03cc574269625a"
+    },
+    {
+      "path": "migration/ledger/ov04_status.json",
+      "size_bytes": 485,
+      "sha256": "e562f72ed95f06e3c722cf105a9d3c24073507789b4dcadb02a2c650e25cd363"
+    },
+    {
+      "path": "scripts/validate_ov04_contract.py",
+      "size_bytes": 6834,
+      "sha256": "4867be7a6110a41670f468a374d80eac5e02033fbe6c68ffa974ea0705888b91"
+    }
+  ],
+  "notes": [
+    "Android buildability intentionally suspended until OV13.",
+    "No unsupported Devtool target-local jobs/workflows are introduced.",
+    "OV04 is read/query only and introduces no destructive execution path."
+  ]
+}

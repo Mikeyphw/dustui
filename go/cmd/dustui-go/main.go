@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/mikeyphw/dustui/go/internal/query"
 	"github.com/mikeyphw/dustui/go/internal/readiness"
 	"github.com/mikeyphw/dustui/go/internal/scan"
 	"github.com/mikeyphw/dustui/go/internal/state"
@@ -27,6 +28,28 @@ func main() {
 			"createStatements": state.CreateStatements(),
 			"roomV3ImportPlan": state.RoomV3ImportPlan(),
 		}
+
+	case "query-contract":
+		payload = map[string]any{
+			"phase":        "OV04",
+			"pagination":   "deterministic_offset_token_bound_to_generation",
+			"maxPageLimit": query.MaxPageLimit,
+			"countKinds":   []string{query.CountTotal, query.CountPartial, query.CountUnknown},
+			"sorts":        []string{query.SortByPath, query.SortByName, query.SortByLogicalSize, query.SortByAllocatedSize, query.SortByModified},
+			"features": []string{
+				"paged_explorer_children",
+				"whole_scan_search",
+				"current_folder_filtering_distinct_from_search",
+				"large_files",
+				"storage_summary",
+				"composition_treemap_aggregates",
+				"scan_history_growth_series",
+				"package_linked_path_lookup",
+				"activity_page_preparation",
+				"query_cancellation",
+				"bounded_response_size",
+			},
+		}
 	case "scan-contract":
 		payload = map[string]any{
 			"integrityStates":       []scan.IntegrityState{scan.IntegrityComplete, scan.IntegrityPartial, scan.IntegrityTruncated, scan.IntegrityMalformed, scan.IntegrityFailed, scan.IntegrityStaleAfterCleanup},
@@ -46,7 +69,7 @@ func main() {
 		}
 		payload = session
 	default:
-		fmt.Fprintf(os.Stderr, "unknown command %q; supported: readiness, version, protocol, schema, scan-contract, scan [root]\n", command)
+		fmt.Fprintf(os.Stderr, "unknown command %q; supported: readiness, version, protocol, schema, query-contract, scan-contract, scan [root]\n", command)
 		os.Exit(2)
 	}
 	encoded, err := json.MarshalIndent(payload, "", "  ")

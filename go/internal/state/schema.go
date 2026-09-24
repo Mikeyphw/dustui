@@ -29,6 +29,15 @@ var SQLitePragmas = []string{
 	"PRAGMA synchronous = NORMAL",
 }
 
+var QueryIndexes = []string{
+	"CREATE INDEX IF NOT EXISTS idx_scan_entries_parent_page ON scan_entries(scan_id, parent_path, name, path);",
+	"CREATE INDEX IF NOT EXISTS idx_scan_entries_search_name ON scan_entries(scan_id, name, path);",
+	"CREATE INDEX IF NOT EXISTS idx_scan_entries_logical_size ON scan_entries(scan_id, logical_size_bytes DESC, path);",
+	"CREATE INDEX IF NOT EXISTS idx_scan_entries_allocated_size ON scan_entries(scan_id, allocated_size_bytes DESC, path);",
+	"CREATE INDEX IF NOT EXISTS idx_scan_entries_modified ON scan_entries(scan_id, modified_at_ms DESC, path);",
+	"CREATE INDEX IF NOT EXISTS idx_scan_sessions_history ON scan_sessions(canonical_root, completed_at_ms, generation);",
+}
+
 type Table struct {
 	Name string
 	SQL  string
@@ -56,6 +65,7 @@ func CreateStatements() []string {
 	for _, table := range Tables {
 		statements = append(statements, table.SQL)
 	}
+	statements = append(statements, QueryIndexes...)
 	statements = append(statements, fmt.Sprintf("INSERT OR REPLACE INTO schema_metadata(key, value, updated_at_ms) VALUES('schema_version', '%d', strftime('%%s','now') * 1000);", SchemaVersion))
 	return statements
 }
@@ -67,7 +77,7 @@ func ValidateSchemaContract() error {
 			return fmt.Errorf("required table %s missing", table)
 		}
 	}
-	for _, required := range []string{"journal_mode = WAL", "expected_generation", "request_fingerprint", "operation_events", "retained_legacy_quarantine_json"} {
+	for _, required := range []string{"journal_mode = WAL", "expected_generation", "request_fingerprint", "operation_events", "retained_legacy_quarantine_json", "idx_scan_entries_parent_page", "idx_scan_entries_logical_size", "idx_scan_sessions_history"} {
 		if !strings.Contains(joined, required) {
 			return fmt.Errorf("schema contract missing %s", required)
 		}

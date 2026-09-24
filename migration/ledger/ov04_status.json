@@ -1,0 +1,12 @@
+{
+  "overlay": "OV04",
+  "artifact": "dustui_go_ov04_query_search_history_v1.zip",
+  "android_buildability": "intentionally-suspended",
+  "gate": "non-gate",
+  "hard_blockers": [
+    "scripts/validate_ov04_contract.py --audit-loop",
+    "cd go && go test ./..."
+  ],
+  "devtool_exo": "deferred_to_milestone_gate_without_unsupported_target_local_jobs_schema",
+  "summary": "Go query/search/history APIs are bounded, generation-bound, cancellation-aware, and size-semantics explicit."
+}

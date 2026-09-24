@@ -91,12 +91,13 @@
       "source": "Original bug hunt"
     },
     {
-      "closure_evidence": "Paged queries and scale",
+      "closure_evidence": "Bounded page responses and generation-bound pagination tests",
       "closure_mode": "Corrected in Go",
       "gate": "Gate B / Gate E",
       "id": "RC-07",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
+      "ov04_status": "bounded_query_engine_prevents_full_scan_materialization",
       "overlays": [
         "OV04",
         "OV05"
@@ -154,13 +155,14 @@
       "source": "Original bug hunt"
     },
     {
-      "closure_evidence": "Semantic history comparability",
+      "closure_evidence": "OV03 semantic compatibility plus OV04 GrowthSeries tests",
       "closure_mode": "Corrected in Go",
       "gate": "Gate A / Gate B",
       "id": "RC-12",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov03_status": "semantic_history_compatibility_established",
+      "ov04_status": "history_query_side_uses_semantic_compatibility",
       "overlays": [
         "OV03",
         "OV04"
@@ -380,6 +382,7 @@
       "id": "ABH-06",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
+      "ov04_status": "explorer_search_query_semantics_added",
       "overlays": [
         "OV04",
         "OV05"
@@ -394,8 +397,10 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov03_status": "integrity_completeness_truncation_accounted",
+      "ov04_status": "summary_composition_inputs_added",
       "overlays": [
-        "OV03"
+        "OV03",
+        "OV04"
       ],
       "source": "Original 16-section bug hunt",
       "title": "Scan completeness"
@@ -408,6 +413,7 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov03_status": "semantic_history_compatibility_foundation",
+      "ov04_status": "growth_history_series_added",
       "overlays": [
         "OV03",
         "OV04",
@@ -423,6 +429,7 @@
       "id": "ABH-09",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
+      "ov04_status": "large_file_query_uses_explicit_size_semantics",
       "overlays": [
         "OV03",
         "OV04",
@@ -462,8 +469,10 @@
       "id": "ABH-12",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
+      "ov04_status": "activity_page_preparation_added",
       "overlays": [
-        "OV09"
+        "OV09",
+        "OV04"
       ],
       "source": "Original 16-section bug hunt"
     },
@@ -660,8 +669,19 @@
         "OV03"
       ],
       "title": "Go ScanAuthority and size truth"
+    },
+    {
+      "closure_mode": "Corrected in Go",
+      "gate": "Gate B / Gate E",
+      "id": "GO06",
+      "ov04_status": "query_search_history_contract_introduced",
+      "overlays": [
+        "OV04"
+      ],
+      "source": "Android-suspended roadmap OV04 mapping",
+      "title": "GO06"
     }
   ],
-  "phase": "OV03",
+  "phase": "OV04",
   "schema": "dustui.migration.ledger.v1"
 }
