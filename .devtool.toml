@@ -277,6 +277,12 @@ root = ".."
 command = ["python3", "scripts/validate_ov14_retirement_truth_hotfix.py", "--gate"]
 inputs = ["scripts/validate_ov14_retirement_truth_hotfix.py", "android", "go", "migration", ".devtool.toml"]
 
+[targets.dustui_android.jobs.rem02_sqlite]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_rem02_sqlite_persistence_authority.py"]
+inputs = ["scripts/validate_rem02_sqlite_persistence_authority.py", "go", "android/app/src/main/kotlin/com/mikeyphw/dustui/go"]
+
 [targets.dustui_android.jobs.gradle_contract]
 gradle_tasks = ["verifyDustMigrationContract"]
 
@@ -302,8 +308,8 @@ outputs = ["app/build/outputs/apk/debug"]
 fast = ["job:ov13_contract", "job:go_test", "job:android_unit"]
 unit = ["job:android_unit"]
 cutover_audit = ["job:retirement_audit"]
-gate_d = ["job:retirement_gate", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
-validate = ["job:retirement_gate", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
+gate_d = ["job:retirement_gate", "job:rem02_sqlite", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
+validate = ["job:retirement_gate", "job:rem02_sqlite", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
 
 [targets.dustui_go.jobs.go_test]
 runner = "command"

@@ -30,7 +30,12 @@ func main() {
 	}
 
 	if command == "serve" {
-		if err := serve(); err != nil {
+		databasePath, err := serveDatabasePath(os.Args[2:])
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "serve: %v\n", err)
+			os.Exit(2)
+		}
+		if err := serve(databasePath); err != nil {
 			fmt.Fprintf(os.Stderr, "serve: %v\n", err)
 			os.Exit(1)
 		}
@@ -137,9 +142,25 @@ type runtimeFrame struct {
 	Payload    json.RawMessage `json:"payload"`
 }
 
-func serve() error {
+func serveDatabasePath(args []string) (string, error) {
+	if len(args) != 2 || args[0] != "--db" || strings.TrimSpace(args[1]) == "" {
+		return "", fmt.Errorf("serve requires --db <app-private-sqlite-path>")
+	}
+	return args[1], nil
+}
+
+func serve(databasePath string) error {
+	store, err := state.OpenSQLiteStore(databasePath)
+	if err != nil {
+		return fmt.Errorf("open persistence authority: %w", err)
+	}
+	defer store.Close()
+
 	writer := bufio.NewWriter(os.Stdout)
-	ready, err := json.Marshal(readiness.Current())
+	readyReport := readiness.Current()
+	readyReport.PersistenceAuthority = "go-sqlite"
+	readyReport.PersistenceSchema = state.SchemaVersion
+	ready, err := json.Marshal(readyReport)
 	if err != nil {
 		return err
 	}

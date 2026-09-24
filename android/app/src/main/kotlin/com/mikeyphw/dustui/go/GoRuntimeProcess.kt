@@ -62,7 +62,14 @@ class GoRuntimeProcess private constructor(
         fun start(context: Context): GoRuntimeProcess {
             val executable = File(GoRuntimePathContract.executablePath(context.applicationInfo.nativeLibraryDir))
             require(executable.isFile) { "go_runtime_missing:${executable.absolutePath}" }
-            val process = ProcessBuilder(executable.absolutePath, "serve")
+            val stateDir = File(context.noBackupFilesDir, "go-state").apply { mkdirs() }
+            val database = File(stateDir, "dustui-go.db")
+            val process = ProcessBuilder(
+                executable.absolutePath,
+                "serve",
+                "--db",
+                database.absolutePath,
+            )
                 .redirectError(ProcessBuilder.Redirect.INHERIT)
                 .start()
             val input = BufferedWriter(OutputStreamWriter(process.outputStream, Charsets.UTF_8))

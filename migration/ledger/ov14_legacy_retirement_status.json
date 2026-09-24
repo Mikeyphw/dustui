@@ -3,7 +3,7 @@
   "status": "reopened_blocked",
   "gate_d_truth": "reopened",
   "ov15_status": "blocked_until_real_android_go_cutover",
-  "reason": "REM-01 installs the production Android Go child-process binding using the real android/ and go/ repository layout; Gate D remains reopened for persistence and remaining legacy-retirement blockers.",
+  "reason": "REM-02 installs the real Go-owned SQLite persistence authority. Gate D remains reopened while Android Room/C++/legacy production authority and remaining retirement blockers still exist.",
   "desired": {
     "cpp_scanner_runtime": "none",
     "python_runtime": "none",
@@ -20,7 +20,7 @@
     "cpp_scanner_runtime": "active-production",
     "generic_release_truth": "duplicated-app-local",
     "go_authority": "go-domain-contracts-present-android-production-unqualified",
-    "go_sqlite_persistence": "missing-implementation",
+    "go_sqlite_persistence": "go-owned-sqlite",
     "legacy_destructive_executor": "active-production",
     "legacy_navigation": "not-proven-retired",
     "python_runtime": "compatibility-only-target-present",
@@ -29,7 +29,6 @@
   "blockers": [
     "cpp_scanner_production_active",
     "generic_release_truth_duplicated",
-    "go_sqlite_persistence_missing",
     "legacy_destructive_executor_active",
     "legacy_navigation_not_proven_retired",
     "python_legacy_target_present",
@@ -39,7 +38,8 @@
     "ov13_cleaning_performance_termux_hotfix_validator_jobs_workflows_fix",
     "ov14_validator_syntax_hotfix",
     "ov14_retirement_truth_hotfix",
-    "rem01_android_go_runtime_binding_v2_layout_corrected"
+    "rem01_android_go_runtime_binding_v2_layout_corrected",
+    "rem02_go_sqlite_persistence"
   ],
-  "next": "rem02_go_sqlite_persistence_before_ov15_gate_e"
+  "next": "rem03_android_domain_protocol_cutover_before_ov15_gate_e"
 }
