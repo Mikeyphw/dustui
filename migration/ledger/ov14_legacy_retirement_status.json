@@ -1,0 +1,16 @@
+{
+  "phase": "OV14",
+  "status": "implemented",
+  "android_buildability": "mandatory",
+  "go_authority": "product-default",
+  "cpp_scanner_runtime": "none",
+  "python_runtime": "none",
+  "room_domain_authority": "none",
+  "legacy_destructive_executor": "none",
+  "legacy_navigation": "none",
+  "folded_in": [
+    "ov13_cleaning_performance_termux_hotfix_validator_jobs_workflows_fix"
+  ],
+  "unsupported_devtool_jobs_workflows_rejected": false,
+  "supported_devtool_wrapper_jobs_required": true
+}

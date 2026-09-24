@@ -1,0 +1,60 @@
+{
+  "artifact": "dustui_go_ov14_legacy_retirement_purge_v1.zip",
+  "files": [
+    {
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleaningPerformanceContractTest.kt",
+      "sha256": "4a285450494326c70022dbc7dbbddf5228ed6a33c3bd3f90922312ccb50768be",
+      "size": 3052
+    },
+    {
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/migration/Ov14LegacyRetirementContractTest.kt",
+      "sha256": "95a762e7a54e98701844074be06a99a3e96497d1f9564ed2748d0a02484a9721",
+      "size": 1534
+    },
+    {
+      "path": "go/internal/retirement/retirement.go",
+      "sha256": "a2720db807bc5bc77394665099db0c21f85a98c6bf6662fef797efb9b76e8d77",
+      "size": 1200
+    },
+    {
+      "path": "go/internal/retirement/retirement_test.go",
+      "sha256": "15ffffade346abc26bbebd6252798f544e90547f51be42358d1c6456ca551e9f",
+      "size": 923
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov14_legacy_retirement_purge_v1/README.md",
+      "sha256": "717495b29534a42e5abf8e504ba334858066877e478d875c9836a94a184484b2",
+      "size": 268
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov14_legacy_retirement_purge_v1/manifest.schema-v2.json",
+      "sha256": "bd7367344e72f3c20b94a97ee247b0c4fc1fa6a491d556e6d682b143f33a8925",
+      "size": 1035
+    },
+    {
+      "path": "migration/audit/v1/ov14_legacy_retirement_audit.md",
+      "sha256": "c09abefd6bb645b930210f86e773253477dc481d76376d467ffc14715ff8ee24",
+      "size": 542
+    },
+    {
+      "path": "migration/contracts/v1/ov14_legacy_retirement.md",
+      "sha256": "0adf4c8669f388ec3298fdda421607e16a60eee040e7b76b8e86f38b8ffec51c",
+      "size": 1404
+    },
+    {
+      "path": "migration/ledger/ov14_legacy_retirement_status.json",
+      "sha256": "1dcca51ebdc6c6ae2c30327a5f557a480a0047f873599921131924b79225c0a5",
+      "size": 497
+    },
+    {
+      "path": "scripts/validate_ov13_cleaning_performance_termux_hotfix.py",
+      "sha256": "96cce3c1c471a500b9c73f8dd6c1844f3a27a99d064a525933355f5865d1140e",
+      "size": 2936
+    },
+    {
+      "path": "scripts/validate_ov14_contract.py",
+      "sha256": "a984b732dd8872e13dd58040a76d4f3b939978da3c8d6712a80756897f7d1430",
+      "size": 4548
+    }
+  ]
+}
