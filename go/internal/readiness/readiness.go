@@ -13,6 +13,9 @@ type Report struct {
 	SchemaProtocol       string                  `json:"schemaProtocol"`
 	ProductionEngine     bool                    `json:"productionEngine"`
 	SQLiteAuthorityModel bool                    `json:"sqliteAuthorityModel"`
+	ReadAuthority        bool                    `json:"readAuthority"`
+	RuntimePackaged      bool                    `json:"runtimePackaged"`
+	ShellScaffold        bool                    `json:"shellScaffold"`
 	MutationAuthority    bool                    `json:"mutationAuthority"`
 	RequiredTables       []string                `json:"requiredTables"`
 	EnvelopeTypes        []protocol.EnvelopeType `json:"envelopeTypes"`
@@ -27,9 +30,12 @@ func Current() Report {
 		SchemaProtocol:       version.SchemaProtocol,
 		ProductionEngine:     false,
 		SQLiteAuthorityModel: true,
+		ReadAuthority:        true,
+		RuntimePackaged:      true,
+		ShellScaffold:        true,
 		MutationAuthority:    false,
 		RequiredTables:       append([]string{}, state.RequiredTables...),
 		EnvelopeTypes:        protocol.SupportedEnvelopeTypes(),
-		Message:              "OV02 Go state/protocol/SQLite kernel is present but Android production behavior has not cut over.",
+		Message:              "OV05 Go runtime/read-authority contract is present; Android buildability remains intentionally suspended until OV13 reconnect.",
 	}
 }

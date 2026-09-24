@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const SchemaVersion = 1
+const SchemaVersion = 2
 
 var RequiredTables = []string{
 	"scan_sessions",
@@ -21,6 +21,8 @@ var RequiredTables = []string{
 	"evidence_generations",
 	"problems",
 	"run_history",
+	"runtime_sessions",
+	"shell_routes",
 }
 
 var SQLitePragmas = []string{
@@ -58,6 +60,8 @@ var Tables = []Table{
 	{"evidence_generations", `CREATE TABLE IF NOT EXISTS evidence_generations (id TEXT PRIMARY KEY, subject TEXT NOT NULL, generation INTEGER NOT NULL, evidence_hash TEXT NOT NULL, created_at_ms INTEGER NOT NULL);`},
 	{"problems", `CREATE TABLE IF NOT EXISTS problems (id TEXT PRIMARY KEY, severity TEXT NOT NULL, reason TEXT NOT NULL, subject TEXT NOT NULL, message TEXT NOT NULL, recovery_required INTEGER NOT NULL DEFAULT 0, created_at_ms INTEGER NOT NULL);`},
 	{"run_history", `CREATE TABLE IF NOT EXISTS run_history (id TEXT PRIMARY KEY, kind TEXT NOT NULL, status TEXT NOT NULL, started_at_ms INTEGER NOT NULL, completed_at_ms INTEGER, summary_json TEXT NOT NULL);`},
+	{"runtime_sessions", `CREATE TABLE IF NOT EXISTS runtime_sessions (id TEXT PRIMARY KEY, abi TEXT NOT NULL, executable_path TEXT NOT NULL, readiness_protocol TEXT NOT NULL, process_state TEXT NOT NULL, last_sequence INTEGER NOT NULL DEFAULT 0, started_at_ms INTEGER NOT NULL, last_ready_at_ms INTEGER, died_at_ms INTEGER);`},
+	{"shell_routes", `CREATE TABLE IF NOT EXISTS shell_routes (id TEXT PRIMARY KEY, route_id TEXT NOT NULL, entity_id TEXT, generation INTEGER NOT NULL, state TEXT NOT NULL, restored_at_ms INTEGER NOT NULL);`},
 }
 
 func CreateStatements() []string {
@@ -77,7 +81,7 @@ func ValidateSchemaContract() error {
 			return fmt.Errorf("required table %s missing", table)
 		}
 	}
-	for _, required := range []string{"journal_mode = WAL", "expected_generation", "request_fingerprint", "operation_events", "retained_legacy_quarantine_json", "idx_scan_entries_parent_page", "idx_scan_entries_logical_size", "idx_scan_sessions_history"} {
+	for _, required := range []string{"journal_mode = WAL", "expected_generation", "request_fingerprint", "operation_events", "retained_legacy_quarantine_json", "idx_scan_entries_parent_page", "idx_scan_entries_logical_size", "idx_scan_sessions_history", "runtime_sessions", "shell_routes"} {
 		if !strings.Contains(joined, required) {
 			return fmt.Errorf("schema contract missing %s", required)
 		}

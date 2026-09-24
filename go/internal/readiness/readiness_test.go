@@ -2,18 +2,18 @@ package readiness
 
 import "testing"
 
-func TestCurrentIsOV02StateProtocolKernelWithoutProductionCutover(t *testing.T) {
+func TestCurrentIsOV05RuntimeReadAuthorityWithoutMutationCutover(t *testing.T) {
 	report := Current()
-	if report.MigrationPhase != "OV02" {
+	if report.MigrationPhase != "OV05" {
 		t.Fatalf("phase = %q", report.MigrationPhase)
 	}
 	if report.ProductionEngine || report.MutationAuthority {
-		t.Fatalf("OV02 must not claim production/mutation authority: %+v", report)
+		t.Fatalf("OV05 must not claim Android production/mutation authority: %+v", report)
 	}
-	if !report.SQLiteAuthorityModel {
-		t.Fatalf("OV02 must expose Go SQLite authority model: %+v", report)
+	if !report.SQLiteAuthorityModel || !report.ReadAuthority || !report.RuntimePackaged || !report.ShellScaffold {
+		t.Fatalf("OV05 must expose SQLite/read/runtime/shell contracts: %+v", report)
 	}
-	if len(report.RequiredTables) < 13 || len(report.EnvelopeTypes) < 9 {
-		t.Fatalf("OV02 readiness lacks table/protocol coverage: %+v", report)
+	if len(report.RequiredTables) < 15 || len(report.EnvelopeTypes) < 9 {
+		t.Fatalf("OV05 readiness lacks table/protocol coverage: %+v", report)
 	}
 }

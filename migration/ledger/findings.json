@@ -14,6 +14,7 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov03_status": "scan_truth_semantics_established",
+      "ov05_status": "go_scan_read_authority_bound_to_runtime_contract",
       "overlays": [
         "OV03",
         "OV05",
@@ -82,6 +83,7 @@
       "id": "RC-06",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "foundation_established_non_production",
+      "ov05_status": "runtime_session_reconnect_contract_added",
       "overlays": [
         "OV02",
         "OV05",
@@ -98,6 +100,7 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov04_status": "bounded_query_engine_prevents_full_scan_materialization",
+      "ov05_status": "bounded_query_read_path_promoted_to_Gate_B",
       "overlays": [
         "OV04",
         "OV05"
@@ -309,6 +312,7 @@
       "id": "ABH-01",
       "ov01_status": "mapped",
       "ov02_status": "not_in_ov02_scope",
+      "ov05_status": "android_runtime_packaging_contract_added",
       "overlays": [
         "OV01",
         "OV05",
@@ -338,6 +342,7 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov03_status": "scanner_contract_foundation",
+      "ov05_status": "protocol_session_identity_added",
       "overlays": [
         "OV03",
         "OV05"
@@ -352,6 +357,7 @@
       "id": "ABH-04",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "foundation_established_non_production",
+      "ov05_status": "scan_lifecycle_runtime_session_contract_added",
       "overlays": [
         "OV02",
         "OV05",
@@ -383,6 +389,7 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov04_status": "explorer_search_query_semantics_added",
+      "ov05_status": "files_route_read_contract_added",
       "overlays": [
         "OV04",
         "OV05"
@@ -398,9 +405,11 @@
       "ov02_status": "not_in_ov02_scope",
       "ov03_status": "integrity_completeness_truncation_accounted",
       "ov04_status": "summary_composition_inputs_added",
+      "ov05_status": "overview_route_read_contract_added",
       "overlays": [
         "OV03",
-        "OV04"
+        "OV04",
+        "OV05"
       ],
       "source": "Original 16-section bug hunt",
       "title": "Scan completeness"
@@ -520,6 +529,7 @@
       "id": "ABH-16",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
+      "ov05_status": "stable_route_identity_shell_scaffold_added",
       "overlays": [
         "OV05",
         "OV12",
@@ -682,6 +692,6 @@
       "title": "GO06"
     }
   ],
-  "phase": "OV04",
+  "phase": "OV05",
   "schema": "dustui.migration.ledger.v1"
 }

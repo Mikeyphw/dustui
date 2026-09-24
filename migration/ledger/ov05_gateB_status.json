@@ -1,0 +1,12 @@
+{
+  "android_buildability": "intentionally-suspended",
+  "android_buildability_suspended_until": "OV13",
+  "destructive_authority": "legacy-constrained-until-OV08",
+  "exo_gate_evidence": "required externally; unsupported TOML workflow schema not used",
+  "gate": "Gate B",
+  "go_read_authority": "go-sqlite",
+  "overlay": "OV05",
+  "production_abi": "arm64-v8a",
+  "room_scan_writes": "disabled for new migration authority",
+  "x86_64": "test-only unless matching Go runtime exists"
+}

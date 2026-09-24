@@ -7,7 +7,9 @@ import (
 
 	"github.com/mikeyphw/dustui/go/internal/query"
 	"github.com/mikeyphw/dustui/go/internal/readiness"
+	runtimecontract "github.com/mikeyphw/dustui/go/internal/runtime"
 	"github.com/mikeyphw/dustui/go/internal/scan"
+	"github.com/mikeyphw/dustui/go/internal/shell"
 	"github.com/mikeyphw/dustui/go/internal/state"
 )
 
@@ -27,11 +29,16 @@ func main() {
 			"requiredTables":   state.RequiredTables,
 			"createStatements": state.CreateStatements(),
 			"roomV3ImportPlan": state.RoomV3ImportPlan(),
+			"ov05Authority":    state.OV05AuthorityMatrix(),
 		}
 
+	case "runtime-contract":
+		payload = runtimecontract.CurrentSpec()
+	case "shell-contract":
+		payload = shell.CurrentContract()
 	case "query-contract":
 		payload = map[string]any{
-			"phase":        "OV04",
+			"phase":        "OV05",
 			"pagination":   "deterministic_offset_token_bound_to_generation",
 			"maxPageLimit": query.MaxPageLimit,
 			"countKinds":   []string{query.CountTotal, query.CountPartial, query.CountUnknown},
@@ -52,10 +59,12 @@ func main() {
 		}
 	case "scan-contract":
 		payload = map[string]any{
+			"phase":                 "OV05",
 			"integrityStates":       []scan.IntegrityState{scan.IntegrityComplete, scan.IntegrityPartial, scan.IntegrityTruncated, scan.IntegrityMalformed, scan.IntegrityFailed, scan.IntegrityStaleAfterCleanup},
 			"sourceCompleteness":    []scan.SourceCompleteness{scan.SourceComplete, scan.SourceIncomplete, scan.SourceUnknown},
 			"sizeSemantics":         []scan.SizeSemantics{scan.SizeLogical, scan.SizeAllocated, scan.SizeLogicalAndAllocated},
 			"authorityCapabilities": []string{"canAnalyze", "canCompareWith", "canDriveDeletion", "canDriveDuplicateHashing", "canDriveResidue", "canExportCompleteData", "canShowAsFresh"},
+			"readAuthority":         "go-sqlite",
 		}
 	case "scan":
 		root := "."
@@ -69,7 +78,7 @@ func main() {
 		}
 		payload = session
 	default:
-		fmt.Fprintf(os.Stderr, "unknown command %q; supported: readiness, version, protocol, schema, query-contract, scan-contract, scan [root]\n", command)
+		fmt.Fprintf(os.Stderr, "unknown command %q; supported: readiness, version, protocol, schema, runtime-contract, shell-contract, query-contract, scan-contract, scan [root]\n", command)
 		os.Exit(2)
 	}
 	encoded, err := json.MarshalIndent(payload, "", "  ")

@@ -1,0 +1,128 @@
+{
+  "generated_utc": "2026-09-24T12:15:00Z",
+  "name": "dustui_go_ov05_android_runtime_shell_gateB_v1",
+  "overlay": "OV05",
+  "payload_files": [
+    {
+      "path": ".devtool.toml",
+      "sha256": "869df8eaf3017096ca042d41c667fd8eb3928bfc6f72132c3cab1a477189a2a6",
+      "size_bytes": 5337
+    },
+    {
+      "path": "android/app/build.gradle.kts",
+      "sha256": "b77e57a09c33cfe2f22bc62c937650fe9be86f5b15c7da50148d7eec69dce11b",
+      "size_bytes": 3256
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/go/GoRuntimeSessionContract.kt",
+      "sha256": "07e005b9497a3b955cde4497043e8f39092a770e41801aefb633ccc7c293237c",
+      "size_bytes": 1341
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/shell/DustShellRouteContract.kt",
+      "sha256": "46e20b53f1d5614958afeec93ee39804ad46dde36c49a8ef0de4418254efdae0",
+      "size_bytes": 686
+    },
+    {
+      "path": "go/cmd/dustui-go/main.go",
+      "sha256": "e8025e10059c028614d313285027dafb54bbe2fc4ecd5ee91a71963f1889d0b2",
+      "size_bytes": 3160
+    },
+    {
+      "path": "go/internal/readiness/readiness.go",
+      "sha256": "3eab6af492a33de9261f40266362992eeda366650ca590c99f9236eb8ab139c1",
+      "size_bytes": 1785
+    },
+    {
+      "path": "go/internal/readiness/readiness_test.go",
+      "sha256": "211210032e315278e7f32b559580a8f00a9164bdfa95b0135eaf2d1cb1a5c327",
+      "size_bytes": 717
+    },
+    {
+      "path": "go/internal/version/version.go",
+      "sha256": "fea3b0782c09ebd9e7250744c74a552ac29acfdbb63134c9d1810b7a787b3758",
+      "size_bytes": 222
+    },
+    {
+      "path": "go/internal/state/schema.go",
+      "sha256": "252458b9ba1e295b9aced26d97c84bc92a64eb02d96985ab1f16736c7ebcdaa1",
+      "size_bytes": 7442
+    },
+    {
+      "path": "go/internal/state/read_authority.go",
+      "sha256": "d1b36158630596eeabe4402b20955c1bb17706a636fa39ac377362973b39c0f0",
+      "size_bytes": 3159
+    },
+    {
+      "path": "go/internal/state/read_authority_test.go",
+      "sha256": "7395ea65e775a3eb5eca9374f6f29eeca1b82d0a9e4589a5d01b613d4063126c",
+      "size_bytes": 471
+    },
+    {
+      "path": "go/internal/runtime/spec.go",
+      "sha256": "6165e72e51276a551f83c943c58e79e04bbf3c43c18435b303aa492b35fdf627",
+      "size_bytes": 7565
+    },
+    {
+      "path": "go/internal/runtime/spec_test.go",
+      "sha256": "e9fdaf1a2bc954965d93ca0b551aa9cb8396f3850e3e20d656b2f84f74d7202d",
+      "size_bytes": 3499
+    },
+    {
+      "path": "go/internal/shell/routes.go",
+      "sha256": "94b88b4a77156a7479527c6d9cdf573b244e9c026bfbe76cc6f20569f8b8c965",
+      "size_bytes": 3397
+    },
+    {
+      "path": "go/internal/shell/routes_test.go",
+      "sha256": "d9786c22f4e8c15f099360854fae82263afab7901bcabc9277b427f54408f011",
+      "size_bytes": 1155
+    },
+    {
+      "path": "migration/audit/v1/ov05_gateB_audit_loop.md",
+      "sha256": "bf70e143c532be88172c723405fd265191d9aa079781c54b032682707df3e251",
+      "size_bytes": 1013
+    },
+    {
+      "path": "migration/contracts/v1/authority_transition_ov05.md",
+      "sha256": "57fec6143d62f9c6ca8f6a3d999c947f0ad807840bf0c01482b415d945700c2c",
+      "size_bytes": 869
+    },
+    {
+      "path": "migration/contracts/v1/android_runtime_packaging_ov05.md",
+      "sha256": "a5822fd6ade86157a75a5b7d6382e495c7975ed0091e4db2b5c126ac9787af5d",
+      "size_bytes": 797
+    },
+    {
+      "path": "migration/contracts/v1/shell_scaffold_ov05.md",
+      "sha256": "24bb70c59bfaf5efa7884ce3eaa8a8a1cdb91d6c6d67ac6c04c1c930e6950433",
+      "size_bytes": 636
+    },
+    {
+      "path": "migration/contracts/v1/legacy_paths_ov05.md",
+      "sha256": "45d4be1af717fc201adfb92b9a6b3f68b9952e7d3ef75aacb487d1ad2a38d4b8",
+      "size_bytes": 723
+    },
+    {
+      "path": "migration/contracts/v1/source_token_retirement_ov05.md",
+      "sha256": "d93e4827ded60bd132e2b0b22ee8e51574c05a75838f293b04556d82dd3d2421",
+      "size_bytes": 563
+    },
+    {
+      "path": "migration/ledger/findings.json",
+      "sha256": "a256361a9703c01944558b0be00cbea33830391603fc09548645db260cad86e0",
+      "size_bytes": 20686
+    },
+    {
+      "path": "migration/ledger/ov05_gateB_status.json",
+      "sha256": "0729eb46d2804bb9db0829a22543dc95d0e591ffaffff93d5a83de3be80ddfb5",
+      "size_bytes": 486
+    },
+    {
+      "path": "scripts/validate_ov05_contract.py",
+      "sha256": "c410a2685a88b048237644863435878cbcf1a6679733d9affe76dbb493083b30",
+      "size_bytes": 8608
+    }
+  ],
+  "target": "dustui_android"
+}
