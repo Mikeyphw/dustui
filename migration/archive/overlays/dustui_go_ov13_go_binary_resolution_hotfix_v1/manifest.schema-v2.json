@@ -1,0 +1,26 @@
+{
+  "androidBuildability": "mandatory",
+  "changes": [
+    "migration/archive/overlays/dustui_go_ov13_go_binary_resolution_hotfix_v1/README.md",
+    "migration/contracts/v1/ov13_go_binary_resolution_hotfix.md",
+    "scripts/validate_ov13_contract.py"
+  ],
+  "checks": [
+    "python3 -m py_compile scripts/validate_ov13_contract.py",
+    "python3 scripts/validate_ov13_contract.py --audit-loop",
+    "cd go && go test ./...",
+    "devtool validate Gate D tasks when memory allows"
+  ],
+  "createdAt": "2026-09-24T14:25:00Z",
+  "description": "Resolve Go executable robustly inside OV13 validator when Gradle daemon PATH does not expose go.",
+  "devtool": {
+    "apply": "overlay",
+    "unsupportedJobsWorkflowsIntroduced": false,
+    "validation": "Gate D remains mandatory; memory guard interruptions are resource failures."
+  },
+  "gate": "Gate D - Android reconnect mandatory",
+  "name": "dustui_go_ov13_go_binary_resolution_hotfix_v1",
+  "phase": "OV13",
+  "schemaVersion": 2,
+  "target": "dustui_android"
+}

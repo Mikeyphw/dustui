@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate DustUI OV13 Gate D product reconnect contracts."""
 from __future__ import annotations
-import argparse, json, subprocess, sys, tomllib
+import argparse, json, os, shutil, subprocess, sys, tomllib
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -12,8 +12,33 @@ def require(cond: bool, msg: str, failures: list[str]) -> None:
     if not cond:
         failures.append(msg)
 
+def resolve_go() -> str:
+    candidates = [
+        os.environ.get('DUSTUI_GO'),
+        shutil.which('go'),
+        '/data/data/com.termux/files/usr/bin/go',
+        '/usr/bin/go',
+        '/usr/local/go/bin/go',
+    ]
+    for candidate in candidates:
+        if not candidate:
+            continue
+        path = Path(candidate)
+        if path.is_file() and os.access(path, os.X_OK):
+            return str(path)
+    raise RuntimeError(
+        'Go executable not found for OV13 validator. '
+        'Set DUSTUI_GO=/path/to/go or install Go in Termux. '
+        f'PATH={os.environ.get("PATH", "")}'
+    )
+
 def run_json(args: list[str]) -> dict:
-    proc = subprocess.run(args, cwd=ROOT / 'go', text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    env = os.environ.copy()
+    termux_bin = '/data/data/com.termux/files/usr/bin'
+    env['PATH'] = termux_bin + os.pathsep + env.get('PATH', '')
+    if args and args[0] == 'go':
+        args = [resolve_go(), *args[1:]]
+    proc = subprocess.run(args, cwd=ROOT / 'go', env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if proc.returncode != 0:
         raise RuntimeError(proc.stderr or proc.stdout)
     return json.loads(proc.stdout)
@@ -101,6 +126,7 @@ def validate(audit_loop: bool = False) -> list[str]:
         'migration/contracts/v1/source_token_retirement_ov13.md',
         'migration/audit/v1/ov13_audit_loop.md',
         'migration/ledger/ov13_status.json',
+        'migration/contracts/v1/ov13_go_binary_resolution_hotfix.md',
     ]:
         require((ROOT / rel).is_file(), f'OV13 contract missing: {rel}', failures)
     findings = json.loads(read('migration/ledger/findings.json'))

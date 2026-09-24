@@ -1,0 +1,28 @@
+{
+  "files": [
+    {
+      "path": "migration/archive/overlays/dustui_go_ov13_go_binary_resolution_hotfix_v1/README.md",
+      "sha256": "59fafef43c1730d024de3a52a98ba9dbf8c8eae0ee9f0915121db7dd95989cc6",
+      "size": 382
+    },
+    {
+      "path": "migration/contracts/v1/ov13_go_binary_resolution_hotfix.md",
+      "sha256": "6f8c9e787890c8841bb6b516f0a251d6d8513afcade15f4d86718823d5ea095c",
+      "size": 730
+    },
+    {
+      "path": "scripts/validate_ov13_contract.py",
+      "sha256": "479ff8c350e92343a7dc8eaf6291d88a7b77229c0c3d7e554c95e4fbe8a5c7d1",
+      "size": 11076
+    }
+  ],
+  "kind": "gate-d-validator-hotfix",
+  "notes": [
+    "Fixes Gradle/Termux environment where go is unavailable on PATH during verifyDustMigrationContract.",
+    "Does not change product/runtime behavior.",
+    "Does not relax Android buildability or Gate D checks."
+  ],
+  "overlay": "dustui_go_ov13_go_binary_resolution_hotfix_v1",
+  "phase": "OV13-hotfix",
+  "target": "dustui_android"
+}
