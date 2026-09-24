@@ -39,25 +39,26 @@ type Artifact struct {
 }
 
 type Spec struct {
-	Protocol                string     `json:"protocol"`
-	ProductionABI           string     `json:"productionAbi"`
-	TestOnlyABI             string     `json:"testOnlyAbi"`
-	RuntimeLibraryName      string     `json:"runtimeLibraryName"`
-	NativeLibraryDirName    string     `json:"nativeLibraryDirName"`
-	MaxFrameBytes           int        `json:"maxFrameBytes"`
-	ReadinessTimeoutMs      int        `json:"readinessTimeoutMs"`
-	RequiresFixedPath       bool       `json:"requiresFixedPath"`
-	RequiresReadiness       bool       `json:"requiresReadiness"`
-	RequiresReconnect       bool       `json:"requiresReconnect"`
-	RequiresSequence        bool       `json:"requiresSequence"`
-	RequiresRequestID       bool       `json:"requiresRequestId"`
-	Artifacts               []Artifact `json:"artifacts"`
-	AndroidBuildability     string     `json:"androidBuildability"`
-	AndroidReconnectGate    string     `json:"androidReconnectGate"`
-	ScanReadAuthority       string     `json:"scanReadAuthority"`
-	CleanupAuthority        string     `json:"cleanupAuthority"`
-	PrivilegedBoundary      string     `json:"privilegedBoundary"`
-	PackageStorageAuthority string     `json:"packageStorageAuthority"`
+	Protocol                     string     `json:"protocol"`
+	ProductionABI                string     `json:"productionAbi"`
+	TestOnlyABI                  string     `json:"testOnlyAbi"`
+	RuntimeLibraryName           string     `json:"runtimeLibraryName"`
+	NativeLibraryDirName         string     `json:"nativeLibraryDirName"`
+	MaxFrameBytes                int        `json:"maxFrameBytes"`
+	ReadinessTimeoutMs           int        `json:"readinessTimeoutMs"`
+	RequiresFixedPath            bool       `json:"requiresFixedPath"`
+	RequiresReadiness            bool       `json:"requiresReadiness"`
+	RequiresReconnect            bool       `json:"requiresReconnect"`
+	RequiresSequence             bool       `json:"requiresSequence"`
+	RequiresRequestID            bool       `json:"requiresRequestId"`
+	Artifacts                    []Artifact `json:"artifacts"`
+	AndroidBuildability          string     `json:"androidBuildability"`
+	AndroidReconnectGate         string     `json:"androidReconnectGate"`
+	ScanReadAuthority            string     `json:"scanReadAuthority"`
+	CleanupAuthority             string     `json:"cleanupAuthority"`
+	PrivilegedBoundary           string     `json:"privilegedBoundary"`
+	PackageStorageAuthority      string     `json:"packageStorageAuthority"`
+	CleanupIntelligenceAuthority string     `json:"cleanupIntelligenceAuthority"`
 }
 
 func CurrentSpec() Spec {
@@ -78,12 +79,13 @@ func CurrentSpec() Spec {
 			{ABI: ProductionABI, Status: ABIProduction, LibraryName: RuntimeLibraryName, Present: true},
 			{ABI: TestOnlyABI, Status: ABITestOnly, LibraryName: RuntimeLibraryName, Present: false},
 		},
-		AndroidBuildability:     "intentionally-suspended",
-		AndroidReconnectGate:    "OV13",
-		ScanReadAuthority:       "go-sqlite",
-		CleanupAuthority:        "go-production-mutation-authority-ov08",
-		PrivilegedBoundary:      "go-root-admission-boundary-ov06",
-		PackageStorageAuthority: "go-package-storage-evidence-authority-ov09",
+		AndroidBuildability:          "intentionally-suspended",
+		AndroidReconnectGate:         "OV13",
+		ScanReadAuthority:            "go-sqlite",
+		CleanupAuthority:             "go-production-mutation-authority-ov08",
+		PrivilegedBoundary:           "go-root-admission-boundary-ov06",
+		PackageStorageAuthority:      "go-package-storage-evidence-authority-ov09",
+		CleanupIntelligenceAuthority: "go-cleanup-intelligence-authority-ov10",
 	}
 }
 

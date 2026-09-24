@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const SchemaVersion = 6
+const SchemaVersion = 7
 
 var RequiredTables = []string{
 	"scan_sessions",
@@ -37,6 +37,12 @@ var RequiredTables = []string{
 	"android_storage_evidence",
 	"package_residue_candidates",
 	"package_action_rechecks",
+	"cleanup_duplicate_groups",
+	"cleanup_duplicate_candidates",
+	"cleanup_residue_evidence",
+	"cleanup_recommendations",
+	"cleanup_rule_results",
+	"cleanup_plan_conflicts",
 }
 
 var SQLitePragmas = []string{
@@ -52,6 +58,9 @@ var QueryIndexes = []string{
 	"CREATE INDEX IF NOT EXISTS idx_scan_entries_allocated_size ON scan_entries(scan_id, allocated_size_bytes DESC, path);",
 	"CREATE INDEX IF NOT EXISTS idx_scan_entries_modified ON scan_entries(scan_id, modified_at_ms DESC, path);",
 	"CREATE INDEX IF NOT EXISTS idx_scan_sessions_history ON scan_sessions(canonical_root, completed_at_ms, generation);",
+	"CREATE INDEX IF NOT EXISTS idx_cleanup_duplicate_candidates_group ON cleanup_duplicate_candidates(group_id, path);",
+	"CREATE INDEX IF NOT EXISTS idx_cleanup_recommendations_scan ON cleanup_recommendations(scan_id, scan_generation, recommendation_kind);",
+	"CREATE INDEX IF NOT EXISTS idx_cleanup_rule_results_plan ON cleanup_rule_results(plan_id, rule_id, path);",
 }
 
 type Table struct {
@@ -90,6 +99,12 @@ var Tables = []Table{
 	{"android_storage_evidence", `CREATE TABLE IF NOT EXISTS android_storage_evidence (snapshot_id TEXT NOT NULL, package_name TEXT NOT NULL, user_id INTEGER NOT NULL, storage_kind TEXT NOT NULL, path TEXT NOT NULL, completeness TEXT NOT NULL, source_api TEXT NOT NULL, blocked_reason TEXT, PRIMARY KEY(snapshot_id, package_name, user_id, storage_kind, path), FOREIGN KEY(snapshot_id, package_name, user_id) REFERENCES android_package_records(snapshot_id, package_name, user_id) ON DELETE CASCADE);`},
 	{"package_residue_candidates", `CREATE TABLE IF NOT EXISTS package_residue_candidates (id TEXT PRIMARY KEY, snapshot_evidence_hash TEXT NOT NULL, package_name TEXT NOT NULL, user_id INTEGER NOT NULL, package_key TEXT NOT NULL, path TEXT NOT NULL, eligibility TEXT NOT NULL, collection_completeness TEXT NOT NULL, blocks_deletion INTEGER NOT NULL, requires_recheck INTEGER NOT NULL, derived_from_regex INTEGER NOT NULL DEFAULT 0, recheck_reasons_json TEXT NOT NULL);`},
 	{"package_action_rechecks", `CREATE TABLE IF NOT EXISTS package_action_rechecks (candidate_id TEXT PRIMARY KEY, snapshot_evidence_hash TEXT NOT NULL, package_key TEXT NOT NULL, path TEXT NOT NULL, checked_at_ms INTEGER NOT NULL, result TEXT NOT NULL, mismatch_reason TEXT, FOREIGN KEY(candidate_id) REFERENCES package_residue_candidates(id) ON DELETE CASCADE);`},
+	{"cleanup_duplicate_groups", `CREATE TABLE IF NOT EXISTS cleanup_duplicate_groups (id TEXT PRIMARY KEY, scan_id TEXT NOT NULL, scan_generation INTEGER NOT NULL, logical_size_bytes INTEGER NOT NULL, content_hash TEXT NOT NULL, verification_state TEXT NOT NULL, canonical_keep_path TEXT NOT NULL, retained_copy_proof TEXT NOT NULL, source_context_hash TEXT NOT NULL, group_hash TEXT NOT NULL UNIQUE, created_at_ms INTEGER NOT NULL);`},
+	{"cleanup_duplicate_candidates", `CREATE TABLE IF NOT EXISTS cleanup_duplicate_candidates (group_id TEXT NOT NULL, path TEXT NOT NULL, expected_identity TEXT NOT NULL, content_hash TEXT NOT NULL, logical_size_bytes INTEGER NOT NULL, allocated_size_bytes INTEGER NOT NULL, keep INTEGER NOT NULL, actionable_evidence_json TEXT NOT NULL, verification_state TEXT NOT NULL, PRIMARY KEY(group_id, path), FOREIGN KEY(group_id) REFERENCES cleanup_duplicate_groups(id) ON DELETE CASCADE);`},
+	{"cleanup_residue_evidence", `CREATE TABLE IF NOT EXISTS cleanup_residue_evidence (id TEXT PRIMARY KEY, package_key TEXT NOT NULL, package_name TEXT NOT NULL, user_id INTEGER NOT NULL, path TEXT NOT NULL, evidence_hash TEXT NOT NULL, confidence TEXT NOT NULL, ambiguity_reasons_json TEXT NOT NULL, special_path_context TEXT NOT NULL, protected INTEGER NOT NULL, requires_recheck INTEGER NOT NULL, actionable_evidence_json TEXT NOT NULL, created_at_ms INTEGER NOT NULL);`},
+	{"cleanup_recommendations", `CREATE TABLE IF NOT EXISTS cleanup_recommendations (id TEXT PRIMARY KEY, scan_id TEXT NOT NULL, scan_generation INTEGER NOT NULL, recommendation_kind TEXT NOT NULL, evidence_hash TEXT NOT NULL, proof_json TEXT NOT NULL, bounded_import INTEGER NOT NULL DEFAULT 1, can_authorize INTEGER NOT NULL DEFAULT 0, created_at_ms INTEGER NOT NULL);`},
+	{"cleanup_rule_results", `CREATE TABLE IF NOT EXISTS cleanup_rule_results (plan_id TEXT NOT NULL, rule_id TEXT NOT NULL, path TEXT NOT NULL, pattern_hash TEXT NOT NULL, provenance_json TEXT NOT NULL, bounded_regex INTEGER NOT NULL DEFAULT 1, decision TEXT NOT NULL, actionable_evidence_json TEXT NOT NULL, PRIMARY KEY(plan_id, rule_id, path));`},
+	{"cleanup_plan_conflicts", `CREATE TABLE IF NOT EXISTS cleanup_plan_conflicts (plan_id TEXT NOT NULL, conflict_id TEXT NOT NULL, paths_json TEXT NOT NULL, conflict_kind TEXT NOT NULL, severity TEXT NOT NULL, requires_review INTEGER NOT NULL DEFAULT 1, PRIMARY KEY(plan_id, conflict_id));`},
 }
 
 func CreateStatements() []string {
@@ -109,7 +124,7 @@ func ValidateSchemaContract() error {
 			return fmt.Errorf("required table %s missing", table)
 		}
 	}
-	for _, required := range []string{"journal_mode = WAL", "expected_generation", "request_fingerprint", "operation_events", "retained_legacy_quarantine_json", "idx_scan_entries_parent_page", "idx_scan_entries_logical_size", "idx_scan_sessions_history", "runtime_sessions", "shell_routes", "root_runtime_identities", "privileged_admissions", "privileged_events", "no_replay_token", "reconcile_required", "cleanup_actionable_evidence", "cleanup_manifest_entries", "cleanup_capability_claims", "manifest_revision", "scan_context_hash", "root_identity", "claim_state", "exact_descendants_json", "cleanup_mutation_journal", "cleanup_verification_results", "cleanup_recovery_status", "mutation_protocol", "verified_absent", "stale_after_cleanup", "legacy_destructive_executor", "no_replay", "android_package_evidence_snapshots", "android_package_records", "android_storage_evidence", "package_residue_candidates", "package_action_rechecks", "evidence_hash", "package_key", "collection_completeness", "requires_recheck", "derived_from_regex"} {
+	for _, required := range []string{"journal_mode = WAL", "expected_generation", "request_fingerprint", "operation_events", "retained_legacy_quarantine_json", "idx_scan_entries_parent_page", "idx_scan_entries_logical_size", "idx_scan_sessions_history", "runtime_sessions", "shell_routes", "root_runtime_identities", "privileged_admissions", "privileged_events", "no_replay_token", "reconcile_required", "cleanup_actionable_evidence", "cleanup_manifest_entries", "cleanup_capability_claims", "manifest_revision", "scan_context_hash", "root_identity", "claim_state", "exact_descendants_json", "cleanup_mutation_journal", "cleanup_verification_results", "cleanup_recovery_status", "mutation_protocol", "verified_absent", "stale_after_cleanup", "legacy_destructive_executor", "no_replay", "android_package_evidence_snapshots", "android_package_records", "android_storage_evidence", "package_residue_candidates", "package_action_rechecks", "evidence_hash", "package_key", "collection_completeness", "requires_recheck", "derived_from_regex", "cleanup_duplicate_groups", "cleanup_duplicate_candidates", "cleanup_residue_evidence", "cleanup_recommendations", "cleanup_rule_results", "cleanup_plan_conflicts", "verification_state", "canonical_keep_path", "retained_copy_proof", "actionable_evidence_json", "bounded_regex", "provenance_json", "requires_review"} {
 		if !strings.Contains(joined, required) {
 			return fmt.Errorf("schema contract missing %s", required)
 		}

@@ -1,0 +1,13 @@
+{
+  "phase": "OV10",
+  "name": "Cleanup intelligence",
+  "android_buildability": "intentionally-suspended",
+  "go_authority": true,
+  "protocol": "dustui.cleanup.intelligence.v1",
+  "gate": "none",
+  "hard_blockers": [
+    "scripts/validate_ov10_contract.py --audit-loop",
+    "go test ./..."
+  ],
+  "unsupported_devtool_jobs_workflows": false
+}

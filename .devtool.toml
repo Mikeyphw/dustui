@@ -84,7 +84,7 @@ android_buildability = "intentionally-suspended"
 android_buildability_suspended_until = "OV13"
 gate = "none - Android suspended non-gate"
 primary = true
-migration_phase = "OV09"
+migration_phase = "OV10"
 structured_events = true
 max_gradle_nodes = 1
 abi_policy = "arm64-v8a production first; x86_64 is test-only until a matching Go runtime exists"
@@ -99,7 +99,7 @@ inputs = ["go"]
 
 [targets.dustui_go.metadata]
 production_authority = false
-migration_phase = "OV09"
+migration_phase = "OV10"
 readiness_only = false
 state_protocol_kernel = true
 query_history_engine = true
@@ -110,6 +110,9 @@ mutation_authority = true
 mutation_gate = "Gate C"
 package_storage_authority = true
 package_storage_protocol = "dustui.package.storage.evidence.v1"
+cleanup_intelligence_authority = true
+cleanup_intelligence_protocol = "dustui.cleanup.intelligence.v1"
+duplicate_residue_rules_authority = "go"
 legacy_destructive_executor = "none"
 root_protocol = "dustui.privileged.runtime.v1"
 read_authority = "go-sqlite"

@@ -1,0 +1,140 @@
+{
+  "apply_policy": {
+    "android_buildability": "intentionally-suspended",
+    "android_buildability_suspended_until": "OV13",
+    "devtool_command": "devtool -r \"$HOME/Code/dustui\" --target dustui_android apply overlay /sdcard/Download/dustui_go_ov10_cleanup_intelligence_v1.zip --no-validate --commit \"DustUI OV10 cleanup intelligence\"",
+    "evidence_commands": [
+      "python3 scripts/validate_ov10_contract.py --audit-loop",
+      "cd go && go test ./..."
+    ],
+    "full_validation_gate": false,
+    "unsupported_devtool_jobs_workflows_added": false,
+    "validation_policy": "Non-gate OV10 under Android-suspended roadmap: Go/contracts evidence is hard blocker; Android build/test/lint remains diagnostic until OV13."
+  },
+  "artifact": "dustui_go_ov10_cleanup_intelligence_v1.zip",
+  "authority_transition": {
+    "android_buildability": "intentionally-suspended",
+    "android_buildability_suspended_until": "OV13",
+    "go_cleanup_intelligence_authority": true,
+    "legacy_kotlin_cleanup_policy_authority": false,
+    "production_destructive_authority": "go OV08 executor remains authority; OV10 supplies proof-bearing cleanup intelligence",
+    "protocol": "dustui.cleanup.intelligence.v1",
+    "unsupported_devtool_jobs_workflows_added": false
+  },
+  "created_utc": "2026-09-24T12:00:00Z",
+  "name": "dustui_go_ov10_cleanup_intelligence_v1",
+  "ov10_requirements": [
+    "duplicate candidate grouping with logical-size semantics and content/identity verification",
+    "canonical keep selection with retained-copy proof",
+    "residue using package/user evidence and action-time re-evaluation",
+    "proof-bearing recommendations and provenance-preserving rule outputs",
+    "bounded imports and bounded regex/pattern execution",
+    "plan-level conflict detection before authorization",
+    "no specialized result can degrade to a bare path and remain verified/safe"
+  ],
+  "overlay": "OV10",
+  "payload_file_count": 22,
+  "payload_sha256": [
+    {
+      "path": ".devtool.toml",
+      "sha256": "47e1d0b7c56be5b57a110264bff4b8288aaf727616d1bfa201ca13519d0904b1",
+      "size_bytes": 5810
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/go/CleanupIntelligenceContract.kt",
+      "sha256": "250305fc4671fa354e97bff914d91d953a4ca46f0bd05f52caccacbdab9e860d",
+      "size_bytes": 724
+    },
+    {
+      "path": "go/cmd/dustui-go/main.go",
+      "sha256": "3082b64ff7dbf920d192418f5b6b6cdd759dcd595f64fbf9b1818ea307d8dd24",
+      "size_bytes": 4140
+    },
+    {
+      "path": "go/internal/intelligence/intelligence.go",
+      "sha256": "b5496ef2c455a64b86cd2a3d862e44eb902807446d43dfdd7e8af8a306b782c4",
+      "size_bytes": 14384
+    },
+    {
+      "path": "go/internal/intelligence/intelligence_test.go",
+      "sha256": "463add031ba849b076460668a2f70d40e8e9c4801b4ea12634a9b51ed87d3073",
+      "size_bytes": 5751
+    },
+    {
+      "path": "go/internal/readiness/readiness.go",
+      "sha256": "d63f0a6c3a1b285206886b51793970f6d2eb857a6e967ff0f346fe87c0590ae3",
+      "size_bytes": 2385
+    },
+    {
+      "path": "go/internal/readiness/readiness_test.go",
+      "sha256": "32a8e20343681931fbbecb3d08b03f79ce302b8f458125af4780d310d86ce40d",
+      "size_bytes": 893
+    },
+    {
+      "path": "go/internal/runtime/spec.go",
+      "sha256": "008bd2e2d08e11b1ac6b56d07fe07669052c319b53fb33d76f2a165ca75b37f0",
+      "size_bytes": 8182
+    },
+    {
+      "path": "go/internal/state/schema.go",
+      "sha256": "b3f786f93761f2b01f914767d7b859b84c11025a2f392deda0717519952ef32a",
+      "size_bytes": 18479
+    },
+    {
+      "path": "go/internal/version/version.go",
+      "sha256": "3a86dca448a0dbe70f9a0fb97a0e287012537dff14d9a533e5f09d346743f664",
+      "size_bytes": 224
+    },
+    {
+      "path": "migration/audit/v1/ov10_audit_loop.md",
+      "sha256": "a662bafc02740fb8be1d0aa9756676c24f64afa2376981330a455a4a832b91ef",
+      "size_bytes": 574
+    },
+    {
+      "path": "migration/contracts/v1/authority_transition_ov10.md",
+      "sha256": "2b37c8f6ab8bf499be71338319e0a72a97fc3bc6b152b1d6f94123ec7eab312b",
+      "size_bytes": 519
+    },
+    {
+      "path": "migration/contracts/v1/cleanup_intelligence_ov10.md",
+      "sha256": "433d340c401737690d6b9465b66f985c51d0365c2e630033fdd452d8b8f8d11b",
+      "size_bytes": 1137
+    },
+    {
+      "path": "migration/contracts/v1/legacy_paths_ov10.md",
+      "sha256": "7043292d020def30caffd6e1d6c316da34c7380a1b4779c13259c6443ea8fb4b",
+      "size_bytes": 380
+    },
+    {
+      "path": "migration/contracts/v1/source_token_retirement_ov10.md",
+      "sha256": "e0e3b46416f6e4d34f9c20d6692e48dd2777d0bb911b1ee2a7a6211dc47832c7",
+      "size_bytes": 297
+    },
+    {
+      "path": "migration/ledger/findings.json",
+      "sha256": "2d5eb3c5383f653a70274757e8faa14bfc9e5006e038789c9bc47fed629e4eb8",
+      "size_bytes": 22754
+    },
+    {
+      "path": "migration/ledger/ov10_status.json",
+      "sha256": "8df754396cd6286fe83b00b65789f65d233d8b0950115b4442d0a26323259307",
+      "size_bytes": 346
+    },
+    {
+      "path": "scripts/validate_ov10_contract.py",
+      "sha256": "daf67f703d28196d11d5a6f06352fb3a5bfda01b0b60ea1af27f7529ebff7b8b",
+      "size_bytes": 6980
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov10_cleanup_intelligence_v1/README.md",
+      "sha256": "5ab55d69eee656605efa604f8cb0ac1ef61b42a3a53e2f7ba8cb57a1bf3e572b",
+      "size_bytes": 613
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov10_cleanup_intelligence_v1/inventory.json",
+      "sha256": "5f118738294d6e551cd988a9efde42280371e3bb8b8707c2d62528c1bcdad43c",
+      "size_bytes": 2053
+    }
+  ],
+  "target": "dustui_android"
+}
