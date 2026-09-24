@@ -1,0 +1,35 @@
+{
+  "name": "dustui_go_ov13_devtool_wrapper_validator_hotfix_v1",
+  "files": [
+    {
+      "path": "migration/archive/overlays/dustui_go_ov13_devtool_wrapper_validator_hotfix_v1/README.md",
+      "sha256": "4fc4e785bd02612a89c62f1a1633c023f41749d5ae201b885375b4e8cf803146",
+      "bytes": 323
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov13_devtool_wrapper_validator_hotfix_v1/manifest.schema-v2.json",
+      "sha256": "dda611074f8e0eb69583d6947aec96db5083e89ca1a82a6cf3e7f53a7cbd85bf",
+      "bytes": 708
+    },
+    {
+      "path": "migration/audit/v1/ov13_devtool_wrapper_validator_hotfix.md",
+      "sha256": "894769fb47d8b7415b28149b338cf8cdeb13a148370e4c76ca0940f13140b2e9",
+      "bytes": 416
+    },
+    {
+      "path": "migration/contracts/v1/ov13_devtool_wrapper_validator_hotfix.md",
+      "sha256": "43a4d083ad85628ec958b088762eda9084d04e51396ef0296a0a507062866b05",
+      "bytes": 547
+    },
+    {
+      "path": "migration/ledger/ov13_devtool_wrapper_validator_hotfix_status.json",
+      "sha256": "4218938c2543684cc23128afba59b3121aaa6b3e4ba70caa1fd2e7bba1c0f258",
+      "bytes": 324
+    },
+    {
+      "path": "scripts/validate_ov13_devtool_wrapper_exo_jobs.py",
+      "sha256": "252ba9f6e926bf1560d0f792ff01ded46352fd10b65fef41a7956f0ef9905c76",
+      "bytes": 7956
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "schema": 2,
+  "name": "dustui_go_ov13_devtool_wrapper_validator_hotfix_v1",
+  "target": "dustui_android",
+  "phase": "OV13",
+  "kind": "hotfix",
+  "summary": "Make OV13 wrapper/EXO dynamic validator accept installed Devtool JSON or Rich/text output.",
+  "files": [
+    "migration/audit/v1/ov13_devtool_wrapper_validator_hotfix.md",
+    "migration/contracts/v1/ov13_devtool_wrapper_validator_hotfix.md",
+    "migration/ledger/ov13_devtool_wrapper_validator_hotfix_status.json",
+    "scripts/validate_ov13_devtool_wrapper_exo_jobs.py"
+  ],
+  "commands": [
+    "python3 scripts/validate_ov13_devtool_wrapper_exo_jobs.py --static-only",
+    "python3 scripts/validate_ov13_devtool_wrapper_exo_jobs.py"
+  ]
+}

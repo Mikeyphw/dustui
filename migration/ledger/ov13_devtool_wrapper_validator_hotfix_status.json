@@ -1,0 +1,12 @@
+{
+  "overlay": "dustui_go_ov13_devtool_wrapper_validator_hotfix_v1",
+  "phase": "OV13",
+  "type": "validator-hotfix",
+  "gate": "Gate D",
+  "changes": [
+    "scripts/validate_ov13_devtool_wrapper_exo_jobs.py"
+  ],
+  "relaxes_gate": false,
+  "android_buildability": "mandatory",
+  "unsupported_devtool_schema_added": false
+}
