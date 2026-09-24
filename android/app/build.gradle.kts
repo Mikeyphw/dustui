@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.Exec
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
@@ -67,6 +69,7 @@ android {
     }
 
     sourceSets {
+        getByName("main").jniLibs.srcDir(layout.buildDirectory.dir("generated/goRuntime/jniLibs"))
         getByName("androidTest").assets.srcDir("$projectDir/schemas")
     }
 
@@ -88,7 +91,24 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
+
+val buildGoAndroidRuntime by tasks.registering(Exec::class) {
+    group = "build"
+    description = "Build the production arm64 Android Go runtime packaged as libdustui_go.so"
+    val goRoot = rootProject.projectDir.parentFile.resolve("go")
+    val output = layout.buildDirectory.file("generated/goRuntime/jniLibs/arm64-v8a/libdustui_go.so")
+    inputs.files(fileTree(goRoot) { include("**/*.go", "go.mod", "go.sum") })
+    outputs.file(output)
+    workingDir(goRoot)
+    environment("GOOS", "android")
+    environment("GOARCH", "arm64")
+    environment("CGO_ENABLED", "0")
+    doFirst { output.get().asFile.parentFile.mkdirs() }
+    commandLine("go", "build", "-trimpath", "-buildmode=pie", "-o", output.get().asFile.absolutePath, "./cmd/dustui-go")
+}
+
 tasks.matching { it.name == "preBuild" }.configureEach {
+    dependsOn(buildGoAndroidRuntime)
     dependsOn(rootProject.tasks.named("verifyStableToolchainBaseline"))
 }
 

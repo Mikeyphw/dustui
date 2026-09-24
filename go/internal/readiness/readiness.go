@@ -63,9 +63,9 @@ func Current() Report {
 		AndroidBuildability:     product.AndroidBuildState,
 		RequiredTables:          append([]string{}, state.RequiredTables...),
 		EnvelopeTypes:           protocol.SupportedEnvelopeTypes(),
-		Message:                 "OV14 truth audit: Go contracts are the intended product target, but Gate D is reopened because Android still uses legacy Kotlin/Room/C++ authority and lacks the real Go runtime + Go SQLite cutover.",
+		Message:                 "OV14 truth audit: Go contracts are the intended product target, but Gate D is reopened because Android still uses legacy Kotlin/Room/C++ authority and now has the production Android Go runtime binding; Gate D remains reopened for Go SQLite and legacy retirement.",
 		GateDQualified:          false,
-		AndroidRuntimeBound:     false,
+		AndroidRuntimeBound:     true,
 		GoSQLiteImplemented:     false,
 		LegacyAndroidAuthority:  true,
 	}

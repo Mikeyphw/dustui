@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/mikeyphw/dustui/go/internal/automation"
 	"github.com/mikeyphw/dustui/go/internal/cleanup"
@@ -25,6 +27,14 @@ func main() {
 	command := "readiness"
 	if len(os.Args) > 1 {
 		command = os.Args[1]
+	}
+
+	if command == "serve" {
+		if err := serve(); err != nil {
+			fmt.Fprintf(os.Stderr, "serve: %v\n", err)
+			os.Exit(1)
+		}
+		return
 	}
 
 	var payload any
@@ -116,4 +126,61 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Println(string(encoded))
+}
+
+type runtimeFrame struct {
+	Protocol   string          `json:"protocol"`
+	Type       string          `json:"type"`
+	RequestID  string          `json:"requestId"`
+	Sequence   int64           `json:"sequence"`
+	Generation int64           `json:"generation"`
+	Payload    json.RawMessage `json:"payload"`
+}
+
+func serve() error {
+	writer := bufio.NewWriter(os.Stdout)
+	ready, err := json.Marshal(readiness.Current())
+	if err != nil {
+		return err
+	}
+	if _, err := writer.Write(append(ready, '\n')); err != nil {
+		return err
+	}
+	if err := writer.Flush(); err != nil {
+		return err
+	}
+
+	scanner := bufio.NewScanner(os.Stdin)
+	buf := make([]byte, 64*1024)
+	scanner.Buffer(buf, runtimecontract.MaxFrameBytes)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+		var frame runtimeFrame
+		if err := json.Unmarshal([]byte(line), &frame); err != nil {
+			return fmt.Errorf("decode frame: %w", err)
+		}
+		if frame.Protocol != runtimecontract.SessionProtocolName {
+			return fmt.Errorf("unsupported session protocol %q", frame.Protocol)
+		}
+		if frame.RequestID == "" || frame.Type == "" || frame.Sequence <= 0 || frame.Generation <= 0 {
+			return fmt.Errorf("frame identity required")
+		}
+		encoded, err := json.Marshal(frame)
+		if err != nil {
+			return err
+		}
+		if len(encoded) > runtimecontract.MaxFrameBytes {
+			return fmt.Errorf("response exceeds bounded stream")
+		}
+		if _, err := writer.Write(append(encoded, '\n')); err != nil {
+			return err
+		}
+		if err := writer.Flush(); err != nil {
+			return err
+		}
+	}
+	return scanner.Err()
 }
