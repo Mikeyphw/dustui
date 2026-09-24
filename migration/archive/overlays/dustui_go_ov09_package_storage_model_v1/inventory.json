@@ -1,0 +1,83 @@
+{
+  "android_buildability": "intentionally-suspended",
+  "files": [
+    {
+      "category": "source",
+      "path": ".devtool.toml"
+    },
+    {
+      "category": "source",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/go/PackageStorageEvidenceContract.kt"
+    },
+    {
+      "category": "source",
+      "path": "go/cmd/dustui-go/main.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/packageevidence/packageevidence.go"
+    },
+    {
+      "category": "test",
+      "path": "go/internal/packageevidence/packageevidence_test.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/readiness/readiness.go"
+    },
+    {
+      "category": "test",
+      "path": "go/internal/readiness/readiness_test.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/runtime/spec.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/state/schema.go"
+    },
+    {
+      "category": "source",
+      "path": "go/internal/version/version.go"
+    },
+    {
+      "category": "contract",
+      "path": "migration/audit/v1/ov09_audit_loop.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/contracts/v1/authority_transition_ov09.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/contracts/v1/legacy_paths_ov09.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/contracts/v1/package_storage_authority_ov09.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/contracts/v1/source_token_retirement_ov09.md"
+    },
+    {
+      "category": "contract",
+      "path": "migration/ledger/findings.json"
+    },
+    {
+      "category": "contract",
+      "path": "migration/ledger/ov09_status.json"
+    },
+    {
+      "category": "contract",
+      "path": "scripts/validate_ov09_contract.py"
+    }
+  ],
+  "name": "dustui_go_ov09_package_storage_model_v1",
+  "no_unrelated_cleanup": true,
+  "overlay": "OV09",
+  "schema": "devtool.overlay.inventory.v1",
+  "target": "dustui_android",
+  "unsupported_devtool_jobs_workflows_added": false
+}

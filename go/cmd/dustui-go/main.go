@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/mikeyphw/dustui/go/internal/cleanup"
+	"github.com/mikeyphw/dustui/go/internal/packageevidence"
 	"github.com/mikeyphw/dustui/go/internal/privileged"
 	"github.com/mikeyphw/dustui/go/internal/query"
 	"github.com/mikeyphw/dustui/go/internal/readiness"
@@ -38,6 +39,8 @@ func main() {
 		payload = runtimecontract.CurrentSpec()
 	case "cleanup-contract", "manifest-contract", "capability-contract", "mutation-contract":
 		payload = cleanup.Contract()
+	case "package-storage-contract", "package-contract", "storage-contract":
+		payload = packageevidence.Contract()
 	case "privileged-contract", "root-contract":
 		controller, err := privileged.NewController(privileged.DefaultConfig())
 		if err != nil {
@@ -49,7 +52,7 @@ func main() {
 		payload = shell.CurrentContract()
 	case "query-contract":
 		payload = map[string]any{
-			"phase":        "OV08",
+			"phase":        "OV09",
 			"pagination":   "deterministic_offset_token_bound_to_generation",
 			"maxPageLimit": query.MaxPageLimit,
 			"countKinds":   []string{query.CountTotal, query.CountPartial, query.CountUnknown},
@@ -70,7 +73,7 @@ func main() {
 		}
 	case "scan-contract":
 		payload = map[string]any{
-			"phase":                 "OV08",
+			"phase":                 "OV09",
 			"integrityStates":       []scan.IntegrityState{scan.IntegrityComplete, scan.IntegrityPartial, scan.IntegrityTruncated, scan.IntegrityMalformed, scan.IntegrityFailed, scan.IntegrityStaleAfterCleanup},
 			"sourceCompleteness":    []scan.SourceCompleteness{scan.SourceComplete, scan.SourceIncomplete, scan.SourceUnknown},
 			"sizeSemantics":         []scan.SizeSemantics{scan.SizeLogical, scan.SizeAllocated, scan.SizeLogicalAndAllocated},
@@ -89,7 +92,7 @@ func main() {
 		}
 		payload = session
 	default:
-		fmt.Fprintf(os.Stderr, "unknown command %q; supported: readiness, version, protocol, schema, runtime-contract, cleanup-contract, mutation-contract, privileged-contract, shell-contract, query-contract, scan-contract, scan [root]\n", command)
+		fmt.Fprintf(os.Stderr, "unknown command %q; supported: readiness, version, protocol, schema, runtime-contract, cleanup-contract, mutation-contract, package-storage-contract, privileged-contract, shell-contract, query-contract, scan-contract, scan [root]\n", command)
 		os.Exit(2)
 	}
 	encoded, err := json.MarshalIndent(payload, "", "  ")

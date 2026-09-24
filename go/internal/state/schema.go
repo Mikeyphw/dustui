@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const SchemaVersion = 5
+const SchemaVersion = 6
 
 var RequiredTables = []string{
 	"scan_sessions",
@@ -32,6 +32,11 @@ var RequiredTables = []string{
 	"cleanup_mutation_journal",
 	"cleanup_verification_results",
 	"cleanup_recovery_status",
+	"android_package_evidence_snapshots",
+	"android_package_records",
+	"android_storage_evidence",
+	"package_residue_candidates",
+	"package_action_rechecks",
 }
 
 var SQLitePragmas = []string{
@@ -80,6 +85,11 @@ var Tables = []Table{
 	{"cleanup_mutation_journal", `CREATE TABLE IF NOT EXISTS cleanup_mutation_journal (operation_id TEXT NOT NULL, sequence INTEGER NOT NULL, state TEXT NOT NULL, reason TEXT, path TEXT, mutation_protocol TEXT NOT NULL, created_at_ms INTEGER NOT NULL, PRIMARY KEY(operation_id, sequence), FOREIGN KEY(operation_id) REFERENCES operations(id) ON DELETE CASCADE);`},
 	{"cleanup_verification_results", `CREATE TABLE IF NOT EXISTS cleanup_verification_results (operation_id TEXT NOT NULL, path TEXT NOT NULL, expected_identity TEXT NOT NULL, verified_absent INTEGER NOT NULL, reclaimed_bytes INTEGER NOT NULL DEFAULT 0, stale_after_cleanup INTEGER NOT NULL DEFAULT 1, certainty TEXT NOT NULL, created_at_ms INTEGER NOT NULL, PRIMARY KEY(operation_id, path), FOREIGN KEY(operation_id) REFERENCES operations(id) ON DELETE CASCADE);`},
 	{"cleanup_recovery_status", `CREATE TABLE IF NOT EXISTS cleanup_recovery_status (operation_id TEXT PRIMARY KEY, reconcile_required INTEGER NOT NULL, recovery_state TEXT NOT NULL, no_replay INTEGER NOT NULL DEFAULT 1, legacy_destructive_executor TEXT NOT NULL, last_checked_at_ms INTEGER NOT NULL, FOREIGN KEY(operation_id) REFERENCES operations(id) ON DELETE CASCADE);`},
+	{"android_package_evidence_snapshots", `CREATE TABLE IF NOT EXISTS android_package_evidence_snapshots (id TEXT PRIMARY KEY, generation INTEGER NOT NULL, collector TEXT NOT NULL, completeness TEXT NOT NULL, degradation_reasons_json TEXT NOT NULL, evidence_hash TEXT NOT NULL UNIQUE, created_at_ms INTEGER NOT NULL);`},
+	{"android_package_records", `CREATE TABLE IF NOT EXISTS android_package_records (snapshot_id TEXT NOT NULL, package_name TEXT NOT NULL, user_id INTEGER NOT NULL, installed INTEGER NOT NULL, archived INTEGER NOT NULL, system_app INTEGER NOT NULL, enabled_state TEXT NOT NULL, completeness TEXT NOT NULL, ui_state TEXT NOT NULL, degradation_reasons_json TEXT NOT NULL, paths_json TEXT NOT NULL, code_bytes_known INTEGER NOT NULL, code_bytes INTEGER, data_bytes_known INTEGER NOT NULL, data_bytes INTEGER, cache_bytes_known INTEGER NOT NULL, cache_bytes INTEGER, native_bytes_known INTEGER NOT NULL, native_bytes INTEGER, PRIMARY KEY(snapshot_id, package_name, user_id), FOREIGN KEY(snapshot_id) REFERENCES android_package_evidence_snapshots(id) ON DELETE CASCADE);`},
+	{"android_storage_evidence", `CREATE TABLE IF NOT EXISTS android_storage_evidence (snapshot_id TEXT NOT NULL, package_name TEXT NOT NULL, user_id INTEGER NOT NULL, storage_kind TEXT NOT NULL, path TEXT NOT NULL, completeness TEXT NOT NULL, source_api TEXT NOT NULL, blocked_reason TEXT, PRIMARY KEY(snapshot_id, package_name, user_id, storage_kind, path), FOREIGN KEY(snapshot_id, package_name, user_id) REFERENCES android_package_records(snapshot_id, package_name, user_id) ON DELETE CASCADE);`},
+	{"package_residue_candidates", `CREATE TABLE IF NOT EXISTS package_residue_candidates (id TEXT PRIMARY KEY, snapshot_evidence_hash TEXT NOT NULL, package_name TEXT NOT NULL, user_id INTEGER NOT NULL, package_key TEXT NOT NULL, path TEXT NOT NULL, eligibility TEXT NOT NULL, collection_completeness TEXT NOT NULL, blocks_deletion INTEGER NOT NULL, requires_recheck INTEGER NOT NULL, derived_from_regex INTEGER NOT NULL DEFAULT 0, recheck_reasons_json TEXT NOT NULL);`},
+	{"package_action_rechecks", `CREATE TABLE IF NOT EXISTS package_action_rechecks (candidate_id TEXT PRIMARY KEY, snapshot_evidence_hash TEXT NOT NULL, package_key TEXT NOT NULL, path TEXT NOT NULL, checked_at_ms INTEGER NOT NULL, result TEXT NOT NULL, mismatch_reason TEXT, FOREIGN KEY(candidate_id) REFERENCES package_residue_candidates(id) ON DELETE CASCADE);`},
 }
 
 func CreateStatements() []string {
@@ -99,7 +109,7 @@ func ValidateSchemaContract() error {
 			return fmt.Errorf("required table %s missing", table)
 		}
 	}
-	for _, required := range []string{"journal_mode = WAL", "expected_generation", "request_fingerprint", "operation_events", "retained_legacy_quarantine_json", "idx_scan_entries_parent_page", "idx_scan_entries_logical_size", "idx_scan_sessions_history", "runtime_sessions", "shell_routes", "root_runtime_identities", "privileged_admissions", "privileged_events", "no_replay_token", "reconcile_required", "cleanup_actionable_evidence", "cleanup_manifest_entries", "cleanup_capability_claims", "manifest_revision", "scan_context_hash", "root_identity", "claim_state", "exact_descendants_json", "cleanup_mutation_journal", "cleanup_verification_results", "cleanup_recovery_status", "mutation_protocol", "verified_absent", "stale_after_cleanup", "legacy_destructive_executor", "no_replay"} {
+	for _, required := range []string{"journal_mode = WAL", "expected_generation", "request_fingerprint", "operation_events", "retained_legacy_quarantine_json", "idx_scan_entries_parent_page", "idx_scan_entries_logical_size", "idx_scan_sessions_history", "runtime_sessions", "shell_routes", "root_runtime_identities", "privileged_admissions", "privileged_events", "no_replay_token", "reconcile_required", "cleanup_actionable_evidence", "cleanup_manifest_entries", "cleanup_capability_claims", "manifest_revision", "scan_context_hash", "root_identity", "claim_state", "exact_descendants_json", "cleanup_mutation_journal", "cleanup_verification_results", "cleanup_recovery_status", "mutation_protocol", "verified_absent", "stale_after_cleanup", "legacy_destructive_executor", "no_replay", "android_package_evidence_snapshots", "android_package_records", "android_storage_evidence", "package_residue_candidates", "package_action_rechecks", "evidence_hash", "package_key", "collection_completeness", "requires_recheck", "derived_from_regex"} {
 		if !strings.Contains(joined, required) {
 			return fmt.Errorf("schema contract missing %s", required)
 		}

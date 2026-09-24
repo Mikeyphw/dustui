@@ -1,0 +1,167 @@
+{
+  "apply_policy": {
+    "android_buildability": "intentionally-suspended",
+    "android_buildability_suspended_until": "OV13",
+    "devtool_command": "devtool -r \"$HOME/Code/dustui\" --target dustui_android apply overlay /sdcard/Download/dustui_go_ov09_package_storage_model_v1.zip --no-validate --commit \"DustUI OV09 package storage model\"",
+    "evidence_commands": [
+      "python3 scripts/validate_ov09_contract.py --audit-loop",
+      "cd go && go test ./..."
+    ],
+    "full_validation_gate": false,
+    "unsupported_devtool_jobs_workflows_added": false,
+    "validation_policy": "Non-gate OV09 under Android-suspended roadmap: Go/contracts evidence is hard blocker; Android build/test/lint remains diagnostic until OV13."
+  },
+  "artifact": "dustui_go_ov09_package_storage_model_v1.zip",
+  "authority_transition": {
+    "android_buildability": "intentionally-suspended",
+    "android_buildability_suspended_until": "OV13",
+    "go_package_storage_authority": true,
+    "legacy_regex_package_authority": false,
+    "production_destructive_authority": "go OV08 executor remains authority; OV09 supplies package-sensitive evidence",
+    "unsupported_devtool_jobs_workflows_added": false
+  },
+  "created_utc": "2026-09-24T12:55:00Z",
+  "name": "dustui_go_ov09_package_storage_model_v1",
+  "ov09_requirements": [
+    "thin Kotlin Android collector for package/user/storage platform facts",
+    "Go-normalized package evidence snapshot with supported/partial/unavailable/blocked states",
+    "residue/cleanup eligibility consumes package/user evidence and never regex alone",
+    "partial evidence is never rendered as zero",
+    "action-time re-evaluation for package-sensitive deletion",
+    "multi-user, archived, disabled, system and partial-evidence tests"
+  ],
+  "overlay": "OV09",
+  "payload_file_count": 22,
+  "payload_sha256": [
+    {
+      "path": ".devtool.toml",
+      "sha256": "5fc53c74830c9b4cb4d80ee5aeb7dad7c0e8ff69507f73f773457b95d433ff10",
+      "size_bytes": 5666
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/go/PackageStorageEvidenceContract.kt",
+      "sha256": "eea3885c3f0a8097a39711dd7748958eaf9fc200f5d6a2ea3d5a08ea1ca3b872",
+      "size_bytes": 2042
+    },
+    {
+      "path": "go/cmd/dustui-go/main.go",
+      "sha256": "abddf2978f5a57d50eb02c879a7f27dee6e3f3ff73f668552a7a0858075eed58",
+      "size_bytes": 3893
+    },
+    {
+      "path": "go/internal/packageevidence/packageevidence.go",
+      "sha256": "8f636f609f7a961231445f877309e2363de63f06f5638b7ccaa637efa3c9af1d",
+      "size_bytes": 14336
+    },
+    {
+      "path": "go/internal/packageevidence/packageevidence_test.go",
+      "sha256": "811b1cc374d7c45437579ad3a897aa13939aaa03f9296ac167157e431c99be63",
+      "size_bytes": 5459
+    },
+    {
+      "path": "go/internal/readiness/readiness.go",
+      "sha256": "25584174d2b453572403633c561f3ad2e47ac384953fee833b6a86cc9b93119b",
+      "size_bytes": 2265
+    },
+    {
+      "path": "go/internal/readiness/readiness_test.go",
+      "sha256": "077cfb70153575b50f21d9ccf3bffc32b97a9239036a202d6bdba5bd1939808a",
+      "size_bytes": 836
+    },
+    {
+      "path": "go/internal/runtime/spec.go",
+      "sha256": "e8854d00d51cfedd822a63f2b5ad1342b6f10dc3efdc025d9b117ce357ba658f",
+      "size_bytes": 7904
+    },
+    {
+      "path": "go/internal/state/schema.go",
+      "sha256": "079cd5b856a359cf5c8343eacf9f73deb2c1ca7f3a280faacceef98575485b8f",
+      "size_bytes": 15220
+    },
+    {
+      "path": "go/internal/version/version.go",
+      "sha256": "1af500a206f76e0743387487539a16b99513af61bfdaf8dd41db4864675358ff",
+      "size_bytes": 228
+    },
+    {
+      "path": "migration/audit/v1/ov09_audit_loop.md",
+      "sha256": "305649ac0a521ea18f0f23493f8dff2b5e7eb21e0606b89e8fd7aaae47ddd580",
+      "size_bytes": 583
+    },
+    {
+      "path": "migration/contracts/v1/authority_transition_ov09.md",
+      "sha256": "a62d4526d6828bb026a40d0f04f9bfbe3417fea84f9707c0bda37f6710fc4b9a",
+      "size_bytes": 513
+    },
+    {
+      "path": "migration/contracts/v1/legacy_paths_ov09.md",
+      "sha256": "1ad5d92e0b97df79c3980ff51704e404304e884b629486ec8f6e81901dec3aa9",
+      "size_bytes": 553
+    },
+    {
+      "path": "migration/contracts/v1/package_storage_authority_ov09.md",
+      "sha256": "77d6ee1dc8d396c080d81e1970d48ccefe6521a0c011cf4e67fd72a084710efc",
+      "size_bytes": 1236
+    },
+    {
+      "path": "migration/contracts/v1/source_token_retirement_ov09.md",
+      "sha256": "30ca7561fcb8f680bf7960e2ea4de96e7ac6a8926667f5d2da118cd975a8867c",
+      "size_bytes": 445
+    },
+    {
+      "path": "migration/ledger/findings.json",
+      "sha256": "cd6bfd74f6f7dc8b43309e8c6f25aa4a7f01d9099453077a1f2c7fed1dfde1df",
+      "size_bytes": 22319
+    },
+    {
+      "path": "migration/ledger/ov09_status.json",
+      "sha256": "27034d0797be0fe6b4712a40348519de862f30dd202a533a72c59d326bb83a08",
+      "size_bytes": 344
+    },
+    {
+      "path": "scripts/validate_ov09_contract.py",
+      "sha256": "ec33c0f327db1a578174ce76275d6f8364cdeddf68dc638e796dacb34fd1147c",
+      "size_bytes": 6818
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov09_package_storage_model_v1/README.md",
+      "sha256": "a984e6f49c09564f0ca7523aa895ba5abee5f363b80346ce0be0bf62db4689e7",
+      "size_bytes": 735
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov09_package_storage_model_v1/manifest.schema-v2.json",
+      "sha256": "50ea6d6775ef289169e8dce50175f0175cb276b2b4ddca3507d38d66635151fb",
+      "size_bytes": 5743
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov09_package_storage_model_v1/inventory.json",
+      "sha256": "20a00d3e32762ee20f9f7f4e07decadba7482f9c37f6baa8c34b25d4e17d7c0d",
+      "size_bytes": 2074
+    },
+    {
+      "path": "migration/archive/overlays/dustui_go_ov09_package_storage_model_v1/SHA256SUMS",
+      "sha256": "496f94dfee5640f121ab2432cbdd1149e923168348673950fae935c2c96d1494",
+      "size_bytes": 2366
+    }
+  ],
+  "repository": "~/Code/dustui",
+  "roadmap_requirements": [
+    "schema-v2/current Devtool overlay manifest",
+    "checksums and explicit inventory",
+    "target declaration",
+    "migration-ledger updates",
+    "tests for overlay promises",
+    "authority-transition notes",
+    "reachable/unreachable legacy-path notes",
+    "source-token retirement notes",
+    "no unrelated cleanup or aesthetic refactors"
+  ],
+  "schema": "devtool.overlay.schema.v2",
+  "schema_version": 2,
+  "secondary_targets": [
+    "dustui_go",
+    "dust_tui_legacy"
+  ],
+  "target": "dustui_android",
+  "title": "Android package and storage evidence authority under Android suspension"
+}

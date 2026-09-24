@@ -45,6 +45,7 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov07_status": "cleanup_evidence_manifest_capability_authority_added_non_mutating",
+      "ov09_status": "package evidence can bind cleanup labels but intelligence remains OV10",
       "overlays": [
         "OV07",
         "OV10"
@@ -120,6 +121,7 @@
       "id": "RC-08",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
+      "ov09_status": "package_storage_evidence_authority_added_with_action_time_recheck",
       "overlays": [
         "OV09"
       ],
@@ -479,6 +481,7 @@
       "id": "ABH-11",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
+      "ov09_status": "package_storage_evidence_authority_added_with_action_time_recheck",
       "overlays": [
         "OV09",
         "OV10"
@@ -493,6 +496,7 @@
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
       "ov04_status": "activity_page_preparation_added",
+      "ov09_status": "package_storage_evidence_authority_added_with_action_time_recheck",
       "overlays": [
         "OV09",
         "OV04"
@@ -707,6 +711,6 @@
       "title": "GO06"
     }
   ],
-  "phase": "OV08",
+  "phase": "OV09",
   "schema": "dustui.migration.ledger.v1"
 }

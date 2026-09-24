@@ -1,0 +1,12 @@
+{
+  "overlay": "OV09",
+  "status": "implemented_local_contract",
+  "android_buildability": "intentionally-suspended",
+  "phase": "package-storage-authority",
+  "protocol": "dustui.package.storage.evidence.v1",
+  "go_schema_version": 6,
+  "hard_checks": [
+    "scripts/validate_ov09_contract.py --audit-loop",
+    "cd go && go test ./..."
+  ]
+}
