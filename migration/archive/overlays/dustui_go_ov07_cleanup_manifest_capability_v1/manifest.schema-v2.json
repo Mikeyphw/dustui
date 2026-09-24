@@ -1,0 +1,147 @@
+{
+  "apply_policy": {
+    "android_buildability": "intentionally-suspended",
+    "android_buildability_suspended_until": "OV13",
+    "devtool_command": "devtool -r \"$HOME/Code/dustui\" --target dustui_android apply overlay /sdcard/Download/dustui_go_ov07_cleanup_manifest_capability_v1.zip --no-validate --commit \"DustUI OV07 cleanup manifest capability\"",
+    "evidence_commands": [
+      "python3 scripts/validate_ov07_contract.py --audit-loop",
+      "cd go && go test ./..."
+    ],
+    "full_validation_gate": false,
+    "unsupported_devtool_jobs_workflows_added": false,
+    "validation_policy": "Non-gate OV07 under Android-suspended roadmap: Go/contracts evidence is hard blocker; Android build/test/lint remains diagnostic until OV13."
+  },
+  "artifact": "dustui_go_ov07_cleanup_manifest_capability_v1.zip",
+  "authority_transition": {
+    "android_buildability": "intentionally-suspended",
+    "android_buildability_suspended_until": "OV13",
+    "go_cleanup_evidence_authority": true,
+    "go_mutation_authority": false,
+    "legacy_destructive_paths_newly_reachable": false,
+    "production_destructive_cutover": "OV08",
+    "unsupported_devtool_jobs_workflows_added": false
+  },
+  "created_utc": "2026-09-24T12:30:00Z",
+  "name": "dustui_go_ov07_cleanup_manifest_capability_v1",
+  "ov07_requirements": [
+    "ActionablePathEvidence with path/scan/source/identity/retained-copy/package/user/bucket/protected/duplicate/rule/recommendation/deletion fields",
+    "immutable cleanup manifest binds exact descendants, path role/protection, mount boundary, identity evidence, retained copy constraints, manifest hash/revision, source context hash, and root identity",
+    "durable one-use capability binds operation, scan generation, scan context hash, manifest hash/revision, root identity, review/expiry, and claim state",
+    "Clean review flow exposes exact paths, exact bytes, reasons, warnings, protected descendants, acknowledgements, and capability creation",
+    "dry-run/preflight only; production Go mutation engine waits for OV08"
+  ],
+  "overlay": "OV07",
+  "payload_file_count": 18,
+  "payload_sha256": [
+    {
+      "path": ".devtool.toml",
+      "sha256": "a9947f503d0fcf82f828068fc837972f4a9f67a19a822f6bf474836527f38cd4",
+      "size_bytes": 5495
+    },
+    {
+      "path": "go/cmd/dustui-go/main.go",
+      "sha256": "4ec06e94184a2b27050c03fec7680c7f3c1d37c8706c760b01bfb60d10a9e929",
+      "size_bytes": 3656
+    },
+    {
+      "path": "go/internal/cleanup/cleanup.go",
+      "sha256": "c9074698dfa22db6cfee9fed2c49fa33dee3c699d8636efbe6fa47cbbb067c64",
+      "size_bytes": 15447
+    },
+    {
+      "path": "go/internal/cleanup/cleanup_test.go",
+      "sha256": "d88dfb12c96ceaba6c74af2e073c0bfbde3f2ac9c12ba1a2a295a22a4183a271",
+      "size_bytes": 4464
+    },
+    {
+      "path": "go/internal/readiness/readiness.go",
+      "sha256": "baf2cc19b9b481e0b5c665adc14972c669a6b34a8cfbd9cbe6d00ff1ce62a996",
+      "size_bytes": 2000
+    },
+    {
+      "path": "go/internal/readiness/readiness_test.go",
+      "sha256": "b6ef1a93d69918bdae1e27b9794293f412c80d4defd1f6389b7eac370bde3f60",
+      "size_bytes": 806
+    },
+    {
+      "path": "go/internal/runtime/spec.go",
+      "sha256": "98e01847e4e3c07fee356592af2adc1b897a3e3bbe1ce692d73f704a2a82c96d",
+      "size_bytes": 7702
+    },
+    {
+      "path": "go/internal/state/schema.go",
+      "sha256": "d615c8bf4711ae4ae720474a49b8c4542eacfe102464b1bebfb2a1a7d0e313ca",
+      "size_bytes": 11100
+    },
+    {
+      "path": "go/internal/version/version.go",
+      "sha256": "607287c127e024e038366b8e8085e608be98e982471216a5252608b1d4639861",
+      "size_bytes": 231
+    },
+    {
+      "path": "migration/audit/v1/ov07_audit_loop.md",
+      "sha256": "f4d98ea79a39cd3cd80c25ded6cbc0422cf022720b90e5222908d74a9a2a73b1",
+      "size_bytes": 346
+    },
+    {
+      "path": "migration/contracts/v1/authority_transition_ov07.md",
+      "sha256": "592f881fea3a01b785c3b5036e5fa9878f3778e10ca56cba6019a932f4903634",
+      "size_bytes": 344
+    },
+    {
+      "path": "migration/contracts/v1/cleanup_manifest_capability_ov07.md",
+      "sha256": "33c67bd76152f0b65f8c887b6564d38499c7200dfbc0bdaea2b365e44e380511",
+      "size_bytes": 1030
+    },
+    {
+      "path": "migration/contracts/v1/legacy_paths_ov07.md",
+      "sha256": "0215ee77a3228541c3c4c18ab62a70fd39d5584eaa49ae8357da58458e3e2c14",
+      "size_bytes": 333
+    },
+    {
+      "path": "migration/contracts/v1/review_flow_ov07.md",
+      "sha256": "49c4f5dac6b309ea8ff18b9a36b0d0177ffd9faee0a9146cb3d3388ee29c4987",
+      "size_bytes": 474
+    },
+    {
+      "path": "migration/contracts/v1/source_token_retirement_ov07.md",
+      "sha256": "deba2094489f093db64f465d23724f3c39288e56dc36206963fbff5720b985e1",
+      "size_bytes": 246
+    },
+    {
+      "path": "migration/ledger/findings.json",
+      "sha256": "7b6112ce6c64438be78272c9692679c36eeb70ffed38f13eb5e8fd10bf6205b8",
+      "size_bytes": 21203
+    },
+    {
+      "path": "migration/ledger/ov07_status.json",
+      "sha256": "d1695abf66eda59c0fd73411be2036e0dbc45f6a9f4df099b74e44fe84f10139",
+      "size_bytes": 215
+    },
+    {
+      "path": "scripts/validate_ov07_contract.py",
+      "sha256": "ee97eb120bb7d0a7130346e5f9098065caa505c81faa3d202a5c32f86761028a",
+      "size_bytes": 7013
+    }
+  ],
+  "repository": "~/Code/dustui",
+  "roadmap_requirements": [
+    "schema-v2/current Devtool overlay manifest",
+    "checksums and explicit inventory",
+    "target declaration",
+    "migration-ledger updates",
+    "tests for overlay promises",
+    "authority-transition notes",
+    "reachable/unreachable legacy-path notes",
+    "source-token retirement notes",
+    "no unrelated cleanup or aesthetic refactors"
+  ],
+  "schema": "devtool.overlay.schema.v2",
+  "schema_version": 2,
+  "secondary_targets": [
+    "dustui_go",
+    "dust_tui_legacy"
+  ],
+  "target": "dustui_android",
+  "title": "Actionable evidence, immutable cleanup manifest, and single-use capability under Android suspension"
+}

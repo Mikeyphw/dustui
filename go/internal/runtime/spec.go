@@ -80,7 +80,7 @@ func CurrentSpec() Spec {
 		AndroidBuildability:  "intentionally-suspended",
 		AndroidReconnectGate: "OV13",
 		ScanReadAuthority:    "go-sqlite",
-		CleanupAuthority:     "legacy-constrained-until-OV08",
+		CleanupAuthority:     "go-evidence-capability-non-mutating-until-OV08",
 		PrivilegedBoundary:   "go-root-admission-boundary-ov06",
 	}
 }

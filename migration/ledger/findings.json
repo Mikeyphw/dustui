@@ -44,6 +44,7 @@
       "id": "RC-03",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
+      "ov07_status": "cleanup_evidence_manifest_capability_authority_added_non_mutating",
       "overlays": [
         "OV07",
         "OV10"
@@ -57,6 +58,7 @@
       "id": "RC-04",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
+      "ov07_status": "cleanup_evidence_manifest_capability_authority_added_non_mutating",
       "overlays": [
         "OV07",
         "OV08"
@@ -275,6 +277,7 @@
       "id": "N-06",
       "ov01_status": "mapped_to_future_overlay",
       "ov02_status": "not_in_ov02_scope",
+      "ov07_status": "cleanup_evidence_manifest_capability_authority_added_non_mutating",
       "overlays": [
         "OV07",
         "OV08"
@@ -695,6 +698,6 @@
       "title": "GO06"
     }
   ],
-  "phase": "OV06",
+  "phase": "OV07",
   "schema": "dustui.migration.ledger.v1"
 }

@@ -1,0 +1,8 @@
+{
+  "androidBuildability": "intentionally-suspended",
+  "cleanupCapability": true,
+  "gate": "post-Gate-B non-gate",
+  "mutationAuthority": false,
+  "nextGate": "OV08 Gate C destructive safety",
+  "phase": "OV07"
+}

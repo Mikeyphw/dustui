@@ -18,6 +18,7 @@ type Report struct {
 	ShellScaffold        bool                    `json:"shellScaffold"`
 	PrivilegedBoundary   bool                    `json:"privilegedBoundary"`
 	MutationAuthority    bool                    `json:"mutationAuthority"`
+	CleanupCapability    bool                    `json:"cleanupCapability"`
 	RequiredTables       []string                `json:"requiredTables"`
 	EnvelopeTypes        []protocol.EnvelopeType `json:"envelopeTypes"`
 	Message              string                  `json:"message"`
@@ -36,8 +37,9 @@ func Current() Report {
 		ShellScaffold:        true,
 		PrivilegedBoundary:   true,
 		MutationAuthority:    false,
+		CleanupCapability:    true,
 		RequiredTables:       append([]string{}, state.RequiredTables...),
 		EnvelopeTypes:        protocol.SupportedEnvelopeTypes(),
-		Message:              "OV06 privileged runtime boundary is present; mutation authority remains dry-run/non-production until OV08.",
+		Message:              "OV07 immutable cleanup manifest and single-use capability authority are present; mutation execution remains non-production until OV08.",
 	}
 }
