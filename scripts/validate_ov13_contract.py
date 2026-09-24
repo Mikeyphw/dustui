@@ -40,14 +40,15 @@ def validate(audit_loop: bool = False) -> list[str]:
     require(wrapper.get('schema') == 1, 'DustUI devtool wrapper schema=1 missing', failures)
     require(wrapper.get('default_command') == 'gate-d', 'DustUI wrapper default command must be gate-d', failures)
     wrapper_commands = wrapper.get('commands', {})
-    for command in ['gate-d', 'fast', 'unit', 'go-fast', 'build', 'test', 'lint']:
+    for command in ['gate-d', 'cutover-audit', 'fast', 'unit', 'go-fast', 'build', 'test', 'lint']:
         require(command in wrapper_commands, f'DustUI wrapper command missing: {command}', failures)
     jobs = android.get('jobs', {})
     workflows = android.get('workflows', {})
-    for job in ['ov13_contract', 'gradle_contract', 'go_test', 'android_unit', 'android_lint', 'android_assemble']:
+    for job in ['retirement_audit', 'retirement_gate', 'ov13_contract', 'gradle_contract', 'go_test', 'android_unit', 'android_lint', 'android_assemble']:
         require(job in jobs, f'DustUI android target-local EXO job missing: {job}', failures)
     require(workflows.get('fast') == ['job:ov13_contract', 'job:go_test', 'job:android_unit'], 'DustUI fast workflow must use target-local jobs', failures)
-    require(workflows.get('gate_d') == ['job:ov13_contract', 'job:go_test', 'job:gradle_contract', 'job:android_unit', 'job:android_lint', 'job:android_assemble'], 'DustUI Gate D workflow must use target-local jobs', failures)
+    require(workflows.get('cutover_audit') == ['job:retirement_audit'], 'DustUI cutover_audit workflow must expose the non-sealing truth audit', failures)
+    require(workflows.get('gate_d') == ['job:retirement_gate', 'job:ov13_contract', 'job:go_test', 'job:gradle_contract', 'job:android_unit', 'job:android_lint', 'job:android_assemble'], 'DustUI Gate D workflow must begin with the retirement truth gate', failures)
     go_jobs = go.get('jobs', {})
     go_workflows = go.get('workflows', {})
     for job in ['go_test', 'product_contract', 'tui_smoke', 'schema_contract']:
@@ -89,6 +90,9 @@ def validate(audit_loop: bool = False) -> list[str]:
     for evidence in ['android-compile', 'android-unit', 'android-lint', 'android-package', 'route-instrumentation', 'accessibility', 'runtime-apk-binding', 'go-tui-smoke']:
         require(evidence in product.get('requiredEvidence', []), f'Gate D evidence missing: {evidence}', failures)
     require(product.get('dustTuiAliasImplementation') == 'go-cli-or-go-tui-wrapper-after-gate-d', 'dust-tui alias implementation contract missing', failures)
+    require(product.get('gateDQualified') is False, 'product contract must expose reopened/unqualified Gate D truth', failures)
+    require(product.get('androidRuntimeBound') is False, 'product contract must not claim Android Go runtime binding before implementation', failures)
+    require(product.get('goSQLiteImplemented') is False, 'product contract must not claim Go SQLite implementation before implementation', failures)
     tui = run_json(['go', 'run', './cmd/dustui-go', 'tui-smoke'])
     require(tui.get('phase') == 'OV13', 'TUI smoke phase must be OV13', failures)
     require(tui.get('surface') == 'go-tui', 'TUI smoke surface mismatch', failures)
@@ -99,6 +103,8 @@ def validate(audit_loop: bool = False) -> list[str]:
     require(readiness.get('productionEngine') is True, 'readiness must expose production engine', failures)
     require(readiness.get('androidBuildability') == 'mandatory', 'readiness must expose mandatory Android buildability', failures)
     require(readiness.get('goCliDefault') is True and readiness.get('goTuiDefault') is True, 'readiness must expose Go CLI/TUI defaults', failures)
+    require(readiness.get('gateDQualified') is False, 'readiness must expose reopened/unqualified Gate D truth', failures)
+    require(readiness.get('androidRuntimeBound') is False and readiness.get('goSQLiteImplemented') is False, 'readiness must not claim unimplemented Android runtime/SQLite cutover', failures)
     schema = run_json(['go', 'run', './cmd/dustui-go', 'schema'])
     require(schema.get('schemaVersion') == 10, 'OV13 schema version must be 10', failures)
     tables = schema.get('requiredTables', [])
@@ -129,7 +135,9 @@ def validate(audit_loop: bool = False) -> list[str]:
         require(by_id[fid].get('ov13_status'), f'OV13 ledger status missing: {fid}', failures)
     status = json.loads(read('migration/ledger/ov13_status.json'))
     require(status.get('android_buildability') == 'mandatory', 'OV13 status must mark Android mandatory', failures)
-    require(status.get('legacy_domain_engines_required') is False, 'OV13 status must make legacy domain engines unnecessary', failures)
+    require(status.get('legacy_domain_engines_required') is False, 'OV13 historical target must make legacy domain engines unnecessary', failures)
+    require(status.get('gate_closure') == 'reopened-by-ov14-retirement-truth-audit', 'OV13 status must record Gate D reopening after source truth audit', failures)
+    require(status.get('ov15_eligible') is False, 'OV15 must remain ineligible while Gate D is reopened', failures)
     if audit_loop:
         combined = '\n'.join(read(rel) for rel in [
             'migration/contracts/v1/product_cutover_gateD_ov13.md',

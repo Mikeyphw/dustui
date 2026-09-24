@@ -13,6 +13,12 @@ func TestCurrentContractCutsOverAllProductSurfaces(t *testing.T) {
 	if contract.LegacyDomainEnginesRequired || contract.LegacyPythonTextualProduction {
 		t.Fatalf("legacy engines must not be required after Gate D: %+v", contract)
 	}
+	if contract.GateDQualified || contract.AndroidRuntimeBound || contract.GoSQLiteImplemented {
+		t.Fatalf("Gate D must remain truthfully unqualified until real Android cutover: %+v", contract)
+	}
+	if contract.ObservedAndroidAuthority != "legacy-kotlin-room-cpp-still-active" {
+		t.Fatalf("unexpected observed Android authority: %+v", contract)
+	}
 	required := map[Surface]bool{SurfaceCLI: false, SurfaceTUI: false, SurfaceAndroid: false}
 	for _, surface := range contract.Surfaces {
 		required[surface.Name] = true

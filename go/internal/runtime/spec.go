@@ -81,7 +81,7 @@ func CurrentSpec() Spec {
 			{ABI: ProductionABI, Status: ABIProduction, LibraryName: RuntimeLibraryName, Present: true},
 			{ABI: TestOnlyABI, Status: ABITestOnly, LibraryName: RuntimeLibraryName, Present: false},
 		},
-		AndroidBuildability:          "intentionally-suspended",
+		AndroidBuildability:          "mandatory",
 		AndroidReconnectGate:         "OV13",
 		ScanReadAuthority:            "go-sqlite",
 		CleanupAuthority:             "go-production-mutation-authority-ov08",
@@ -123,7 +123,7 @@ func ValidatePackageLayout(layout PackageLayout) error {
 		}
 		if artifact.ABI == TestOnlyABI {
 			if artifact.Status != ABITestOnly {
-				return fmt.Errorf("x86_64 may only be test-only while production Android is suspended: %+v", artifact)
+				return fmt.Errorf("x86_64 may only be test-only without a matching production Go runtime: %+v", artifact)
 			}
 			continue
 		}

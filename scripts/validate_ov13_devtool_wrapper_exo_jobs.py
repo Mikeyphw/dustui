@@ -70,7 +70,7 @@ def static_validate() -> list[str]:
 
     require(wrapper.get('schema') == 1, '[wrapper].schema must be 1', failures)
     require(wrapper.get('default_command') == 'gate-d', '[wrapper].default_command must be gate-d', failures)
-    for command in ['gate-d', 'fast', 'unit', 'go-fast', 'build', 'test', 'lint']:
+    for command in ['gate-d', 'cutover-audit', 'fast', 'unit', 'go-fast', 'build', 'test', 'lint']:
         require(command in commands, f'wrapper command missing: {command}', failures)
     require(commands.get('gate-d', {}).get('workflow') == 'gate_d', 'gate-d must resolve to gate_d workflow', failures)
     require(commands.get('gate-d', {}).get('target') == 'dustui_android', 'gate-d must target dustui_android', failures)
@@ -79,12 +79,13 @@ def static_validate() -> list[str]:
 
     android_jobs = android.get('jobs', {})
     android_workflows = android.get('workflows', {})
-    for job in ['ov13_contract', 'gradle_contract', 'go_test', 'android_unit', 'android_lint', 'android_assemble']:
+    for job in ['retirement_audit', 'retirement_gate', 'ov13_contract', 'gradle_contract', 'go_test', 'android_unit', 'android_lint', 'android_assemble']:
         require(job in android_jobs, f'android target-local job missing: {job}', failures)
     require(android_jobs.get('go_test', {}).get('root') == '../go', 'android go_test job must execute from ../go', failures)
     require(android_jobs.get('android_unit', {}).get('gradle_tasks') == [':app:testDebugUnitTest'], 'android_unit gradle task mismatch', failures)
     require(android_workflows.get('fast') == ['job:ov13_contract', 'job:go_test', 'job:android_unit'], 'android fast workflow mismatch', failures)
-    require(android_workflows.get('gate_d') == ['job:ov13_contract', 'job:go_test', 'job:gradle_contract', 'job:android_unit', 'job:android_lint', 'job:android_assemble'], 'android gate_d workflow mismatch', failures)
+    require(android_workflows.get('cutover_audit') == ['job:retirement_audit'], 'android cutover_audit workflow mismatch', failures)
+    require(android_workflows.get('gate_d') == ['job:retirement_gate', 'job:ov13_contract', 'job:go_test', 'job:gradle_contract', 'job:android_unit', 'job:android_lint', 'job:android_assemble'], 'android gate_d workflow must begin with retirement truth gate', failures)
 
     go_jobs = go.get('jobs', {})
     go_workflows = go.get('workflows', {})
@@ -126,7 +127,7 @@ def dynamic_validate() -> list[str]:
 
     jobs_text, jobs_json = run_capture([devtool, '-r', str(ROOT), 'jobs', '--target', 'dustui_android', '--json'])
     jobs_blob = jobs_text + '\n' + (flatten_json(jobs_json) if jobs_json is not None else '')
-    for job in ['ov13_contract', 'gradle_contract', 'android_unit']:
+    for job in ['retirement_audit', 'retirement_gate', 'ov13_contract', 'gradle_contract', 'android_unit']:
         require(
             contains_any(jobs_blob, [job, f'job:{job}', f'local={job}', f'target:dustui_android.{job}']),
             f'devtool jobs missing dustui_android target job: {job}',
@@ -140,7 +141,7 @@ def dynamic_validate() -> list[str]:
         'Gate D plan must expose target-local jobs',
         failures,
     )
-    for job in ['ov13_contract', 'android_unit']:
+    for job in ['retirement_gate', 'ov13_contract', 'android_unit']:
         require(
             contains_any(plan_blob, [f'job:{job}', f'job-{job}', f'target:dustui_android.{job}', job]),
             f'Gate D plan missing job:{job}',

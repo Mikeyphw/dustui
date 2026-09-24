@@ -39,6 +39,13 @@ func (p *fakeProcess) Send(_ context.Context, env protocol.Envelope) (protocol.E
 func (p *fakeProcess) Alive() bool { return p.alive }
 func (p *fakeProcess) Kill() error { p.alive = false; return nil }
 
+func TestCurrentSpecKeepsAndroidBuildabilityMandatory(t *testing.T) {
+	spec := CurrentSpec()
+	if spec.AndroidBuildability != "mandatory" {
+		t.Fatalf("android buildability = %q, want mandatory", spec.AndroidBuildability)
+	}
+}
+
 func TestPackageLayoutRequiresArm64RuntimeAndForbidsAdvertisedMissingABI(t *testing.T) {
 	if err := ValidatePackageLayout(PackageLayout{Artifacts: CurrentSpec().Artifacts}); err != nil {
 		t.Fatalf("valid package layout rejected: %v", err)

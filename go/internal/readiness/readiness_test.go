@@ -13,6 +13,9 @@ func TestCurrentIsOV13ProductDefault(t *testing.T) {
 	if !report.GoCLIDefault || !report.GoTUIDefault {
 		t.Fatalf("Go CLI/TUI must be product defaults: %+v", report)
 	}
+	if report.GateDQualified || report.AndroidRuntimeBound || report.GoSQLiteImplemented || !report.LegacyAndroidAuthority {
+		t.Fatalf("OV14 truth audit qualification state is wrong: %+v", report)
+	}
 	if !report.MutationAuthority || !report.PackageStorageAuthority || !report.CleanupIntelligence || !report.AutomationActivity || !report.DiagnosticsEvidence || !report.PrivacyBoundedSupport || !report.SQLiteAuthorityModel || !report.ReadAuthority || !report.RuntimePackaged || !report.ShellScaffold || !report.PrivilegedBoundary || !report.CleanupCapability {
 		t.Fatalf("OV13 must retain all prior authorities: %+v", report)
 	}

@@ -32,6 +32,10 @@ type Report struct {
 	RequiredTables          []string                `json:"requiredTables"`
 	EnvelopeTypes           []protocol.EnvelopeType `json:"envelopeTypes"`
 	Message                 string                  `json:"message"`
+	GateDQualified          bool                    `json:"gateDQualified"`
+	AndroidRuntimeBound     bool                    `json:"androidRuntimeBound"`
+	GoSQLiteImplemented     bool                    `json:"goSQLiteImplemented"`
+	LegacyAndroidAuthority  bool                    `json:"legacyAndroidAuthority"`
 }
 
 func Current() Report {
@@ -59,6 +63,10 @@ func Current() Report {
 		AndroidBuildability:     product.AndroidBuildState,
 		RequiredTables:          append([]string{}, state.RequiredTables...),
 		EnvelopeTypes:           protocol.SupportedEnvelopeTypes(),
-		Message:                 "OV13 makes the Go CLI/TUI and Android semantic shell the product default; Android buildability is mandatory again and legacy domain engines are no longer required.",
+		Message:                 "OV14 truth audit: Go contracts are the intended product target, but Gate D is reopened because Android still uses legacy Kotlin/Room/C++ authority and lacks the real Go runtime + Go SQLite cutover.",
+		GateDQualified:          false,
+		AndroidRuntimeBound:     false,
+		GoSQLiteImplemented:     false,
+		LegacyAndroidAuthority:  true,
 	}
 }

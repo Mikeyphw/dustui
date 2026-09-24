@@ -79,6 +79,11 @@ type Contract struct {
 	BoundProtocols                []string             `json:"boundProtocols"`
 	FrozenPythonParityOracle      bool                 `json:"frozenPythonParityOracle"`
 	DustTuiAliasImplementation    string               `json:"dustTuiAliasImplementation"`
+	DeclarationScope              string               `json:"declarationScope"`
+	GateDQualified                bool                 `json:"gateDQualified"`
+	AndroidRuntimeBound           bool                 `json:"androidRuntimeBound"`
+	GoSQLiteImplemented           bool                 `json:"goSQLiteImplemented"`
+	ObservedAndroidAuthority      string               `json:"observedAndroidAuthority"`
 }
 
 func CurrentContract() Contract {
@@ -120,6 +125,11 @@ func CurrentContract() Contract {
 		BoundProtocols:             boundProtocols(),
 		FrozenPythonParityOracle:   true,
 		DustTuiAliasImplementation: "go-cli-or-go-tui-wrapper-after-gate-d",
+		DeclarationScope:           "desired-product-contract-not-qualified-runtime-state",
+		GateDQualified:             false,
+		AndroidRuntimeBound:        false,
+		GoSQLiteImplemented:        false,
+		ObservedAndroidAuthority:   "legacy-kotlin-room-cpp-still-active",
 	}
 }
 
@@ -167,6 +177,12 @@ func ValidateContract(c Contract) error {
 	}
 	if !c.ProductionEngine || !c.GoSQLiteProductDefault || c.LegacyDomainEnginesRequired || c.LegacyPythonTextualProduction {
 		return errors.New("Gate D must make Go the product default and legacy engines unnecessary")
+	}
+	if c.GateDQualified || c.AndroidRuntimeBound || c.GoSQLiteImplemented {
+		return errors.New("OV14 truth audit must keep Gate D unqualified until Android runtime and Go SQLite are real")
+	}
+	if c.DeclarationScope != "desired-product-contract-not-qualified-runtime-state" || c.ObservedAndroidAuthority == "" {
+		return errors.New("product contract must distinguish declared target from observed Android authority")
 	}
 	if len(c.Routes) != 6 {
 		return fmt.Errorf("expected six semantic routes, got %d", len(c.Routes))

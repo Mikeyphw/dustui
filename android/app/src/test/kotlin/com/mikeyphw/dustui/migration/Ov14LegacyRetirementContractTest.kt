@@ -18,13 +18,19 @@ class Ov14LegacyRetirementContractTest {
 
     private fun repoFile(path: String): File = File(repoRoot(), path)
 
-    @Test fun `ov14 records legacy retirement facts`() {
+    @Test fun `ov14 records desired retirement target and observed blockers separately`() {
         val contract = repoFile("migration/contracts/v1/ov14_legacy_retirement.md").readText()
         assertTrue(contract.contains("cpp_scanner_runtime = none"))
         assertTrue(contract.contains("python_runtime = none"))
         assertTrue(contract.contains("room_domain_authority = none"))
         assertTrue(contract.contains("legacy_destructive_executor = none"))
         assertTrue(contract.contains("legacy_navigation = none"))
+        assertTrue(contract.contains("Observed state"))
+        assertTrue(contract.contains("cpp_scanner_runtime = active-production"))
+        assertTrue(contract.contains("go_sqlite_persistence = missing-implementation"))
+        val status = repoFile("migration/ledger/ov14_legacy_retirement_status.json").readText()
+        assertTrue(status.contains("\"status\": \"reopened_blocked\""))
+        assertTrue(status.contains("go_android_runtime_binding_missing"))
     }
 
     @Test fun `ov14 keeps supported devtool wrapper jobs`() {

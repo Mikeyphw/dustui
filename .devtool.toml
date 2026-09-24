@@ -88,6 +88,8 @@ structured_events = true
 max_gradle_nodes = 1
 abi_policy = "arm64-v8a production first; x86_64 is test-only until a matching Go runtime exists"
 release_authority = "devtool"
+gate_d_truth = "reopened-by-ov14-retirement-truth-audit"
+ov15_status = "blocked-on-real-android-go-cutover"
 
 [targets.dustui_go]
 type = "go"
@@ -130,6 +132,9 @@ root_protocol = "dustui.privileged.runtime.v1"
 read_authority = "go-sqlite"
 android_runtime_packaging = "arm64-v8a-only"
 shell_scaffold = true
+production_authority_qualified = false
+android_cutover_complete = false
+go_sqlite_implementation = false
 
 [targets.dustui_go.tasks]
 test = ["go", "test", "./..."]
@@ -260,6 +265,18 @@ root = ".."
 command = ["python3", "scripts/validate_ov13_contract.py", "--audit-loop"]
 inputs = ["scripts/validate_ov13_contract.py", "go", "migration", ".devtool.toml"]
 
+[targets.dustui_android.jobs.retirement_audit]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_ov14_retirement_truth_hotfix.py"]
+inputs = ["scripts/validate_ov14_retirement_truth_hotfix.py", "android", "go", "migration", ".devtool.toml"]
+
+[targets.dustui_android.jobs.retirement_gate]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_ov14_retirement_truth_hotfix.py", "--gate"]
+inputs = ["scripts/validate_ov14_retirement_truth_hotfix.py", "android", "go", "migration", ".devtool.toml"]
+
 [targets.dustui_android.jobs.gradle_contract]
 gradle_tasks = ["verifyDustMigrationContract"]
 
@@ -284,8 +301,9 @@ outputs = ["app/build/outputs/apk/debug"]
 [targets.dustui_android.workflows]
 fast = ["job:ov13_contract", "job:go_test", "job:android_unit"]
 unit = ["job:android_unit"]
-gate_d = ["job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
-validate = ["job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
+cutover_audit = ["job:retirement_audit"]
+gate_d = ["job:retirement_gate", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
+validate = ["job:retirement_gate", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
 
 [targets.dustui_go.jobs.go_test]
 runner = "command"
@@ -320,6 +338,12 @@ description = "Run DustUI Gate D through EXO target-local jobs"
 workflow = "gate_d"
 target = "dustui_android"
 aliases = ["gate", "validate-gate"]
+
+[wrapper.commands.cutover-audit]
+description = "Audit actual Android/Go cutover truth without claiming Gate D closure"
+workflow = "cutover_audit"
+target = "dustui_android"
+aliases = ["truth"]
 
 [wrapper.commands.fast]
 description = "Run the DustUI fast OV13 evidence workflow"

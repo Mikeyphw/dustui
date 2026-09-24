@@ -1,16 +1,45 @@
 {
   "phase": "OV14",
-  "status": "implemented",
-  "android_buildability": "mandatory",
-  "go_authority": "product-default",
-  "cpp_scanner_runtime": "none",
-  "python_runtime": "none",
-  "room_domain_authority": "none",
-  "legacy_destructive_executor": "none",
-  "legacy_navigation": "none",
-  "folded_in": [
-    "ov13_cleaning_performance_termux_hotfix_validator_jobs_workflows_fix"
+  "status": "reopened_blocked",
+  "gate_d_truth": "reopened",
+  "ov15_status": "blocked_until_real_android_go_cutover",
+  "reason": "Source audit found live C++ scanner/destructive paths, live Room authority, no Android Go process binding, no Go SQLite implementation, a Python compatibility target, unresolved legacy navigation, and duplicated app-local release truth.",
+  "desired": {
+    "cpp_scanner_runtime": "none",
+    "python_runtime": "none",
+    "room_domain_authority": "none",
+    "legacy_destructive_executor": "none",
+    "legacy_navigation": "none",
+    "go_authority": "product-default-qualified",
+    "android_go_runtime_binding": "production",
+    "go_sqlite_persistence": "go-owned-sqlite",
+    "generic_release_truth": "devtool-only"
+  },
+  "observed": {
+    "cpp_scanner_runtime": "active-production",
+    "python_runtime": "compatibility-only-target-present",
+    "room_domain_authority": "active-production",
+    "legacy_destructive_executor": "active-production",
+    "legacy_navigation": "not-proven-retired",
+    "go_authority": "go-domain-contracts-present-android-production-unqualified",
+    "android_go_runtime_binding": "missing-production-binding",
+    "go_sqlite_persistence": "missing-implementation",
+    "generic_release_truth": "duplicated-app-local"
+  },
+  "blockers": [
+    "cpp_scanner_production_active",
+    "generic_release_truth_duplicated",
+    "go_android_runtime_binding_missing",
+    "go_sqlite_persistence_missing",
+    "legacy_destructive_executor_active",
+    "legacy_navigation_not_proven_retired",
+    "python_legacy_target_present",
+    "room_domain_authority_active"
   ],
-  "unsupported_devtool_jobs_workflows_rejected": false,
-  "supported_devtool_wrapper_jobs_required": true
+  "folded_in": [
+    "ov13_cleaning_performance_termux_hotfix_validator_jobs_workflows_fix",
+    "ov14_validator_syntax_hotfix",
+    "ov14_retirement_truth_hotfix"
+  ],
+  "next": "android_go_cutover_remediation_before_ov15_gate_e"
 }

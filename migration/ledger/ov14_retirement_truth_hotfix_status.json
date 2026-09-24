@@ -1,0 +1,9 @@
+{
+  "artifact": "dustui_go_ov14_retirement_truth_hotfix_v1.zip",
+  "phase": "OV14",
+  "status": "ready-to-apply",
+  "validation_mode": "deferred-non-gate-hotfix",
+  "gate_d": "reopened",
+  "ov15": "blocked",
+  "next_after_apply": "REM-01 real Android Go runtime packaging and session bridge"
+}
