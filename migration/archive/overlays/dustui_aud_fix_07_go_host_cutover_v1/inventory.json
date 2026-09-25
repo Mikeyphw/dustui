@@ -1,0 +1,379 @@
+{
+  "entries": [
+    {
+      "action": "modify",
+      "path": ".devtool.toml",
+      "sha256": "0ab21563bdaa0061c15c61e1bb334dc765a8c42707303e384486832bb8e8e398",
+      "size": 19823,
+      "source_sha256": "84024d8d56cfb9cac16ad92b29ba0481e01858f3bfc9726af7a6fbd7ad217e62"
+    },
+    {
+      "action": "modify",
+      "path": "CHANGELOG.md",
+      "sha256": "5cb967f0fa07fb1dabfc5381951d14807e48edcac06fd2284d53aae9d1a6839d",
+      "size": 22668,
+      "source_sha256": "ead728020bb49241b1ee9e63620399b64cecbfd261a3104db00c28cab0b94849"
+    },
+    {
+      "action": "modify",
+      "path": "README.md",
+      "sha256": "ad69673262bb41c32ccd9bbfefacedc335a317b49200930c0133c4345dc475db",
+      "size": 4942,
+      "source_sha256": "d1687eec466382aaaa9057c03c9ce24dfc591cd216cf7cbf5677f460228a11ee"
+    },
+    {
+      "action": "modify",
+      "path": "VALIDATION.md",
+      "sha256": "e5f672dbd57d46bd80b2c7f82d3f8e66048a3e9dcf513a395403a814be7fd997",
+      "size": 5859,
+      "source_sha256": "bed847746b26eb7d2bb5abb3a7d50166a0526f4f12ce7e21381f1d5b6e8e0a06"
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/migration/Ov01MigrationContractTest.kt",
+      "sha256": "4e02a8cf8238724c8ae26d2b5a3ca2c1a73c693a6add9feb029e1ae671b1e4f3",
+      "size": 5510,
+      "source_sha256": "36271327dcc722bfe5145f9ad74a61e62962adc2eebec8377b7b105c6579896a"
+    },
+    {
+      "action": "modify",
+      "path": "docs/UI_UX_CONTRACT.md",
+      "sha256": "a26ebd8039e854b87c12e9e7ba8a4e2cba59666d78b79cafb39970febfe75865",
+      "size": 3478,
+      "source_sha256": "49b525175f25b0234f66da9acdf1206528fe1d08c5bac099e1d095b5ff8a73aa"
+    },
+    {
+      "action": "add",
+      "path": "go/cmd/dust-space/main.go",
+      "sha256": "3b87d8c3cbe9acda6391b8a3974fa9eca8ebb1bc8376ff8677bb7f7ad617369e",
+      "size": 349
+    },
+    {
+      "action": "add",
+      "path": "go/cmd/dust-tui/main.go",
+      "sha256": "f8d2a45c326bf7014a79bc6afeb249835dc1fb793438b90107cb38b99ab4acc9",
+      "size": 347
+    },
+    {
+      "action": "modify",
+      "path": "go/cmd/dustui-go/main.go",
+      "sha256": "e14af6b076b0c551eed907c74fa3b05a9b9f3fb3f4ca44c012d66cb536f16808",
+      "size": 9032,
+      "source_sha256": "aa914391e3bdee14c5a6ea39f6f4a357ab2e351adcc91cc8fdf219c8247c33dc"
+    },
+    {
+      "action": "add",
+      "path": "go/internal/host/host.go",
+      "sha256": "2a9c969f0224a9cc3edd0fd53efeec377c18d63e9d7571647ba64d16b604ebe6",
+      "size": 19649
+    },
+    {
+      "action": "add",
+      "path": "go/internal/host/host_test.go",
+      "sha256": "08df387ac3ffd4dca9dfbf7edc2603f52fe9e39c944e430cfd413c5daf105ae9",
+      "size": 3084
+    },
+    {
+      "action": "modify",
+      "path": "go/internal/product/product.go",
+      "sha256": "25bfb615f1dc1419df834b6d90ebbd3633b48c7fe7bd1e3c69b616c5e00c8200",
+      "size": 11533,
+      "source_sha256": "7c03087aecf8c1898cc4cb6874568c642ce0bffba01f77f5aaab494949cc9038"
+    },
+    {
+      "action": "modify",
+      "path": "go/internal/product/product_test.go",
+      "sha256": "624d5c942f3b975fe78a9e001513a916b2753c763f338464b62d5a0225f2fa9d",
+      "size": 2113,
+      "source_sha256": "f5efb00df56365bfd476901c88765e0461c35b60be3ccb47d2414b4a6c274a1a"
+    },
+    {
+      "action": "modify",
+      "path": "go/internal/qualification/state_generated.go",
+      "sha256": "53d6d6edb4e274cbe1a87a1f99fade5cdbc256643fafbc2e006b7f9ac59fdab0",
+      "size": 2098,
+      "source_sha256": "0d08a0cdf0902d57f6e58d6590618af62020b70a559a4982a599d9c03123d885"
+    },
+    {
+      "action": "modify",
+      "path": "go/internal/readiness/readiness.go",
+      "sha256": "eb57e65aad0923ee19de092b55950ebd4949d1a1500be8fc41f8a208aac0e780",
+      "size": 4111,
+      "source_sha256": "140a5f66e6b13f7dca11614e82572964b4ffc8388be96e910dc98f8819befb4a"
+    },
+    {
+      "action": "modify",
+      "path": "go/internal/readiness/readiness_test.go",
+      "sha256": "8312f93c4fae31917fb914b848ff75b0e2a739b6da1a8a546f929d8b11f5dce7",
+      "size": 981,
+      "source_sha256": "a6d9e805520a757a66a0c928f9a8557740f225c3bc5e15fe74d48eec4d8a2fef"
+    },
+    {
+      "action": "modify",
+      "path": "go/internal/tui/tui.go",
+      "sha256": "5d2fb5c7d667a37c5311ffa8214ef0fbc6f3c016f2feb853e18ebc6216c6c678",
+      "size": 7684,
+      "source_sha256": "74ff085f81e2d58ddf8d36b5a0a35d55abc4af21e3a21648c2f0e1ab584d926b"
+    },
+    {
+      "action": "modify",
+      "path": "go/internal/tui/tui_test.go",
+      "sha256": "d661c7246c8ef6707c0b1f3f682b3425029e12c291462b84315c6f633e3830fe",
+      "size": 2467,
+      "source_sha256": "9e984070146195066bf64b2532ae3fae486fb84eb7897222530bd984097b3b13"
+    },
+    {
+      "action": "add",
+      "path": "migration/audit/v2/aud_fix_07_audit_loop.json",
+      "sha256": "be8eb0683176acbc175e13850a418bc3e58f0e700b298ec9f2a5ff5c355811a6",
+      "size": 2198
+    },
+    {
+      "action": "add",
+      "path": "migration/contracts/v2/aud_fix_07_go_host_cutover.md",
+      "sha256": "2b03f98f68aabab1b40078196c7c9e10884025fa03513d49b6db0fe58cc19130",
+      "size": 1535
+    },
+    {
+      "action": "add",
+      "path": "migration/ledger/aud_fix_07_status.json",
+      "sha256": "462ce3f859f0b194c46a3daf52256d66ad9a9c98cfbef12e1797b89b5c7c7500",
+      "size": 693
+    },
+    {
+      "action": "add",
+      "path": "migration/oracle/python_textual/LEGACY_README.md",
+      "sha256": "d1687eec466382aaaa9057c03c9ce24dfc591cd216cf7cbf5677f460228a11ee",
+      "size": 7761
+    },
+    {
+      "action": "add",
+      "path": "migration/oracle/python_textual/README.md",
+      "sha256": "65e6f1b7facb0907b91b60ff2ddf1029c7fbd9f6ce60296c264cf3ebd916c785",
+      "size": 804
+    },
+    {
+      "action": "add",
+      "path": "migration/oracle/python_textual/pyproject.toml",
+      "sha256": "669f81af04dfdd2c8e3629368851439de5df45b68e48f0e53ec3ece796294650",
+      "size": 1450
+    },
+    {
+      "action": "add",
+      "path": "migration/oracle/python_textual/src/dust_tui/__init__.py",
+      "sha256": "15ca67df7db971900957d98230cacef7ba09c01c0502a53d4cb680a6f4810bd6",
+      "size": 74
+    },
+    {
+      "action": "add",
+      "path": "migration/oracle/python_textual/src/dust_tui/__main__.py",
+      "sha256": "59f9fa5da83de662cc780b898cb8ac1493efcd5a36b3c5f914f7465df22b8944",
+      "size": 764
+    },
+    {
+      "action": "add",
+      "path": "migration/oracle/python_textual/src/dust_tui/app.py",
+      "sha256": "861e467b9a941839ec4e66f0601c7a6db0017ab09a457d457d4b3e2d93ea5b92",
+      "size": 25394
+    },
+    {
+      "action": "add",
+      "path": "migration/oracle/python_textual/src/dust_tui/backends.py",
+      "sha256": "90681053227a8001404eded243fc9ec00cd99ee1f6cf306822dcacfa6568a6a1",
+      "size": 15153
+    },
+    {
+      "action": "add",
+      "path": "migration/oracle/python_textual/src/dust_tui/config.py",
+      "sha256": "de5f37db1606cbf2de5b1eabeab307041fb041d1338852e7c307543ad3eb988c",
+      "size": 2380
+    },
+    {
+      "action": "add",
+      "path": "migration/oracle/python_textual/src/dust_tui/models.py",
+      "sha256": "8453cc8b5faeeac9c3014be0484057ce4c277a4df5f846b9223cdffc8e128c99",
+      "size": 2140
+    },
+    {
+      "action": "add",
+      "path": "migration/oracle/python_textual/src/dust_tui/screens.py",
+      "sha256": "987ddf717c8b84de252938c6e38bcb196892d0370f107e0526339f40a3a8dca3",
+      "size": 15310
+    },
+    {
+      "action": "add",
+      "path": "migration/oracle/python_textual/src/dust_tui/styles.tcss",
+      "sha256": "2d800f702ab9fd25c08b7b560f7ca25d340731126b20b296bae354eb6ef5b76c",
+      "size": 3344
+    },
+    {
+      "action": "add",
+      "path": "migration/oracle/python_textual/src/dust_tui/utils.py",
+      "sha256": "e927ea903033a7757bff1fcbc92acbb1d1f2ef4ddedf9cda2d406b5735eba608",
+      "size": 5229
+    },
+    {
+      "action": "add",
+      "path": "migration/oracle/python_textual/tests/test_app.py",
+      "sha256": "57d6ee40d9a163ea9d6d5f1fa60dd8e28ff62f917c1448423286f1f5e480b839",
+      "size": 7120
+    },
+    {
+      "action": "add",
+      "path": "migration/oracle/python_textual/tests/test_backends.py",
+      "sha256": "f3b771c6e0bcdd996ca82cdc97125507b62f3c26d8e79830d1a1f0a950104f05",
+      "size": 4236
+    },
+    {
+      "action": "add",
+      "path": "migration/oracle/python_textual/tests/test_ui_contract.py",
+      "sha256": "8300effbff7c88d9a291e0801fee7fe3172d89a263fcba4471543bbf517de6fc",
+      "size": 931
+    },
+    {
+      "action": "add",
+      "path": "migration/oracle/python_textual/tests/test_utils.py",
+      "sha256": "99091807698864ff67b6aa6ecd5ad56b5e91e1c4b569529e85dea059e848bc38",
+      "size": 621
+    },
+    {
+      "action": "modify",
+      "path": "migration/qualification/v1/current_state.json",
+      "sha256": "24b39ec1abe3e7360f73318eb28a21fcb4c391d33cd024f1988508d8e1a35509",
+      "size": 3217,
+      "source_sha256": "88729a256937acdf00ca9172218e4deef8db650db52fa6e411491a231b2d29dc"
+    },
+    {
+      "action": "delete",
+      "path": "pyproject.toml",
+      "source_sha256": "669f81af04dfdd2c8e3629368851439de5df45b68e48f0e53ec3ece796294650"
+    },
+    {
+      "action": "modify",
+      "path": "scripts/audfix01_core.py",
+      "sha256": "3bf2c6cf31b8c7e398303f35c253fe22d3c347c04c6456e3490f363d370bcb2e",
+      "size": 14405,
+      "source_sha256": "2ed0b3b0484c777f1f06a86936a511b2c8611f7513b503eae7d845e5443ba33a"
+    },
+    {
+      "action": "modify",
+      "path": "scripts/install.sh",
+      "sha256": "6cc3791fbd4ed06f9d3da38334fc602bca83ce74ec82beb04673825165f0c19f",
+      "size": 451,
+      "source_sha256": "3c0825d431ac05f1ad2abfab86e25d0e823b546100489f311b96d74e2ff45f14"
+    },
+    {
+      "action": "modify",
+      "path": "scripts/refresh_qualification_state.py",
+      "sha256": "047b2d9d55ee41d805b0d88bd2bd2147db752637ca8e7f8ecefead2ed8d08b4b",
+      "size": 3414,
+      "source_sha256": "8f3c10b8f809da95351addafe5b0a76df9d98e9efe1c74fd3788762e520c940b"
+    },
+    {
+      "action": "modify",
+      "path": "scripts/run-dev.sh",
+      "sha256": "26ed811e716880a328196d440285f8b7e535ee434b9f2ead9f2f1bf28797c2ec",
+      "size": 134,
+      "source_sha256": "fe12f15189100499d95daa2efb262edadf0e70a390a791a7387f6bd118e48456"
+    },
+    {
+      "action": "modify",
+      "path": "scripts/validate_audfix05_contract.py",
+      "sha256": "d7679530f9041a4dd6227bb7488771b417013c32d500a912bdcb031d29742778",
+      "size": 5440,
+      "source_sha256": "218838dd3c00ad8509d78a292448e9a07895ba1eb4ff0e068a8f7402a7b1114a"
+    },
+    {
+      "action": "add",
+      "path": "scripts/validate_audfix07_contract.py",
+      "sha256": "e1fed7f564b6ba20d897d1d4d1487926a6aae9038ad9b37463435fac5bdde320",
+      "size": 6770
+    },
+    {
+      "action": "modify",
+      "path": "scripts/validate_ov01_contract.py",
+      "sha256": "901893378ca3433343cb5fd7292536f7288887c84382346fb6af5effac4ec447",
+      "size": 4842,
+      "source_sha256": "af13f8326540d03df9252554c3c0c21f6dcd4d822e2ea4d9496e8e11f96c675b"
+    },
+    {
+      "action": "modify",
+      "path": "scripts/validate_ov13_contract.py",
+      "sha256": "b4fe0af8da5335e0c84a0b8ceee8a6ade5f4f1b66a731d23a6105a8171a829ec",
+      "size": 5865,
+      "source_sha256": "0b2a7fa2bc04c0871e179e915093663a8d6777278a62476adc7d5bd81f34e119"
+    },
+    {
+      "action": "modify",
+      "path": "scripts/validate_ov13_ov01_readiness_transition_hotfix.py",
+      "sha256": "96e5b4852af9b6a96d301193a4e16c15a391cbb02427b3ab8d8426f2e09a192e",
+      "size": 1443,
+      "source_sha256": "e4a92128314fac12df660935d7338ad07029d8b4a5d11b3bbc6662874181fd6b"
+    },
+    {
+      "action": "delete",
+      "path": "src/dust_tui/__init__.py",
+      "source_sha256": "15ca67df7db971900957d98230cacef7ba09c01c0502a53d4cb680a6f4810bd6"
+    },
+    {
+      "action": "delete",
+      "path": "src/dust_tui/__main__.py",
+      "source_sha256": "59f9fa5da83de662cc780b898cb8ac1493efcd5a36b3c5f914f7465df22b8944"
+    },
+    {
+      "action": "delete",
+      "path": "src/dust_tui/app.py",
+      "source_sha256": "861e467b9a941839ec4e66f0601c7a6db0017ab09a457d457d4b3e2d93ea5b92"
+    },
+    {
+      "action": "delete",
+      "path": "src/dust_tui/backends.py",
+      "source_sha256": "90681053227a8001404eded243fc9ec00cd99ee1f6cf306822dcacfa6568a6a1"
+    },
+    {
+      "action": "delete",
+      "path": "src/dust_tui/config.py",
+      "source_sha256": "de5f37db1606cbf2de5b1eabeab307041fb041d1338852e7c307543ad3eb988c"
+    },
+    {
+      "action": "delete",
+      "path": "src/dust_tui/models.py",
+      "source_sha256": "8453cc8b5faeeac9c3014be0484057ce4c277a4df5f846b9223cdffc8e128c99"
+    },
+    {
+      "action": "delete",
+      "path": "src/dust_tui/screens.py",
+      "source_sha256": "987ddf717c8b84de252938c6e38bcb196892d0370f107e0526339f40a3a8dca3"
+    },
+    {
+      "action": "delete",
+      "path": "src/dust_tui/styles.tcss",
+      "source_sha256": "2d800f702ab9fd25c08b7b560f7ca25d340731126b20b296bae354eb6ef5b76c"
+    },
+    {
+      "action": "delete",
+      "path": "src/dust_tui/utils.py",
+      "source_sha256": "e927ea903033a7757bff1fcbc92acbb1d1f2ef4ddedf9cda2d406b5735eba608"
+    },
+    {
+      "action": "delete",
+      "path": "tests/test_app.py",
+      "source_sha256": "57d6ee40d9a163ea9d6d5f1fa60dd8e28ff62f917c1448423286f1f5e480b839"
+    },
+    {
+      "action": "delete",
+      "path": "tests/test_backends.py",
+      "source_sha256": "f3b771c6e0bcdd996ca82cdc97125507b62f3c26d8e79830d1a1f0a950104f05"
+    },
+    {
+      "action": "delete",
+      "path": "tests/test_ui_contract.py",
+      "source_sha256": "8300effbff7c88d9a291e0801fee7fe3172d89a263fcba4471543bbf517de6fc"
+    },
+    {
+      "action": "delete",
+      "path": "tests/test_utils.py",
+      "source_sha256": "99091807698864ff67b6aa6ecd5ad56b5e91e1c4b569529e85dea059e848bc38"
+    }
+  ]
+}

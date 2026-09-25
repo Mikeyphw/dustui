@@ -1,0 +1,86 @@
+package host
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/mikeyphw/dustui/go/internal/qualification"
+)
+
+func runForTest(t *testing.T, args ...string) map[string]any {
+	t.Helper()
+	var out, errOut bytes.Buffer
+	code := Run(context.Background(), args, Streams{In: strings.NewReader(""), Out: &out, Err: &errOut})
+	if code != 0 {
+		t.Fatalf("Run(%v)=%d stderr=%s", args, code, errOut.String())
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(out.Bytes(), &payload); err != nil {
+		t.Fatalf("Run(%v) did not emit JSON: %v\n%s", args, err, out.String())
+	}
+	return payload
+}
+
+func TestAUD_FIX07HostInspectionIsMachineReadableAndTruthful(t *testing.T) {
+	payload := runForTest(t, "inspect", "product")
+	if got, _ := payload["hostAuthorityDefault"].(bool); !got {
+		t.Fatalf("Go host is not production-default: %#v", payload)
+	}
+	if got, _ := payload["legacyPythonTextualProduction"].(bool); got {
+		t.Fatalf("legacy Python/Textual still exposed as production: %#v", payload)
+	}
+	if got, _ := payload["pythonParityOraclePresent"].(bool); got != qualification.PythonTextualOraclePresent {
+		t.Fatalf("oracle observation diverged from canonical qualification: %#v", payload)
+	}
+	if got, _ := payload["gateDQualified"].(bool); got != qualification.GateDQualified {
+		t.Fatalf("host cutover must not forge Android Gate D closure: %#v", payload)
+	}
+}
+
+func TestAUD_FIX07ScanQuerySearchShareSQLiteAuthority(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "needle.txt"), []byte("dustui"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(filepath.Join(root, "nested"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "nested", "other.bin"), []byte("123456"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	db := filepath.Join(t.TempDir(), "dustui.db")
+	scanPayload := runForTest(t, "scan", "--db", db, root)
+	if persisted, _ := scanPayload["persisted"].(bool); !persisted {
+		t.Fatalf("scan did not persist into Go SQLite authority: %#v", scanPayload)
+	}
+	query := runForTest(t, "query", "--db", db, "--query", "needle", "--limit", "20")
+	if ok, _ := query["ok"].(bool); !ok {
+		t.Fatalf("query failed: %#v", query)
+	}
+	search := runForTest(t, "search", "--db", db, "--query", "needle", "--limit", "20")
+	if ok, _ := search["ok"].(bool); !ok {
+		t.Fatalf("search failed: %#v", search)
+	}
+	encoded, _ := json.Marshal(search)
+	if !bytes.Contains(encoded, []byte("needle.txt")) {
+		t.Fatalf("search did not observe persisted scan entry: %s", encoded)
+	}
+}
+
+func TestAUD_FIX07CompatibilityAliasesConvergeOnGoTUI(t *testing.T) {
+	for _, alias := range []string{"dust-tui", "dust-space"} {
+		var out, errOut bytes.Buffer
+		code := RunAlias(context.Background(), alias, []string{"."}, Streams{In: strings.NewReader("quit\n"), Out: &out, Err: &errOut})
+		if code != 0 {
+			t.Fatalf("%s alias failed: %s", alias, errOut.String())
+		}
+		if !strings.Contains(out.String(), "DustUI Go TUI") {
+			t.Fatalf("%s did not route to Go TUI: %s", alias, out.String())
+		}
+	}
+}

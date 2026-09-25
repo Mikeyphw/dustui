@@ -13,6 +13,7 @@ import (
 	"github.com/mikeyphw/dustui/go/internal/automation"
 	"github.com/mikeyphw/dustui/go/internal/cleanup"
 	"github.com/mikeyphw/dustui/go/internal/diagnostics"
+	"github.com/mikeyphw/dustui/go/internal/host"
 	"github.com/mikeyphw/dustui/go/internal/intelligence"
 	"github.com/mikeyphw/dustui/go/internal/packageevidence"
 	"github.com/mikeyphw/dustui/go/internal/privileged"
@@ -28,10 +29,12 @@ import (
 )
 
 func main() {
-	command := "readiness"
-	if len(os.Args) > 1 {
-		command = os.Args[1]
+	if len(os.Args) == 1 {
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stop()
+		os.Exit(host.Run(ctx, nil, host.Streams{In: os.Stdin, Out: os.Stdout, Err: os.Stderr}))
 	}
+	command := os.Args[1]
 
 	if strings.HasPrefix(command, "root-") {
 		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -59,6 +62,12 @@ func main() {
 			os.Exit(1)
 		}
 		return
+	}
+
+	if host.Handles(command) {
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stop()
+		os.Exit(host.Run(ctx, os.Args[1:], host.Streams{In: os.Stdin, Out: os.Stdout, Err: os.Stderr}))
 	}
 
 	if command == "serve" {

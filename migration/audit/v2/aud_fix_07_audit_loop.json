@@ -1,0 +1,47 @@
+{
+  "schema": "dustui.aud-fix-audit-loop.v1",
+  "overlay": "AUD-FIX-07",
+  "roadmap": "migration/requirements/v2/source/AUD_FIX_REMEDIATION_ROADMAP.md#AUD-FIX-07--go-clitui-parity-and-production-host-cutover",
+  "status": "converged-source-level",
+  "gate_d": "open",
+  "passes": [
+    {
+      "name": "requirement-pass",
+      "result": "pass",
+      "detail": "Go host implements scan/query/search, activity, cleanup review/execution, diagnostics, support export, inspection and interactive TUI dispatch over shared Go authorities."
+    },
+    {
+      "name": "production-reachability-pass",
+      "result": "pass",
+      "detail": "Root Python project/install/run declarations are removed; Python/Textual exists only under migration/oracle/python_textual and is explicitly non-production/non-default/non-packaged."
+    },
+    {
+      "name": "identity-pass",
+      "result": "pass",
+      "detail": "Canonical qualification observes legacy_python_textual_present=false and python_textual_oracle_present=true while Gate D remains open; Go CLI/TUI host defaults are independent of Android reconnect qualification."
+    },
+    {
+      "name": "guard-lifecycle-pass",
+      "result": "pass",
+      "detail": "AUD-FIX-05 and OV13 host validators were successor-proofed for restored Gradle coverage and post-AUD-FIX-07 host semantics instead of preserving stale source-token assumptions."
+    },
+    {
+      "name": "devtool-native-pass",
+      "result": "pass",
+      "detail": "AUD-FIX-07 has target-local host/product and Go CLI/TUI/build leaf jobs composed through dustui_android#aud_fix_07; full validate also restores Gradle contract/unit/lint/assemble coverage."
+    },
+    {
+      "name": "fresh-pass",
+      "result": "pass",
+      "new_independent_gap_families": []
+    }
+  ],
+  "local_execution": {
+    "aud_fix_01_through_05_leaf_assertions": "pass-after-successor-proofing",
+    "aud_fix_07_static_audit_loop": "pass",
+    "qualification_freshness": "pass",
+    "ov13_successor_validator": "pass",
+    "go_runtime_behavior": "deferred-to-user-native-termux-workflow-because-sandbox-cannot-fetch-modernc.org/sqlite",
+    "full_devtool_validate": "not-run-by-design-non-gate-overlay"
+  }
+}

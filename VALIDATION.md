@@ -120,3 +120,19 @@ Validate Phase 15 with targeted Android gates:
 Manual smoke check: launch a debug build, open Files/Clean/Tools before any scan, run a shared-storage scan, then confirm input remains responsive after completion and depth-cap evidence is informational unless another warning/failure is present.
 
 - Phase 16 adds `ScanDepthProfile` source contracts, cooperative post-scan refresh checks, and Tasker depth bound checks.
+
+## AUD-FIX-07 Go host cutover
+
+AUD-FIX-07 is intentionally a non-gate overlay. Apply it with `--no-validate`; do not turn it into a full validation gate.
+
+Narrow static/qualification checks:
+
+```bash
+python3 scripts/validate_audfix07_contract.py --audit-loop
+python3 scripts/refresh_qualification_state.py --check
+python3 scripts/validate_ov13_contract.py
+```
+
+Go host checks are owned by the `dustui_go#aud_fix_07` Devtool workflow and cover CLI/JSON contracts, interactive TUI delegation, product identity, and a real Go host build. The federated `dustui_android#aud_fix_07` workflow adds static host reachability/product identity and prior Go regression coverage.
+
+The normal full `validate` graph once again schedules `verifyDustMigrationContract`, `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`. Those Gradle jobs are **not** run merely by applying AUD-FIX-07 with `--no-validate`; their restored graph presence prevents the temporary Gate-R1 pin from becoming permanent validation drift.

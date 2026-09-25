@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse, json, re
+import argparse, json, re, tomllib
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 def text(rel):
@@ -35,6 +35,20 @@ def check_source():
     req('target:dustui_go#authority_gate_r1' in cfg,'AUD021_CROSS_TARGET','Authority gate does not compose the Go target DAG')
     req('[targets.dustui_go.jobs.audfix05_diagnostics_go]' in cfg,'AUD021_DEVTOOL_JOB','Go AUD-FIX-05 diagnostics job missing')
     req('validation.tasks' not in cfg,'AUD021_EXCLUSIVE_TASK_OVERRIDE','Devtool config must not use validation.tasks for the multi-runner R1 gate')
+    # Gate R1 has passed and the temporary Gradle pin is lifted. Keep the leaf
+    # jobs in the canonical R1/full-validation graph so later stages cannot
+    # silently lose Android buildability coverage.
+    try:
+        parsed_cfg=tomllib.loads(cfg)
+        workflows=parsed_cfg.get('targets',{}).get('dustui_android',{}).get('workflows',{})
+    except Exception as exc:
+        workflows={}; req(False,'AUD021_DEVTOOL_TOML',f'cannot parse .devtool.toml: {exc}')
+    for wf in ['authority_gate_r1','validate']:
+        nodes=workflows.get(wf,[])
+        refs={node.get('ref') if isinstance(node,dict) else node for node in nodes}
+        req(bool(nodes),'AUD021_DEVTOOL_WORKFLOW',f'Devtool workflow body missing {wf}')
+        for job in ['gradle_contract','android_unit','android_lint','android_assemble']:
+            req(f'job:{job}' in refs,'AUD021_GRADLE_COVERAGE',f'{wf} must schedule restored Gradle job {job}')
     # Custom leaf validators may not orchestrate builders/device/devtool.
     for n in range(1,6):
         src=text(f'scripts/validate_audfix0{n}_contract.py')

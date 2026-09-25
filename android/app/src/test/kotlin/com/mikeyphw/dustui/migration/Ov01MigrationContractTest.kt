@@ -77,31 +77,25 @@ class Ov01MigrationContractTest {
         assertFalse(packageRc.contains("testDebugUnitTest"))
     }
 
-    @Test fun `go readiness authority matches migration phase`() {
+    @Test fun `go host cutover is real while android reconnect remains gate d controlled`() {
         val readiness = repoFile("go/internal/readiness/readiness.go").readText()
+        val product = repoFile("go/internal/product/product.go").readText()
+        val generated = repoFile("go/internal/qualification/state_generated.go").readText()
         val devtool = repoFile(".devtool.toml").readText()
-        val gateDCutover = devtool.contains("migration_phase = \"OV13\"") ||
-            readiness.contains("GoCLIDefault") ||
-            readiness.contains("GoCLIDefault:")
 
-        if (gateDCutover) {
-            assertTrue(
-                "OV13 Gate D makes Go the product engine",
-                Regex("ProductionEngine:\\s+true").containsMatchIn(readiness),
-            )
-            assertTrue(
-                "OV13 Gate D makes Go SQLite/read authority the product model",
-                Regex("SQLiteAuthority(Model)?:\\s+true").containsMatchIn(readiness) ||
-                    Regex("ReadAuthority:\\s+true").containsMatchIn(readiness),
-            )
-            assertTrue(
-                "OV13 Gate D keeps mutation authority in Go",
-                Regex("MutationAuthority:\\s+true").containsMatchIn(readiness),
-            )
-        } else {
-            assertTrue(readiness.contains("ProductionEngine:  false"))
-            assertTrue(readiness.contains("SQLiteAuthority:   false"))
-            assertTrue(readiness.contains("MutationAuthority: false"))
-        }
+        assertTrue(Regex("ProductionEngine:\\s+true").containsMatchIn(readiness))
+        assertTrue(Regex("GoCLIDefault:\\s+true").containsMatchIn(readiness))
+        assertTrue(Regex("GoTUIDefault:\\s+true").containsMatchIn(readiness))
+        assertTrue(Regex("SQLiteAuthorityModel:\\s+true").containsMatchIn(readiness))
+        assertTrue(Regex("MutationAuthority:\\s+true").containsMatchIn(readiness))
+
+        assertTrue(product.contains("HostAuthorityDefault:          true"))
+        assertTrue(product.contains("LegacyPythonTextualProduction: false"))
+        assertTrue(product.contains("ProductDefault: qualification.GateDQualified"))
+        assertTrue(generated.contains("const GateDQualified = false"))
+        assertTrue(generated.contains("const LegacyPythonTextualPresent = false"))
+        assertTrue(generated.contains("const PythonTextualOraclePresent = true"))
+        assertTrue(devtool.contains("host_authority_default = true"))
+        assertTrue(devtool.contains("legacy_python_textual_production = false"))
     }
 }

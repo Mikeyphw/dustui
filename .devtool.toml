@@ -7,20 +7,10 @@ max_parallel_nodes = 3
 max_gradle_nodes = 1
 max_dotnet_nodes = 1
 
-[project]
-kind = "python"
-name = "DustUI"
-run_module = "dust_tui"
 
 [execution]
 environment = "auto"
 
-[python]
-manager = "auto"
-test_framework = "pytest"
-environment = ".devtool/venvs/python"
-install_project = true
-isolation = true
 
 [targets.dustui_android]
 type = "android"
@@ -114,6 +104,9 @@ readiness_only = false
 target_product_default = true
 target_go_cli_default = true
 target_go_tui_default = true
+host_authority_default = true
+legacy_python_textual_production = false
+python_textual_oracle = "migration/oracle/python_textual"
 android_reconnect_gate = "Gate D"
 android_buildability = "mandatory"
 legacy_python_observation_source = "migration/qualification/v1/current_state.json"
@@ -284,6 +277,22 @@ inputs = ["scripts/validate_audfix05_contract.py", "go/internal/diagnostics", "g
 [targets.dustui_android.jobs.audfix05_android_contract.metadata]
 read_only = true
 
+[targets.dustui_android.jobs.audfix07_host_reachability]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix07_contract.py", "--check", "host-reachability"]
+inputs = ["scripts/validate_audfix07_contract.py", "go/internal/host", "go/internal/tui", "go/cmd", "scripts/install.sh", "scripts/run-dev.sh", "migration/oracle/python_textual", ".devtool.toml"]
+[targets.dustui_android.jobs.audfix07_host_reachability.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.audfix07_product_identity]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix07_contract.py", "--check", "product-identity"]
+inputs = ["scripts/validate_audfix07_contract.py", "go/internal/product", "go/internal/readiness", "migration/qualification/v1", ".devtool.toml"]
+[targets.dustui_android.jobs.audfix07_product_identity.metadata]
+read_only = true
+
 [targets.dustui_android.jobs.qualification_state]
 runner = "command"
 root = ".."
@@ -330,6 +339,13 @@ aud_fix_05 = [
   { id = "go", ref = "target:dustui_go#aud_fix_05", depends_on = [] },
   { id = "truth", ref = "job:qualification_state", depends_on = ["a01", "a02", "a03", "a04", "a05", "go"] },
 ]
+aud_fix_07 = [
+  { id = "host", ref = "job:audfix07_host_reachability", depends_on = [] },
+  { id = "identity", ref = "job:audfix07_product_identity", depends_on = [] },
+  { id = "go07", ref = "target:dustui_go#aud_fix_07", depends_on = [] },
+  { id = "regression", ref = "target:dustui_go#aud_fix_regression", depends_on = ["go07"] },
+  { id = "truth", ref = "job:qualification_state", depends_on = ["host", "identity", "regression"] },
+]
 authority_gate_r1 = [
   { id = "a01", ref = "job:audfix01_truth", depends_on = [] },
   { id = "a02", ref = "job:audfix02_bounded", depends_on = [] },
@@ -349,8 +365,10 @@ validate = [
   { id = "a03", ref = "job:audfix03_domain", depends_on = [] },
   { id = "a04", ref = "job:audfix04_operations", depends_on = [] },
   { id = "a05", ref = "job:audfix05_android_contract", depends_on = [] },
-  { id = "go", ref = "target:dustui_go#authority_gate_r1", depends_on = [] },
-  { id = "gradle_contract", ref = "job:gradle_contract", depends_on = ["a01", "a02", "a03", "a04", "a05", "go"] },
+  { id = "a07host", ref = "job:audfix07_host_reachability", depends_on = [] },
+  { id = "a07identity", ref = "job:audfix07_product_identity", depends_on = [] },
+  { id = "go", ref = "target:dustui_go#validate", depends_on = [] },
+  { id = "gradle_contract", ref = "job:gradle_contract", depends_on = ["a01", "a02", "a03", "a04", "a05", "a07host", "a07identity", "go"] },
   { id = "unit", ref = "job:android_unit", depends_on = ["gradle_contract"] },
   { id = "lint", ref = "job:android_lint", depends_on = ["unit"] },
   { id = "assemble", ref = "job:android_assemble", depends_on = ["lint"] },
@@ -395,6 +413,26 @@ inputs = ["internal/diagnostics", "internal/state", "go.mod", "go.sum"]
 [targets.dustui_go.jobs.audfix05_diagnostics_go.metadata]
 read_only = true
 
+[targets.dustui_go.jobs.audfix07_cli_contract]
+runner = "command"
+command = ["go", "test", "./internal/host", "./internal/product", "./internal/readiness", "-run", "AUD_FIX07", "-count=1"]
+inputs = ["internal/host", "internal/product", "internal/readiness", "internal/state", "cmd", "go.mod", "go.sum"]
+[targets.dustui_go.jobs.audfix07_cli_contract.metadata]
+read_only = true
+
+[targets.dustui_go.jobs.audfix07_tui_contract]
+runner = "command"
+command = ["go", "test", "./internal/tui", "-run", "AUD_FIX07", "-count=1"]
+inputs = ["internal/tui", "internal/product", "internal/shell", "go.mod", "go.sum"]
+[targets.dustui_go.jobs.audfix07_tui_contract.metadata]
+read_only = true
+
+[targets.dustui_go.jobs.audfix07_build]
+runner = "command"
+command = ["go", "build", "-o", "build/aud-fix-07/dustui-go", "./cmd/dustui-go"]
+inputs = ["."]
+outputs = ["build/aud-fix-07/dustui-go"]
+
 [targets.dustui_go.workflows]
 aud_fix_regression = [
   { id = "tests", ref = "job:go_test_all", depends_on = [] },
@@ -405,6 +443,12 @@ aud_fix_05 = [
   { id = "diagnostics", ref = "job:audfix05_diagnostics_go", depends_on = [] },
   { id = "product", ref = "job:product_contract", depends_on = [] },
   { id = "schema", ref = "job:schema_contract", depends_on = [] },
+]
+aud_fix_07 = [
+  { id = "cli", ref = "job:audfix07_cli_contract", depends_on = [] },
+  { id = "tui", ref = "job:audfix07_tui_contract", depends_on = [] },
+  { id = "product", ref = "job:product_contract", depends_on = [] },
+  { id = "build", ref = "job:audfix07_build", depends_on = ["cli", "tui", "product"] },
 ]
 authority_gate_r1 = [
   { id = "tests", ref = "job:go_test_all", depends_on = [] },
@@ -424,7 +468,13 @@ validate = [
 
 [wrapper]
 schema = 1
-default_command = "authority-r1"
+default_command = "aud-fix-07"
+
+[wrapper.commands.aud-fix-07]
+description = "Run DustUI AUD-FIX-07 Go host cutover and parity workflow"
+workflow = "aud_fix_07"
+target = "dustui_android"
+aliases = ["host-cutover", "go-host"]
 
 [wrapper.commands.authority-r1]
 description = "Run DustUI AUD-FIX-06 Authority Convergence Gate R1 through the native EXO DAG"

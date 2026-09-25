@@ -1,0 +1,27 @@
+{
+  "schema": "dustui.aud-fix-status.v1",
+  "overlay": "AUD-FIX-07",
+  "status": "implementation-complete-non-gate",
+  "closed_or_advanced_gap_families": [
+    "AUD-003",
+    "AUD-004",
+    "AUD-017"
+  ],
+  "host_authority": "go",
+  "host_defaults": [
+    "dustui-go",
+    "dust-tui",
+    "dust-space"
+  ],
+  "python_textual": {
+    "production_reachable": false,
+    "oracle_present": true,
+    "oracle_path": "migration/oracle/python_textual",
+    "physical_retirement_owner": "AUD-FIX-16"
+  },
+  "android_default": "gate-d-controlled",
+  "gate_d": "open",
+  "validation_authority": "devtool-target-local-jobs",
+  "workflow": "dustui_android#aud_fix_07",
+  "apply_policy": "--no-validate"
+}

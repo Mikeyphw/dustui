@@ -89,7 +89,12 @@ def repository_observations(root: Path) -> dict[str, Any]:
     go_state = _all_source(root, "go/internal/state", (".go",))
     gomod = read_text(root, "go/go.mod")
 
-    python_present = (root / "dust_tui").is_dir() or ("kind = \"python\"" in devtool and "run_module = \"dust_tui\"" in devtool)
+    python_present = any(p.is_file() for p in (root / "src/dust_tui").glob("**/*")) or (
+        "kind = \"python\"" in devtool and "run_module = \"dust_tui\"" in devtool
+    )
+    python_oracle_present = (root / "migration/oracle/python_textual/src/dust_tui").is_dir() and (
+        root / "migration/oracle/python_textual/pyproject.toml"
+    ).is_file()
     room_artifacts = _any_file(root, [
         "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DustDatabase.kt",
         "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanDao.kt",
@@ -124,6 +129,7 @@ def repository_observations(root: Path) -> dict[str, Any]:
 
     return {
         "legacy_python_textual_present": python_present,
+        "python_textual_oracle_present": python_oracle_present,
         "room_artifacts_present": room_artifacts,
         "ndjson_lifecycle_present": ndjson_present,
         "legacy_navigation_present": legacy_navigation,

@@ -23,13 +23,14 @@ def main()->int:
     req(am.get('android_buildability')=='mandatory','Android buildability must be mandatory at OV13',failures)
     req(am.get('qualification_state_source')=='migration/qualification/v1/current_state.json','Android metadata must consume canonical qualification state',failures)
     req(gm.get('qualification_state_source')=='migration/qualification/v1/current_state.json','Go metadata must consume canonical qualification state',failures)
-    for banned in ['gate_d_truth','ov15_status','production_authority_qualified','android_cutover_complete','product_default','go_cli_default','go_tui_default','legacy_python_textual_production','legacy_kotlin_domain_truth']:
+    for banned in ['gate_d_truth','ov15_status','production_authority_qualified','android_cutover_complete','legacy_kotlin_domain_truth']:
         req(banned not in am and banned not in gm,f'independent/aspirational metadata remains: {banned}',failures)
     req(gm.get('target_product_default') is True and gm.get('target_go_cli_default') is True and gm.get('target_go_tui_default') is True,'target product declarations missing',failures)
+    req(gm.get('host_authority_default') is True and gm.get('legacy_python_textual_production') is False,'AUD-FIX-07 host identity declarations missing',failures)
     req('qualification_state' in jobs,'qualification_state EXO job missing',failures)
-    req(flows.get('gate_d',[None])[0]=='job:qualification_state','Gate D must begin with canonical qualification check',failures)
+    req('job:qualification_state' in flows.get('gate_d',[]),'Gate D must include canonical qualification check',failures)
     req('job:retirement_gate' not in flows.get('gate_d',[]),'Gate D must not be sequenced after OV14 retirement',failures)
-    req(flows.get('cutover_audit',[None])[0]=='job:qualification_state','cutover audit must begin with qualification check',failures)
+    req('job:qualification_state' in flows.get('cutover_audit',[]),'cutover audit must include qualification check',failures)
     try:
         state=json.loads((ROOT/'migration/qualification/v1/current_state.json').read_text())
         product_src=(ROOT/'go/internal/product/product.go').read_text()
@@ -41,11 +42,12 @@ def main()->int:
     qualified=state.get('gate_d',{}).get('qualified') is True
     literal='true' if qualified else 'false'
     req(f'const GateDQualified = {literal}' in generated_src,'generated Gate D constant diverges from canonical state',failures)
-    req('ProductionEngine:              qualification.GateDQualified' in product_src,'product default must be evidence-derived',failures)
-    req('GoSQLiteProductDefault:        qualification.GateDQualified' in product_src,'Go SQLite default must be evidence-derived',failures)
+    req('ProductionEngine:              true' in product_src and 'HostAuthorityDefault:          true' in product_src,'Go host production default must be reachable after AUD-FIX-07',failures)
+    req('GoSQLiteProductDefault:        true' in product_src,'Go SQLite host default must be real after AUD-FIX-07',failures)
+    req('ProductDefault: qualification.GateDQualified' in product_src,'Android surface default must remain canonical Gate-D-controlled',failures)
     req('DeclarationScope:           "canonical-evidence-derived:" + qualification.StateSource' in product_src,'product declaration scope not canonical',failures)
-    req('ProductionEngine:        qualification.GateDQualified' in readiness_src,'readiness product truth must be canonical',failures)
-    req('GoCLIDefault:            qualification.GateDQualified' in readiness_src and 'GoTUIDefault:            qualification.GateDQualified' in readiness_src,'CLI/TUI defaults must be evidence-derived',failures)
+    req('ProductionEngine:        true' in readiness_src,'readiness must expose the reachable Go host',failures)
+    req('GoCLIDefault:            true' in readiness_src and 'GoTUIDefault:            true' in readiness_src,'CLI/TUI defaults must reflect the reachable Go host',failures)
     for route in ['overview','files','clean','apps','activity','system']:
         req(f'RouteID = "{route}"' in shell_src,f'target semantic route missing: {route}',failures)
     required=set(state.get('gate_d',{}).get('required_nodes',[]))

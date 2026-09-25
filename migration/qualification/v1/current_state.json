@@ -84,8 +84,9 @@
     "go_sqlite_implementation_present": true,
     "legacy_destructive_executor_present": false,
     "legacy_navigation_present": true,
-    "legacy_python_textual_present": true,
+    "legacy_python_textual_present": false,
     "ndjson_lifecycle_present": true,
+    "python_textual_oracle_present": true,
     "release_kotlin_authority_paths": [],
     "room_artifacts_present": true
   },

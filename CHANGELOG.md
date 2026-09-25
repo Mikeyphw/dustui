@@ -277,3 +277,11 @@ Final release-candidate hardening for the rooted Android storage workbench.
 - Raised allowed depth ceiling to 128 for automation/manual scan requests while preserving `-1` unlimited depth support.
 - Added cooperative checkpoints inside post-scan insight refresh to reduce long CPU bursts after scan completion.
 - Reworded depth-cap evidence as quiet informational boundary evidence unless paired with zero-file, truncation, warning, or error signals.
+
+## AUD-FIX-07 — Go host cutover
+
+- Added real Go CLI workflows for persisted scan/query/search, activity, cleanup review/execution, diagnostics, support export, and contract inspection.
+- Replaced the Go TUI Render/Smoke-only scaffold with an interactive loop that delegates data-bearing work to the same Go host executor as the CLI.
+- Moved the Python/Textual host to `migration/oracle/python_textual/` as a non-production parity oracle and cut `dust-tui`/`dust-space` to Go compatibility binaries.
+- Separated Go host-default truth from Android Gate-D qualification; Gate D remains open and Android remains evidence-gated.
+- Restored Gradle jobs to the normal full validation DAG after the temporary Gate-R1 deferral ended.

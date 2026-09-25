@@ -1,3 +1,5 @@
 #!/usr/bin/env sh
 set -eu
-PYTHONPATH=src exec python3 -m dust_tui "$@"
+repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+cd "$repo_dir/go"
+exec go run ./cmd/dustui-go "$@"

@@ -2,7 +2,7 @@
 
 # UI/UX Contract
 
-This document is authoritative for the dust-tui terminal interface. New screens, panels, controls, and visual treatments must follow these rules unless this document and the guarding tests are updated in the same change.
+This document preserves the predecessor Python/Textual terminal-interface contract as migration evidence. Since AUD-FIX-07 it is not production host authority; the supported Go TUI uses the shared Go product/shell contracts and this file remains a parity reference only until physical oracle retirement.
 
 ## Scope
 
