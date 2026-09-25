@@ -28,7 +28,10 @@ ARTIFACT_NODES = {
     "production_reachability": {"outputs": ["build/evidence/gate-d/production-reachability.json"], "kind": "evidence-json"},
 }
 EXPECTED_SUFFIX = ["gate_d_evidence_finalize", "qualification_state"]
-CONTRACT_SCHEMA = "dustui.aud-fix-15.gate-d-closure-contract.v1"
+CONTRACT_SCHEMA = "dustui.aud-fix-15.gate-d-closure-contract.v2"
+
+GO_TEST_TMPDIR_COMMAND = 'mkdir -p .devtool/tmp/go-test && TMPDIR="$PWD/.devtool/tmp/go-test" go test ./...'
+HISTORICAL_GO_TARGETS = ["dustui_gate_a_history", "dustui_gate_b_history", "dustui_gate_c_history"]
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -152,6 +155,14 @@ def build_report() -> dict[str, Any]:
     closure_job = jobs.get("audfix15_gate_d_closure") or {}
     if closure_job.get("command") != ["python3", "scripts/audfix15_gate_d_closure.py", "--check"]:
         failures.append("audfix15_gate_d_closure job must run closure --check")
+
+    current_go_job = _jobs(config, "dustui_go").get("go_test_all") or {}
+    if current_go_job.get("command") != ["sh", "-lc", GO_TEST_TMPDIR_COMMAND]:
+        failures.append("dustui_go.go_test_all must run with a repository-local TMPDIR to avoid Termux hardlink tmp failures")
+    for historical_target in HISTORICAL_GO_TARGETS:
+        go_job = _jobs(config, historical_target).get("go_test") or {}
+        if go_job.get("command") != ["sh", "-lc", GO_TEST_TMPDIR_COMMAND]:
+            failures.append(f"{historical_target}.go_test must run with a historical worktree-local TMPDIR")
     contract = _workflow(config, "dustui_android", "aud_fix_15_contract")
     contract_ids = _ids(contract)
     if "closure" not in contract_ids:

@@ -790,8 +790,9 @@ gate_d = [
 
 [targets.dustui_go.jobs.go_test_all]
 runner = "command"
-command = ["go", "test", "./..."]
+command = ["sh", "-lc", 'mkdir -p .devtool/tmp/go-test && TMPDIR="$PWD/.devtool/tmp/go-test" go test ./...']
 inputs = ["."]
+outputs = [".devtool/tmp/go-test"]
 [targets.dustui_go.jobs.go_test_all.metadata]
 read_only = true
 
@@ -984,7 +985,8 @@ command = ["python3", "scripts/validate_ov03_contract.py", "--audit-loop"]
 [targets.dustui_gate_a_history.jobs.go_test]
 runner = "command"
 root = "go"
-command = ["go", "test", "./..."]
+command = ["sh", "-lc", 'mkdir -p .devtool/tmp/go-test && TMPDIR="$PWD/.devtool/tmp/go-test" go test ./...']
+outputs = ["go/.devtool/tmp/go-test"]
 [targets.dustui_gate_a_history.workflows]
 requalify = [
   { id = "contract", ref = "job:contract", depends_on = [] },
@@ -1001,7 +1003,8 @@ command = ["python3", "scripts/validate_ov05_contract.py", "--audit-loop"]
 [targets.dustui_gate_b_history.jobs.go_test]
 runner = "command"
 root = "go"
-command = ["go", "test", "./..."]
+command = ["sh", "-lc", 'mkdir -p .devtool/tmp/go-test && TMPDIR="$PWD/.devtool/tmp/go-test" go test ./...']
+outputs = ["go/.devtool/tmp/go-test"]
 [targets.dustui_gate_b_history.jobs.runtime_contract]
 runner = "command"
 root = "go"
@@ -1027,7 +1030,8 @@ command = ["python3", "scripts/validate_ov08_contract.py", "--audit-loop"]
 [targets.dustui_gate_c_history.jobs.go_test]
 runner = "command"
 root = "go"
-command = ["go", "test", "./..."]
+command = ["sh", "-lc", 'mkdir -p .devtool/tmp/go-test && TMPDIR="$PWD/.devtool/tmp/go-test" go test ./...']
+outputs = ["go/.devtool/tmp/go-test"]
 [targets.dustui_gate_c_history.workflows]
 requalify = [
   { id = "contract", ref = "job:contract", depends_on = [] },

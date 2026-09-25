@@ -86,6 +86,15 @@ def lifecycle_failures() -> list[str]:
         failures.append("aud_fix_15_contract workflow must run evidence contract after closure")
     if not re.search(r'id\s*=\s*"historical_inventory"[^\n]+ref\s*=\s*"job:historical_gate_inventory"', workflow):
         failures.append("gate_d workflow must prepare historical worktrees before historical replay targets")
+    for target_name in ["targets.dustui_go.jobs.go_test_all", "targets.dustui_gate_a_history.jobs.go_test", "targets.dustui_gate_b_history.jobs.go_test", "targets.dustui_gate_c_history.jobs.go_test"]:
+        idx = body.find(f"[{target_name}]")
+        if idx < 0:
+            failures.append(f"missing {target_name} section for Gate-D Go hardlink-safe TMPDIR")
+            continue
+        next_header = body.find("\n[", idx + 1)
+        section = body[idx: next_header if next_header > 0 else len(body)]
+        if 'TMPDIR="$PWD/.devtool/tmp/go-test" go test ./...' not in section:
+            failures.append(f"{target_name} must run Go tests with a local TMPDIR for Termux hardlink semantics")
     lifecycle_source = text(LIFECYCLE)
     for token in ["apply_validates_itself", "manual_post_apply_commands_required", "required-by-artifact-manifest", "do_not_add_no_validate", "artifact-manifest-validation-tests", "af15_bridge", "af15_doctor", "af15_closure", "closure_contract_workflow", "diagnostics_workflow"]:
         if token not in lifecycle_source:
@@ -111,12 +120,15 @@ def lifecycle_failures() -> list[str]:
 
     closure_source = text(CLOSURE)
     for token in [
-        "dustui.aud-fix-15.gate-d-closure-contract.v1",
+        "dustui.aud-fix-15.gate-d-closure-contract.v2",
         "single_execution_command",
         "gate_d_evidence_finalize",
         "ARTIFACT_NODES",
         "historical_inventory",
         "audfix15_gate_d_closure",
+        "GO_TEST_TMPDIR_COMMAND",
+        "HISTORICAL_GO_TARGETS",
+        "repository-local TMPDIR",
     ]:
         if token not in closure_source:
             failures.append(f"AUD-FIX-15 closure contract missing token: {token}")
