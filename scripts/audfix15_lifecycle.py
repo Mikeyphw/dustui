@@ -7,7 +7,7 @@ import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACT_NAME = "dustui_aud_fix_15_manifest_tests_v9.zip"
+ARTIFACT_NAME = "dustui_aud_fix_15_gate_d_doctor_v11.zip"
 
 
 def _load_config() -> dict:
@@ -25,6 +25,7 @@ def _ids(workflow: list) -> list[str]:
 def plan() -> dict:
     validate_ids = _ids(_workflow("validate"))
     contract_ids = _ids(_workflow("aud_fix_15_contract"))
+    diagnostics_ids = _ids(_workflow("aud_fix_15_diagnostics"))
     gate_d_ids = _ids(_workflow("gate_d"))
     return {
         "schema": "dustui.aud-fix-15.lifecycle-plan.v2",
@@ -40,14 +41,19 @@ def plan() -> dict:
         "embedded_validation": {
             "mode": "artifact-manifest-validation-tests",
             "target": "dustui_android",
-            "required_tests": ["af15_lifecycle_plan", "af15_contract", "qualification_state"],
+            "required_tests": ["af15_lifecycle_plan", "af15_doctor", "af15_contract", "qualification_state"],
             "normal_validate_workflow_is_not_required": True,
             "present": True,
         },
         "contract_workflow": {
             "workflow": "aud_fix_15_contract",
-            "required_nodes": ["lifecycle", "contract", "truth"],
-            "present": all(node in contract_ids for node in ["lifecycle", "contract", "truth"]),
+            "required_nodes": ["lifecycle", "doctor", "contract", "truth"],
+            "present": all(node in contract_ids for node in ["lifecycle", "doctor", "contract", "truth"]),
+        },
+        "diagnostics_workflow": {
+            "workflow": "aud_fix_15_diagnostics",
+            "required_nodes": ["doctor"],
+            "present": "doctor" in diagnostics_ids,
         },
         "gate_d_workflow": {
             "workflow": "gate_d",
@@ -72,7 +78,7 @@ def main() -> int:
             print("AUD-FIX-15 lifecycle is embedded in artifact manifest validation tests.")
             print(f"Apply: devtool --yes apply-overlay /sdcard/Download/{ARTIFACT_NAME}")
             print("Do not add --no-validate; the artifact manifest requires validation.")
-        return 0 if obj["embedded_validation"]["present"] and obj["contract_workflow"]["present"] and obj["gate_d_workflow"]["prepares_history_before_replay"] else 1
+        return 0 if obj["embedded_validation"]["present"] and obj["contract_workflow"]["present"] and obj["diagnostics_workflow"]["present"] and obj["gate_d_workflow"]["prepares_history_before_replay"] else 1
     raise AssertionError(args.cmd)
 
 

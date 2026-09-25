@@ -564,6 +564,15 @@ root = ".."
 command = ["python3", "scripts/audfix15_lifecycle.py", "plan", "--json"]
 inputs = ["scripts/audfix15_lifecycle.py", ".devtool.toml"]
 
+
+[targets.dustui_android.jobs.audfix15_gate_d_doctor]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/audfix15_gate_d_doctor.py", "--json"]
+inputs = ["scripts/audfix15_gate_d_doctor.py", ".devtool.toml", "migration/qualification/v1/gate_d_topology.json", "migration/qualification/v1/gate_d_evidence.json", "migration/qualification/v1/current_state.json", "build/evidence/aud-fix/14/historical_discovery.json", "build/evidence/gate-d"]
+[targets.dustui_android.jobs.audfix15_gate_d_doctor.metadata]
+read_only = true
+
 [targets.dustui_android.jobs.audfix15_evidence_lifecycle]
 runner = "command"
 root = ".."
@@ -716,8 +725,12 @@ unit = ["job:android_unit"]
 cutover_audit = ["job:audfix01_truth", "job:audfix02_bounded", "job:audfix03_domain", "job:audfix04_operations", "job:audfix05_android_contract", "job:qualification_state"]
 aud_fix_15_contract = [
   { id = "lifecycle", ref = "job:audfix15_lifecycle_plan", depends_on = [] },
-  { id = "contract", ref = "job:audfix15_evidence_lifecycle", depends_on = ["lifecycle"] },
+  { id = "doctor", ref = "job:audfix15_gate_d_doctor", depends_on = ["lifecycle"] },
+  { id = "contract", ref = "job:audfix15_evidence_lifecycle", depends_on = ["doctor"] },
   { id = "truth", ref = "job:qualification_state", depends_on = ["contract"] },
+]
+aud_fix_15_diagnostics = [
+  { id = "doctor", ref = "job:audfix15_gate_d_doctor", depends_on = [] },
 ]
 gate_d = [
   { id = "historical_inventory", ref = "job:historical_gate_inventory", depends_on = [] },
@@ -1087,6 +1100,13 @@ description = "Validate the AUD-FIX-15 Gate-D evidence lifecycle contract withou
 workflow = "aud_fix_15_contract"
 target = "dustui_android"
 aliases = ["gate-d-contract"]
+
+
+[wrapper.commands.aud-fix-15-doctor]
+description = "Diagnose Gate-D readiness and evidence blockers without qualifying Gate D"
+workflow = "aud_fix_15_diagnostics"
+target = "dustui_android"
+aliases = ["gate-d-doctor", "gate-d-diagnose"]
 
 [wrapper.commands.gate-d]
 description = "Execute the complete Gate-D qualification topology; remains blocked until AUD-FIX-15 evidence prerequisites are satisfied"

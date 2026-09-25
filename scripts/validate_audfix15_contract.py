@@ -16,6 +16,7 @@ TOPOLOGY = QUAL / "gate_d_topology.json"
 REGISTRY = QUAL / "gate_d_evidence.json"
 SCRIPT = ROOT / "scripts/audfix15_gate_d_evidence.py"
 LIFECYCLE = ROOT / "scripts/audfix15_lifecycle.py"
+DOCTOR = ROOT / "scripts/audfix15_gate_d_doctor.py"
 
 
 def load(path: Path):
@@ -40,11 +41,14 @@ def lifecycle_failures() -> list[str]:
     for token in [
         "[targets.dustui_android.jobs.gate_d_evidence_finalize]",
         "[targets.dustui_android.jobs.audfix15_lifecycle_plan]",
+        "[targets.dustui_android.jobs.audfix15_gate_d_doctor]",
         "[targets.dustui_android.jobs.audfix15_evidence_lifecycle]",
         "scripts/audfix15_gate_d_evidence.py",
         "scripts/audfix15_lifecycle.py",
+        "scripts/audfix15_gate_d_doctor.py",
         "migration/qualification/v1/gate_d_bundle.json",
         "[wrapper.commands.aud-fix-15]",
+        "[wrapper.commands.aud-fix-15-doctor]",
         "workflow = \"gate_d\"",
     ]:
         if token not in body:
@@ -61,12 +65,22 @@ def lifecycle_failures() -> list[str]:
         failures.append("ordinary validate workflow must not own AUD-FIX-15 contract; artifact manifest validation.tests owns it")
     if 'validate = [' in workflow and 'ref = "target:dustui_android#gate_d"' in workflow:
         failures.append("ordinary validate must not silently run full Gate-D")
+    if not re.search(r'aud_fix_15_diagnostics\s*=\s*\[\s*\n\s*\{ id\s*=\s*"doctor"[^\n]+ref\s*=\s*"job:audfix15_gate_d_doctor"', workflow):
+        failures.append("AUD-FIX-15 diagnostics workflow must expose the Gate-D doctor")
+    if not re.search(r'id\s*=\s*"doctor"[^\n]+ref\s*=\s*"job:audfix15_gate_d_doctor"[^\n]+depends_on\s*=\s*\["lifecycle"\]', workflow):
+        failures.append("aud_fix_15_contract workflow must run the Gate-D doctor after lifecycle plan")
+    if not re.search(r'id\s*=\s*"contract"[^\n]+depends_on\s*=\s*\["doctor"\]', workflow):
+        failures.append("aud_fix_15_contract workflow must run evidence contract after doctor")
     if not re.search(r'id\s*=\s*"historical_inventory"[^\n]+ref\s*=\s*"job:historical_gate_inventory"', workflow):
         failures.append("gate_d workflow must prepare historical worktrees before historical replay targets")
     lifecycle_source = text(LIFECYCLE)
-    for token in ["apply_validates_itself", "manual_post_apply_commands_required", "required-by-artifact-manifest", "do_not_add_no_validate", "artifact-manifest-validation-tests"]:
+    for token in ["apply_validates_itself", "manual_post_apply_commands_required", "required-by-artifact-manifest", "do_not_add_no_validate", "artifact-manifest-validation-tests", "af15_doctor", "diagnostics_workflow"]:
         if token not in lifecycle_source:
             failures.append(f"AUD-FIX-15 lifecycle script missing token: {token}")
+    doctor = text(DOCTOR)
+    for token in ["dustui.aud-fix-15.gate-d-doctor.v1", "historical", "artifacts", "tools", "Gate-D doctor", "diagnostic only"]:
+        if token not in doctor:
+            failures.append(f"AUD-FIX-15 Gate-D doctor missing token: {token}")
     script = text(SCRIPT)
     for token in [
         "source_projection_sha256",
