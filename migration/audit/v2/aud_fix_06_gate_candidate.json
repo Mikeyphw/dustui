@@ -1,0 +1,87 @@
+{
+  "gate": "Authority Convergence Gate R1",
+  "gate_d": "open",
+  "local_preflight": {
+    "incompatibility": "native-termux target workflows inspected from desktop-linux authoring environment",
+    "incompatible_checks": 15,
+    "ready_checks": 92,
+    "status": "environment-incompatible-only",
+    "unexpected_nonready_checks": 0
+  },
+  "overlay": "AUD-FIX-06",
+  "planned_node_count": 15,
+  "planned_wave_count": 9,
+  "planned_waves": [
+    {
+      "index": 1,
+      "nodes": [
+        "dustui_android.authority_gate_r1.a01",
+        "dustui_android.authority_gate_r1.a02",
+        "dustui_android.authority_gate_r1.a03"
+      ]
+    },
+    {
+      "index": 2,
+      "nodes": [
+        "dustui_android.authority_gate_r1.a04",
+        "dustui_android.authority_gate_r1.a05",
+        "dustui_go.authority_gate_r1.tests"
+      ]
+    },
+    {
+      "index": 3,
+      "nodes": [
+        "dustui_go.authority_gate_r1.diagnostics",
+        "dustui_go.authority_gate_r1.product",
+        "dustui_go.authority_gate_r1.schema"
+      ]
+    },
+    {
+      "index": 4,
+      "nodes": [
+        "dustui_go.authority_gate_r1.build"
+      ]
+    },
+    {
+      "index": 5,
+      "nodes": [
+        "dustui_android.authority_gate_r1.gradle_contract"
+      ]
+    },
+    {
+      "index": 6,
+      "nodes": [
+        "dustui_android.authority_gate_r1.unit"
+      ]
+    },
+    {
+      "index": 7,
+      "nodes": [
+        "dustui_android.authority_gate_r1.lint"
+      ]
+    },
+    {
+      "index": 8,
+      "nodes": [
+        "dustui_android.authority_gate_r1.assemble"
+      ]
+    },
+    {
+      "index": 9,
+      "nodes": [
+        "dustui_android.authority_gate_r1.truth"
+      ]
+    }
+  ],
+  "qualification_condition": "The overlay application must execute required Devtool validation on the user native-Termux host. EXO run/node evidence from that apply is the R1 gate evidence.",
+  "scheduler": {
+    "max_gradle_nodes": 1,
+    "max_parallel_nodes": 3,
+    "parallel": true
+  },
+  "schema": "dustui.aud-fix-gate-candidate.v1",
+  "status": "candidate-awaiting-required-devtool-validation",
+  "validate_workflow_same_authority": true,
+  "validation_tasks_declared": false,
+  "workflow": "dustui_android#authority_gate_r1"
+}

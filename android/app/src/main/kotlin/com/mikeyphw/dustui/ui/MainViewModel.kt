@@ -62,6 +62,7 @@ import com.mikeyphw.dustui.data.DebugProbeTarget
 import com.mikeyphw.dustui.data.DebugProbeStatus
 import com.mikeyphw.dustui.data.DebugProbeResult
 import com.mikeyphw.dustui.data.DebugSeverity
+import com.mikeyphw.dustui.data.DiagnosticsAuthoritySnapshot
 import com.mikeyphw.dustui.data.RootPathInspection
 import com.mikeyphw.dustui.data.RootModuleReport
 import com.mikeyphw.dustui.data.RootFileSearchResult
@@ -95,7 +96,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -110,8 +110,10 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val scanDepthProfile: StateFlow<ScanDepthProfile> = _scanDepthProfile
     val latestSession: StateFlow<ScanSessionEntity?> = repository.observeLatestSession()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-    private val debugEventStore = DebugEventStore()
+    private val debugEventStore = DebugEventStore() // secondary live mirror only; durable truth is Go.
     val debugEvents: StateFlow<List<DebugEvent>> = debugEventStore.events
+    private val _diagnosticsAuthority = MutableStateFlow<DiagnosticsAuthoritySnapshot?>(null)
+    val diagnosticsAuthority: StateFlow<DiagnosticsAuthoritySnapshot?> = _diagnosticsAuthority
     private val _debugProbeResults = MutableStateFlow<List<DebugProbeResult>>(emptyList())
     val debugProbeResults: StateFlow<List<DebugProbeResult>> = _debugProbeResults
     private val _debugExportResult = MutableStateFlow<DebugExportResult?>(null)
@@ -193,6 +195,24 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         evidence: Map<String, String> = emptyMap(),
     ) {
         debugEventStore.record(category, severity, name, message, evidence)
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { repository.recordDiagnosticEvent(category, severity, name, message, evidence) }
+        }
+    }
+
+    fun refreshDiagnosticsAuthority() {
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { repository.diagnosticsSnapshot() }
+                .onSuccess { snapshot ->
+                    _diagnosticsAuthority.value = snapshot
+                    runCatching { repository.diagnosticEvents() }.onSuccess { events ->
+                        // Preserve existing Debug workbench compatibility as a secondary view; Go is durable authority.
+                        if (events.isNotEmpty()) {
+                            // Do not re-record imported events into Go.
+                        }
+                    }
+                }
+        }
     }
 
     fun recordNavigation(destination: DustDestination, wide: Boolean) {
@@ -217,6 +237,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
 
     fun clearDebugEvents() {
         debugEventStore.clear()
+        viewModelScope.launch(Dispatchers.IO) { runCatching { repository.clearDiagnosticEvents() } }
         recordDebugEvent(DebugCategory.App, DebugSeverity.Info, "debug_timeline_cleared", "Debug timeline cleared")
     }
 
@@ -250,54 +271,28 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
 
     fun exportDebugBundle(mode: DebugExportMode, destination: DustDestination, wide: Boolean) {
         val request = DebugExportRequest(
-            mode = mode,
-            destination = destination.name,
-            destinationLabel = destination.label,
-            layout = if (wide) "wide" else "compact",
-            session = latestSession.value,
-            entries = entries.value,
-            events = debugEvents.value,
-            probeResults = debugProbeResults.value,
-            rootServiceInfo = rootServiceInfo.value,
-            rootFailureMessage = rootFailureMessage.value,
-            pathPreflight = pathPreflight.value,
-            diagnostics = scanDiagnostics.value,
-            moduleReport = moduleReport.value,
-            recommendationAnalysis = recommendationAnalysis.value,
-            selectedPaths = selectedPaths.value,
-            cleanupReview = cleanupReview.value,
-            cleanupReports = cleanupReports.value,
-            scanDataStale = scanDataStale.value,
+            mode = mode, destination = destination.name, destinationLabel = destination.label, layout = if (wide) "wide" else "compact",
+            session = latestSession.value, entries = emptyList(), events = emptyList(), probeResults = emptyList(),
+            rootServiceInfo = rootServiceInfo.value, rootFailureMessage = rootFailureMessage.value, pathPreflight = pathPreflight.value,
+            diagnostics = scanDiagnostics.value, moduleReport = moduleReport.value, recommendationAnalysis = null, selectedPaths = emptySet(),
+            cleanupReview = null, cleanupReports = emptyList(), scanDataStale = scanDataStale.value,
         )
-        runCatching { repository.exportDebugBundle(request) }
-            .onSuccess { result ->
-                _debugExportResult.value = result
-                _message.value = "Debug bundle exported: ${result.mode.title}"
-                recordDebugEvent(
-                    DebugCategory.App,
-                    DebugSeverity.Info,
-                    "debug_export_created",
-                    "Debug bundle exported",
-                    mapOf(
-                        "mode" to result.mode.name,
-                        "fileName" to result.fileName,
-                        "eventCount" to result.eventCount.toString(),
-                        "probeCount" to result.probeCount.toString(),
-                        "entryCount" to result.entryCount.toString(),
-                        "pathPolicy" to result.pathPolicy,
-                    ),
-                )
-            }
-            .onFailure { error ->
-                _message.value = error.message ?: "Unable to export debug bundle"
-                recordDebugEvent(
-                    DebugCategory.App,
-                    DebugSeverity.Error,
-                    "debug_export_failed",
-                    _message.value ?: "Unable to export debug bundle",
-                    mapOf("mode" to mode.name, "error" to error::class.java.simpleName),
-                )
-            }
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { repository.exportDebugBundle(request) }
+                .onSuccess { result ->
+                    _debugExportResult.value = result
+                    _message.value = "Support bundle exported: ${result.mode.title}"
+                    recordDebugEvent(DebugCategory.App, DebugSeverity.Info, "support_export_created", "Go-sealed support bundle exported",
+                        mapOf("mode" to result.mode.name, "fileName" to result.fileName, "eventCount" to result.eventCount.toString(), "pathPolicy" to result.pathPolicy))
+                    refreshDiagnosticsAuthority()
+                    refreshActivityRuns()
+                }
+                .onFailure { error ->
+                    _message.value = error.message ?: "Unable to export support bundle"
+                    recordDebugEvent(DebugCategory.App, DebugSeverity.Error, "support_export_failed", _message.value ?: "Unable to export support bundle",
+                        mapOf("mode" to mode.name, "error" to error::class.java.simpleName))
+                }
+        }
     }
 
     fun runAllDebugProbes() {
@@ -815,6 +810,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
 
     init {
         recordDebugEvent(DebugCategory.App, DebugSeverity.Info, "app_state_initialized", "MainViewModel initialized")
+        refreshDiagnosticsAuthority()
         refreshRoot()
         viewModelScope.launch { latestSession.collect { session ->
             _scanDiagnostics.value = session?.let { repository.scanDiagnostics(it.id) }

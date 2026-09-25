@@ -123,6 +123,9 @@ func (s *SQLiteStore) initialize(ctx context.Context) error {
 			}
 		}
 	}
+	if err := migrateLegacyDuplicateAnalysisAdmissions(ctx, tx); err != nil {
+		return err
+	}
 	present, err := sqliteColumnExists(ctx, tx, "android_package_evidence_snapshots", "scan_id")
 	if err != nil {
 		return err
@@ -148,6 +151,48 @@ func (s *SQLiteStore) initialize(ctx context.Context) error {
 	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit schema migration: %w", err)
+	}
+	return nil
+}
+
+func migrateLegacyDuplicateAnalysisAdmissions(ctx context.Context, tx *sql.Tx) error {
+	rows, err := tx.QueryContext(ctx, `SELECT a.operation_id,a.request_id,o.state,o.recovery_required FROM automation_admissions a JOIN operations o ON o.id=a.operation_id WHERE a.automation_kind='analysis' AND a.request_id LIKE 'duplicate-analysis:%'`)
+	if err != nil {
+		return fmt.Errorf("inspect legacy duplicate-analysis admissions: %w", err)
+	}
+	type legacyAdmission struct {
+		operationID string
+		requestID   string
+		state       string
+		recovery    bool
+	}
+	var admissions []legacyAdmission
+	for rows.Next() {
+		var item legacyAdmission
+		var recovery int
+		if err := rows.Scan(&item.operationID, &item.requestID, &item.state, &recovery); err != nil {
+			rows.Close()
+			return fmt.Errorf("read legacy duplicate-analysis admission: %w", err)
+		}
+		item.recovery = recovery != 0
+		if legacyDuplicateAnalysisRequest(item.requestID) {
+			admissions = append(admissions, item)
+		}
+	}
+	if err := rows.Close(); err != nil {
+		return fmt.Errorf("close legacy duplicate-analysis admissions: %w", err)
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate legacy duplicate-analysis admissions: %w", err)
+	}
+	for _, item := range admissions {
+		if _, err := tx.ExecContext(ctx, `UPDATE automation_admissions SET automation_kind='duplicate-analysis' WHERE operation_id=?`, item.operationID); err != nil {
+			return fmt.Errorf("migrate duplicate-analysis admission %s: %w", item.operationID, err)
+		}
+		retry, cancel, reconcile := automationGates("duplicate-analysis", item.state, item.recovery)
+		if _, err := tx.ExecContext(ctx, `UPDATE activity_runs SET retry_gate=?,cancel_gate=?,reconcile_gate=? WHERE operation_id=?`, retry, cancel, reconcile, item.operationID); err != nil {
+			return fmt.Errorf("migrate duplicate-analysis gates %s: %w", item.operationID, err)
+		}
 	}
 	return nil
 }

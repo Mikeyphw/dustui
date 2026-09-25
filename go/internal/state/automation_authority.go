@@ -99,11 +99,39 @@ func normalizeAutomationSource(source string) (string, error) {
 func normalizeAutomationKind(kind string) (string, error) {
 	kind = strings.TrimSpace(strings.ToLower(kind))
 	switch kind {
-	case "scan", "status", "inspect", "analysis", "duplicate-analysis":
+	case "scan", "status", "inspect", "analysis", "duplicate-analysis", "support-export":
 		return kind, nil
 	default:
 		return "", errors.New("automation_kind_invalid")
 	}
+}
+
+// legacyDuplicateAnalysisRequest identifies the pre-typed admission shape used by
+// exact duplicate verification before duplicate-analysis became its own operation
+// kind. The request must carry both a scan identity and a per-run suffix so a
+// generic analysis cannot gain a cancellation adapter merely by sharing a prefix.
+func legacyDuplicateAnalysisRequest(requestID string) bool {
+	const prefix = "duplicate-analysis:"
+	requestID = strings.TrimSpace(requestID)
+	if !strings.HasPrefix(requestID, prefix) {
+		return false
+	}
+	rest := strings.TrimPrefix(requestID, prefix)
+	lastSeparator := strings.LastIndex(rest, ":")
+	return lastSeparator > 0 &&
+		strings.TrimSpace(rest[:lastSeparator]) != "" &&
+		strings.TrimSpace(rest[lastSeparator+1:]) != ""
+}
+
+func normalizeAutomationAdmissionKind(requestID, kind string) (string, error) {
+	normalized, err := normalizeAutomationKind(kind)
+	if err != nil {
+		return "", err
+	}
+	if normalized == "analysis" && legacyDuplicateAnalysisRequest(requestID) {
+		return "duplicate-analysis", nil
+	}
+	return normalized, nil
 }
 
 func terminalTruthForState(state string) string {
@@ -144,7 +172,7 @@ func (s *SQLiteStore) AdmitAutomation(ctx context.Context, requestID, source, ki
 	if source, err = normalizeAutomationSource(source); err != nil {
 		return DurableAdmission{}, err
 	}
-	if kind, err = normalizeAutomationKind(kind); err != nil {
+	if kind, err = normalizeAutomationAdmissionKind(requestID, kind); err != nil {
 		return DurableAdmission{}, err
 	}
 

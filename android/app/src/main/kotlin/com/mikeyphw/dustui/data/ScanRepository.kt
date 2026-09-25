@@ -1115,13 +1115,75 @@ class ScanRepository(
         }, "Export DustUI scan").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 
-    fun exportDebugBundle(request: DebugExportRequest): DebugExportResult {
-        val result = DebugExportBundleWriter.write(context, request)
+    suspend fun diagnosticsSnapshot(): DiagnosticsAuthoritySnapshot {
+        val response = domainStore.authorityRequest("domain.diagnostics.snapshot", 1L, JSONObject())
+        val snapshot = response.getJSONObject("snapshot")
+        val evidenceJson = snapshot.optJSONArray("evidenceGenerations") ?: JSONArray()
+        val problemsJson = snapshot.optJSONArray("problems") ?: JSONArray()
+        val retention = snapshot.optJSONObject("retention") ?: JSONObject()
+        val evidence = buildList {
+            for (i in 0 until evidenceJson.length()) {
+                val value = evidenceJson.optJSONObject(i) ?: continue
+                add(DiagnosticEvidenceGeneration(value.optString("subject"), value.optLong("generation"), value.optString("hash"), value.optString("health"), value.optString("reason").ifBlank { null }))
+            }
+        }
+        val problems = buildList {
+            for (i in 0 until problemsJson.length()) {
+                val value = problemsJson.optJSONObject(i) ?: continue
+                val actionsJson = value.optJSONArray("remediationActions") ?: JSONArray()
+                val actions = buildList {
+                    for (j in 0 until actionsJson.length()) {
+                        val action = actionsJson.optJSONObject(j) ?: continue
+                        add(DiagnosticRemediationAction(action.optString("code"), action.optString("label"), action.optString("route").ifBlank { null }, action.optBoolean("destructive")))
+                    }
+                }
+                add(DiagnosticProblem(value.optString("id"), value.optString("reason"), value.optBoolean("recoveryRequired"), value.optString("operationId").ifBlank { null }, value.optString("rootCauseId").ifBlank { null }, value.optString("guidance"), value.optString("risk"), actions))
+            }
+        }
+        return DiagnosticsAuthoritySnapshot(
+            protocol = snapshot.optString("protocol"), generatedAtMillis = snapshot.optLong("generatedAtMs"), evidence = evidence, problems = problems,
+            supportExportState = snapshot.optString("supportExportState", "available"), maxEventsPerSession = retention.optInt("maxEventsPerSession"),
+            maxSessions = retention.optInt("maxSessions"), maxSupportBundles = retention.optInt("maxSupportBundles"),
+        )
+    }
+
+    suspend fun diagnosticEvents(limit: Int = 200): List<DebugEvent> {
+        val response = domainStore.authorityRequest("domain.diagnostics.list", 1L, JSONObject().put("limit", limit.coerceIn(1, 1000)))
+        val events = response.optJSONArray("events") ?: JSONArray()
+        return buildList {
+            for (index in 0 until events.length()) {
+                val event = events.optJSONObject(index) ?: continue
+                val createdAt = event.optLong("createdAtMs", 0L)
+                val values = event.optJSONObject("values")
+                add(DebugEvent(
+                    id = createdAt xor index.toLong(), timestampMillis = createdAt,
+                    category = runCatching { DebugCategory.valueOf(event.optString("area", "App")) }.getOrDefault(DebugCategory.App),
+                    severity = when (event.optString("severity").lowercase()) { "error" -> DebugSeverity.Error; "warning", "warn" -> DebugSeverity.Warning; "trace" -> DebugSeverity.Trace; else -> DebugSeverity.Info },
+                    name = event.optString("action", "diagnostic_event"), message = event.optString("result", ""),
+                    evidence = buildMap { if (values != null) values.keys().forEach { key -> put(key, values.optString(key, "")) } },
+                ))
+            }
+        }.sortedBy { it.timestampMillis }
+    }
+
+    suspend fun recordDiagnosticEvent(category: DebugCategory, severity: DebugSeverity, name: String, message: String, evidence: Map<String, String> = emptyMap()) {
+        val values = JSONObject().also { o -> evidence.forEach { (k,v) -> o.put(k,v) } }
+        domainStore.authorityRequest("domain.diagnostics.record", 1L, JSONObject().put("event", JSONObject()
+            .put("sessionId", "android-app").put("area", category.name).put("severity", severity.name.lowercase())
+            .put("action", name).put("result", message).put("values", values).put("createdAtMs", System.currentTimeMillis())))
+    }
+
+    suspend fun clearDiagnosticEvents() { domainStore.authorityRequest("domain.diagnostics.clear", 1L, JSONObject()) }
+
+    suspend fun exportDebugBundle(request: DebugExportRequest): DebugExportResult {
+        val privacyMode = if (request.mode == DebugExportMode.Safe) "minimal" else "detailed_redacted"
+        val requestId = "support-${request.createdAtMillis}-${request.mode.name.lowercase()}"
+        val response = domainStore.authorityRequest("domain.support.bundle", 1L, JSONObject().put("requestId", requestId).put("mode", privacyMode))
+        val sealedBundle = response.getJSONObject("bundle")
+        val result = DebugExportBundleWriter.writeSealed(context, request, sealedBundle)
         context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
-            type = "application/zip"
-            putExtra(Intent.EXTRA_STREAM, result.uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-        }, "Export DustUI debug bundle").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            type = "application/zip"; putExtra(Intent.EXTRA_STREAM, result.uri); addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+        }, "Export DustUI support bundle").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         return result
     }
 

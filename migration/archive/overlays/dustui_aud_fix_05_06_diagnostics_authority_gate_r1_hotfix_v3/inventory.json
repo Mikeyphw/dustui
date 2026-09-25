@@ -1,0 +1,176 @@
+{
+  "entries": [
+    {
+      "action": "modify",
+      "path": ".devtool.toml",
+      "sha256": "84024d8d56cfb9cac16ad92b29ba0481e01858f3bfc9726af7a6fbd7ad217e62",
+      "size": 17020,
+      "source_sha256": "bc60caf136427ca956a2c4efe762d146de01f1a97a1bd5dc5c24065f7cda43dd"
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DebugExportBundle.kt",
+      "sha256": "5bda426d84cefc09773f8f1346e38efc78887d9b54666dfae35c05f90fc8e690",
+      "size": 4268,
+      "source_sha256": "ff9ba42c990e9d28b3357bb328af7aab90555026e6ec2235d62b0c42fa25c6d6"
+    },
+    {
+      "action": "add",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DiagnosticsAuthorityModels.kt",
+      "sha256": "65a078569916b17d93c89c3ba42890f02b89bc5f0cd0265da0fbf5958c5e5e3f",
+      "size": 952
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+      "sha256": "1c74daac9423500d51e5798280d7a0b628cd2ff672935dec909e6f9e0e2565b7",
+      "size": 67418,
+      "source_sha256": "91e6a6056d384b3db2a385535ee30dd7ca5fa9cc25c501b66d257fca2ea0e181"
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+      "sha256": "d88080e38f731e298e46a85e6f378e051ae3fce86b149335be72a6f14bd95d61",
+      "size": 125524,
+      "source_sha256": "3631ef0b6c5d23b48f3f7ad231987229b86f41a0b4ba6b09cf803296af930ebb"
+    },
+    {
+      "action": "add",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/diagnostics/AudFix05DiagnosticsContractTest.kt",
+      "sha256": "1fe1348f6e48739454adbc2f3f07faf4dc0a7af325dc7767b792bf5f31113b4e",
+      "size": 2019
+    },
+    {
+      "action": "modify",
+      "path": "go/cmd/dustui-go/runtime_domain.go",
+      "sha256": "e10809ac93dd16434f1b6d9a0298712719c4d726c3039d12b5fc771571d76e13",
+      "size": 27340,
+      "source_sha256": "801d4f0a608577570f4f703d94a56b8bc9f2b31491ca24e31fd503c74aa4e0dc"
+    },
+    {
+      "action": "modify",
+      "path": "go/internal/diagnostics/diagnostics.go",
+      "sha256": "07530d4109e01bf4f854b11a1696e93913dd8975cf05814136f2b722c604c56e",
+      "size": 14385,
+      "source_sha256": "afca0a3ba9a90e53f1f02ff1ce0dfa0f4b896e26376d998cb64f336d06c676e7"
+    },
+    {
+      "action": "modify",
+      "path": "go/internal/diagnostics/diagnostics_test.go",
+      "sha256": "240d3acc7bc90c483c0ecf5dc83a525e5e12be0cd366c25c890be6f417650359",
+      "size": 6142,
+      "source_sha256": "cb3a6c27212dbcba2c6b1329c079e549587d3b344fa97efb59ab0d6f965df492"
+    },
+    {
+      "action": "modify",
+      "path": "go/internal/qualification/state_generated.go",
+      "sha256": "0d08a0cdf0902d57f6e58d6590618af62020b70a559a4982a599d9c03123d885",
+      "size": 2057,
+      "source_sha256": "87771baff53ca266d3878029e5dbce74f97b58f3883bb006c2a390e560e17ea9"
+    },
+    {
+      "action": "modify",
+      "path": "go/internal/state/automation_authority.go",
+      "sha256": "01d0dda591bdd65f3a456de1fb48b8cd5216ba8935cebad341731f2cc3bdb5eb",
+      "size": 27346,
+      "source_sha256": "d5a391e29d2bdd4cf86256b7f71fc6f8278761833b503d23f0dc7f9f4b367900"
+    },
+    {
+      "action": "modify",
+      "path": "go/internal/state/sqlite_store.go",
+      "sha256": "a85d275ea1c7a8e0bdf9f2cfe5a93af9097a1b55020170b92b079c05d9fc4adf",
+      "size": 13595,
+      "source_sha256": "825729359b280bbb0b284caee51baff14d845c6696376e7b79d222a3eb00bc6f"
+    },
+    {
+      "action": "add",
+      "path": "go/internal/state/diagnostics_authority.go",
+      "sha256": "fdf7b0c016ba7ac12cdd15d5bf3baa5da1fa782f9f4ba29a7772a38babc7f305",
+      "size": 13960
+    },
+    {
+      "action": "add",
+      "path": "go/internal/state/diagnostics_authority_test.go",
+      "sha256": "e82402cdfe07f75d7d81baf3a855c6dd70350c941ec69b7a47f777bbaf46222c",
+      "size": 4168
+    },
+    {
+      "action": "add",
+      "path": "migration/audit/v2/aud_fix_05_audit_loop.json",
+      "sha256": "a0d43c6dd617af33d20a0a8baa370b5bafe71e0ed48959f79527a17a4f775060",
+      "size": 2019
+    },
+    {
+      "action": "add",
+      "path": "migration/audit/v2/aud_fix_06_gate_candidate.json",
+      "sha256": "90294dc893376c54be66a9dbbd41dc1c9cfb8d403b69825a982094fa4fbc27cb",
+      "size": 2210
+    },
+    {
+      "action": "add",
+      "path": "migration/contracts/v2/aud_fix_05_diagnostics_authority.md",
+      "sha256": "cda53409f49a3b18a559c0624d068513f37b91d5664c09147e316a4a4245ace4",
+      "size": 662
+    },
+    {
+      "action": "add",
+      "path": "migration/contracts/v2/aud_fix_06_authority_gate_r1.md",
+      "sha256": "58e9a7beba86b1fc901552d4601b321cb3b78c6bd6afd2da8ee7972c1218bbcb",
+      "size": 589
+    },
+    {
+      "action": "add",
+      "path": "migration/ledger/aud_fix_05_status.json",
+      "sha256": "0af2a7d152b62c6357741d8f88219c5987060a2070fcd5d2734303278f1d981f",
+      "size": 300
+    },
+    {
+      "action": "add",
+      "path": "migration/ledger/aud_fix_06_status.json",
+      "sha256": "a32ca7ba11ee604edeba0ef4d3d4e24cbaf2c988c7b6bc0756796e3b5ffe7337",
+      "size": 520
+    },
+    {
+      "action": "modify",
+      "path": "migration/qualification/v1/current_state.json",
+      "sha256": "88729a256937acdf00ca9172218e4deef8db650db52fa6e411491a231b2d29dc",
+      "size": 3173,
+      "source_sha256": "f3a3f4f7efa77c30929bf165053a29de87e584cb7f8250ec8d6bad63abfc0873"
+    },
+    {
+      "action": "modify",
+      "path": "scripts/validate_audfix01_contract.py",
+      "sha256": "b86c0dba1cad8a28501893a5956a64eaae5a6df1cf948d5ea3f2b03fc06b2288",
+      "size": 1760,
+      "source_sha256": "596c01141c654cd411391b46e0451a46155dfb2e4c36fff33feccbcca3eacf98"
+    },
+    {
+      "action": "modify",
+      "path": "scripts/validate_audfix02_contract.py",
+      "sha256": "5f0a657e329279eb1561dcea538cf458af7d4948e588fec32457c82d5553d684",
+      "size": 6329,
+      "source_sha256": "bad9a8a9492cb61dfd1d6e13d8ed2deb57cded2bc9c253bd92132261e72cf498"
+    },
+    {
+      "action": "modify",
+      "path": "scripts/validate_audfix03_contract.py",
+      "sha256": "4053fd0c86812fdbf849d5af7903337e62f2c082885e03fed39de4912b332a7c",
+      "size": 9520,
+      "source_sha256": "8db380131acce476167e5252214d61797d09d997d6e72cba70d10d5dfab1173e"
+    },
+    {
+      "action": "modify",
+      "path": "scripts/validate_audfix04_contract.py",
+      "sha256": "13c5e6ee03c2405041664573622540ba825ae8532c491caec0fdbe037b1781b2",
+      "size": 12778,
+      "source_sha256": "a72e3e5882905c4cf2de133893b813f6146ea77e8359cb85dbf95362103d6d18"
+    },
+    {
+      "action": "add",
+      "path": "scripts/validate_audfix05_contract.py",
+      "sha256": "218838dd3c00ad8509d78a292448e9a07895ba1eb4ff0e068a8f7402a7b1114a",
+      "size": 4509
+    }
+  ],
+  "format": 1
+}

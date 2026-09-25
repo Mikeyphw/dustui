@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/mikeyphw/dustui/go/internal/authority"
+	"github.com/mikeyphw/dustui/go/internal/diagnostics"
 	"github.com/mikeyphw/dustui/go/internal/intelligence"
 	"github.com/mikeyphw/dustui/go/internal/packageevidence"
 	"github.com/mikeyphw/dustui/go/internal/state"
@@ -168,6 +170,19 @@ type notificationClaimPayload struct {
 	Action           string `json:"action"`
 	OperationBinding string `json:"operationBinding"`
 	NowMS            int64  `json:"nowMs"`
+}
+type diagnosticRecordPayload struct {
+	Event diagnostics.DiagnosticEvent `json:"event"`
+}
+type diagnosticListPayload struct {
+	Limit int `json:"limit"`
+}
+type supportBundlePayload struct {
+	RequestID string                  `json:"requestId"`
+	Mode      diagnostics.PrivacyMode `json:"mode"`
+}
+type supportBundleDeletePayload struct {
+	OperationID string `json:"operationId"`
 }
 
 type verificationBuildPayload = state.VerificationBuildInput
@@ -670,6 +685,90 @@ func domainPayload(ctx context.Context, store *state.SQLiteStore, frame runtimeF
 			return nil, err
 		}
 		return map[string]any{"ok": true, "claim": v}, nil
+	case "domain.diagnostics.record":
+		p, err := decodePayload[diagnosticRecordPayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		v, err := store.RecordDiagnostic(ctx, p.Event)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "event": v}, nil
+	case "domain.diagnostics.list":
+		p, err := decodePayload[diagnosticListPayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		v, err := store.DiagnosticEvents(ctx, p.Limit)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "events": v}, nil
+	case "domain.diagnostics.snapshot":
+		v, err := store.DiagnosticsSnapshot(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "snapshot": v}, nil
+	case "domain.diagnostics.clear":
+		if err := store.ClearDiagnosticEvents(ctx); err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true}, nil
+	case "domain.diagnostics.compact":
+		v, err := store.PruneDiagnostics(ctx, time.Now().UnixMilli())
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "compaction": v}, nil
+	case "domain.support.bundle":
+		p, err := decodePayload[supportBundlePayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		if p.RequestID == "" {
+			return nil, fmt.Errorf("support_bundle_request_id_required")
+		}
+		if p.Mode != diagnostics.PrivacyMinimal && p.Mode != diagnostics.PrivacyDetailed {
+			return nil, fmt.Errorf("support_bundle_privacy_mode_invalid")
+		}
+		snapshot, err := store.DiagnosticsSnapshot(ctx)
+		if err != nil {
+			return nil, err
+		}
+		admission, err := store.AdmitAutomation(ctx, p.RequestID, "ui", "support-export", 1, string(p.Mode)+"|"+fmt.Sprint(snapshot.GeneratedAtMS))
+		if err != nil {
+			return nil, err
+		}
+		if _, err = store.AdvanceAutomation(ctx, admission.OperationID, "running", "support_export_started", "Go support evidence export started"); err != nil {
+			return nil, err
+		}
+		events, err := store.DiagnosticEvents(ctx, diagnostics.DefaultDiagnosticPolicy().MaxEventsPerSession)
+		if err != nil {
+			_, _ = store.AdvanceAutomation(ctx, admission.OperationID, "failure", "diagnostic_read_failed", err.Error())
+			return nil, err
+		}
+		bundle := diagnostics.NewSupportBundle(p.Mode, snapshot.EvidenceGenerations, snapshot.Problems, events)
+		bundle.OperationID = admission.OperationID
+		if err = store.PersistSupportBundle(ctx, admission.OperationID, bundle); err != nil {
+			_, _ = store.AdvanceAutomation(ctx, admission.OperationID, "failure", "support_bundle_persist_failed", err.Error())
+			return nil, err
+		}
+		terminal, err := store.AdvanceAutomation(ctx, admission.OperationID, "success", "support_export_sealed", "Go support evidence export sealed")
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "bundle": bundle, "operation": terminal}, nil
+	case "domain.support.bundle.delete":
+		p, err := decodePayload[supportBundleDeletePayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		if err := store.DeleteSupportBundle(ctx, p.OperationID); err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true}, nil
 	case "domain.product.rules.preview":
 		p, err := decodePayload[rulePreviewPayload](frame.Payload)
 		if err != nil {

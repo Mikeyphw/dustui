@@ -1,0 +1,20 @@
+{
+  "schema": "dustui.aud-fix-status.v1",
+  "overlay": "AUD-FIX-06",
+  "status": "candidate-awaiting-devtool-gate",
+  "closed_or_advanced_gap_families": [
+    "AUD-006",
+    "AUD-007",
+    "AUD-008",
+    "AUD-009",
+    "AUD-010",
+    "AUD-011",
+    "AUD-012",
+    "AUD-013",
+    "AUD-021"
+  ],
+  "gate_d": "open",
+  "validation_authority": "devtool-exo",
+  "workflow": "dustui_android#authority_gate_r1",
+  "closure_condition": "overlay application succeeds with required Devtool validation on the source-pinned tree"
+}

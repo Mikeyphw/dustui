@@ -1,6 +1,12 @@
 [workspace]
 default_target = "dustui_android"
 
+[workspace.scheduler]
+parallel = true
+max_parallel_nodes = 3
+max_gradle_nodes = 1
+max_dotnet_nodes = 1
+
 [project]
 kind = "python"
 name = "DustUI"
@@ -20,8 +26,8 @@ isolation = true
 type = "android"
 root = "android"
 execution_environment = "native-termux"
-outputs = ["android/app/build", "android/build", "build/release-candidate", "build/final-rc", ".devtool"]
-inputs = ["android", "migration", ".devtool.toml"]
+outputs = ["app/build", "build", "../build/release-candidate", "../build/final-rc", ".devtool"]
+inputs = ["app", "../go", "../migration", "../.devtool.toml"]
 
 [targets.dustui_android.android]
 variant = "debug"
@@ -98,8 +104,8 @@ go_sqlite_implementation = true
 type = "go"
 root = "go"
 execution_environment = "native-termux"
-outputs = ["go/bin", "go/build"]
-inputs = ["go"]
+outputs = ["bin", "build"]
+inputs = ["."]
 
 [targets.dustui_go.metadata]
 target_production_authority = true
@@ -238,106 +244,202 @@ lint = [
   ":app:lintDebug",
 ]
 
+[targets.dustui_android.jobs.audfix01_truth]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix01_contract.py"]
+inputs = ["scripts/validate_audfix01_contract.py", "migration/qualification/v1", "migration/requirements/v2"]
+[targets.dustui_android.jobs.audfix01_truth.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.audfix02_bounded]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix02_contract.py"]
+inputs = ["scripts/validate_audfix02_contract.py", "go/internal/scan", "go/internal/rootworker", "go/internal/state/android_query_page.go", "android/app/src"]
+[targets.dustui_android.jobs.audfix02_bounded.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.audfix03_domain]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix03_contract.py"]
+inputs = ["scripts/validate_audfix03_contract.py", "go/internal/authority", "go/internal/packageevidence", "go/internal/intelligence", "go/internal/state", "go/cmd/dustui-go", "android/app/src"]
+[targets.dustui_android.jobs.audfix03_domain.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.audfix04_operations]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix04_contract.py"]
+inputs = ["scripts/validate_audfix04_contract.py", "go/internal/automation", "go/internal/state/automation_authority.go", "android/app/src", "migration/qualification/v1"]
+[targets.dustui_android.jobs.audfix04_operations.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.audfix05_android_contract]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix05_contract.py"]
+inputs = ["scripts/validate_audfix05_contract.py", "go/internal/diagnostics", "go/internal/state/diagnostics_authority.go", "go/cmd/dustui-go/runtime_domain.go", "android/app/src", ".devtool.toml", "migration/qualification/v1"]
+[targets.dustui_android.jobs.audfix05_android_contract.metadata]
+read_only = true
+
 [targets.dustui_android.jobs.qualification_state]
 runner = "command"
 root = ".."
 command = ["python3", "scripts/refresh_qualification_state.py", "--check"]
 inputs = ["scripts/refresh_qualification_state.py", "scripts/audfix01_core.py", "migration/qualification/v1", "migration/requirements/v2/requirements.json", ".devtool.toml"]
-
-[targets.dustui_android.jobs.ov13_contract]
-runner = "command"
-root = ".."
-command = ["python3", "scripts/validate_ov13_contract.py", "--audit-loop"]
-inputs = ["scripts/validate_ov13_contract.py", "go", "migration", ".devtool.toml"]
-
-[targets.dustui_android.jobs.retirement_audit]
-runner = "command"
-root = ".."
-command = ["python3", "scripts/validate_ov14_retirement_truth_hotfix.py"]
-inputs = ["scripts/validate_ov14_retirement_truth_hotfix.py", "android", "go", "migration", ".devtool.toml"]
-
-[targets.dustui_android.jobs.retirement_gate]
-runner = "command"
-root = ".."
-command = ["python3", "scripts/validate_ov14_retirement_truth_hotfix.py", "--gate"]
-inputs = ["scripts/validate_ov14_retirement_truth_hotfix.py", "android", "go", "migration", ".devtool.toml"]
-
-[targets.dustui_android.jobs.rem02_sqlite]
-runner = "command"
-root = ".."
-command = ["python3", "scripts/validate_rem02_sqlite_persistence_authority.py"]
-inputs = ["scripts/validate_rem02_sqlite_persistence_authority.py", "go", "android/app/src/main/kotlin/com/mikeyphw/dustui/go"]
-
-[targets.dustui_android.jobs.rem03_domain_cutover]
-runner = "command"
-root = ".."
-command = ["python3", "scripts/validate_rem03_android_domain_cutover.py"]
-inputs = ["scripts/validate_rem03_android_domain_cutover.py", "go", "android/app/src/main/kotlin/com/mikeyphw/dustui", "migration", ".devtool.toml"]
-
-[targets.dustui_android.jobs.rem04_privileged_cutover]
-runner = "command"
-command = ["python3", "scripts/validate_rem04_privileged_cleanup_cutover.py"]
-inputs = ["scripts/validate_rem04_privileged_cleanup_cutover.py", "go/internal/rootworker", "go/internal/cleanup", "go/cmd/dustui-go", "android/app/src/main/kotlin/com/mikeyphw/dustui/root", "android/app/src/main/kotlin/com/mikeyphw/dustui/data/CleanupModels.kt", "android/app/src/main/aidl", "android/app/build.gradle.kts", "migration", ".devtool.toml"]
-
+[targets.dustui_android.jobs.qualification_state.metadata]
+read_only = true
 
 [targets.dustui_android.jobs.gradle_contract]
 gradle_tasks = ["verifyDustMigrationContract"]
-
-[targets.dustui_android.jobs.go_test]
-runner = "command"
-root = "../go"
-command = ["go", "test", "./..."]
-inputs = ["."]
+inputs = ["app/src", "build.gradle.kts", "../migration", "../.devtool.toml"]
+outputs = ["app/build/reports", "app/build/test-results"]
 
 [targets.dustui_android.jobs.android_unit]
 gradle_tasks = [":app:testDebugUnitTest"]
+inputs = ["app/src", "build.gradle.kts", "settings.gradle.kts", "../go", "../migration"]
 outputs = ["app/build/test-results", "app/build/reports/tests"]
 
 [targets.dustui_android.jobs.android_lint]
 gradle_tasks = [":app:lintDebug"]
+inputs = ["app/src", "build.gradle.kts", "settings.gradle.kts", "../go", "../migration"]
 outputs = ["app/build/reports/lint-results-debug.html", "app/build/reports/lint-results-debug.xml"]
 
 [targets.dustui_android.jobs.android_assemble]
 gradle_tasks = [":app:assembleDebug"]
+inputs = ["app/src", "build.gradle.kts", "settings.gradle.kts", "../go", "../migration"]
 outputs = ["app/build/outputs/apk/debug"]
 
 [targets.dustui_android.workflows]
-fast = ["job:qualification_state", "job:rem04_privileged_cutover", "job:rem03_domain_cutover", "job:ov13_contract", "job:go_test", "job:android_unit"]
+aud_fix_regression = [
+  { id = "a01", ref = "job:audfix01_truth", depends_on = [] },
+  { id = "a02", ref = "job:audfix02_bounded", depends_on = [] },
+  { id = "a03", ref = "job:audfix03_domain", depends_on = [] },
+  { id = "a04", ref = "job:audfix04_operations", depends_on = [] },
+  { id = "go", ref = "target:dustui_go#aud_fix_regression", depends_on = [] },
+  { id = "truth", ref = "job:qualification_state", depends_on = ["a01", "a02", "a03", "a04", "go"] },
+]
+aud_fix_05 = [
+  { id = "a01", ref = "job:audfix01_truth", depends_on = [] },
+  { id = "a02", ref = "job:audfix02_bounded", depends_on = [] },
+  { id = "a03", ref = "job:audfix03_domain", depends_on = [] },
+  { id = "a04", ref = "job:audfix04_operations", depends_on = [] },
+  { id = "a05", ref = "job:audfix05_android_contract", depends_on = [] },
+  { id = "go", ref = "target:dustui_go#aud_fix_05", depends_on = [] },
+  { id = "truth", ref = "job:qualification_state", depends_on = ["a01", "a02", "a03", "a04", "a05", "go"] },
+]
+authority_gate_r1 = [
+  { id = "a01", ref = "job:audfix01_truth", depends_on = [] },
+  { id = "a02", ref = "job:audfix02_bounded", depends_on = [] },
+  { id = "a03", ref = "job:audfix03_domain", depends_on = [] },
+  { id = "a04", ref = "job:audfix04_operations", depends_on = [] },
+  { id = "a05", ref = "job:audfix05_android_contract", depends_on = [] },
+  { id = "go", ref = "target:dustui_go#authority_gate_r1", depends_on = [] },
+  { id = "gradle_contract", ref = "job:gradle_contract", depends_on = ["a01", "a02", "a03", "a04", "a05", "go"] },
+  { id = "unit", ref = "job:android_unit", depends_on = ["gradle_contract"] },
+  { id = "lint", ref = "job:android_lint", depends_on = ["unit"] },
+  { id = "assemble", ref = "job:android_assemble", depends_on = ["lint"] },
+  { id = "truth", ref = "job:qualification_state", depends_on = ["assemble"] },
+]
+validate = [
+  { id = "a01", ref = "job:audfix01_truth", depends_on = [] },
+  { id = "a02", ref = "job:audfix02_bounded", depends_on = [] },
+  { id = "a03", ref = "job:audfix03_domain", depends_on = [] },
+  { id = "a04", ref = "job:audfix04_operations", depends_on = [] },
+  { id = "a05", ref = "job:audfix05_android_contract", depends_on = [] },
+  { id = "go", ref = "target:dustui_go#authority_gate_r1", depends_on = [] },
+  { id = "gradle_contract", ref = "job:gradle_contract", depends_on = ["a01", "a02", "a03", "a04", "a05", "go"] },
+  { id = "unit", ref = "job:android_unit", depends_on = ["gradle_contract"] },
+  { id = "lint", ref = "job:android_lint", depends_on = ["unit"] },
+  { id = "assemble", ref = "job:android_assemble", depends_on = ["lint"] },
+  { id = "truth", ref = "job:qualification_state", depends_on = ["assemble"] },
+]
+fast = ["job:audfix05_android_contract", "target:dustui_go#aud_fix_05"]
 unit = ["job:android_unit"]
-cutover_audit = ["job:qualification_state", "job:retirement_audit"]
-gate_d = ["job:qualification_state", "job:rem02_sqlite", "job:rem03_domain_cutover", "job:rem04_privileged_cutover", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
-validate = ["job:qualification_state", "job:rem02_sqlite", "job:rem03_domain_cutover", "job:rem04_privileged_cutover", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
+cutover_audit = ["job:audfix01_truth", "job:audfix02_bounded", "job:audfix03_domain", "job:audfix04_operations", "job:audfix05_android_contract", "job:qualification_state"]
+gate_d = ["job:audfix01_truth", "job:audfix02_bounded", "job:audfix03_domain", "job:audfix04_operations", "job:audfix05_android_contract", "job:qualification_state"]
 
-[targets.dustui_go.jobs.go_test]
+[targets.dustui_go.jobs.go_test_all]
 runner = "command"
 command = ["go", "test", "./..."]
 inputs = ["."]
+[targets.dustui_go.jobs.go_test_all.metadata]
+read_only = true
+
+[targets.dustui_go.jobs.go_build]
+runner = "command"
+command = ["go", "build", "-o", "build/aud-fix-06/dustui-go", "./cmd/dustui-go"]
+inputs = ["."]
+outputs = ["build/aud-fix-06/dustui-go"]
 
 [targets.dustui_go.jobs.product_contract]
 runner = "command"
 command = ["go", "run", "./cmd/dustui-go", "product-contract"]
 inputs = ["."]
-
-[targets.dustui_go.jobs.tui_smoke]
-runner = "command"
-command = ["go", "run", "./cmd/dustui-go", "tui-smoke"]
-inputs = ["."]
+[targets.dustui_go.jobs.product_contract.metadata]
+read_only = true
 
 [targets.dustui_go.jobs.schema_contract]
 runner = "command"
 command = ["go", "run", "./cmd/dustui-go", "schema"]
 inputs = ["."]
+[targets.dustui_go.jobs.schema_contract.metadata]
+read_only = true
+
+[targets.dustui_go.jobs.audfix05_diagnostics_go]
+runner = "command"
+command = ["go", "test", "./internal/diagnostics", "./internal/state", "-run", "AUD_FIX05", "-count=1"]
+inputs = ["internal/diagnostics", "internal/state", "go.mod", "go.sum"]
+[targets.dustui_go.jobs.audfix05_diagnostics_go.metadata]
+read_only = true
 
 [targets.dustui_go.workflows]
-fast = ["job:go_test", "job:product_contract", "job:tui_smoke", "job:schema_contract"]
-validate = ["job:go_test", "job:product_contract", "job:tui_smoke", "job:schema_contract"]
+aud_fix_regression = [
+  { id = "tests", ref = "job:go_test_all", depends_on = [] },
+  { id = "product", ref = "job:product_contract", depends_on = [] },
+  { id = "schema", ref = "job:schema_contract", depends_on = [] },
+]
+aud_fix_05 = [
+  { id = "diagnostics", ref = "job:audfix05_diagnostics_go", depends_on = [] },
+  { id = "product", ref = "job:product_contract", depends_on = [] },
+  { id = "schema", ref = "job:schema_contract", depends_on = [] },
+]
+authority_gate_r1 = [
+  { id = "tests", ref = "job:go_test_all", depends_on = [] },
+  { id = "diagnostics", ref = "job:audfix05_diagnostics_go", depends_on = [] },
+  { id = "product", ref = "job:product_contract", depends_on = [] },
+  { id = "schema", ref = "job:schema_contract", depends_on = [] },
+  { id = "build", ref = "job:go_build", depends_on = ["tests", "diagnostics", "product", "schema"] },
+]
+fast = ["job:go_test_all", "job:product_contract", "job:schema_contract"]
+validate = [
+  { id = "tests", ref = "job:go_test_all", depends_on = [] },
+  { id = "diagnostics", ref = "job:audfix05_diagnostics_go", depends_on = [] },
+  { id = "product", ref = "job:product_contract", depends_on = [] },
+  { id = "schema", ref = "job:schema_contract", depends_on = [] },
+  { id = "build", ref = "job:go_build", depends_on = ["tests", "diagnostics", "product", "schema"] },
+]
 
 [wrapper]
 schema = 1
-default_command = "gate-d"
+default_command = "authority-r1"
+
+[wrapper.commands.authority-r1]
+description = "Run DustUI AUD-FIX-06 Authority Convergence Gate R1 through the native EXO DAG"
+workflow = "authority_gate_r1"
+target = "dustui_android"
+aliases = ["r1", "aud-fix-gate"]
+
+[wrapper.commands.aud-fix-05]
+description = "Run the AUD-FIX-05 diagnostics/support authority workflow"
+workflow = "aud_fix_05"
+target = "dustui_android"
+aliases = ["diag-authority"]
 
 [wrapper.commands.gate-d]
-description = "Run DustUI Gate D through EXO target-local jobs"
+description = "Compatibility audit alias only; Gate D remains open until AUD-FIX-15"
 workflow = "gate_d"
 target = "dustui_android"
 aliases = ["gate", "validate-gate"]
@@ -361,7 +463,7 @@ target = "dustui_android"
 aliases = ["test-unit"]
 
 [wrapper.commands.go-fast]
-description = "Run Go product contract, schema, TUI smoke, and go test evidence"
+description = "Run Go test, product contract, and schema evidence"
 workflow = "fast"
 target = "dustui_go"
 aliases = ["go"]

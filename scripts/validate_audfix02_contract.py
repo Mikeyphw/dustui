@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse, json, re, subprocess, sys
+import argparse, json, re, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -87,68 +87,20 @@ def check_source() -> list[dict[str, str]]:
     return failures
 
 
-def run_go_tests() -> tuple[bool, str]:
-    cp = subprocess.run(
-        ["go", "test", "./internal/scan", "./internal/rootworker"],
-        cwd=ROOT / "go", text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-    )
-    return cp.returncode == 0, cp.stdout[-12000:]
-
-
-def run_pass(index: int) -> dict:
-    failures = check_source()
-    ok, out = run_go_tests()
-    if not ok:
-        failures.append({"code": "AUD_FIX_02_GO_TESTS", "detail": "targeted shared-scanner/root-worker Go tests failed"})
-    return {"pass": index, "failures": failures, "go_tests": {"ok": ok, "output": out}}
-
-
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--audit-loop", action="store_true")
-    ap.add_argument("--write-evidence", action="store_true")
     args = ap.parse_args()
-    passes=[]
-    max_passes = 4 if args.audit_loop else 1
-    prior_codes = None
-    converged = False
-    for i in range(1, max_passes+1):
-        result=run_pass(i); passes.append(result)
-        codes=tuple(x["code"] for x in result["failures"])
-        if not codes and prior_codes == codes:
-            converged=True; break
-        if not codes and prior_codes is None and not args.audit_loop:
-            converged=True; break
-        if prior_codes == codes:
-            converged=not codes
-            break
-        prior_codes=codes
-    failures=passes[-1]["failures"]
-    evidence={
-        "schema":"dustui.aud-fix-02-audit.v1",
-        "overlay":"AUD-FIX-02",
-        "scope_gap_families":["AUD-007","AUD-009","AUD-010"],
-        "passes":passes,
-        "converged":converged and not failures,
-        "later_roadmap_gaps_intentionally_open":["AUD-006","AUD-008","AUD-011","AUD-012","AUD-013","UIX-001","UIX-002","UIX-003","UIX-004","UIX-005","UIX-006","UIX-007","UIX-008","UIX-009"],
-        "gate_d":"open",
-    }
-    ledger={
-        "schema":"dustui.aud-fix-status.v1","overlay":"AUD-FIX-02",
-        "status":"complete" if evidence["converged"] else "blocked",
-        "closed_gap_families":["AUD-007","AUD-009","AUD-010"] if evidence["converged"] else [],
-        "audit_evidence":"migration/audit/v2/aud_fix_02_audit_loop.json",
-        "gate_d":"open","passes":len(passes),"blockers":failures,
-    }
-    if args.write_evidence:
-        EVIDENCE.parent.mkdir(parents=True,exist_ok=True)
-        EVIDENCE.write_text(json.dumps(evidence,indent=2)+"\n")
-        LEDGER.write_text(json.dumps(ledger,indent=2)+"\n")
-    for p in passes:
-        print(f"AUD-FIX-02 audit pass {p['pass']}: failures={len(p['failures'])}")
-        for f in p["failures"]: print(f"  - {f['code']}: {f['detail']}")
-    print(f"converged={str(evidence['converged']).lower()}")
-    return 0 if evidence["converged"] else 1
+    passes = 2 if args.audit_loop else 1
+    for i in range(1, passes + 1):
+        failures = check_source()
+        print(f"AUD-FIX-02 leaf pass {i}: failures={len(failures)}")
+        for failure in failures:
+            print(f"  - {failure['code']}: {failure['detail']}")
+        if failures:
+            return 1
+    print("converged=true")
+    return 0
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -41,7 +41,7 @@ var RequiredEvidenceNodes = []string{
 	"devtool_artifact_identity",
 	"durable_operation_terminal_truth",
 	"diagnostics_support_seal",
-	"production_reachability"
+	"production_reachability",
 }
 
 var MissingRequiredEvidence = []string{
@@ -69,5 +69,5 @@ var MissingRequiredEvidence = []string{
 	"production_reachability",
 	"rooted_arm64_runtime",
 	"route_deeplink_recreation_rotation",
-	"runtime_apk_binding"
+	"runtime_apk_binding",
 }

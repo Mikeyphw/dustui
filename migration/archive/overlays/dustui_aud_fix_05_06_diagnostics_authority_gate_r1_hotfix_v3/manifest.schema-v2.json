@@ -1,0 +1,42 @@
+{
+  "artifact": "dustui_aud_fix_05_06_diagnostics_authority_gate_r1_hotfix_v3.zip",
+  "gap_families": [
+    "AUD-006",
+    "AUD-007",
+    "AUD-008",
+    "AUD-009",
+    "AUD-010",
+    "AUD-011",
+    "AUD-012",
+    "AUD-013",
+    "AUD-021"
+  ],
+  "phases": [
+    "AUD-FIX-05",
+    "AUD-FIX-06"
+  ],
+  "purpose": "Durable Go diagnostics/support authority, AUD-FIX-04 duplicate-analysis cancellation compatibility repair, native Devtool validation graph convergence, and Authority Convergence Gate R1.",
+  "schema": "devtool.overlay.schema-v2",
+  "source_state": {
+    "failed_gate_run": "5e91a83aacb748bf929857d2f65b94d2",
+    "live_snapshot": "dustui-20260925-004927-165045.tar.gz",
+    "rebase_note": "preserve live AUD-FIX-01/02 cleanup; repair generated qualification state; repair legacy duplicate-analysis admission kind exposed by Gate R1",
+    "required_parent_commit": "7334c4a",
+    "requires_overlays": [
+      "AUD-FIX-01",
+      "AUD-FIX-02",
+      "AUD-FIX-03",
+      "AUD-FIX-04"
+    ],
+    "supersedes_failed_artifact": "dustui_aud_fix_05_06_diagnostics_authority_gate_r1_live_rebase_v2.zip"
+  },
+  "target": "dustui_android",
+  "validation": {
+    "authority": "devtool-exo",
+    "gate_d_must_remain": "open",
+    "required": true,
+    "validate_alias": "validate",
+    "validation_tasks": null,
+    "workflow": "authority_gate_r1"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "devtool_native": {
+    "custom_validation_orchestrator": false,
+    "jobs": "target-local",
+    "workflows": [
+      "aud_fix_regression",
+      "aud_fix_05",
+      "authority_gate_r1",
+      "validate"
+    ]
+  },
+  "gate_d": "open",
+  "local_execution": {
+    "android_gradle": "deferred-to-native-termux-gate",
+    "go_internal_diagnostics": "pass",
+    "go_state_and_runtime_compile": "pass-with-compile-only-modernc-stub",
+    "go_state_runtime_behavior": "deferred-to-native-termux-gate-modernc-cache"
+  },
+  "overlay": "AUD-FIX-05",
+  "passes": [
+    {
+      "detail": "AUD-013 implementation mapped to durable Go diagnostics/support authority and Android adapter consumption.",
+      "name": "requirement-pass",
+      "result": "pass"
+    },
+    {
+      "detail": "AUD-FIX-01..05 leaf assertions each converged twice; Gate D remains open.",
+      "name": "regression-pass",
+      "result": "pass"
+    },
+    {
+      "detail": "Checked local-only support authorship, unbounded diagnostics, raw path-like value persistence, synthetic root-cause parent, invalid privacy mode, and missing durable-operation correlation; each is blocked or covered by implementation/tests.",
+      "name": "counterexample-pass",
+      "result": "pass"
+    },
+    {
+      "detail": "AUD-FIX-01..04 scripts are leaf assertions only and are owned by Devtool target-local jobs; no recursive Gradle/Go/adb/Devtool orchestration remains in canonical AUD-FIX leaf checkers.",
+      "name": "guard-lifecycle-pass",
+      "result": "pass"
+    },
+    {
+      "detail": "Devtool job names/commands resolve to real source paths and match roadmap semantic names.",
+      "name": "validator-vs-source-pass",
+      "result": "pass"
+    },
+    {
+      "name": "fresh-pass",
+      "new_independent_gap_families": [],
+      "result": "pass"
+    }
+  ],
+  "roadmap": "DUSTUI_FULL_AUDIT_REMEDIATION_ROADMAP_AUD_FIX01_AUD_FIX17_DEVTOOL_NATIVE_20260924.md#AUD-FIX-05",
+  "schema": "dustui.aud-fix-audit-loop.v1",
+  "status": "converged-source-level"
+}

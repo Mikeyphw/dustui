@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse, json, re, subprocess
+import argparse, json, re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -111,86 +111,20 @@ def check_source() -> list[dict[str, str]]:
     return failures
 
 
-def run_go_tests() -> tuple[bool, str]:
-    cp = subprocess.run(
-        ["go", "test", "./internal/authority", "./internal/packageevidence", "./internal/intelligence", "./internal/scan", "./internal/rootworker"],
-        cwd=ROOT / "go", text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-    )
-    return cp.returncode == 0, cp.stdout[-16000:]
-
-
-def modernc_available() -> bool:
-    cp = subprocess.run(["go", "env", "GOMODCACHE"], cwd=ROOT / "go", text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-    if cp.returncode != 0:
-        return False
-    cache = Path(cp.stdout.strip())
-    return any(cache.glob("modernc.org/sqlite@v1.36.3*")) or any((cache / "cache/download/modernc.org/sqlite/@v").glob("v1.36.3.zip"))
-
-
-def run_restart_test() -> dict:
-    if not modernc_available():
-        return {"status": "environment-deferred", "reason": "modernc.org/sqlite v1.36.3 is not present in the local module cache; CGO substitution is forbidden"}
-    cp = subprocess.run(
-        ["go", "test", "./internal/state", "-run", "^TestAUD_FIX03AuthoritySurvivesRestartWithGenerationAndEvidenceTruth$", "-count=1"],
-        cwd=ROOT / "go", text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-    )
-    return {"status": "passed" if cp.returncode == 0 else "failed", "output": cp.stdout[-16000:]}
-
-
-def run_pass(index: int) -> dict:
-    failures = check_source()
-    ok, out = run_go_tests()
-    if not ok:
-        failures.append({"code": "AUD_FIX_03_GO_TESTS", "detail": "targeted authority/package/intelligence/scanner Go tests failed"})
-    restart = run_restart_test()
-    if restart["status"] == "failed":
-        failures.append({"code": "AUD_FIX_03_RESTART_TEST", "detail": "SQLite restart parity test failed"})
-    return {"pass": index, "failures": failures, "go_tests": {"ok": ok, "output": out}, "restart_test": restart}
-
-
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--audit-loop", action="store_true")
-    ap.add_argument("--write-evidence", action="store_true")
     args = ap.parse_args()
-    passes=[]; previous=None; converged=False
-    for i in range(1, 5 if args.audit_loop else 2):
-        result=run_pass(i); passes.append(result)
-        codes=tuple(x["code"] for x in result["failures"])
-        if not codes and previous == codes:
-            converged=True; break
-        if not args.audit_loop and not codes:
-            converged=True; break
-        if previous == codes:
-            converged=not codes; break
-        previous=codes
-    failures=passes[-1]["failures"]
-    deferred=passes[-1]["restart_test"].get("status") == "environment-deferred"
-    evidence={
-        "schema":"dustui.aud-fix-03-audit.v1", "overlay":"AUD-FIX-03",
-        "scope_gap_families":["AUD-006","AUD-008","AUD-014","UIX-007"],
-        "passes":passes, "converged":converged and not failures,
-        "environment_deferred_evidence":["modernc SQLite restart test"] if deferred else [],
-        "later_roadmap_gaps_intentionally_open":["AUD-003","AUD-004","AUD-005","AUD-011","AUD-012","AUD-013","AUD-015","AUD-016","AUD-017","AUD-018","AUD-019","AUD-020","AUD-021","AUD-022","AUD-023","AUD-024","UIX-001","UIX-002","UIX-003","UIX-004","UIX-005","UIX-006","UIX-008","UIX-009"],
-        "gate_d":"open",
-    }
-    ledger={
-        "schema":"dustui.aud-fix-status.v1", "overlay":"AUD-FIX-03",
-        "status":"implementation-complete-evidence-deferred" if evidence["converged"] and deferred else ("complete" if evidence["converged"] else "blocked"),
-        "closed_or_advanced_gap_families":["AUD-006","AUD-008","AUD-014","UIX-007"] if evidence["converged"] else [],
-        "audit_evidence":"migration/audit/v2/aud_fix_03_audit_loop.json",
-        "gate_d":"open", "passes":len(passes), "blockers":failures,
-        "environment_deferred_evidence":evidence["environment_deferred_evidence"],
-    }
-    if args.write_evidence:
-        EVIDENCE.parent.mkdir(parents=True,exist_ok=True); LEDGER.parent.mkdir(parents=True,exist_ok=True)
-        EVIDENCE.write_text(json.dumps(evidence,indent=2)+"\n")
-        LEDGER.write_text(json.dumps(ledger,indent=2)+"\n")
-    for p in passes:
-        print(f"AUD-FIX-03 audit pass {p['pass']}: failures={len(p['failures'])} restart={p['restart_test']['status']}")
-        for f in p["failures"]: print(f"  - {f['code']}: {f['detail']}")
-    print(f"converged={str(evidence['converged']).lower()}")
-    return 0 if evidence["converged"] else 1
+    passes = 2 if args.audit_loop else 1
+    for i in range(1, passes + 1):
+        failures = check_source()
+        print(f"AUD-FIX-03 leaf pass {i}: failures={len(failures)}")
+        for failure in failures:
+            print(f"  - {failure['code']}: {failure['detail']}")
+        if failures:
+            return 1
+    print("converged=true")
+    return 0
 
 if __name__ == "__main__":
     raise SystemExit(main())

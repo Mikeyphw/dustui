@@ -83,13 +83,22 @@ const (
 	RiskDestructive RemediationRisk = "destructive"
 )
 
+type RemediationAction struct {
+	Code        string `json:"code"`
+	Label       string `json:"label"`
+	Route       string `json:"route,omitempty"`
+	Destructive bool   `json:"destructive"`
+}
+
 type Problem struct {
-	ID               string          `json:"id"`
-	Reason           string          `json:"reason"`
-	RecoveryRequired bool            `json:"recoveryRequired"`
-	RootCauseID      string          `json:"rootCauseId,omitempty"`
-	Guidance         string          `json:"guidance,omitempty"`
-	Risk             RemediationRisk `json:"risk"`
+	ID                 string              `json:"id"`
+	Reason             string              `json:"reason"`
+	RecoveryRequired   bool                `json:"recoveryRequired"`
+	OperationID        string              `json:"operationId,omitempty"`
+	RootCauseID        string              `json:"rootCauseId,omitempty"`
+	Guidance           string              `json:"guidance,omitempty"`
+	Risk               RemediationRisk     `json:"risk"`
+	RemediationActions []RemediationAction `json:"remediationActions,omitempty"`
 }
 
 func RecoveryProblem(id, reason string) Problem {
@@ -116,7 +125,9 @@ func (g *ProblemGraph) Add(problem Problem) error {
 		return errors.New("problem_id_and_reason_required")
 	}
 	problem.ID = StableProblemID(problem.ID)
-	problem.RootCauseID = StableProblemID(problem.RootCauseID)
+	if strings.TrimSpace(problem.RootCauseID) != "" {
+		problem.RootCauseID = StableProblemID(problem.RootCauseID)
+	}
 	if problem.Risk == "" {
 		problem.Risk = RiskLow
 	}
@@ -168,14 +179,25 @@ type DiagnosticEvent struct {
 }
 
 type DiagnosticPolicy struct {
-	MaxValueBytes       int  `json:"maxValueBytes"`
-	MaxEventsPerSession int  `json:"maxEventsPerSession"`
-	MaxSessions         int  `json:"maxSessions"`
-	AutoUpload          bool `json:"autoUpload"`
+	MaxValueBytes           int  `json:"maxValueBytes"`
+	MaxEventsPerSession     int  `json:"maxEventsPerSession"`
+	MaxSessions             int  `json:"maxSessions"`
+	MaxSupportBundles       int  `json:"maxSupportBundles"`
+	DiagnosticRetainDays    int  `json:"diagnosticRetainDays"`
+	SupportBundleRetainDays int  `json:"supportBundleRetainDays"`
+	AutoUpload              bool `json:"autoUpload"`
 }
 
 func DefaultDiagnosticPolicy() DiagnosticPolicy {
-	return DiagnosticPolicy{MaxValueBytes: 128, MaxEventsPerSession: 2000, MaxSessions: 25, AutoUpload: false}
+	return DiagnosticPolicy{
+		MaxValueBytes:           128,
+		MaxEventsPerSession:     2000,
+		MaxSessions:             25,
+		MaxSupportBundles:       25,
+		DiagnosticRetainDays:    14,
+		SupportBundleRetainDays: 14,
+		AutoUpload:              false,
+	}
 }
 
 func RedactEvent(event DiagnosticEvent, policy DiagnosticPolicy) DiagnosticEvent {
@@ -186,7 +208,10 @@ func RedactEvent(event DiagnosticEvent, policy DiagnosticPolicy) DiagnosticEvent
 	redacted.Values = map[string]string{}
 	for key, value := range event.Values {
 		lk := strings.ToLower(key)
-		if strings.Contains(lk, "path") || strings.Contains(lk, "hash") || strings.Contains(lk, "package") || strings.Contains(lk, "device") || strings.Contains(lk, "root") {
+		lv := strings.ToLower(strings.TrimSpace(value))
+		sensitiveKey := strings.Contains(lk, "path") || strings.Contains(lk, "hash") || strings.Contains(lk, "package") || strings.Contains(lk, "device") || strings.Contains(lk, "root")
+		sensitiveValue := strings.HasPrefix(lv, "/") || strings.Contains(lv, "/data/") || strings.Contains(lv, "/storage/") || strings.HasPrefix(lv, "content://") || strings.HasPrefix(lv, "file://")
+		if sensitiveKey || sensitiveValue {
 			redacted.Values[key] = "redacted:" + shortHash(value)
 			continue
 		}
@@ -251,7 +276,9 @@ const (
 type SupportBundle struct {
 	Manifest              string               `json:"manifest"`
 	Protocol              string               `json:"protocol"`
+	OperationID           string               `json:"operationId,omitempty"`
 	PrivacyMode           PrivacyMode          `json:"privacyMode"`
+	PrivacyClasses        []PrivacyClass       `json:"privacyClasses"`
 	EvidenceGenerations   []EvidenceGeneration `json:"evidenceGenerations"`
 	Problems              []Problem            `json:"problems"`
 	DiagnosticEventCount  int                  `json:"diagnosticEventCount"`
@@ -259,26 +286,52 @@ type SupportBundle struct {
 	IncludesFileContent   bool                 `json:"includesFileContent"`
 	AutomaticUpload       bool                 `json:"automaticUpload"`
 	ReproducibleExportKey string               `json:"reproducibleExportKey"`
+	CreatedAtMS           int64                `json:"createdAtMs"`
+	ExpiresAtMS           int64                `json:"expiresAtMs"`
+}
+
+type DiagnosticSnapshot struct {
+	Protocol            string               `json:"protocol"`
+	GeneratedAtMS       int64                `json:"generatedAtMs"`
+	EvidenceGenerations []EvidenceGeneration `json:"evidenceGenerations"`
+	Problems            []Problem            `json:"problems"`
+	Retention           DiagnosticPolicy     `json:"retention"`
+	SupportExportState  string               `json:"supportExportState"`
+}
+
+type CompactionReport struct {
+	ExpiredEvents   int64 `json:"expiredEvents"`
+	OverflowEvents  int64 `json:"overflowEvents"`
+	ExpiredBundles  int64 `json:"expiredBundles"`
+	OverflowBundles int64 `json:"overflowBundles"`
+	RemovedSessions int64 `json:"removedSessions"`
 }
 
 func NewSupportBundle(mode PrivacyMode, generations []EvidenceGeneration, problems []Problem, events []DiagnosticEvent) SupportBundle {
 	sort.Slice(generations, func(i, j int) bool { return generations[i].Subject < generations[j].Subject })
 	sort.Slice(problems, func(i, j int) bool { return problems[i].ID < problems[j].ID })
-	manifest := fmt.Sprintf("dustui-support-bundle/%s/%d/%d", mode, len(generations), len(problems))
+	evidenceDigest := checksumJSON(generations)
+	problemDigest := checksumJSON(problems)
+	manifest := fmt.Sprintf("dustui-support-bundle/v2/%s/%s/%s", mode, evidenceDigest[:16], problemDigest[:16])
+	now := time.Now().UnixMilli()
+	policy := DefaultDiagnosticPolicy()
 	bundle := SupportBundle{
 		Manifest:             manifest,
 		Protocol:             Protocol,
 		PrivacyMode:          mode,
+		PrivacyClasses:       []PrivacyClass{PrivacyRawPath, PrivacyHash, PrivacyPackage, PrivacyRootDevice},
 		EvidenceGenerations:  generations,
 		Problems:             problems,
 		DiagnosticEventCount: len(events),
 		Checksums:            map[string]string{},
 		IncludesFileContent:  false,
 		AutomaticUpload:      false,
+		CreatedAtMS:          now,
+		ExpiresAtMS:          time.UnixMilli(now).AddDate(0, 0, policy.SupportBundleRetainDays).UnixMilli(),
 	}
 	bundle.Checksums["manifest"] = checksum(manifest)
-	bundle.Checksums["evidence"] = checksumJSON(generations)
-	bundle.Checksums["problems"] = checksumJSON(problems)
+	bundle.Checksums["evidence"] = evidenceDigest
+	bundle.Checksums["problems"] = problemDigest
 	bundle.ReproducibleExportKey = checksumJSON(bundle.Checksums)
 	return bundle
 }
@@ -295,6 +348,8 @@ type ContractReport struct {
 	StructuredPersistentEvents bool             `json:"structuredPersistentEvents"`
 	RedactionBeforePersistence bool             `json:"redactionBeforePersistence"`
 	BoundedRetention           bool             `json:"boundedRetention"`
+	DeterministicExpiry        bool             `json:"deterministicExpiry"`
+	DurableSupportOperation    bool             `json:"durableSupportOperation"`
 	AutomaticUpload            bool             `json:"automaticUpload"`
 	SupportBundle              bool             `json:"supportBundle"`
 	PrivacyClasses             []PrivacyClass   `json:"privacyClasses"`
@@ -314,6 +369,8 @@ func Contract() ContractReport {
 		StructuredPersistentEvents: true,
 		RedactionBeforePersistence: true,
 		BoundedRetention:           true,
+		DeterministicExpiry:        true,
+		DurableSupportOperation:    true,
 		AutomaticUpload:            false,
 		SupportBundle:              true,
 		PrivacyClasses:             []PrivacyClass{PrivacyRawPath, PrivacyHash, PrivacyPackage, PrivacyRootDevice},

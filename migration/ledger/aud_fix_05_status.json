@@ -1,0 +1,12 @@
+{
+  "schema": "dustui.aud-fix-status.v1",
+  "overlay": "AUD-FIX-05",
+  "status": "implementation-complete",
+  "closed_or_advanced_gap_families": [
+    "AUD-013",
+    "AUD-021"
+  ],
+  "gate_d": "open",
+  "validation_authority": "devtool-target-local-jobs",
+  "workflow": "dustui_android#aud_fix_05"
+}

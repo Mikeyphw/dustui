@@ -52,6 +52,30 @@ func TestProblemGraphSuppressesDependentSymptoms(t *testing.T) {
 	}
 }
 
+func TestProblemGraphLeavesAbsentRootCauseEmpty(t *testing.T) {
+	graph := NewProblemGraph()
+	if err := graph.Add(Problem{ID: "standalone", Reason: "standalone problem"}); err != nil {
+		t.Fatal(err)
+	}
+	visible := graph.VisibleProblems()
+	if len(visible) != 1 || visible[0].RootCauseID != "" {
+		t.Fatalf("standalone problems must not acquire a synthetic root cause: %#v", visible)
+	}
+}
+
+func TestDiagnosticsRedactsPathLikeValuesRegardlessOfKeyName(t *testing.T) {
+	event := DiagnosticEvent{SessionID: "s1", Area: "support", Severity: SeverityInfo, Action: "record", Result: "ok", Values: map[string]string{
+		"detail": "/storage/emulated/0/Secret/photo.jpg",
+		"uri":    "content://com.example.private/item/42",
+	}}
+	redacted := RedactEvent(event, DefaultDiagnosticPolicy())
+	for key, value := range redacted.Values {
+		if !strings.HasPrefix(value, "redacted:") {
+			t.Fatalf("%s must be redacted by value shape: %q", key, value)
+		}
+	}
+}
+
 func TestDiagnosticsRedactBeforePersistenceAndBoundValues(t *testing.T) {
 	event := DiagnosticEvent{SessionID: "s1", Area: "scan", Severity: SeverityWarning, Action: "persist", Result: "blocked", Values: map[string]string{
 		"rawPath":     "/sdcard/secret/photo.jpg",
@@ -98,5 +122,19 @@ func TestRetentionMatrixAndSupportBundleArePrivacyQualified(t *testing.T) {
 	}
 	if bundle.Checksums["manifest"] == "" || bundle.ReproducibleExportKey == "" {
 		t.Fatalf("support bundle must be sealed and reproducible: %#v", bundle)
+	}
+}
+
+func TestAUD_FIX05PolicyBoundsRetentionAndSupportExpiry(t *testing.T) {
+	p := DefaultDiagnosticPolicy()
+	if p.MaxEventsPerSession <= 0 || p.MaxSessions <= 0 || p.MaxSupportBundles <= 0 || p.DiagnosticRetainDays <= 0 || p.SupportBundleRetainDays <= 0 {
+		t.Fatalf("retention policy must be fully bounded: %#v", p)
+	}
+	bundle := NewSupportBundle(PrivacyMinimal, []EvidenceGeneration{{Subject: "scan", Generation: 2, Hash: "h", Health: EvidenceCurrent}}, nil, nil)
+	if bundle.ExpiresAtMS <= bundle.CreatedAtMS || bundle.OperationID != "" {
+		t.Fatalf("support bundle expiry/operation lifecycle invalid: %#v", bundle)
+	}
+	if !Contract().DeterministicExpiry || !Contract().DurableSupportOperation {
+		t.Fatalf("contract must advertise deterministic expiry and durable support operation")
 	}
 }

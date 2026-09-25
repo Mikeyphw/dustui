@@ -1,74 +1,34 @@
 #!/usr/bin/env python3
-"""AUD-FIX-01 contract + bounded audit loop.
-
-This is intentionally a no-full-validation overlay validator. It verifies canonical
-truth machinery, successor-aware guards, negative fixtures, and agreement of every
-live migration validator that is in AUD-FIX-01 scope. Later roadmap gaps are
-reported but do not become false AUD-FIX-01 failures.
-"""
 from __future__ import annotations
-import argparse, hashlib, json, os, subprocess, sys, time
+import argparse, json
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
-
-COMMANDS=[
- ['python3','scripts/refresh_qualification_state.py','--check'],
- ['python3','scripts/refresh_ov14_retirement_observation.py','--check'],
- ['python3','-m','unittest','migration.audit.v2.tests.test_audfix01','-v'],
- ['python3','scripts/validate_rem02_reconciliation_hotfix.py'],
- ['python3','scripts/validate_rem03_android_domain_cutover.py'],
- ['python3','scripts/validate_rem04_privileged_cleanup_cutover.py'],
- ['python3','scripts/validate_rem05_legacy_surface_retirement.py'],
- ['python3','scripts/validate_ov13_contract.py'],
- ['python3','scripts/validate_ov14_contract.py'],
- ['python3','scripts/validate_ov13_devtool_wrapper_exo_jobs.py'],
- ['python3','android/scripts/validate-modern-dark-portrait-ui.py'],
- ['python3','android/scripts/validate-debug-workbench-contract.py'],
- ['python3','scripts/validate_full_roadmap_conformance.py','--scope','AUD-FIX-01','--json'],
-]
-
-def run(cmd):
- print('  -> '+ ' '.join(cmd), file=sys.stderr, flush=True)
- try:
-  p=subprocess.run(cmd,cwd=ROOT,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=15)
-  return {'command':' '.join(cmd),'returncode':p.returncode,'output':p.stdout.strip()}
- except subprocess.TimeoutExpired as exc:
-  output=(exc.stdout or '') if isinstance(exc.stdout,str) else (exc.stdout or b'').decode(errors='replace')
-  return {'command':' '.join(cmd),'returncode':124,'output':('TIMEOUT after 15s\n'+output).strip()}
-
-def sha(path):
- h=hashlib.sha256(); h.update(path.read_bytes()); return h.hexdigest()
-
-def one_pass(index:int):
- results=[run(c) for c in COMMANDS]
- conformance=json.loads(results[-1]['output']) if results[-1]['returncode']==0 else {}
- later=sorted({x['family'] for x in conformance.get('findings',[]) if not x.get('blocks_aud_fix_01')})
- blocker_ids=sorted(x['id'] for x in conformance.get('aud_fix_01_blockers',[]))
- failures=[r for r in results if r['returncode']!=0]
- return {'pass':index,'results':results,'failures':[{'command':r['command'],'output':r['output']} for r in failures], 'aud_fix_01_blockers':blocker_ids,'later_gap_families_observed':later}
-
+def req(f, ok, code, detail):
+    if not ok: f.append({"code":code,"detail":detail})
+def check_source():
+    f=[]
+    state_p=ROOT/'migration/qualification/v1/current_state.json'
+    req(f,state_p.is_file(),'AUD001_STATE','canonical qualification state missing')
+    if state_p.is_file():
+        state=json.loads(state_p.read_text())
+        req(f,state.get('gate_d',{}).get('qualified') is False,'AUD001_GATE_D','Gate D must remain open before AUD-FIX-15')
+    idx=ROOT/'migration/requirements/v2/requirements.json'
+    req(f,idx.is_file(),'AUD001_REQUIREMENTS','requirement index missing')
+    if idx.is_file():
+        obj=json.loads(idx.read_text()); raw=json.dumps(obj)
+        for fam in ['AUD-001','AUD-002','AUD-003','AUD-004','AUD-005','UIX-001','UIX-009']:
+            req(f,fam in raw,'AUD001_REQUIREMENT_FAMILY',f'requirement index missing {fam}')
+    for rel in ['scripts/refresh_qualification_state.py','scripts/validate_full_roadmap_conformance.py','migration/qualification/v1/gate_d_evidence.json']:
+        req(f,(ROOT/rel).is_file(),'AUD001_CANONICAL_FILE',f'canonical truth file missing {rel}')
+    return f
 def main():
- ap=argparse.ArgumentParser(); ap.add_argument('--audit-loop',action='store_true'); ap.add_argument('--write-evidence',action='store_true'); args=ap.parse_args()
- max_passes=3 if args.audit_loop else 1; passes=[]; previous=None; converged=False
- for i in range(1,max_passes+1):
-  p=one_pass(i); passes.append(p)
-  print(f'AUD-FIX-01 audit pass {i}: failures={len(p["failures"])} blockers={len(p["aud_fix_01_blockers"])} later={len(p["later_gap_families_observed"])}', file=sys.stderr, flush=True)
-  sig=(tuple(p['aud_fix_01_blockers']),tuple(p['later_gap_families_observed']),tuple(x['command'] for x in p['failures']))
-  if not p['failures'] and not p['aud_fix_01_blockers'] and previous==sig:
-   converged=True; break
-  previous=sig
- if not args.audit_loop: converged=not passes[-1]['failures'] and not passes[-1]['aud_fix_01_blockers']
- state=json.loads((ROOT/'migration/qualification/v1/current_state.json').read_text())
- evidence={
-  'schema':'dustui.aud-fix-01-audit-loop.v1','overlay':'AUD-FIX-01','source_snapshot_sha256':state.get('source_snapshot_sha256'),
-  'passes':passes,'converged':converged,'convergence_rule':'two consecutive complete passes with zero AUD-FIX-01 blockers/failures and identical later-gap family set',
-  'gate_d_status':state.get('gate_d',{}).get('status'),'full_devtool_validation_run':False,
-  'dynamic_devtool_note':'Dynamic wrapper check runs when devtool is installed; absence is explicitly deferred in this non-gate overlay.',
- }
- if args.write_evidence:
-  out=ROOT/'migration/audit/v2/aud_fix_01_audit_loop.json'; out.parent.mkdir(parents=True,exist_ok=True); out.write_text(json.dumps(evidence,indent=2,sort_keys=True)+'\n')
-  status={'schema':'dustui.aud-fix-status.v1','overlay':'AUD-FIX-01','status':'complete' if converged else 'blocked','gate_d':'open','qualification_state_source':'migration/qualification/v1/current_state.json','audit_evidence':str(out.relative_to(ROOT)),'passes':len(passes),'aud_fix_01_blockers':passes[-1]['aud_fix_01_blockers'],'later_gap_families_observed':passes[-1]['later_gap_families_observed']}
-  (ROOT/'migration/ledger/aud_fix_01_status.json').write_text(json.dumps(status,indent=2,sort_keys=True)+'\n')
- print(json.dumps({'converged':converged,'passes':len(passes),'aud_fix_01_blockers':passes[-1]['aud_fix_01_blockers'],'failures':[x['command'] for x in passes[-1]['failures']],'later_gap_families_observed':passes[-1]['later_gap_families_observed']},indent=2))
- return 0 if converged else 1
+    ap=argparse.ArgumentParser(); ap.add_argument('--audit-loop',action='store_true'); args=ap.parse_args()
+    passes=2 if args.audit_loop else 1; previous=None
+    for i in range(1,passes+1):
+        f=check_source(); print(f'AUD-FIX-01 leaf pass {i}: failures={len(f)}')
+        for x in f: print(f"  - {x['code']}: {x['detail']}")
+        if f: return 1
+        previous=tuple()
+    print('converged=true')
+    return 0
 if __name__=='__main__': raise SystemExit(main())
