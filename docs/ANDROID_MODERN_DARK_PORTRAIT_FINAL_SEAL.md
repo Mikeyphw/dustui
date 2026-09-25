@@ -1,3 +1,5 @@
+> **AUD-FIX successor-aware:** This is a historical predecessor contract/evidence document. It is not current acceptance authority. Current requirements are indexed by `migration/requirements/v2/requirements.json` and the canonical UI/UX authority copied under `migration/requirements/v2/source/`.
+
 # Android modern dark portrait final seal
 
 This document closes the modern dark portrait UI roadmap after Phases 1–7.

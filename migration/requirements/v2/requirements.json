@@ -1,0 +1,1522 @@
+{
+  "authority_order": [
+    "AUTHORITATIVE_GO_UIUX_RECHECKED.md",
+    "ANDROID_SUSPENSION_AMENDMENT.md where it explicitly overrides the original roadmap",
+    "ORIGINAL_ROADMAP_RECHECKED_EXO.md for promises not superseded",
+    "FULL_GAP_LEDGER_READ_ONLY.json",
+    "AUD_FIX_REMEDIATION_ROADMAP.json for remediation ownership/sequencing"
+  ],
+  "campaign": "AUD-FIX",
+  "counts": {
+    "amendments": 1,
+    "gap_families": 33,
+    "original_overlays": 15,
+    "total": 75,
+    "uiux_sections": 26
+  },
+  "generated_by": "scripts/build_audfix_requirement_index.py",
+  "requirements": [
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Establish one canonical gate state derived from executed evidence; all ledgers/contracts/config must consume that state rather than independently declaring closure.",
+      "evidence_kind": [
+        "behavioral-test",
+        "machine-readable-evidence",
+        "source-reachability"
+      ],
+      "finding": "The repository carries mutually exclusive closure states. `.devtool.toml` says Gate D is reopened and OV15 blocked; `ov14_legacy_retirement_status.json` says Gate D is closed and OV15 ready; the product contract remains GateDQualified=false. A closed OV14 ledger therefore cannot be treated as canonical truth.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-001",
+      "owner": [
+        "AUD-FIX-01",
+        "AUD-FIX-15"
+      ],
+      "roadmap_reference": "Original \u00a72.2/\u00a72.3, OV13 Gate D, OV14 required proof; amendment \u00a72.2 and OV13 reconnect gate",
+      "supersession": "not-superseded",
+      "title": "Gate/ledger truth",
+      "wip_status": "gap"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Make validators successor-aware and prove reachability/authority invariants rather than exact predecessor tokens or narrow symbol absence.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability"
+      ],
+      "finding": "Current validators disagree on the same tree. The retirement-truth validator reports no blockers/Gate-D-ready, REM03 reports Gate D still open with five blockers, REM05 reports Gate D closed/OV15 ready, while the historical OV14 validator requires the predecessor reopened state. The retirement validators also prove absence using narrow tokens instead of full production reachability.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-002",
+      "owner": [
+        "AUD-FIX-01",
+        "AUD-FIX-13"
+      ],
+      "roadmap_reference": "Audit loop after every overlay; OV14 static/runtime retirement proof; gate evidence must be truthful",
+      "supersession": "not-superseded",
+      "title": "Audit machinery / retirement truth",
+      "wip_status": "gap"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Retire/move the Python parity oracle out of production and make the compatible host command resolve to Go only after Gate D proof.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability"
+      ],
+      "finding": "The fresh snapshot still has a production Python/Textual host and package entry points.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-003",
+      "owner": [
+        "AUD-FIX-07",
+        "AUD-FIX-15",
+        "AUD-FIX-16"
+      ],
+      "roadmap_reference": "OV13 requires no production Python/Textual for supported host workflows; OV14 physically removes independent Python production backend",
+      "supersession": "not-superseded",
+      "title": "OV13/OV14 host retirement",
+      "wip_status": "candidate-addressed-unvalidated"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Prove CLI/TUI parity against frozen behavior fixtures with real commands and shared engine packages before claiming product-default.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "ui-contract"
+      ],
+      "finding": "Fresh Go product metadata declares CLI/TUI product-default and seven supported workflows, but `main.go` exposes mostly contracts plus `scan`; there are no real query/search/activity/cleanup-review/cleanup-execute/diagnostics/export/tui host commands and `go/internal/tui/tui.go` has only Render/Smoke, not an interactive Run loop.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-004",
+      "owner": [
+        "AUD-FIX-07",
+        "AUD-FIX-15"
+      ],
+      "roadmap_reference": "OV13 requires real Go CLI + Go TUI for scan/query/search/status/activity/cleanup/diagnostics/evidence/machine-readable workflows using shared semantics",
+      "supersession": "not-superseded",
+      "title": "OV13 Go CLI/TUI parity",
+      "wip_status": "candidate-addressed-unvalidated"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Make stable semantic routes the actual production navigation identity and nest tools/reports under those routes; then remove the old shell.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability"
+      ],
+      "finding": "A six-route semantic contract exists, but production `DustUiApp` still navigates through the old `DustDestination`/`DustShellNavigation` model, including Certification, Deletion Reports/Cleanup, and Debug as direct destinations. UI/UX recheck: the WIP removes the 16-value shell, but the semantic hierarchy is still incomplete: SystemHome is the old Tools catch-all and entity/run/review/runtime/automation/settings routes and Android deep links are absent.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-005",
+      "owner": [
+        "AUD-FIX-08",
+        "AUD-FIX-15"
+      ],
+      "roadmap_reference": "OV13 new semantic route hierarchy product-default; OV14 removes old 16-destination/remapping shell and legacy top-level Debug/Certification/Deletion Reports routes",
+      "supersession": "not-superseded",
+      "title": "OV13/OV14 Android navigation cutover",
+      "wip_status": "partial-gap"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Route Android through typed Go product-authority operations; Kotlin should render/format already-authoritative models only.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability"
+      ],
+      "finding": "Production Android still computes domain policy locally through analyzers/engines for snapshots, residue, advanced analysis, package intelligence, recommendations, rules, growth, verification, duplicate projection, and module analysis.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-006",
+      "owner": [
+        "AUD-FIX-03",
+        "AUD-FIX-06",
+        "AUD-FIX-15"
+      ],
+      "roadmap_reference": "Merged audit: Kotlin owns platform/presentation adapters only; OV09\u2013OV13 retire Kotlin domain truth route-by-route",
+      "supersession": "not-superseded",
+      "title": "OV09\u2013OV13 domain authority",
+      "wip_status": "candidate-addressed-unvalidated"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Keep product browsing/analysis paged or aggregate/bounded in Go and prevent UI/domain adapters from rebuilding a full-scan in-memory authority.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability"
+      ],
+      "finding": "The Android product path materializes whole scans and repeatedly runs list-level analysis. `GoDomainStore.entriesOnce()` drains every page; `MainViewModel` holds `allEntries`; `ScanRepository` repeatedly requests full entry lists for analysis/recommendations/rules/growth.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-007",
+      "owner": [
+        "AUD-FIX-02",
+        "AUD-FIX-06",
+        "AUD-FIX-17"
+      ],
+      "roadmap_reference": "OV04 requires paged/bounded query responses and million-scale bounded memory; RC-07 closes through OV04/OV05 and final scale qualification",
+      "supersession": "not-superseded",
+      "title": "OV04 bounded query / scale",
+      "wip_status": "candidate-addressed-unvalidated"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Expose domain operations through the Go runtime and bind Android adapters to them; prove stale-response/generation behavior and persistence.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability"
+      ],
+      "finding": "Go packages exist for these domains, but the Android runtime protocol does not expose the required product operations and Android does not consume them. The packages are therefore not yet the product authority.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-008",
+      "owner": [
+        "AUD-FIX-03",
+        "AUD-FIX-06",
+        "AUD-FIX-15"
+      ],
+      "roadmap_reference": "OV09 package/storage, OV10 intelligence, OV11 automation/activity, OV12 diagnostics/support become Go authorities; OV13 all supported Android flows use Go",
+      "supersession": "not-superseded",
+      "title": "OV09\u2013OV12 Go runtime authority exposure",
+      "wip_status": "candidate-addressed-unvalidated"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Share the same scan semantics/implementation primitives between normal and privileged execution, keeping privilege transport as the only divergent layer.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability"
+      ],
+      "finding": "`go/internal/rootworker/scan.go` contains its own filesystem traversal/size/hardlink logic instead of reusing `go/internal/scan` authority.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-009",
+      "owner": [
+        "AUD-FIX-02",
+        "AUD-FIX-06"
+      ],
+      "roadmap_reference": "Authoritative merged audit requires the same Go domain implementation in normal and privileged execution rather than a second scanner implementation",
+      "supersession": "not-superseded",
+      "title": "OV03/OV06 scan authority convergence",
+      "wip_status": "candidate-addressed-unvalidated"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Move duplicate verification semantics into the Go privileged/domain path and keep Kotlin as IPC/platform adapter.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability"
+      ],
+      "finding": "Exact duplicate verification remains in the Kotlin root service using SHA-256 edge/full hashing, while the Go privileged worker has no duplicate-verification command.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-010",
+      "owner": [
+        "AUD-FIX-02",
+        "AUD-FIX-06"
+      ],
+      "roadmap_reference": "OV10 duplicates migrate to Go; Kotlin must not retain domain verification policy",
+      "supersession": "not-superseded",
+      "title": "OV10 duplicate verification authority",
+      "wip_status": "candidate-addressed-unvalidated"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Make automation surfaces observe the same durable Go operation to terminal/recovery-required state before reporting terminal outcome.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability"
+      ],
+      "finding": "ScheduledScanWorker labels launch as non-terminal but still returns WorkManager Result.success immediately after launch; Tasker reports \"accepted\" immediately; there is no Android adapter consuming durable Go activity runs. UI/UX recheck: the WIP loads Go activityRuns into MainViewModel but DustUiApp never consumes them; ActivityList still renders CleanupReportsScreen, and there is no global active-operation/reconcile/recovery surface.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-011",
+      "owner": [
+        "AUD-FIX-04",
+        "AUD-FIX-06",
+        "AUD-FIX-11",
+        "AUD-FIX-17"
+      ],
+      "roadmap_reference": "OV11 request -> operationId -> observe durable operation -> report only terminal truth; WorkManager/Tasker/notifications/UI must share operation semantics",
+      "supersession": "not-superseded",
+      "title": "OV11 automation and Activity ownership",
+      "wip_status": "partial-gap"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Bind notification mutation/cancel actions to durable Go operation identity and replay-resistant admission metadata.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability"
+      ],
+      "finding": "Foreground notification cancellation is keyed by scan ID/action only and does not show a Go-issued nonce/expiry/single-use replay guard.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-012",
+      "owner": [
+        "AUD-FIX-04",
+        "AUD-FIX-06",
+        "AUD-FIX-17"
+      ],
+      "roadmap_reference": "OV11 notification surface shares durable operation ownership; cleanup/operation actions retain one-use/fail-closed safety semantics",
+      "supersession": "not-superseded",
+      "title": "OV11 notification cancellation capability",
+      "wip_status": "candidate-addressed-unvalidated"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Persist diagnostic truth in Go with bounded/redacted retention and have Android request sealed support evidence through Go.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability"
+      ],
+      "finding": "Go diagnostics contracts exist, but product diagnostics remain partly process-local Kotlin and support export is authored by Kotlin instead of a sealed Go support-evidence operation. UI/UX recheck: SystemDiagnostics still renders DebugWorkbenchScreen and Android does not present the Go ProblemGraph/root-cause/remediation model as the primary diagnostics experience.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-013",
+      "owner": [
+        "AUD-FIX-05",
+        "AUD-FIX-06",
+        "AUD-FIX-11",
+        "AUD-FIX-17"
+      ],
+      "roadmap_reference": "OV12 requires durable Go diagnostics/evidence/privacy/retention/support bundle; canonical UX System > Diagnostics",
+      "supersession": "not-superseded",
+      "title": "OV12 diagnostics / support authority",
+      "wip_status": "partial-gap"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Move any retained migration fixtures to explicit archive-only location and remove production Room/NDJSON code/dependencies after proof of Go persistence/runtime parity.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability"
+      ],
+      "finding": "Fresh production still contains Room database/DAO/schema integration and NDJSON tail reader files. Even where runtime authority metadata says Room=false, physical retirement is incomplete.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-014",
+      "owner": [
+        "AUD-FIX-03",
+        "AUD-FIX-16",
+        "AUD-FIX-17"
+      ],
+      "roadmap_reference": "OV14 physically removes final Room/domain authority and migration-only writers plus retired scan lifecycle; only archived migration fixtures/contracts remain",
+      "supersession": "not-superseded",
+      "title": "OV14 Room/NDJSON physical retirement",
+      "wip_status": "candidate-addressed-unvalidated"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Retain only Dust-specific semantic gates; use Devtool operations/artifact identity for generic build/install/device/release evidence.",
+      "evidence_kind": [
+        "behavioral-test",
+        "devtool-execution",
+        "source-reachability"
+      ],
+      "finding": "Fresh repo still contains generic scripts that discover/guess APK paths and invoke adb directly for install/device certification/launch/logcat. This duplicates the authority explicitly assigned to Devtool.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-015",
+      "owner": [
+        "AUD-FIX-13",
+        "AUD-FIX-16",
+        "AUD-FIX-17"
+      ],
+      "roadmap_reference": "Devtool owns generic build/device/signing/install/artifact/release evidence; OV14 removes app-local generic duplicates",
+      "supersession": "not-superseded",
+      "title": "OV01/OV14 Devtool generic authority",
+      "wip_status": "candidate-addressed-unvalidated"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Re-inventory actual source-reading guards, map each to the correct behavioral/failure/instrumentation evidence overlay, and retire only after replacement evidence exists.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability"
+      ],
+      "finding": "Fourteen source-reading Contract/SourceContract tests remain. The retirement ledger is also not trustworthy: 27/33 records are generically classified as release/devtool evidence with replacement OV01/OV15, including unrelated domain tests.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-016",
+      "owner": [
+        "AUD-FIX-01",
+        "AUD-FIX-02",
+        "AUD-FIX-03",
+        "AUD-FIX-04",
+        "AUD-FIX-05",
+        "AUD-FIX-07",
+        "AUD-FIX-08",
+        "AUD-FIX-09",
+        "AUD-FIX-10",
+        "AUD-FIX-11",
+        "AUD-FIX-12",
+        "AUD-FIX-13",
+        "AUD-FIX-16"
+      ],
+      "roadmap_reference": "OV01 inventories each source/token guard and maps its replacement; each guard retires in the same overlay as authoritative behavioral evidence; OV14 only sweeps leftovers",
+      "supersession": "not-superseded",
+      "title": "Source/token test retirement",
+      "wip_status": "candidate-addressed-unvalidated"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Treat metadata as observed evidence-derived state, not an aspirational declaration.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability"
+      ],
+      "finding": "Fresh `.devtool.toml` simultaneously declares a Python root project and Go product/CLI/TUI defaults with legacy_python_textual_production=false and legacy_kotlin_domain_truth=false, despite those production paths still existing. The WIP removes the root Python project declaration, but still leaves Gate-D unqualified/reopened while other ledgers claim closure.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-017",
+      "owner": [
+        "AUD-FIX-01",
+        "AUD-FIX-07",
+        "AUD-FIX-13",
+        "AUD-FIX-15",
+        "AUD-FIX-16",
+        "AUD-FIX-17"
+      ],
+      "roadmap_reference": "OV13 product-default declarations must reflect actual runtime; audit loop forbids hidden Python/Kotlin fallback",
+      "supersession": "not-superseded",
+      "title": "Repository/product identity declarations",
+      "wip_status": "partial-gap"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Represent every mandatory Gate-D proof as canonical executable EXO evidence with stable dependencies and artifact/runtime identities.",
+      "evidence_kind": [
+        "behavioral-test",
+        "machine-readable-evidence",
+        "source-reachability",
+        "ui-contract"
+      ],
+      "finding": "The configured Gate-D workflow runs retirement/remediation validators, Go test, migration contract, Debug unit/lint/assemble only. It has no install/smoke, connected route instrumentation, accessibility node, runtime/APK binding evidence node, Devtool artifact identity node, rooted runtime smoke, or Release unit/lint/build tasks. The same workflow persists in the WIP. UI/UX recheck: neither fresh nor WIP has Compose/device route, deep-link, rotation, or accessibility traversal instrumentation; source-string/static tests cannot satisfy the UX gate.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-018",
+      "owner": [
+        "AUD-FIX-14",
+        "AUD-FIX-15"
+      ],
+      "roadmap_reference": "Original OV13 Gate D + amendment reconnect gate: compile, unit, lint, package, install/smoke, route/instrumentation/accessibility, Go-runtime/APK binding, artifact identity; original also requires release-variant unit/lint/build and rooted runtime smoke; canonical EXO proof",
+      "supersession": "not-superseded",
+      "title": "Gate D required evidence topology",
+      "wip_status": "gap"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Attach later canonical Devtool run IDs/evidence that actually close A/B/C, or keep their milestone closure state explicitly open/unverified.",
+      "evidence_kind": [
+        "behavioral-test",
+        "machine-readable-evidence",
+        "source-reachability"
+      ],
+      "finding": "Supplied Gate A/B/C audit notes explicitly leave canonical EXO evidence as an external/open dependency. The handoff contains no DustUI Gate-A/B/C terminal/sealed/replayable execution evidence showing those dependencies were later discharged, and no Gate-B ARM64 device run was found.",
+      "fresh_status": "unverified-open",
+      "id": "GAP:AUD-019",
+      "owner": [
+        "AUD-FIX-14"
+      ],
+      "roadmap_reference": "Amendment: canonical terminal/sealed/replayable EXO evidence is required before every milestone gate closes; unavailable EXO keeps gate open. Gate B also specifies ARM64 device/emulator/physical evidence.",
+      "supersession": "not-superseded",
+      "title": "Historical Gate A/B/C EXO closure",
+      "wip_status": "unverified-open"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "A future Gate-D closure needs a successful full canonical run after source/audit truth is reconciled; old failing logs remain historical evidence, not a seal.",
+      "evidence_kind": [
+        "behavioral-test",
+        "machine-readable-evidence",
+        "source-reachability"
+      ],
+      "finding": "No successful final Gate-D run is supplied. All five bundled late validation logs fail. The latest runs 235 unit tests with 234 passed/1 failed; the failure is the bounded cleaning performance contract. Earlier runs fail migration contract or OV01 transition/source tests.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-020",
+      "owner": [
+        "AUD-FIX-15"
+      ],
+      "roadmap_reference": "Gate D may close only after successful hard Android reconnect validation and canonical evidence",
+      "supersession": "not-superseded",
+      "title": "Gate D executed validation",
+      "wip_status": "unverified"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Use a requirement-indexed checker with semantic parsing/reachability/evidence assertions and explicit original-vs-amendment coverage.",
+      "evidence_kind": [
+        "behavioral-test",
+        "machine-readable-evidence",
+        "source-reachability"
+      ],
+      "finding": "The stricter full-roadmap checker is WIP-only, not in the fresh repo. Against fresh it reports 88 checks, but some are false positives (six semantic routes are present with enum syntax), while it misses Gate-D evidence completeness, historical EXO gates, state contradictions, source-token ledger quality, release-variant requirements, and raw adb via `$adb_bin`. It therefore cannot be a sole conformance seal even when it PASSes on WIP. UI/UX recheck: it also misses the handoff UI/UX requirements for staged scan review, shared state/gates actually used by screens, Activity/global operation UX, Apps evidence-state truth, tablet master/detail, deep links, and stale UI acceptance artifacts.",
+      "fresh_status": "gap",
+      "id": "GAP:AUD-021",
+      "owner": [
+        "AUD-FIX-01",
+        "AUD-FIX-06",
+        "AUD-FIX-13",
+        "AUD-FIX-14",
+        "AUD-FIX-17"
+      ],
+      "roadmap_reference": "Audit loop must cover the complete authoritative merged audit + original promises not superseded by amendment",
+      "supersession": "not-superseded",
+      "title": "Full-roadmap conformance checker quality",
+      "wip_status": "gap"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Do not promote WIP closure ledgers until executed Gate-D evidence qualifies the state.",
+      "evidence_kind": [
+        "behavioral-test",
+        "machine-readable-evidence",
+        "source-reachability"
+      ],
+      "finding": "The supplied WIP statically removes many fresh-source blockers and its conformance checker PASSes, but its own `.devtool.toml` still says Gate D reopened/OV15 blocked and `production_authority_qualified=false`, `android_cutover_complete=false`; its OV14 ledger still says closed/OV15 ready; product contract remains GateDQualified=false.",
+      "fresh_status": "n/a",
+      "id": "GAP:AUD-022",
+      "owner": [
+        "AUD-FIX-01",
+        "AUD-FIX-15"
+      ],
+      "roadmap_reference": "Gate/ledger truth must be internally consistent; WIP is candidate work, not authoritative closure",
+      "supersession": "not-superseded",
+      "title": "Reconstructed WIP gate truth",
+      "wip_status": "gap"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Version or successor-proof validators around behavioral/authority contracts and retire predecessor validators when their scope is superseded.",
+      "evidence_kind": [
+        "behavioral-test",
+        "machine-readable-evidence",
+        "source-reachability"
+      ],
+      "finding": "Several validators become stale against the WIP: wrapper/EXO static validator fails exact workflow assumptions; historical OV14 validator requires predecessor state; REM03 expects a retired operation name; REM04 expects exact scanner implementation tokens; REM05 expects the old DustShellNavigation that WIP intentionally removes. UI/UX recheck: WIP still carries predecessor UI validators; validate-modern-dark-portrait-ui.py and validate-debug-workbench-contract.py both fail because they require the retired DustDestination/Debug Workbench-era implementation.",
+      "fresh_status": "n/a",
+      "id": "GAP:AUD-023",
+      "owner": [
+        "AUD-FIX-01",
+        "AUD-FIX-13",
+        "AUD-FIX-14",
+        "AUD-FIX-16"
+      ],
+      "roadmap_reference": "Audit loop validators must remain valid after successor refactors and cannot require retired implementation tokens",
+      "supersession": "not-superseded",
+      "title": "Reconstructed WIP successor validator compatibility",
+      "wip_status": "gap"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Run the final adversarial and canonical release qualification only after Gate D/OV14 truth is reconciled; otherwise record qualification-deferred rather than a pass.",
+      "evidence_kind": [
+        "behavioral-test",
+        "machine-readable-evidence",
+        "source-reachability"
+      ],
+      "finding": "Gate E is not qualified. The bundled OV15 artifacts are explicitly future-reference-only and predate the reconstructed WIP. Without a qualifying Android/root/device environment and canonical release binding, final seal must remain open/deferred.",
+      "fresh_status": "open",
+      "id": "GAP:AUD-024",
+      "owner": [
+        "AUD-FIX-17"
+      ],
+      "roadmap_reference": "OV15 requires adversarial/device/scale/privacy/accessibility/rooted/release qualification and validation/release EXO cross-binding by Git/runtime/APK/signing/semantic evidence",
+      "supersession": "not-superseded",
+      "title": "OV15 / Gate E final qualification",
+      "wip_status": "open"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Complete stable nested route identity and deep-link restoration for entity/review/run/system-detail flows; make System a real domain, not a renamed Tools catch-all.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "ui-contract"
+      ],
+      "finding": "The semantic route tree is incomplete even after the WIP cutover. Ten authoritative entity/detail/runtime routes are absent; app/file/report selection remains local Compose state/sheets; Android has no ACTION_VIEW/navDeepLink integration; the Go deep-link translator accepts only top-level RouteID values. WIP SystemHome remains the old Tools catch-all rather than a System-specific task domain.",
+      "fresh_status": "gap",
+      "id": "GAP:UIX-001",
+      "owner": [
+        "AUD-FIX-08",
+        "AUD-FIX-11",
+        "AUD-FIX-15"
+      ],
+      "roadmap_reference": "Authoritative UI/UX \u00a7\u00a75\u20138; original OV13 Gate D stable semantic routes + deep-link tests",
+      "supersession": "not-superseded",
+      "title": "Semantic route tree / deep links",
+      "wip_status": "gap"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Expose revision/identity in Go responses and enforce one shared route/entity/request/fingerprint acceptance predicate before any late response mutates UI state.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "ui-contract"
+      ],
+      "finding": "The required routeKey + routeGeneration + entityKind + entityId + requestId + query/draft fingerprint binding is not implemented as the screen protocol. BoundDustRoute contains only id/entityId/generation and is unused outside its declaration; MainViewModel has multiple ad-hoc AtomicLong request guards instead of one semantic route binding contract.",
+      "fresh_status": "gap",
+      "id": "GAP:UIX-002",
+      "owner": [
+        "AUD-FIX-09",
+        "AUD-FIX-15"
+      ],
+      "roadmap_reference": "Authoritative \u00a78; OV13 stale-response tests",
+      "supersession": "not-superseded",
+      "title": "Route/stale-response binding",
+      "wip_status": "gap"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Create one presentation-state model sourced from authoritative evidence and use it across every content route with explicit reason/recovery/problem/freshness/action-gate payloads.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "ui-contract"
+      ],
+      "finding": "Loading/Empty/Blocked/Error/Content are declared but not wired into production screen rendering. DustContentState appears only in DustShellRouteContract.kt; individual screens derive readiness from local nulls/booleans/empty lists and bespoke notices. The ProductRouteFixtures further test only state=\"content\"/actionGate=\"allowed\" fixtures rather than real state transitions.",
+      "fresh_status": "gap",
+      "id": "GAP:UIX-003",
+      "owner": [
+        "AUD-FIX-09",
+        "AUD-FIX-12",
+        "AUD-FIX-15",
+        "AUD-FIX-17"
+      ],
+      "roadmap_reference": "Authoritative \u00a79; original UI/UX acceptance #7; OV13 all content routes use shared screen states",
+      "supersession": "not-superseded",
+      "title": "Shared screen-state contract",
+      "wip_status": "gap"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Make Go return a typed gate object for every risky/evidence-dependent action and render message/remediation in context; remove UI-owned policy booleans.",
+      "evidence_kind": [
+        "behavioral-test",
+        "machine-readable-evidence",
+        "source-reachability",
+        "ui-contract"
+      ],
+      "finding": "The required typed Go gate shape (allowed, reasonCode, message, remediationActions) does not exist end-to-end. Go/Android shell contracts expose only four coarse enum values, Android production never consumes DustActionGate, and risky controls still gate locally with booleans such as !scanDataStale. Scan cancellation is shown from local status alone rather than a Go gate.",
+      "fresh_status": "gap",
+      "id": "GAP:UIX-004",
+      "owner": [
+        "AUD-FIX-09",
+        "AUD-FIX-12",
+        "AUD-FIX-15",
+        "AUD-FIX-17"
+      ],
+      "roadmap_reference": "Authoritative \u00a713; original UI/UX acceptance #8; OV13 shared action gates",
+      "supersession": "not-superseded",
+      "title": "Typed action gates / disabled-state remediation",
+      "wip_status": "gap"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Enforce choose scope -> preflight -> review request -> explicit Start, then hand operation identity to Activity/global-operation UX.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "ui-contract"
+      ],
+      "finding": "The WIP removes Scan from the semantic destination enum, but the scan workflow still bypasses its required staged safety/clarity flow. Preset cards call vm.startPreset(preset) immediately; custom scanning can call vm.startCustom(custom) directly, while preflight is optional via a separate Check access button. There is no mandatory Review scan request step before Start.",
+      "fresh_status": "gap",
+      "id": "GAP:UIX-005",
+      "owner": [
+        "AUD-FIX-10",
+        "AUD-FIX-15",
+        "AUD-FIX-17"
+      ],
+      "roadmap_reference": "Authoritative \u00a7\u00a76.2 and 11.2; original UI/UX acceptance #4",
+      "supersession": "not-superseded",
+      "title": "Scan workflow semantics",
+      "wip_status": "gap"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Bind Overview to current Go operation/recent run data, explicit size semantics and the real Diagnostics route; keep scan as a distinct remediation action.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "ui-contract"
+      ],
+      "finding": "Overview does not satisfy the complete storage-health contract. It has scan/warning/cleanup/composition content, but no active-operation card or recent activity, and it does not label logical versus allocated byte semantics. In both fresh and WIP, HomeDashboardScreen openDiagnostics is wired to openScanLauncher(), so \u201cReview evidence\u201d can open the scan sheet instead of Diagnostics.",
+      "fresh_status": "gap",
+      "id": "GAP:UIX-006",
+      "owner": [
+        "AUD-FIX-10",
+        "AUD-FIX-15",
+        "AUD-FIX-17"
+      ],
+      "roadmap_reference": "Authoritative \u00a7\u00a76.1 Overview, 11.1, 12; UX matrix \u201cUnderstand current storage state\u201d",
+      "supersession": "not-superseded",
+      "title": "Overview contract / next-action correctness",
+      "wip_status": "gap"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Carry evidence provenance/completeness from Go through the package report and render supported/partial/unavailable with reasons so unavailable evidence never masquerades as zero.",
+      "evidence_kind": [
+        "behavioral-test",
+        "machine-readable-evidence",
+        "source-reachability",
+        "ui-contract"
+      ],
+      "finding": "Apps cannot represent package/storage evidence completeness as a first-class state. packageInventoryComplete is used while calculating deletion eligibility but is not carried in AppStoragePackageReport; bucket convenience properties default missing buckets to 0, and AppStorageInspectorScreen has no supported/partial/unavailable evidence state for the package report.",
+      "fresh_status": "gap",
+      "id": "GAP:UIX-007",
+      "owner": [
+        "AUD-FIX-03",
+        "AUD-FIX-10",
+        "AUD-FIX-15",
+        "AUD-FIX-17"
+      ],
+      "roadmap_reference": "Authoritative \u00a7\u00a79 and 11.7; UX matrix \u201cInspect an app\u201d",
+      "supersession": "not-superseded",
+      "title": "Apps evidence truthfulness",
+      "wip_status": "gap"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Implement route-stable list/detail/supporting-pane layouts for appropriate domains and prove phone/tablet/rotation state/route preservation on device.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "ui-contract"
+      ],
+      "finding": "The WIP fixes top-level route substitution but does not implement the promised denser tablet master/detail behavior. Wide mode is a NavigationRail plus one content column; no ListDetail/SupportingPane/TwoPane/adaptive pane implementation is present. There is also no device/Compose route/rotation instrumentation proving semantic identity across form factors.",
+      "fresh_status": "gap",
+      "id": "GAP:UIX-008",
+      "owner": [
+        "AUD-FIX-12",
+        "AUD-FIX-15",
+        "AUD-FIX-17"
+      ],
+      "roadmap_reference": "Authoritative \u00a77 and UX matrix tablet requirement; original OV13 phone/tablet/rotation validation",
+      "supersession": "not-superseded",
+      "title": "Tablet/adaptive master-detail UX",
+      "wip_status": "gap"
+    },
+    {
+      "authority": "converged-read-only-audit",
+      "class": "audit-gap",
+      "closure_criteria": "Retire/version predecessor UI contracts, scripts, docs and copy once behavioral replacements exist; leave one authoritative successor UI acceptance model.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "ui-contract"
+      ],
+      "finding": "The repository still contains a competing UI acceptance system for the predecessor product, including runtime copy, docs, release checklist and audit scripts that require Home/Files/Clean/Tools, DustDestination, wide Scan and Debug Workbench. These survive in the reconstructed WIP. The old modern-portrait and Debug Workbench validators actually fail on the WIP, proving the acceptance authorities are mutually incompatible.",
+      "fresh_status": "gap",
+      "id": "GAP:UIX-009",
+      "owner": [
+        "AUD-FIX-01",
+        "AUD-FIX-08",
+        "AUD-FIX-09",
+        "AUD-FIX-10",
+        "AUD-FIX-11",
+        "AUD-FIX-12",
+        "AUD-FIX-13",
+        "AUD-FIX-16",
+        "AUD-FIX-17"
+      ],
+      "roadmap_reference": "Authoritative \u00a714.1; OV14 source/token retirement; audit loop successor-awareness",
+      "supersession": "not-superseded",
+      "title": "UI/UX acceptance authority / stale predecessor artifacts",
+      "wip_status": "gap"
+    },
+    {
+      "authority": "original-roadmap-rechecked-exo",
+      "class": "original-roadmap-overlay",
+      "closure_criteria": "All Required implementation/Acceptance/Gate/Validation clauses in the embedded source block are satisfied, except only the explicit amendment overrides.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "devtool-execution"
+      ],
+      "id": "ORIG:OV01",
+      "owner": [
+        "ORIG-OV01"
+      ],
+      "source_block": "## OV01 \u2014 Contract, Devtool convergence, and legacy containment\n\n**Artifact:** `dustui_go_ov01_contract_devtool_containment_v1.zip`  \n**Maps to audit:** GO00 + GO01 foundation; N-01, N-02, N-07, N-08; stop-ship rules.\n\n### Purpose\n\nMake the migration measurable before changing architecture, fix Devtool so every later overlay is evaluated against the correct target/variant, and patch only those legacy hazards that are too dangerous to leave reachable during migration.\n\n### Required implementation\n\nCreate a versioned migration area:\n\n```text\nmigration/\n  ledger/\n  contracts/v1/\n  fixtures/v1/\n  audit/v1/\n  archive/\n```\n\nAdd a machine-readable ledger mapping:\n\n- ABH-01\u2026ABH-16;\n- RC-01\u2026RC-14;\n- N-01\u2026N-08;\n- CP-01\u2026CP-02 as ecosystem sidecars;\n- GO phase;\n- overlay;\n- closure mode;\n- closure evidence.\n\nFreeze valid legacy fixtures/oracles without freezing known-bad behavior.\n\nInventory:\n\n- all Android destinations;\n- all deep links;\n- all scan entry points;\n- all destructive entry points;\n- all Tasker/WorkManager/notification entry points;\n- all Python/C++/Kotlin domain engines;\n- all Room/domain tables;\n- all release/certification scripts;\n- all raw ADB callers;\n- all authoritative file publishers.\n\nCreate a **minimal non-authoritative Go skeleton under `go/` in OV01**, not OV02, so `dustui_go` is a real target from the first canonical Devtool/EXO workflow. It needs only version/readiness identity, a trivial command entry point, and fast tests; no production authority moves yet.\n\nModernize `.devtool.toml`:\n\n\n- explicit `[workspace].default_target`;\n- canonical `runner`/`platform` identity;\n- replace stale `ubuntu_provisioner` with the correct Dust CLI/compatibility identity or remove it;\n- create `dustui_go` target;\n- keep `dustui_android`;\n- declare inputs/outputs;\n- declare meaningful jobs/workflows with stable EXO node IDs/dependencies;\n- define `dust_tui_legacy` as a temporary Python/Textual compatibility target;\n- use semantic variant-aware Android tasks;\n- preserve proven Termux memory/worker tuning initially;\n- return provider selection to `auto` unless a measured exception is documented;\n- set `structured_events = true` for Gradle so EXO receives typed child-task progress;\n- use Devtool Android operations/artifact registry for generic ADB/install/smoke/artifact work;\n- define canonical release/signing policy and Dust-specific gate attachment points;\n- capture a source-contract-test retirement ledger mapping every source/token test to the behavioral replacement overlay;\n- preserve the current stable Android toolchain baseline (SDK 36, minSdk 26, Java 21, Gradle 9.7.1, AGP 9.3.1, Kotlin 2.4.10, KSP 2.3.11, Build Tools 36.0.0) unless an overlay provides measured evidence for changing it;\n- record the ABI migration decision: production Go/Android cutover is `arm64-v8a` first. `x86_64` may remain only in a clearly test-only variant with a matching Go runtime; an APK may never advertise an ABI for which the Go engine is absent.\n\n### Mandatory temporary containment while legacy remains reachable\n\nDo **not** fully remediate the old architecture. Add only the stop-ship guards:\n\n- destructive actions reject truncated/degraded/stale/incompatible scans;\n- privileged admission becomes bounded; remove unbounded `newCachedThreadPool()` behavior;\n- critical atomic publication fails closed instead of direct-overwrite fallback;\n- lost destructive transport response never triggers blind replay;\n- automation launch/admission is never reported as terminal success;\n- Release plans must not resolve to Debug tasks.\n\n### Explicit non-goals\n\n- no Go production engine yet;\n- no UI remodel yet;\n- no attempt to perfect old Room/C++/Python domain architecture;\n- no cleanup-engine rewrite yet.\n\n### Overlay acceptance\n\n- Devtool config doctor is canonical;\n- Debug and Release plans resolve to variant-correct tasks;\n- EXO sees known write scopes and meaningful jobs rather than one opaque fallback node;\n- a fast EXO workflow reaches terminal/sealed canonical truth with dependency/process evidence;\n- migration ledger has 100% mapping coverage;\n- every legacy destructive entry point is either contained or explicitly blocked;\n- no existing Termux tuning is lost without measured justification.\n\n### Closure status\n\nThis overlay may close **N-01/N-02/N-07/N-08 configuration defects**, but it does not close the underlying RCs whose legacy implementations remain reachable.\n\n### Validation\n\nApply with `--no-validate`, then run the **fast EXO workflow**. Its OV01 nodes must include at least:\n\n- migration-contract ledger check;\n- Go-skeleton test;\n- legacy-containment unit tests;\n- Devtool config doctor/plan assertions;\n- Debug/Release plan snapshot assertions;\n- overlay manifest/checksum self-check;\n- migration audit join node.\n\nDebug and Release plans must show semantic task expansion (`testDebugUnitTest`/`lintDebug`/`assembleDebug` versus their Release counterparts), known write scopes, and the intended dependency graph.\n\n---",
+      "supersession": "not-superseded",
+      "title": "OV01 \u2014 Contract, Devtool convergence, and legacy containment"
+    },
+    {
+      "authority": "original-roadmap-rechecked-exo",
+      "class": "original-roadmap-overlay",
+      "closure_criteria": "All Required implementation/Acceptance/Gate/Validation clauses in the embedded source block are satisfied, except only the explicit amendment overrides.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "devtool-execution"
+      ],
+      "id": "ORIG:OV02",
+      "owner": [
+        "ORIG-OV02"
+      ],
+      "source_block": "## OV02 \u2014 Go state, SQLite, protocol, and operation kernel\n\n**Artifact:** `dustui_go_ov02_go_state_protocol_kernel_v1.zip`  \n**Maps to audit:** GO02 + GO03 core; RC-06 foundation; BKX/chrootctl operation donors.\n\n### Purpose\n\nEstablish the Go runtime's durable authority model without cutting production behavior over yet.\n\n### Required implementation\n\nExpand the OV01 Go skeleton into package boundaries for:\n\n```text\nengine/\nprotocol/\nstate/\noperations/\nevidence/\nscan/\nquery/\ncleanup/\ndiagnostics/\nplatform/\ncmd/\n```\n\nImplement typed errors and stable reason codes.\n\nDefine deterministic import/migration from the current Room v3 authority before creating the new final state:\n\n- `scan_sessions`;\n- `scan_entries`;\n- `cleanup_operations`;\n- `cleanup_plan_items`;\n- legacy `quarantine_entries` must remain readable/importable according to retention policy, but receive no new writes.\n\nThe import is one-way and versioned; there is no long-lived bidirectional synchronization.\n\nCreate Go-owned SQLite with at minimum:\n\n```text\nscan_sessions\nscan_entries\nscan_contexts\noperations\noperation_events\ncleanup_manifests\ncleanup_capabilities\ncleanup_results\npackage_inventory_snapshots\nanalysis_results\nevidence_generations\nproblems\nrun_history\n```\n\nRequirements:\n\n- schema versioning;\n- WAL or safe equivalent;\n- deterministic migrations;\n- transaction tests;\n- expected-generation/state predicates;\n- crash-safe commit behavior;\n- no production Room dual writer.\n\nImplement operation states equivalent to:\n\n```text\nqueued\nrunning\ncancelling\nsuccess\nfailure\ncancelled\ninterrupted\nunknown\nrecovery_required\n```\n\nImplement:\n\n- request fingerprint;\n- monotonic event sequence;\n- duplicate-request protection;\n- late-event rejection;\n- terminal-state stickiness;\n- reconciliation hooks;\n- bounded event persistence.\n\nDefine versioned protocol envelopes for:\n\n- readiness;\n- execute/admit;\n- status;\n- progress/events;\n- cancel;\n- reconcile;\n- query/page;\n- diagnostics/evidence.\n\n### Non-goals\n\n- no Android process launch yet;\n- no scanner replacement yet;\n- no destructive execution;\n- no final package/storage model.\n\n### Acceptance\n\nBehavioral tests prove:\n\n- stale event cannot resurrect a terminal operation;\n- request ID cannot be reused for a different payload;\n- cancellation remains sticky;\n- DB migration rollback is safe;\n- expected-generation writes reject stale actors;\n- corrupt/invalid state becomes blocked/recovery evidence rather than guessed success.\n\n### Validation\n\n`--no-validate`; run the fast EXO workflow with named Go state/protocol/SQLite migration nodes. Go package tests + SQLite migration/failure-window tests are EXO-owned, not ad-hoc post scripts.\n\n---",
+      "supersession": "not-superseded",
+      "title": "OV02 \u2014 Go state, SQLite, protocol, and operation kernel"
+    },
+    {
+      "authority": "original-roadmap-rechecked-exo",
+      "class": "original-roadmap-overlay",
+      "closure_criteria": "All Required implementation/Acceptance/Gate/Validation clauses in the embedded source block are satisfied, except only the explicit amendment overrides.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "devtool-execution"
+      ],
+      "id": "ORIG:OV03",
+      "owner": [
+        "ORIG-OV03"
+      ],
+      "source_block": "## OV03 \u2014 Go scanner, size semantics, ScanAuthority, and history compatibility\n\n**Artifact:** `dustui_go_ov03_scanner_size_scanauthority_gateA_v1.zip`  \n**Maps to audit:** GO04 + GO05; RC-01, RC-02, RC-12; ABH-03/05/07/08.\n\n### Purpose\n\nMake scan truth explicit before Android starts depending on the Go engine.\n\n### Required implementation\n\nImplement the Go scanner with:\n\n- canonical root;\n- scan generation;\n- backend identity;\n- options fingerprint;\n- hidden/exclusion policy;\n- filesystem-boundary policy;\n- observed/persisted counts;\n- malformed-event/record accounting;\n- truncation;\n- integrity state;\n- source completeness;\n- stale-after-cleanup;\n- timestamps.\n\nImplement explicit:\n\n```text\nlogicalSizeBytes\nallocatedSizeBytes\nsizeSemanticsUsedForScan\n```\n\nwith tested sparse-file, hard-link, symlink, mount-boundary and unreadable-entry policies.\n\nImplement `ScanAuthority` capabilities:\n\n```text\ncanAnalyze\ncanCompareWith(other)\ncanDriveDeletion\ncanDriveDuplicateHashing\ncanDriveResidue\ncanExportCompleteData\ncanShowAsFresh\n```\n\nImplement history compatibility based on semantic dimensions, not `scanId`.\n\nBuild fixture/oracle comparison against legacy outputs where behavior is meant to remain compatible, and explicit expected differences where old behavior is being corrected.\n\n### Non-goals\n\n- production Android cutover waits for OV05;\n- no cleanup execution;\n- no Compose rewrite.\n\n### Gate A validation\n\nFull milestone validation must include:\n\n- all Go unit tests;\n- scanner filesystem fixtures;\n- sparse/hard-link/mount/symlink cases;\n- integrity/truncation/malformed cases;\n- history compatibility matrix;\n- SQLite migration tests;\n- Android current-shell compile/unit sanity;\n- Devtool Debug/Release plan correctness;\n- full audit-loop check for RC/N coverage;\n- canonical EXO gate evidence: terminal run, sealed graph, stable dependencies/blockers, process ownership, transition origin/reason, truthful progress/accounting, journal/checkpoint/history replay.\n\n**Gate A exit condition:** the Go engine can represent scan truth more strongly than the legacy engine and is safe to integrate into Android as a read/scan authority.\n\n---",
+      "supersession": "android-buildability-suspended-only; semantic/safety/evidence promises remain",
+      "title": "OV03 \u2014 Go scanner, size semantics, ScanAuthority, and history compatibility"
+    },
+    {
+      "authority": "original-roadmap-rechecked-exo",
+      "class": "original-roadmap-overlay",
+      "closure_criteria": "All Required implementation/Acceptance/Gate/Validation clauses in the embedded source block are satisfied, except only the explicit amendment overrides.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "devtool-execution"
+      ],
+      "id": "ORIG:OV04",
+      "owner": [
+        "ORIG-OV04"
+      ],
+      "source_block": "## OV04 \u2014 Paged query, search, summary, and history engine\n\n**Artifact:** `dustui_go_ov04_query_search_history_v1.zip`  \n**Maps to audit:** GO06; RC-07 plus RC-12 query side; ABH-06/07/08/09/12.\n\n### Purpose\n\nEliminate whole-scan in-memory materialization before the new UI depends on Go data.\n\n### Required implementation\n\nGo SQL/query APIs for:\n\n- paged explorer children;\n- whole-scan search;\n- current-folder filtering as a distinct operation;\n- sort/filter;\n- large files;\n- storage summaries;\n- composition/treemap aggregates;\n- scan history;\n- growth/trend series;\n- package-linked path lookup;\n- Activity list/page preparation.\n\nRequirements:\n\n- stable page tokens or deterministic offset/keyset semantics;\n- generation binding;\n- explicit total/partial/unknown counts;\n- query cancellation;\n- bounded response size;\n- indexes qualified on realistic large scans;\n- no UI-side full-list filtering for full-scan features.\n\n### Acceptance\n\n- million-scale/specified realistic fixture remains bounded in memory;\n- search and local filtering are semantically distinct;\n- pagination does not duplicate/skip under stable generation;\n- stale generation query fails clearly;\n- summary values use explicit size semantics.\n\n### Validation\n\n`--no-validate`; targeted Go query/performance tests run as named fast-EXO workflow nodes.\n\n---",
+      "supersession": "android-buildability-suspended-only; semantic/safety/evidence promises remain",
+      "title": "OV04 \u2014 Paged query, search, summary, and history engine"
+    },
+    {
+      "authority": "original-roadmap-rechecked-exo",
+      "class": "original-roadmap-overlay",
+      "closure_criteria": "All Required implementation/Acceptance/Gate/Validation clauses in the embedded source block are satisfied, except only the explicit amendment overrides.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "devtool-execution"
+      ],
+      "id": "ORIG:OV05",
+      "owner": [
+        "ORIG-OV05"
+      ],
+      "source_block": "## OV05 \u2014 Android Go runtime integration and new shell foundation\n\n**Artifact:** `dustui_go_ov05_android_runtime_shell_gateB_v1.zip`  \n**Maps to audit:** GO07; RC-01/06/07 UI cutover foundation; BKX runtime/navigation donor.\n\n### Purpose\n\nMake Go the production authority for **new scans and read-only scan-derived state**, and introduce the new DustUI shell without yet changing destructive authority.\n\n### Required implementation\n\nPackage the Android/ARM64 Go runtime as an app-owned native artifact under `nativeLibraryDir`.\n\nAt this cutover, reconcile the current ABI matrix:\n\n- production ABI contract becomes `arm64-v8a`;\n- remove `x86_64` from production `abiFilters` unless a dedicated test-only variant packages a matching x86_64 Go runtime;\n- Gate B must run on an ARM64 emulator/device or physical ARM64 device; no production APK may advertise an ABI lacking the Go runtime.\n\nCreate persistent Kotlin runtime/session adapter:\n\n- fixed executable path;\n- version/readiness handshake;\n- bounded stdin/stdout/stderr;\n- request IDs and sequence numbers;\n- reconnect/reconcile;\n- process death detection;\n- session ownership;\n- normal state namespace.\n\nPerform the versioned Room-v3 \u2192 Go-SQLite import for retained scan/history state, including explicit treatment of legacy `quarantine_entries`.\n\nCut **new scan writes** to Go SQLite. From this overlay onward:\n\n- no new scan/session/entry authority may be written by Room;\n- Room may be import/read compatibility only;\n- legacy scan data may be migrated/imported deterministically.\n\nIntroduce typed semantic routes and new shell foundation:\n\n- Overview;\n- Files;\n- Clean;\n- Apps;\n- Activity;\n- System;\n\nbut document that this grouping is provisional and **not an acceptance requirement**.\n\nImplement:\n\n- stable route identity;\n- adaptive nav chrome;\n- route restoration;\n- deep-link translation;\n- route generation/entity binding;\n- shared `Loading / Empty / Blocked / Error / Content` states;\n- shared typed action-gate rendering;\n- global Scan workflow;\n- initial Overview/Files/Activity read-only surfaces.\n\n### Authority change\n\n**After OV05, Go is the authoritative production scanner/state engine for all new scans.**\n\nLegacy scanner/Room scan writes become unreachable or migration-only.\n\nDestructive cleanup remains legacy and constrained until OV08.\n\n### Gate B validation\n\nMust include:\n\n- Go ARM64 Android build;\n- runtime spawn/readiness/protocol tests;\n- process death/reconnect;\n- new scan \u2192 SQLite \u2192 query \u2192 Compose path;\n- route restoration;\n- phone/tablet route-identity tests;\n- stale async response rejection;\n- instrumentation for Overview/Files/Activity basics;\n- no new Room scan writes;\n- Android compile/unit/lint through EXO workflow nodes;\n- Debug APK assembly/install/smoke through Devtool Android operations;\n- Gate-B canonical EXO evidence contract from \u00a72.2.\n\n**Gate B exit condition:** the app can live on Go-owned scan/read state across process recreation with the new route model, without any destructive cutover.\n\n---",
+      "supersession": "android-buildability-suspended-only; semantic/safety/evidence promises remain",
+      "title": "OV05 \u2014 Android Go runtime integration and new shell foundation"
+    },
+    {
+      "authority": "original-roadmap-rechecked-exo",
+      "class": "original-roadmap-overlay",
+      "closure_criteria": "All Required implementation/Acceptance/Gate/Validation clauses in the embedded source block are satisfied, except only the explicit amendment overrides.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "devtool-execution"
+      ],
+      "id": "ORIG:OV06",
+      "owner": [
+        "ORIG-OV06"
+      ],
+      "source_block": "## OV06 \u2014 Privileged Go runtime and root boundary\n\n**Artifact:** `dustui_go_ov06_privileged_runtime_protocol_v1.zip`  \n**Maps to audit:** GO08; RC-05; N-04; BKX/chrootctl privileged-boundary donors.\n\n### Purpose\n\nCreate the final privileged execution boundary before cleanup capability/execution is moved.\n\n### Required implementation\n\nRun the same Go domain implementation in privileged mode with a separate root namespace.\n\nThe privileged process revalidates:\n\n- protocol version;\n- request ID syntax;\n- operation allowlist;\n- field allowlist;\n- capability class;\n- payload size;\n- response/event size;\n- root/runtime identity;\n- target scope.\n\nImplement:\n\n- bounded worker pool and bounded queue;\n- destructive class globally single-flight;\n- explicit admission rejection;\n- durable lookup/status/reconcile;\n- no arbitrary shell operation;\n- no replay after lost transport;\n- root readiness/scope diagnostics;\n- boot/process identity where useful for reconciliation.\n\nSystem \u2192 Runtime/Modules consumes this authority.\n\n### Non-goals\n\n- no production Go destructive execution until OV08;\n- no generic shell console.\n\n### Acceptance\n\n- oversized/unknown-field/unknown-operation requests fail closed;\n- unauthorized/wrong-scope requests fail closed;\n- lost Binder/session response can be reconciled;\n- queue exhaustion is typed, bounded, and non-destructive;\n- root process restart does not imply replay.\n\n### Validation\n\n`--no-validate`; protocol fuzz/boundary/root-simulator tests as named fast-EXO workflow nodes.\n\n---",
+      "supersession": "android-buildability-suspended-only; semantic/safety/evidence promises remain",
+      "title": "OV06 \u2014 Privileged Go runtime and root boundary"
+    },
+    {
+      "authority": "original-roadmap-rechecked-exo",
+      "class": "original-roadmap-overlay",
+      "closure_criteria": "All Required implementation/Acceptance/Gate/Validation clauses in the embedded source block are satisfied, except only the explicit amendment overrides.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "devtool-execution"
+      ],
+      "id": "ORIG:OV07",
+      "owner": [
+        "ORIG-OV07"
+      ],
+      "source_block": "## OV07 \u2014 Actionable evidence, immutable cleanup manifest, and single-use capability\n\n**Artifact:** `dustui_go_ov07_cleanup_manifest_capability_v1.zip`  \n**Maps to audit:** GO09; RC-03, RC-04 preparation, N-06; BKX/chrootctl capability donors.\n\n### Purpose\n\nMake review evidence cryptographically/structurally bind execution before switching the mutation engine.\n\n### Required implementation\n\nImplement `ActionablePathEvidence` equivalents retaining:\n\n- path;\n- scan/generation;\n- source surface/kind;\n- expected hash/identity;\n- retained-copy constraints;\n- package/user/bucket;\n- protected state;\n- duplicate/rule/recommendation IDs;\n- deletion eligibility.\n\nBuild immutable cleanup manifest with:\n\n- exact descendants;\n- path role/protection;\n- mount boundary;\n- identity evidence;\n- duplicate retained-copy constraints;\n- manifest hash/revision;\n- source context hash;\n- root/scope identity.\n\nBuild durable one-use capability:\n\n```text\ncapabilityId\noperationId\nscanId\nscanGeneration\nscanContextHash\nmanifestHash\nmanifestRevision\nrootIdentity\nreviewedAt\nexpiresAt\nclaimState\n```\n\nImplement the redesigned Clean review flow:\n\n- exact paths;\n- exact bytes with semantics;\n- reasons/provenance;\n- warnings/protected descendants;\n- explicit acknowledgements where required;\n- capability creation.\n\n### Safety rule\n\nOV07 may perform dry-run/preflight against the Go privileged runtime, but **does not make the Go mutation engine the production executor yet**.\n\n### Acceptance\n\n- changing any reviewed identity invalidates authorization;\n- adding a descendant after review never expands the approved set;\n- capability replay fails;\n- expired capability fails;\n- lost response after capability claim requires status/reconcile;\n- bare paths cannot claim specialized safety labels.\n\n### Validation\n\n`--no-validate`; manifest/capability adversarial tests as named fast-EXO workflow nodes.\n\n---",
+      "supersession": "android-buildability-suspended-only; semantic/safety/evidence promises remain",
+      "title": "OV07 \u2014 Actionable evidence, immutable cleanup manifest, and single-use capability"
+    },
+    {
+      "authority": "original-roadmap-rechecked-exo",
+      "class": "original-roadmap-overlay",
+      "closure_criteria": "All Required implementation/Acceptance/Gate/Validation clauses in the embedded source block are satisfied, except only the explicit amendment overrides.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "devtool-execution"
+      ],
+      "id": "ORIG:OV08",
+      "owner": [
+        "ORIG-OV08"
+      ],
+      "source_block": "## OV08 \u2014 Go mutation engine, recovery, verification, and destructive cutover\n\n**Artifact:** `dustui_go_ov08_mutation_recovery_gateC_v1.zip`  \n**Maps to audit:** GO10; RC-04, RC-05, RC-06; N-03, N-04, N-06; chrootctl mutation donor.\n\n### Purpose\n\nMake Go the **only** production destructive authority.\n\n### Required implementation\n\nImplement mutation FSM with states sufficient for:\n\n```text\nreviewed\nclaimed\nadmitted\nexecuting\nverifying\ncomplete\nfailed\ninterrupted\nrecovery_required\ncleanup_debt\n```\n\nImplement:\n\n- process-shared/global destructive serialization;\n- exact-manifest execution only;\n- pre-mutation identity revalidation;\n- mount-boundary enforcement;\n- protected descendant enforcement;\n- retained-copy enforcement;\n- no unreviewed recursive expansion;\n- crash/interruption journal/state;\n- post-mutation verification;\n- stale-after-cleanup scan consequence;\n- cleanup result evidence;\n- reconcile after transport/process loss;\n- fail-closed ambiguity.\n\nActivity becomes the canonical user-facing cleanup run view.\n\n### Authority change\n\n**At OV08 cutover, every production destructive path routes to the Go mutation engine.**\n\nImmediately make the legacy destructive executor unreachable. It may remain on disk until OV14 only for rollback archaeology; there is no runtime fallback.\n\n### Gate C validation\n\nMust include:\n\n- manifest tamper;\n- path replacement between review and execution;\n- symlink/mount crossing;\n- protected descendant;\n- retained-copy failure;\n- capability replay;\n- expiry;\n- kill root runtime during mutation;\n- kill app during mutation;\n- lose transport after admission;\n- restart/reconcile;\n- verification mismatch;\n- atomic/failure-window tests;\n- global single-flight tests;\n- rooted-device fixture cleanup in a controlled test tree;\n- Activity progress/recovery instrumentation;\n- full audit loop;\n- Gate-C canonical EXO evidence contract from \u00a72.2.\n\n**Gate C exit condition:** all production deletion is review-equivalent, single-use, recoverable, and Go-owned.\n\n---",
+      "supersession": "android-buildability-suspended-only; semantic/safety/evidence promises remain",
+      "title": "OV08 \u2014 Go mutation engine, recovery, verification, and destructive cutover"
+    },
+    {
+      "authority": "original-roadmap-rechecked-exo",
+      "class": "original-roadmap-overlay",
+      "closure_criteria": "All Required implementation/Acceptance/Gate/Validation clauses in the embedded source block are satisfied, except only the explicit amendment overrides.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "devtool-execution"
+      ],
+      "id": "ORIG:OV09",
+      "owner": [
+        "ORIG-OV09"
+      ],
+      "source_block": "## OV09 \u2014 Android package and storage evidence authority\n\n**Artifact:** `dustui_go_ov09_package_storage_model_v1.zip`  \n**Maps to audit:** GO11; RC-08; ABH-11/12.\n\n### Purpose\n\nReplace regex/path-guessing package semantics with explicit Android evidence normalized by Go.\n\n### Required implementation\n\nThin Kotlin Android collector for platform-only APIs:\n\n- package/user inventory;\n- installed/archived;\n- system app;\n- enabled state;\n- source/split dirs;\n- CE/DE data;\n- external/adoptable/secondary storage where observable;\n- code/data/cache/native paths where observable;\n- collection completeness/degradation reasons.\n\nGo normalizes and versions the snapshot.\n\nApps UI uses list/detail and truthful `supported / partial / unavailable / blocked` states.\n\nResidue/cleanup eligibility consumes package/user evidence, never path regex alone.\n\n### Acceptance\n\n- multi-user fixtures;\n- archived/uninstalled/system/disabled cases;\n- partial evidence is not rendered as zero;\n- action-time re-evaluation exists for package-sensitive deletion.\n\n### Validation\n\n`--no-validate`; package-model unit/instrumentation fixtures as named fast-EXO workflow nodes.\n\n---",
+      "supersession": "android-buildability-suspended-only; semantic/safety/evidence promises remain",
+      "title": "OV09 \u2014 Android package and storage evidence authority"
+    },
+    {
+      "authority": "original-roadmap-rechecked-exo",
+      "class": "original-roadmap-overlay",
+      "closure_criteria": "All Required implementation/Acceptance/Gate/Validation clauses in the embedded source block are satisfied, except only the explicit amendment overrides.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "devtool-execution"
+      ],
+      "id": "ORIG:OV10",
+      "owner": [
+        "ORIG-OV10"
+      ],
+      "source_block": "## OV10 \u2014 Duplicates, residue, recommendations, and rules in Go\n\n**Artifact:** `dustui_go_ov10_cleanup_intelligence_v1.zip`  \n**Maps to audit:** GO12; RC-03, RC-09; ABH-10/11/13.\n\n### Purpose\n\nMove all cleanup intelligence into Go and make every result proof-bearing.\n\n### Required implementation\n\n### Duplicates\n\n- candidate grouping;\n- logical-size semantics;\n- content/identity verification;\n- verification confidence/state;\n- canonical/keep selection;\n- retained-copy proof;\n- actionable evidence output.\n\n### Residue\n\n- package/user evidence;\n- action-time re-evaluation;\n- ambiguity/confidence;\n- special-path context;\n- exclusions/protection;\n- actionable evidence output.\n\n### Recommendations/rules\n\n- proof-bearing outputs;\n- bounded imports;\n- bounded/non-pathological regex/pattern execution;\n- provenance-preserving unions;\n- plan-level conflict detection;\n- protected-descendant/retained-copy validation before authorization.\n\nCut corresponding Clean subroutes to Go.\n\nAs each Go engine reaches parity, make its Kotlin business-policy implementation unreachable.\n\n### Acceptance\n\nNo specialized result can degrade to a bare path and retain a \u201cverified/safe\u201d label.\n\n### Validation\n\n`--no-validate`; behavioral domain tests + pathological-input limits as named fast-EXO workflow nodes.\n\n---",
+      "supersession": "android-buildability-suspended-only; semantic/safety/evidence promises remain",
+      "title": "OV10 \u2014 Duplicates, residue, recommendations, and rules in Go"
+    },
+    {
+      "authority": "original-roadmap-rechecked-exo",
+      "class": "original-roadmap-overlay",
+      "closure_criteria": "All Required implementation/Acceptance/Gate/Validation clauses in the embedded source block are satisfied, except only the explicit amendment overrides.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "devtool-execution"
+      ],
+      "id": "ORIG:OV11",
+      "owner": [
+        "ORIG-OV11"
+      ],
+      "source_block": "## OV11 \u2014 Automation ownership and Activity convergence\n\n**Artifact:** `dustui_go_ov11_automation_activity_v1.zip`  \n**Maps to audit:** GO13; RC-10; ABH-04/15; BKX/XBS Activity donors.\n\n### Purpose\n\nMake UI, WorkManager, Tasker, notifications, and recovery observe the **same durable operation**.\n\n### Required implementation\n\nCreate one Go automation admission/ownership path.\n\nWorkManager and Tasker become thin adapters:\n\n```text\nrequest operation\n\u2192 receive operationId\n\u2192 observe durable operation\n\u2192 return/report only terminal truth\n```\n\nRules:\n\n- accepted != success;\n- queued != success;\n- running != success;\n- notification actions carry nonce/expiry/replay guards;\n- cancellation is an operation transition;\n- process death does not orphan the job.\n\nComplete Activity UX:\n\n- active/history filtering;\n- run details;\n- progress;\n- result/verification;\n- recovery-required;\n- retry/cancel/reconcile gates;\n- operation/evidence correlation.\n\n### Acceptance\n\nScheduling, Tasker, notification, and UI execution of the same operation produce equivalent terminal semantics.\n\n### Validation\n\n`--no-validate`; WorkManager/Tasker contract tests + Activity instrumentation as named fast-EXO workflow nodes.\n\n**Automation scope for this campaign:** Tasker/WorkManager/notification automation remains non-destructive (`scan`, `status`, `cancel`, and safe inspection). Do not add unattended cleanup/deletion automation without a separate security/UX contract.\n\n---",
+      "supersession": "android-buildability-suspended-only; semantic/safety/evidence promises remain",
+      "title": "OV11 \u2014 Automation ownership and Activity convergence"
+    },
+    {
+      "authority": "original-roadmap-rechecked-exo",
+      "class": "original-roadmap-overlay",
+      "closure_criteria": "All Required implementation/Acceptance/Gate/Validation clauses in the embedded source block are satisfied, except only the explicit amendment overrides.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "devtool-execution"
+      ],
+      "id": "ORIG:OV12",
+      "owner": [
+        "ORIG-OV12"
+      ],
+      "source_block": "## OV12 \u2014 Evidence health, problem graph, diagnostics, privacy, and support bundle\n\n**Artifact:** `dustui_go_ov12_diagnostics_evidence_privacy_v1.zip`  \n**Maps to audit:** GO14; RC-11, RC-14; N-05; XDM/XBS/chrootctl diagnostic donors.\n\n### Purpose\n\nReplace debug-state heuristics with durable, privacy-bounded evidence and user-comprehensible root causes.\n\n### Required implementation\n\nEvidence generations:\n\n```text\nmissing\nstale\ncurrent\ndegraded\n```\n\nDerived health invalidates when authoritative evidence advances.\n\nImplement `DustProblemGraph`:\n\n- root-cause suppression;\n- dependent symptom relationships;\n- stable problem IDs;\n- guided remediation;\n- remediation risk class.\n\nImplement structured persistent diagnostics:\n\n- session/operation/parent IDs;\n- area/severity/action/result;\n- redaction before persistence;\n- bounded values;\n- bounded files/sessions;\n- no automatic upload;\n- significant-problem records separate from raw events.\n\nImplement privacy-retention matrix for:\n\n- raw paths;\n- hashes;\n- package names;\n- root/device metadata;\n- retention;\n- pruning coupling;\n- export redaction;\n- backup/device-transfer eligibility.\n\nCreate sealed support bundle:\n\n- manifest;\n- checksums;\n- selected evidence generations;\n- explicit privacy mode;\n- no file-content leakage by default.\n\nSystem \u2192 Diagnostics replaces Debug as the canonical UX.\n\n### Acceptance\n\n- `COMPLETED` alone can never produce healthy;\n- stale evidence is visibly stale;\n- root causes do not duplicate downstream symptoms;\n- retention/pruning is deterministic;\n- support export is reproducible and privacy-qualified.\n\n### Validation\n\n`--no-validate`; evidence freshness/redaction/retention/bundle tests as named fast-EXO workflow nodes.\n\n---",
+      "supersession": "android-buildability-suspended-only; semantic/safety/evidence promises remain",
+      "title": "OV12 \u2014 Evidence health, problem graph, diagnostics, privacy, and support bundle"
+    },
+    {
+      "authority": "original-roadmap-rechecked-exo",
+      "class": "original-roadmap-overlay",
+      "closure_criteria": "All Required implementation/Acceptance/Gate/Validation clauses in the embedded source block are satisfied, except only the explicit amendment overrides.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "devtool-execution"
+      ],
+      "id": "ORIG:OV13",
+      "owner": [
+        "ORIG-OV13"
+      ],
+      "source_block": "## OV13 \u2014 Go CLI/TUI parity and Android semantic/UI cutover\n\n**Artifact:** `dustui_go_ov13_cli_android_cutover_gateD_v1.zip`  \n**Maps to audit:** GO15 + GO16; full UI/UX semantic cutover.\n\n### Purpose\n\nMake the new Go authority and new route hierarchy the default product, while replacing the current Python/Textual host surface with a Go CLI **and Go TUI** that use the same engine semantics rather than becoming second implementations.\n\n### Required implementation\n\nGo CLI/TUI:\n\n- preserve the supported host workflows currently exposed by `dust-tui` (interactive browsing, resize/layout behavior, settings, scan/backend selection, and export where still product-supported);\n- expose a Go TUI mode/entry point and a non-interactive CLI mode backed by the same packages;\n- keep a compatible `dust-tui` command/alias during migration if practical, but its implementation must be Go after Gate D;\n- scan;\n- query/search;\n- status/activity;\n- cleanup review/capability/execution where appropriate;\n- diagnostics/evidence;\n- machine-readable output;\n- same reason/error codes and operation semantics as Android.\n\nAndroid:\n\n- new route hierarchy is default;\n- no production navigation into retired legacy screens;\n- no production invocation of Python/Textual for supported host workflows;\n- no domain action uses Kotlin-local truth;\n- no cleanup action bypasses manifest capability;\n- all active/recent operations come from Go;\n- all content routes use shared screen states/action gates;\n- compact/wide layouts preserve semantic route identity;\n- Scan remains a workflow, not mandatory top-level destination;\n- top-level destination count is not an acceptance criterion.\n\nComplete the semantic migration for:\n\n- Overview;\n- Files;\n- Clean;\n- Apps;\n- Activity;\n- System;\n\nor the UX-validated equivalent task-domain grouping.\n\n### Gate D validation\n\nFull pre-purge validation:\n\n- Go CLI + Go TUI parity/smoke tests against frozen supported Python/Textual behavior fixtures;\n- Android complete task-flow instrumentation;\n- phone/tablet/rotation route tests;\n- deep-link tests;\n- stale-response tests;\n- accessibility labels and traversal;\n- all domain actions confirmed Go-authoritative;\n- release-variant unit/lint/build tasks;\n- rooted runtime smoke;\n- Devtool artifact identity;\n- Gate-D canonical EXO evidence contract from \u00a72.2.\n\n**Gate D exit condition:** the product no longer needs the old shell or old domain engines for any supported user task.\n\n---",
+      "supersession": "not-superseded",
+      "title": "OV13 \u2014 Go CLI/TUI parity and Android semantic/UI cutover"
+    },
+    {
+      "authority": "original-roadmap-rechecked-exo",
+      "class": "original-roadmap-overlay",
+      "closure_criteria": "All Required implementation/Acceptance/Gate/Validation clauses in the embedded source block are satisfied, except only the explicit amendment overrides.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "devtool-execution"
+      ],
+      "id": "ORIG:OV14",
+      "owner": [
+        "ORIG-OV14"
+      ],
+      "source_block": "## OV14 \u2014 Legacy retirement purge\n\n**Artifact:** `dustui_go_ov14_legacy_retirement_v1.zip`  \n**Maps to audit:** GO17; structural closure phase.\n\n### Purpose\n\nPhysically remove architectures that are already unreachable after Gate D so they cannot silently return.\n\n### Delete or remove from production\n\n- C++ production scanner;\n- independent Python production backend;\n- retired Kotlin domain-analysis engines;\n- final Room/domain authority and migration-only writers;\n- mutable cleanup cache authorization;\n- NDJSON production state-transfer tailing;\n- old 16-destination/remapping shell;\n- legacy Debug/Certification/Deletion Reports top-level routes;\n- generic release/build/install logic now owned by Devtool;\n- any remaining stale source-string tests that merely assert implementation tokens. Most must already have been retired earlier, **immediately after** the corresponding behavioral/failure-injection replacement became authoritative;\n- compatibility flags/fallbacks whose retirement gate has passed.\n\nKeep only deliberately archived fixtures/contracts under migration archives.\n\n### Required proof\n\nStatic/runtime audit must prove:\n\n```text\ncpp_scanner_runtime = none\npython_runtime = none\nroom_domain_authority = none\nlegacy_destructive_executor = none\nlegacy_navigation = none\n```\n\n### Validation\n\n`--no-validate`; compile/static reachability checks plus retirement audit as named fast-EXO workflow nodes.\n\n---",
+      "supersession": "not-superseded",
+      "title": "OV14 \u2014 Legacy retirement purge"
+    },
+    {
+      "authority": "original-roadmap-rechecked-exo",
+      "class": "original-roadmap-overlay",
+      "closure_criteria": "All Required implementation/Acceptance/Gate/Validation clauses in the embedded source block are satisfied, except only the explicit amendment overrides.",
+      "evidence_kind": [
+        "behavioral-test",
+        "source-reachability",
+        "devtool-execution"
+      ],
+      "id": "ORIG:OV15",
+      "owner": [
+        "ORIG-OV15"
+      ],
+      "source_block": "## OV15 \u2014 Adversarial qualification and final release seal\n\n**Artifact:** `dustui_go_ov15_adversarial_final_release_seal_v1.zip`  \n**Maps to audit:** GO18 + GO19; RC-13 final closure; all unresolved ledger items.\n\n### Purpose\n\nProve the replacement under realistic failure, scale, device, accessibility, and release conditions.\n\n### Required adversarial qualification\n\nAt minimum:\n\n- process death during scan;\n- process death during cleanup;\n- root runtime death;\n- transport loss after destructive admission;\n- restart/reconcile;\n- route change while response is in flight;\n- rotation/window resize;\n- stale scan after cleanup;\n- wrong root/module scope;\n- malformed/incomplete/truncated scan;\n- capability replay;\n- expired capability;\n- manifest tamper;\n- descendant appears after review;\n- path identity replacement;\n- mount crossing;\n- duplicate retained-copy invalidation;\n- very large scan pagination/search;\n- sparse/hard-link size fixtures;\n- multi-user package/residue;\n- Tasker/WorkManager terminal truth;\n- notification stale-action replay;\n- privacy retention/pruning;\n- support-export privacy modes;\n- accessibility traversal;\n- destructive confirmation/back behavior;\n- deep link to deleted/stale entity;\n- Release build/install/smoke with exact Go runtime/APK binding.\n\nReplace weak source-token tests with behavioral/failure-window tests where the old tests were acting as safety evidence.\n\n### Final machine-readable migration audit\n\nMust report at least:\n\n```text\nruntime = go-native-android\nandroid_ui = Kotlin/Compose\nengine_database = Go-owned SQLite\npython_runtime = none\ncpp_scanner_runtime = none\nroom_domain_authority = none\nlegacy_destructive_executor = none\nlegacy_navigation = none\nopen_migration_promises = 0\n```\n\n### Gate E / final Devtool validation\n\nRun complete Go + Android validation and canonical Devtool release qualification:\n\n- full Go tests;\n- race/fuzz/failure-injection suites where supported;\n- realistic-scale performance fixtures;\n- Android Debug and Release unit/lint/build;\n- instrumentation on required device/emulator set;\n- rooted device gates;\n- artifact/signing/certificate identity;\n- install/launch/smoke;\n- exact runtime binary hash bound into release evidence;\n- Dust-specific semantic qualification gates;\n- final migration audit;\n- final promise-ledger audit;\n- canonical EXO validation-run evidence satisfies \u00a72.2;\n- canonical Devtool release EXO run is cross-bound to the validation run by Git identity, Go-runtime digest, APK digest, signing identity, and Dust semantic gate evidence;\n- no raw `adb`, manually guessed APK path, or shell-computed generic release truth remains authoritative;\n- no `--affected` shortcut.\n\n**Final exit condition:** every ledger entry has evidence and there is no hidden legacy production fallback.\n\n---\n\n# 6. Validation gates in detail",
+      "supersession": "not-superseded",
+      "title": "OV15 \u2014 Adversarial qualification and final release seal"
+    },
+    {
+      "authority": "android-suspension-amendment",
+      "class": "roadmap-amendment",
+      "closure_criteria": "No audit may count Android build failure alone as an OV03-OV12 gap; OV13/Gate D and later Android evidence remains mandatory; Gate A/B/C canonical EXO evidence remains required.",
+      "evidence_kind": [
+        "machine-readable-evidence",
+        "devtool-execution"
+      ],
+      "id": "AMEND:ANDROID-SUSPENSION-OV03-OV12",
+      "owner": [
+        "AUD-FIX-01",
+        "AUD-FIX-14",
+        "AUD-FIX-15"
+      ],
+      "source_block": "## 2.3a Android buildability suspension policy\n\nFrom **OV03 through OV12**, Android app buildability is intentionally suspended while the Go engine, Go SQLite authority, protocol, scanner, query, cleanup, package/storage, automation, diagnostics, privacy, CLI, and TUI foundations are migrated. During this window:\n\n- Kotlin/Compose, Gradle, Room, C++ scanner, and legacy shell paths may be broken or quarantined if doing so simplifies or de-risks the Go migration;\n- `:app:compile*`, `:app:test*`, `:app:lint*`, `:app:assemble*`, instrumentation, install, and release APK tasks are diagnostic unless an overlay explicitly opts a subset back in;\n- no overlay may hide an Android breakage as accidental: each overlay must state whether Android is `buildable`, `diagnostic-only`, or `intentionally-suspended`;\n- Go tests, migration-contract validators, state/protocol fixtures, scanner/query/root/mutation/diagnostic/adversarial fixtures, and audit-loop checks become the hard blockers;\n- destructive safety remains non-negotiable: no legacy destructive path may become newly reachable merely because Android buildability is suspended;\n- any Android code added before OV13 must be treated as reconnect scaffolding unless the overlay explicitly proves it is buildable;\n- Devtool remains the release authority, but Android release/build authority is inactive until reconnect begins.\n\n**OV13 is the reconnect gate.** From OV13 onward Android buildability is mandatory again: compile, unit tests, lint, packaging, install/smoke, route/instrumentation/accessibility evidence, and Go-runtime/APK binding must return to the hard gate set.\n\nThis policy distinguishes an intentional migration branch from a failed overlay. A broken Android build is acceptable only when the overlay records it under this policy and the Go/migration evidence passes.\n\n\nFull Devtool validation happens at exactly these milestone overlays:\n\n- **Gate A \u2014 OV03**\n- **Gate B \u2014 OV05**\n- **Gate C \u2014 OV08**\n- **Gate D \u2014 OV13**\n- **Gate E \u2014 OV15 (final)**\n\nThe milestone gates validate the complete target state, not only files touched by that overlay.\n\nBecause DustUI has overlapping root-level Go/compatibility content and nested Android content, milestone gates must **not rely on `--affected` as the sole coverage mechanism**.\n\nWhen Gradle tasks are specified to Devtool, each task is passed with its own `--task` flag. No space-joined task blobs.",
+      "supersession": "overrides only Android buildability/Gradle validation expectations for OV03-OV12; ends at OV13",
+      "title": "2.3a Android buildability suspension policy"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:5.1",
+      "owner": [
+        "AUD-FIX-08",
+        "AUD-FIX-09"
+      ],
+      "source_block": "## 5.1 Borrow from BKX\n\nAdopt these BKX qualities:\n\n- task-first information architecture instead of implementation-first navigation;\n- a useful Home/overview that communicates readiness, active work, recent results, and next actions;\n- stable nested routes rather than every workbench becoming a peer navigation destination;\n- consistent loading / empty / error / content states;\n- prominent operation status and recent activity;\n- explicit status pills and plain-language readiness states;\n- progressive disclosure for dangerous workflows;\n- inspect/review/confirm patterns before mutations;\n- a dedicated activity surface rather than scattered progress/history state;\n- grouped advanced/system tooling instead of exposing internals as primary navigation;\n- route-generation/entity binding so stale async responses cannot mutate the wrong screen;\n- deep links that resolve to stable semantic routes.",
+      "supersession": "not-superseded",
+      "title": "5.1 Borrow from BKX"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:5.2",
+      "owner": [
+        "AUD-FIX-10",
+        "AUD-FIX-12"
+      ],
+      "source_block": "## 5.2 Preserve DustUI identity\n\nDo **not** flatten DustUI into a backup-app clone. Keep and elevate:\n\n- storage health as the central product concept;\n- treemap, donut, bars, and growth visualization;\n- filesystem explorer and whole-scan indexed search;\n- logical-vs-allocated size semantics;\n- large-file analysis;\n- exact duplicate analysis;\n- app residue analysis;\n- cleanup recommendations and cleanup rules;\n- app-storage inspection;\n- root/module inspection;\n- exact-path cleanup review;\n- cleanup verification;\n- historical storage comparison;\n- root diagnostics and support evidence.\n\nDustUI's product personality remains **storage intelligence + safe cleanup**, not generic file management.\n\n---\n\n# 6. Navigation model \u2014 domain-led, not destination-count-led\n\nThe current implementation exposes 16 historical `DustDestination` values, including a four-item compact shell and a much larger wide navigation list. It also changes destination identity according to layout. That should be retired.\n\nThe final model should use stable semantic routes grouped into product areas. The exact visible navigation chrome may differ by form factor, but the route tree does not.",
+      "supersession": "not-superseded",
+      "title": "5.2 Preserve DustUI identity"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:6.1",
+      "owner": [
+        "AUD-FIX-08",
+        "AUD-FIX-10",
+        "AUD-FIX-11"
+      ],
+      "source_block": "## 6.1 Recommended product areas\n\nA useful current grouping is the six areas below because they match DustUI's present domain boundaries. **This is a provisional information-architecture hypothesis, not a required destination count.** UX testing may merge, split, or surface these areas differently. The contract is stable task domains, stable semantic routes, and no phone/tablet destination substitution.\n\n### Overview\n\nPurpose: answer **\"What is using my storage, how trustworthy is this view, and what should I do next?\"**\n\nContains:\n\n- storage-health hero;\n- latest scan identity/freshness/integrity;\n- analyzed logical/allocated bytes;\n- indexed objects;\n- cleanup opportunity summary;\n- warnings/problems;\n- storage composition visualizations;\n- treemap/donut launch points;\n- trend summary;\n- active operation card;\n- recent activity;\n- best-next-action cards.\n\nNested routes:\n\n- `overview/home`\n- `overview/composition`\n- `overview/trends`\n- `overview/scan-history`\n\n### Files\n\nPurpose: answer **\"Where is the space?\"**\n\nContains:\n\n- explorer;\n- breadcrumbs;\n- current-folder filter;\n- whole-scan search;\n- large-file workbench;\n- treemap drill-down;\n- item details;\n- safe multi-selection leading only to reviewed cleanup.\n\nNested routes:\n\n- `files/explorer`\n- `files/search`\n- `files/large`\n- `files/treemap`\n- `files/item/{id}`\n\n### Clean\n\nPurpose: answer **\"What can I safely reclaim, and why?\"**\n\nContains:\n\n- ranked cleanup recommendations;\n- recoverable byte summary;\n- exact duplicates;\n- app residue;\n- cleanup rules;\n- candidate details;\n- immutable cleanup review;\n- execution progress/verification handoff.\n\nNested routes:\n\n- `clean/recommended`\n- `clean/duplicates`\n- `clean/residue`\n- `clean/rules`\n- `clean/candidate/{id}`\n- `clean/review/{manifestId}`\n\n### Apps\n\nPurpose: answer **\"Which apps and app-owned areas consume storage?\"**\n\nContains:\n\n- package/app storage list;\n- per-package storage breakdown;\n- Android storage buckets and special paths;\n- cross-user evidence where available;\n- module relationships when they are app/module-owned evidence.\n\nNested routes:\n\n- `apps/list`\n- `apps/package/{packageName}`\n- `apps/package/{packageName}/paths`\n\nRoot module management is not forced into Apps if it is primarily a system/root concern; its canonical route may live under System with contextual links from App detail.\n\n### Activity\n\nPurpose: answer **\"What is running, what happened, and what needs recovery?\"**\n\nThis is the user-facing view of the Go operation coordinator.\n\nContains:\n\n- active scans;\n- active analyses;\n- cleanup execution and verification;\n- scheduled/automation runs;\n- completed/failed/interrupted runs;\n- recovery-required operations;\n- deletion reports as operation details, not a separate top-level product;\n- filters by operation kind/status/time;\n- retry/cancel/reconcile actions when allowed;\n- correlation to diagnostics/support evidence.\n\nNested routes:\n\n- `activity/list`\n- `activity/run/{operationId}`\n- `activity/run/{operationId}/evidence`\n\n### System\n\nPurpose: answer **\"Is DustUI's privileged/runtime environment healthy, and how is the product configured?\"**\n\nContains:\n\n- root/runtime readiness;\n- scan presets and scan configuration;\n- module/root inspection;\n- automation/schedules;\n- diagnostics/problem graph;\n- support bundle export;\n- device certification;\n- privacy/logging settings;\n- appearance/preferences;\n- advanced settings.\n\nNested routes:\n\n- `system/runtime`\n- `system/modules`\n- `system/automation`\n- `system/diagnostics`\n- `system/certification`\n- `system/settings`",
+      "supersession": "not-superseded",
+      "title": "6.1 Recommended product areas"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:6.2",
+      "owner": [
+        "AUD-FIX-10"
+      ],
+      "source_block": "## 6.2 Scan is a workflow, not a navigation destination\n\n`SCAN` should cease to be a permanent destination.\n\nStart Scan should be available from:\n\n- the Overview hero/primary action;\n- top-level app action;\n- empty states that need scan evidence;\n- stale-evidence banners;\n- module wrong-scope remediation;\n- System \u2192 Runtime.\n\nThe scan configuration may render as a modal sheet on compact devices and a dialog/side panel/full route on larger displays. Its semantic workflow is the same.",
+      "supersession": "not-superseded",
+      "title": "6.2 Scan is a workflow, not a navigation destination"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:6.3",
+      "owner": [
+        "AUD-FIX-08",
+        "AUD-FIX-13",
+        "AUD-FIX-16"
+      ],
+      "source_block": "## 6.3 Historical destinations absorbed by the new hierarchy\n\n| Historical destination | Final home |\n|---|---|\n| `SCAN` | global Scan workflow |\n| `EXPLORER` | Files \u2192 Explorer |\n| `INSIGHTS` | Overview |\n| `RECOMMENDATIONS` | Clean \u2192 Recommended |\n| `RULES` | Clean \u2192 Rules |\n| `GROWTH` | Overview \u2192 Trends |\n| `LARGE_FILES` | Files \u2192 Large files |\n| `DUPLICATES` | Clean \u2192 Duplicates |\n| `APP_RESIDUE` | Clean \u2192 Residue, with contextual links from Apps |\n| `SEARCH` | Files \u2192 Search |\n| `PACKAGES` | Apps |\n| `MODULES` | System \u2192 Modules |\n| `CERTIFICATION` | System \u2192 Certification |\n| `CLEANUP` / deletion reports | Activity \u2192 Run details |\n| `DEBUG` | System \u2192 Diagnostics |\n| `MORE` | removed as a semantic destination; replaced by explicit grouped routes |\n\nThis is a structural simplification: it preserves capabilities while removing navigation as an implementation inventory.\n\n---\n\n# 7. Adaptive layout without semantic remapping\n\nThe old rule that can map Scan\u2192Insights on compact and More\u2192Insights on wide layouts should be removed.",
+      "supersession": "not-superseded",
+      "title": "6.3 Historical destinations absorbed by the new hierarchy"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:7.1",
+      "owner": [
+        "AUD-FIX-12"
+      ],
+      "source_block": "## 7.1 Compact phones\n\nOne reasonable compact chrome option is:\n\n- bottom navigation for whichever high-frequency areas UX validation identifies (the current hypothesis is `Overview`, `Files`, `Clean`, `Activity`);\n- overflow/drawer access for lower-frequency areas such as the current `Apps` and `System` grouping;\n- global Scan action in the top app bar / Overview hero;\n- nested routes preserve their canonical route even if their parent is not permanently visible in the bottom bar.\n\nThis is **not** a five-destination product model. It is a compact presentation choice.",
+      "supersession": "not-superseded",
+      "title": "7.1 Compact phones"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:7.2",
+      "owner": [
+        "AUD-FIX-12"
+      ],
+      "source_block": "## 7.2 Large phones / tablets\n\nUse a rail or adaptive drawer exposing the currently selected top-level product areas directly. If the provisional six-area grouping survives UX validation, all six may be visible; if it changes, the layout follows the validated grouping without changing route semantics.\n\nThe content pane can then become two-pane or supporting-pane where useful:\n\n- Files: directory/results + item detail;\n- Clean: candidate list + candidate/review detail;\n- Apps: package list + package detail;\n- Activity: run list + selected run details;\n- System: setting/tool list + detail.",
+      "supersession": "not-superseded",
+      "title": "7.2 Large phones / tablets"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:7.3",
+      "owner": [
+        "AUD-FIX-12"
+      ],
+      "source_block": "## 7.3 Landscape / large tablet\n\nPrefer information-dense master/detail and persistent context rather than adding more navigation destinations.\n\nThe wide layout may reveal nested sections in the rail/drawer, but it must not turn every specialized workbench into a top-level peer again.\n\n---\n\n# 8. Route and stale-response safety\n\nBKX's route-key/generation/response-binding idea should be adapted directly.\n\nEach screen request binds to:\n\n```text\nrouteKey\nrouteGeneration\nentityKind\nentityId\nrequestId\noptional query/draft fingerprint\n```\n\nA late result is accepted only if all relevant identities still match.\n\nFor Dust this is especially important for:\n\n- filesystem search while moving between directories;\n- duplicate analysis while changing scan generation;\n- residue analysis while package/user scope changes;\n- app-storage details while changing package;\n- cleanup review while candidates change;\n- Activity detail while operation selection changes;\n- diagnostics refresh while the underlying evidence generation advances.\n\nThe Go protocol should expose enough generation/revision information that this is not implemented as fragile Compose-local heuristics.\n\n---\n\n# 9. Shared screen-state contract\n\nEvery content route should expose one consistent presentation state:\n\n```text\nLoading\nEmpty(reason + primary recovery action)\nBlocked(reason code + remediation)\nError(problem reference + retry/support action)\nContent(data + freshness + action gates)\n```\n\n`Blocked` is intentionally distinct from Empty and Error because many DustUI states are valid-but-not-actionable:\n\n- no trusted scan;\n- stale after cleanup;\n- wrong scan scope;\n- root not available;\n- scan incomplete/truncated;\n- candidate evidence expired;\n- cleanup capability already claimed;\n- interrupted mutation requires reconciliation;\n- package/storage evidence unsupported on this device/user.\n\nThis should replace screens that silently render zeroes/empty lists for insufficient evidence.\n\n---\n\n# 10. Visual language\n\nKeep DustUI's existing modern dark/product language, but make it systematic.",
+      "supersession": "not-superseded",
+      "title": "7.3 Landscape / large tablet"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:10.1",
+      "owner": [
+        "AUD-FIX-09",
+        "AUD-FIX-12"
+      ],
+      "source_block": "## 10.1 Shared primitives\n\nRetain/evolve:\n\n- `DustHeroCard`;\n- `DustTaskCard`;\n- `DustStatusNotice`;\n- `DustMetricTile`;\n- `DustActionDock`;\n- path pills and selectable monospace paths;\n- filter chips;\n- bottom-sheet/detail headers;\n- status pills;\n- section headers;\n- storage charts and treemap.\n\nAlign their behavior with BKX's consistent surface-card/status patterns, but keep Dust-specific visuals and density.",
+      "supersession": "not-superseded",
+      "title": "10.1 Shared primitives"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:10.2",
+      "owner": [
+        "AUD-FIX-09",
+        "AUD-FIX-12"
+      ],
+      "source_block": "## 10.2 State color semantics\n\nColor must support, never replace, text labels.\n\nUse stable semantic states:\n\n- healthy/current;\n- running;\n- attention/stale;\n- blocked;\n- destructive/irreversible;\n- recovery required;\n- unknown/unverified.\n\nAvoid treating \"completed\" as a positive color unless verification/health also passes.",
+      "supersession": "not-superseded",
+      "title": "10.2 State color semantics"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:10.3",
+      "owner": [
+        "AUD-FIX-12"
+      ],
+      "source_block": "## 10.3 Information density\n\nDustUI should be denser than BKX where the domain demands it. File paths, storage statistics, scan evidence, and candidate comparisons benefit from compact rows and master/detail views.\n\nThe remodel should therefore borrow BKX's clarity, **not its exact spacing or card count**.\n\n---\n\n# 11. Core redesigned flows",
+      "supersession": "not-superseded",
+      "title": "10.3 Information density"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:11.1",
+      "owner": [
+        "AUD-FIX-10"
+      ],
+      "source_block": "## 11.1 First launch / no trusted scan\n\nOverview remains usable and explains readiness.\n\n```text\nOverview\n\u251c\u2500\u2500 Runtime readiness\n\u251c\u2500\u2500 Storage access readiness\n\u251c\u2500\u2500 \"No trusted scan yet\"\n\u251c\u2500\u2500 Start scan\n\u2514\u2500\u2500 What a scan enables\n```\n\nDo not redirect the user to a Scan destination.",
+      "supersession": "not-superseded",
+      "title": "11.1 First launch / no trusted scan"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:11.2",
+      "owner": [
+        "AUD-FIX-10"
+      ],
+      "source_block": "## 11.2 Scan flow\n\n```text\nStart scan\n  \u2193\nChoose scope/preset\n  \u2193\nPreflight\n  \u251c\u2500\u2500 root/runtime identity\n  \u251c\u2500\u2500 canonical path\n  \u251c\u2500\u2500 permission/access\n  \u251c\u2500\u2500 mount/scope evidence\n  \u2514\u2500\u2500 size semantics\n  \u2193\nReview scan request\n  \u2193\nStart\n  \u2193\nOperation appears in Activity + global active-operation surface\n  \u2193\nCompletion\n  \u2193\nHealth evaluation\n  \u251c\u2500\u2500 trusted/current \u2192 Overview/Files/Clean enabled\n  \u2514\u2500\u2500 degraded \u2192 visible problem + limited actions + remediation\n```",
+      "supersession": "not-superseded",
+      "title": "11.2 Scan flow"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:11.3",
+      "owner": [
+        "AUD-FIX-08",
+        "AUD-FIX-09"
+      ],
+      "source_block": "## 11.3 Files flow\n\nFiles defaults to Explorer with an obvious switch to whole-scan Search.\n\nSelection never exposes immediate permanent deletion. It produces an actionable-evidence request which then opens Clean Review.\n\nLarge Files is a Files analysis mode, not an unrelated destination.",
+      "supersession": "not-superseded",
+      "title": "11.3 Files flow"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:11.4",
+      "owner": [
+        "AUD-FIX-09",
+        "AUD-FIX-10"
+      ],
+      "source_block": "## 11.4 Cleanup flow\n\nBorrow BKX's strongest progressive-disclosure behavior and combine it with the new Go cleanup capability:\n\n```text\nCandidate discovery\n  \u2193\nInspect evidence\n  \u2193\nSelect candidates\n  \u2193\nBuild immutable manifest\n  \u2193\nReview exact paths / bytes / reasons / fingerprints\n  \u2193\nExplicit acknowledgement where required\n  \u2193\nClaim single-use cleanup capability\n  \u2193\nExecute\n  \u2193\nVerify\n  \u2193\nActivity run detail + refreshed/stale scan consequence\n```\n\nNo recommendation card, duplicate row, residue row, file row, rule, notification, or automation bypasses this path.",
+      "supersession": "not-superseded",
+      "title": "11.4 Cleanup flow"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:11.5",
+      "owner": [
+        "AUD-FIX-02",
+        "AUD-FIX-10"
+      ],
+      "source_block": "## 11.5 Duplicates\n\nDuplicates becomes a Clean subroute with clear stages:\n\n- candidate grouping;\n- verification state;\n- reclaimable bytes;\n- canonical/keep candidate;\n- exact files;\n- selection;\n- cleanup review.\n\nHash confidence/verification state must be explicit.",
+      "supersession": "not-superseded",
+      "title": "11.5 Duplicates"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:11.6",
+      "owner": [
+        "AUD-FIX-03",
+        "AUD-FIX-10"
+      ],
+      "source_block": "## 11.6 App residue\n\nResidue is shown as cleanup intelligence, not a binary \"junk\" label.\n\nEach residue group presents:\n\n- package/user ownership evidence;\n- installed/uninstalled ambiguity;\n- special-path context;\n- confidence;\n- exclusion/protection reason;\n- paths;\n- review action.",
+      "supersession": "not-superseded",
+      "title": "11.6 App residue"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:11.7",
+      "owner": [
+        "AUD-FIX-03",
+        "AUD-FIX-10"
+      ],
+      "source_block": "## 11.7 App storage\n\nApps uses a list/detail hierarchy with storage buckets and source evidence. Unsupported or partial buckets show explicit reason states instead of zero values.",
+      "supersession": "not-superseded",
+      "title": "11.7 App storage"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:11.8",
+      "owner": [
+        "AUD-FIX-04",
+        "AUD-FIX-11"
+      ],
+      "source_block": "## 11.8 Activity\n\nActivity becomes one of the most important new surfaces.\n\nRows show:\n\n- operation type;\n- status;\n- start/end time;\n- progress if active;\n- scope/summary;\n- result/verification;\n- recovery-required indicator.\n\nRun detail shows:\n\n- operation identity;\n- request/evidence generation;\n- phases;\n- progress counters;\n- warnings/errors;\n- cleanup verification when relevant;\n- safe retry/cancel/reconcile actions;\n- correlated diagnostics;\n- export/support action.\n\nThis absorbs the existing separate deletion-report destination and scattered scan-progress/history UI.",
+      "supersession": "not-superseded",
+      "title": "11.8 Activity"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:11.9",
+      "owner": [
+        "AUD-FIX-05",
+        "AUD-FIX-11"
+      ],
+      "source_block": "## 11.9 System / Diagnostics\n\nThe old Debug Workbench becomes a user-comprehensible Diagnostics surface backed by XDM/XBS-style persistent evidence.\n\nPrimary view:\n\n- top root causes from `DustProblemGraph`;\n- current runtime/root health;\n- scan health;\n- evidence freshness;\n- actionable remediation;\n- support bundle action.\n\nAdvanced subsections can expose:\n\n- structured event timeline;\n- probes;\n- protocol/runtime information;\n- module scope evidence;\n- raw operation correlation IDs.\n\nDebugging detail remains available without making implementation internals a primary navigation destination.\n\n---\n\n# 12. Global operation UX\n\nOperations must remain visible outside Activity without taking over every screen.\n\nUse a compact global active-operation surface:\n\n- top/hero card on Overview;\n- small persistent progress surface/banner where appropriate;\n- tap opens Activity run detail;\n- cancel shown only when the Go action gate allows it;\n- `Cancelling` is not presented as cancelled;\n- lost transport is presented as `Reconnecting/Reconciling`, not failed or restarted automatically;\n- interrupted/ambiguous mutations become `Recovery required`.\n\nThis directly connects BKX's activity clarity with chrootctl-style recovery semantics.\n\n---\n\n# 13. Action gating and disabled-state UX\n\nEvery risky or evidence-dependent action must receive a typed gate from the Go engine:\n\n```text\nallowed: bool\nreasonCode: stable enum/string\nmessage: plain-language explanation\nremediationActions: optional typed actions\n```\n\nThe UI never duplicates gate logic.\n\nExamples:\n\n- `SCAN_REQUIRED`\n- `SCAN_STALE_AFTER_MUTATION`\n- `SCAN_INTEGRITY_DEGRADED`\n- `WRONG_SCOPE`\n- `ROOT_UNAVAILABLE`\n- `EVIDENCE_EXPIRED`\n- `MANIFEST_CHANGED`\n- `CAPABILITY_ALREADY_CLAIMED`\n- `OPERATION_IN_PROGRESS`\n- `RECOVERY_REQUIRED`\n\nDisabled buttons should expose the reason in context; important blocked workflows should show a notice with the remediation action rather than forcing users to discover why a button is disabled.\n\n---\n\n# 14. How the UI remodel changes the original bug-hunt fixes\n\nThe original findings remain acceptance requirements, but several UI fixes should no longer be implemented independently.",
+      "supersession": "not-superseded",
+      "title": "11.9 System / Diagnostics"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:14.1",
+      "owner": [
+        "AUD-FIX-13",
+        "AUD-FIX-16"
+      ],
+      "source_block": "## 14.1 Structurally absorbed\n\nThese old repair patterns become obsolete after the new shell is authoritative:\n\n- compact/wide destination remapping fixes;\n- maintaining a 15-item wide navigation rail;\n- separate top-level Deletion Reports screen;\n- separate top-level Debug Workbench screen;\n- separate top-level Certification screen;\n- separate top-level Growth screen;\n- separate top-level Search route in navigation chrome;\n- separate top-level Large Files / Duplicates / Residue / Rules destinations;\n- screen-specific stale-scan banners implemented with duplicated rules;\n- per-screen progress ownership;\n- per-screen ad-hoc readiness derivation;\n- snackbar-only reporting for evidence/health problems.\n\nThe capabilities remain, but move into stable product areas and shared state policies.",
+      "supersession": "not-superseded",
+      "title": "14.1 Structurally absorbed"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:14.2",
+      "owner": [
+        "AUD-FIX-08",
+        "AUD-FIX-09",
+        "AUD-FIX-10",
+        "AUD-FIX-11",
+        "AUD-FIX-12"
+      ],
+      "source_block": "## 14.2 Still mandatory in the new UI\n\nThe remodel must preserve or strengthen:\n\n- exact path review before deletion;\n- actionable-path evidence;\n- stale-after-cleanup blocking;\n- root/module wrong-scope explanations;\n- search-vs-folder-filter distinction;\n- path selection/accessibility;\n- large-file pagination/scale;\n- duplicate verification confidence;\n- residue ambiguity labels;\n- app-storage evidence provenance;\n- scan truncation/malformed/depth warnings;\n- privacy-aware debug/support export;\n- explicit size semantics;\n- history comparability.\n\n---\n\n# 15. Root-cause reconciliation under Go + UI/UX migration\n\nThe original RC identifiers and meanings are immutable audit references. New architecture may supersede a remediation, but must not silently redefine an RC.\n\nLegend:\n\n- **ACTIVE** \u2014 original semantic defect remains a requirement until closure evidence exists.\n- **ACTIVE / SUBSUMED** \u2014 old one-off fixes are replaced by a shared Go authority.\n- **ACTIVE / SUPERSEDED REMEDIATION** \u2014 the defect remains, but the original Kotlin/C++/Python fix plan is intentionally replaced by the Go architecture.\n- **ACTIVE / PARTIALLY EXTERNALIZED** \u2014 Dust-specific truth remains in Dust; generic build/release/device truth moves to Devtool.\n\n| Root cause | Status under final plan | Final treatment / owner |\n|---|---|---|\n| **RC-01 \u2014 Scan truth is not a first-class invariant** | **ACTIVE / SUBSUMED** | Go `ScanAuthority`, evidence generation/freshness, centralized action gating; UI renders trusted/degraded/stale reasons |\n| **RC-02 \u2014 Size semantics are inconsistent across scan, duplicate verification, and cleanup** | **ACTIVE** | Go logical + allocated byte model, hard-link/sparse policy, explicit UI labels |\n| **RC-03 \u2014 Specialized safety evidence is flattened into bare paths** | **ACTIVE / SUBSUMED** | Go `ActionablePathEvidence` retained into immutable cleanup manifests/capabilities |\n| **RC-04 \u2014 Cleanup review and native deletion do not operate on an immutable reviewed object set** | **ACTIVE / SUPERSEDED REMEDIATION** | immutable exact descendant manifest, one-use capability, mutation FSM, pre-mutation identity revalidation, global destructive serialization |\n| **RC-05 \u2014 Root service and IPC boundaries are not strong enough for privileged work** | **ACTIVE / SUPERSEDED REMEDIATION** | typed/bounded Go protocol + thin Kotlin root adapter, allowlists, bounded admission, durable reconcile/status |\n| **RC-06 \u2014 The app relies on in-memory state for safety-critical lifecycle decisions** | **ACTIVE / SUBSUMED** | Go SQLite operation authority + persistent evidence/history; no per-feature lifecycle islands |\n| **RC-07 \u2014 Full-scan features are implemented through large in-memory lists and UI-side filtering** | **ACTIVE** | Go SQL paging/search/summary APIs + virtualized Compose/master-detail rendering |\n| **RC-08 \u2014 Package/app-storage model is incomplete for modern Android** | **ACTIVE** | Android platform evidence snapshot + Go normalized user-aware package/storage model (CE/DE, archive, external/adoptable/secondary/code/data/cache/native where observable) |\n| **RC-09 \u2014 Recommendations and rules preserve marketing labels, not safety proofs** | **ACTIVE / SUBSUMED** | Go duplicate/residue/recommendation/rule engines emit proof-bearing evidence and plan-level conflict validation |\n| **RC-10 \u2014 Automation paths are launchers, not owners of the work** | **ACTIVE / SUPERSEDED REMEDIATION** | WorkManager/Tasker submit and observe the same Go operation; queued/accepted never equals terminal success |\n| **RC-11 \u2014 Diagnostics, certification, and release evidence are not trustworthy enough** | **ACTIVE / PARTIALLY EXTERNALIZED** | Go/XDM/XBS-style evidence + problems/support diagnostics; Devtool owns generic build/sign/device/install/artifact/release truth |\n| **RC-12 \u2014 Storage history/growth is built on incompatible comparison semantics** | **ACTIVE** | semantic `ScanContext`/options/size compatibility fingerprint and comparison groups in Go |\n| **RC-13 \u2014 Validation is mostly source-string or tiny-fixture coverage** | **ACTIVE / SUPERSEDED TEST STRATEGY** | behavioral Go/protocol/Compose tests, realistic-scale fixtures, failure injection, rooted/device gates, Devtool workflows |\n| **RC-14 \u2014 Privacy retention is uncontrolled** | **ACTIVE** | explicit retention/pruning policy + redaction-before-persistence/export + bounded logs/support bundles |\n\nAtomicity/recovery remains mandatory, but it is a cross-cutting **RC-04/05/06/13 implementation requirement**, not a replacement definition for RC-14.",
+      "supersession": "not-superseded",
+      "title": "14.2 Still mandatory in the new UI"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:GO16",
+      "owner": [
+        "AUD-FIX-08",
+        "AUD-FIX-09",
+        "AUD-FIX-10",
+        "AUD-FIX-11",
+        "AUD-FIX-12",
+        "AUD-FIX-15"
+      ],
+      "source_block": "## GO16 \u2014 Android semantic/UI cutover\n\nMake the new route hierarchy and Go authority the default product.\n\nRequirements:\n\n- no production navigation into retired legacy screens;\n- no domain action uses Kotlin-local truth;\n- no cleanup action bypasses the manifest capability;\n- active/recent operations come from the Go coordinator;\n- every retained top-level product area uses common screen-state/action-gate semantics; no acceptance gate depends on having exactly six areas;\n- compact and wide layouts preserve route identity;\n- old 16-destination shell is removed.",
+      "supersession": "not-superseded",
+      "title": "GO16 \u2014 Android semantic/UI cutover"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:GO17",
+      "owner": [
+        "AUD-FIX-16"
+      ],
+      "source_block": "## GO17 \u2014 Retirement purge\n\nDelete:\n\n- C++ production scanner;\n- legacy Python backend paths;\n- retired Kotlin domain engines;\n- old destination remapping/navigation model;\n- legacy Debug/Certification/Deletion Reports top-level routes;\n- stale source-contract tests that only assert implementation strings.",
+      "supersession": "not-superseded",
+      "title": "GO17 \u2014 Retirement purge"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:GO18",
+      "owner": [
+        "AUD-FIX-17"
+      ],
+      "source_block": "## GO18 \u2014 Adversarial qualification\n\nAdd behavioral UI qualification for:\n\n- process death during scan/cleanup;\n- route changes while async results are in flight;\n- screen rotation/window resize without semantic route changes;\n- stale scan after cleanup;\n- wrong module scope;\n- malformed/incomplete scan;\n- transport loss after cleanup admission;\n- duplicate cleanup capability replay;\n- cleanup manifest mutation attempt;\n- very large scan pagination/search;\n- multi-user package/residue cases;\n- accessibility traversal and screen-reader labels;\n- destructive action confirmation and back-navigation behavior;\n- deep links into a run/candidate that no longer exists;\n- support export privacy modes.",
+      "supersession": "not-superseded",
+      "title": "GO18 \u2014 Adversarial qualification"
+    },
+    {
+      "authority": "authoritative-go-uiux-rechecked",
+      "class": "uiux-authority",
+      "closure_criteria": "Every normative requirement in the embedded source block is implemented and proven by behavioral/device evidence; source-token absence alone is insufficient.",
+      "evidence_kind": [
+        "ui-contract",
+        "behavioral-test",
+        "accessibility",
+        "device-evidence"
+      ],
+      "id": "UIUX:GO19",
+      "owner": [
+        "AUD-FIX-17"
+      ],
+      "source_block": "## GO19 \u2014 Final migration + UX release seal\n\nFinal machine-readable audit must prove:\n\n- production engine is Go-native;\n- no C++ scanner production path;\n- no independent Python production backend;\n- no duplicated Kotlin domain authority;\n- old 16-destination shell unreachable/removed;\n- operation/activity truth survives recreation/process death;\n- route generation rejects stale responses;\n- cleanup review/execution proof is immutable and single-use;\n- responsive layouts preserve route semantics;\n- root/diagnostic evidence is explicit rather than silent-empty;\n- Devtool release evidence passes and binds the exact Go runtime + APK/artifact identity;\n- migration audit reports `runtime = go-native-android`, `python_runtime = none`, `cpp_scanner_runtime = none`, `android_ui = Kotlin/Compose`, `engine_database = Go-owned SQLite`, and no open migration promises;\n- user-visible task flows pass instrumentation/usability contract tests.\n\n---\n\n# 16.1 Migration stop-ship and authority-transition rules\n\nUntil the relevant Go replacement is qualified:\n\n- do not broaden destructive capability merely because a migration is underway;\n- do not allow dual writers to authoritative scan/operation/cleanup state;\n- do not let old and new engines execute destructive operations concurrently;\n- do not silently fall back to legacy cleanup after Go rejects/admitted-then-loses a request;\n- do not freeze known-bad behavior into migration contracts;\n- do not claim parity from source/token tests alone;\n- do not retire an old path until its replacement has behavioral and failure-window evidence;\n- do not keep Python/C++ as a hidden production fallback after the retirement gate;\n- if a migration flag exists during development, each operation has exactly one authority.\n\nTemporary pre-cutover safety patches are still mandatory when legacy behavior remains reachable: reject degraded/truncated scans for destructive actions, constrain recursive cleanup where review/execution equivalence is unproven, prevent blind replay after ambiguous transport loss, fail closed on critical atomic-publication failure, bound privileged admission, correct the Release-vs-Debug Devtool defect, and prevent automation from reporting launch/admission as success.\n\n# 16.2 Closure and obsolescence rules\n\nThe original bug hunt remains the acceptance/adversarial-test ledger. A finding may close only by:\n\n1. **Corrected in Go** \u2014 the replacement behavior is implemented and exercised;\n2. **Structurally retired** \u2014 the unsafe implementation path is unreachable/removed and equivalent user behavior is covered by replacement tests;\n3. **Externalized to Devtool** \u2014 only the generic build/device/sign/release portion moves out, and Dust-specific semantic gates consume the same exact Devtool run/artifact identity.\n\nImplementation-specific symptom classes expected to disappear after verified cutover include C++ scanner/native divergence, Kotlin NDJSON-tail lifecycle races, process-local operation maps as authority, mutable cleanup-cache authorization, Python-vs-Android engine drift, final Room-vs-Go domain duplication, and Kotlin duplicate/residue/rule business-policy duplication. Their semantic safety requirements do **not** disappear.\n\n# 16.3 Donor-system details that are requirements, not inspiration-only\n\n### BKX\n\nAdapt into Go/Android contracts:\n\n- operation states equivalent to queued/running/cancelling/success/failure/cancelled/interrupted/unknown;\n- request identity/fingerprint, monotonic event sequence, late-event rejection, terminal-state stickiness, reconnect/reconcile semantics;\n- preview/capability proof fields such as ID + payload/manifest hash + resource revision/generation + expiry;\n- privileged protocol/version/request/field allowlists and bounded messages;\n- BKX's audited privileged pool (2 workers / queue 4) is a useful bounded-admission precedent, not a required Dust constant;\n- Tasker/automation rule that accepted/queued/running is not terminal success;\n- centralized action gate with reason code/message.\n\nDo not copy BKX's storage choice blindly; final Dust operation authority is Go SQLite.\n\n### chrootctl\n\nAdapt:\n\n- universal destructive mutation boundary;\n- process-shared/global serialization semantics;\n- single-use claim before destructive execution;\n- mutation states including interrupted/ambiguous/`repair_required` and cleanup-debt concepts where applicable;\n- process/runtime reconciliation and no replay-on-lost-response;\n- operation-journal evidence fields useful for recovery (operation/parent IDs, phase, timestamps, process/boot identity where meaningful, errors/warnings/repair flags);\n- fail-closed atomic publication and sealed/checksummed support evidence.\n\nDo **not** add chrootctl as a runtime dependency merely to reuse these concepts.\n\n### XDM\n\nAdapt:\n\n- expected-generation state transitions;\n- Android `AtomicFile`/fail-closed publication discipline where files remain;\n- failure injection between write and commit;\n- structured persistent diagnostics with redaction-before-persistence, bounded values/files/sessions and no automatic upload;\n- separately persisted significant-problem records;\n- operation/activity correlation and last-intent/stale-response protection;\n- typed release/domain gate ownership.\n\n### XBS\n\nAdapt:\n\n- evidence generation invalidation;\n- missing/stale/current/degraded health policy;\n- root-cause problem graph rather than duplicate symptoms;\n- guided-fix risk classes;\n- nonce/expiry/replay guards for stale user actions/notifications;\n- security seal concepts for exported components, backup/cleartext/managed-path/external-entry/stale-action constraints;\n- readiness based on fresh evidence rather than evidence-file presence;\n- searchable/filterable Activity/recovery UX.\n\n### Devtool\n\nRetain as external authority for toolchain, workflows/EXO, Android device operations, artifact/signing/install/release evidence, overlay transactions, and artifact registry. Dust's Go engine must not recreate these concerns.\n\n---\n\n# 17. UX validation matrix\n\nEvery release gate should exercise these user outcomes, not merely Compose source structure.\n\n| User task | Required proof |\n|---|---|\n| Understand current storage state | Overview shows trustworthy scan identity, size semantics, freshness, warnings, and useful next action |\n| Find a file/folder | Files explorer works with pagination and stable navigation |\n| Search entire scan | Whole-scan search is clearly distinguished from local filtering |\n| Find largest consumers | Large Files and visual storage routes operate on paged Go data |\n| Find cleanup opportunities | Clean explains reason/confidence and never equates recommendation with permission |\n| Remove files safely | exact immutable review \u2192 authorization \u2192 execution \u2192 verification |\n| Handle duplicate files | verification/confidence and keep/delete choices are explicit |\n| Inspect residue | package/user/evidence ambiguity remains visible |\n| Inspect an app | Apps shows supported/unsupported/partial storage evidence truthfully |\n| Monitor a long operation | Activity preserves run state across navigation/process recreation |\n| Recover interrupted work | Activity exposes reconcile/repair-required state rather than replaying blindly |\n| Diagnose root/runtime | System provides root cause and remediation, not silent empty content |\n| Export support evidence | privacy mode and included evidence are explicit; no file contents leak |\n| Use tablet layout | same route/task meaning, denser master-detail presentation, no destination substitution |\n\n---\n\n# 18. Visual/product acceptance rules\n\n1. Storage information can be dense; navigation should not be.\n2. A screen should have one dominant user question and at most one dominant primary action.\n3. Destructive primary actions appear only in dedicated review/confirmation contexts.\n4. Problems that invalidate data are shown near the affected data, not only in Diagnostics.\n5. Technical IDs/paths remain copyable/selectable where useful but are secondary to plain-language status.\n6. Empty, unsupported, blocked, stale, and failed are visually and semantically distinct.\n7. Phone and tablet show the same conceptual product, not two different navigation models.\n8. Charts always have textual/accessible equivalents and exact values available.\n9. File/path lists optimize for scanning and comparison, not oversized decorative cards.\n10. Advanced/root/debug detail is available without making the normal product feel like a developer console.\n\n---\n\n# 19. Cross-project donor responsibilities in the final design",
+      "supersession": "not-superseded",
+      "title": "GO19 \u2014 Final migration + UX release seal"
+    }
+  ],
+  "schema": "dustui.requirement-index.v2",
+  "source_sha256": {
+    "ANDROID_SUSPENSION_AMENDMENT.md": "d4b99eeb78cc5147a1653b199153bdfcca31fa9e68ad8d81df392885fe5c2a67",
+    "AUD_FIX_REMEDIATION_ROADMAP.json": "ae790ab0074ab68ef67942215156fdcb75a83753605366d532a376ebcf1356a4",
+    "AUD_FIX_REMEDIATION_ROADMAP.md": "0cbe864a4f45c22a85e314196fce214b3e8107b42f6dac93b8fc55d777c819fe",
+    "AUTHORITATIVE_GO_UIUX_RECHECKED.md": "d2bbd2be426258a9408432ab8dafbc56bbfb435b2c29e6f7022b7794cf2293d4",
+    "FULL_GAP_LEDGER_READ_ONLY.json": "9b9ba2fb15c68787f659da21407fe164aaafb02f560d3709cecfeb8d8cc488b6",
+    "ORIGINAL_ROADMAP_RECHECKED_EXO.md": "5c27ebe5eb84d41553fff72455385e5434d5d6ffa7df521fd51f04a0d1dd3697"
+  }
+}

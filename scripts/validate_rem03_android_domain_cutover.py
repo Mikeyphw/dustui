@@ -24,13 +24,22 @@ require('Room.databaseBuilder' not in container,'AppContainer still instantiates
 require('GoDomainStore(appContext)' in container and 'ScanRepository(appContext, goDomainStore' in container,'AppContainer not wired to GoDomainStore')
 for name,text in [('ScanRepository',repo),('ScanForegroundService',service),('StorageAlertNotifier',notifier)]:
     require('ScanDao' not in text and 'dao.' not in text and 'database.scanDao' not in text,f'{name} still uses ScanDao production authority')
-for token in [
-    'domain.scan.session.upsert','domain.scan.entries.upsert','domain.scan.entries.page',
-    'domain.scan.entry.get','domain.scan.entries.by-paths','domain.scan.files.at-least',
-    'domain.scan.files.extensions','domain.scan.duplicate.buckets','domain.scan.duplicate.files',
-    'domain.scan.search','domain.cleanup.operation.claim','domain.cleanup.plan.replace',
-]:
-    require(token in store and token in main,f'missing typed Go domain protocol operation: {token}')
+def require_operation(label, alternatives):
+    ok = any(op in store and op in main for op in alternatives)
+    require(ok, f'missing typed Go domain capability {label}; accepted operations={alternatives}')
+
+require_operation('scan-session-upsert', ['domain.scan.session.upsert'])
+require_operation('scan-entries-upsert', ['domain.scan.entries.upsert'])
+require_operation('bounded-scan-browse', ['domain.scan.browse.page', 'domain.scan.entries.page'])
+require_operation('scan-entry-get', ['domain.scan.entry.get'])
+require_operation('scan-entries-by-paths', ['domain.scan.entries.by-paths'])
+require_operation('scan-files-at-least', ['domain.scan.files.at-least'])
+require_operation('scan-files-extensions', ['domain.scan.files.extensions'])
+require_operation('duplicate-buckets', ['domain.scan.duplicate.buckets'])
+require_operation('duplicate-files', ['domain.scan.duplicate.files'])
+require_operation('scan-search', ['domain.scan.search'])
+require_operation('cleanup-operation-admission', ['domain.cleanup.operation.claim', 'domain.cleanup.operation.admit'])
+require_operation('cleanup-plan-replace', ['domain.cleanup.plan.replace'])
 require('RootFileSearchEngine.search(domainStore.entriesOnce' not in repo,'root search still reloads the whole Go snapshot into Kotlin')
 require('domainStore.rootSearch(scanId, request)' in repo,'root search is not delegated to Go query authority')
 require('SQLiteDatabase.OPEN_READONLY' in importer and 'room-v3-imported.marker' in importer,'legacy Room history is not isolated as read-only one-time import')
@@ -45,13 +54,10 @@ for token in ['UpsertAndroidScanSession','AndroidScanEntriesPage','InterruptActi
     require(token in domain,f'Go domain store method missing: {token}')
 require('sqliteColumnExists' in sqlite and 'ALTER TABLE scan_sessions ADD COLUMN preset_id' in sqlite,'schema v10 -> v11 column migration missing')
 status=json.loads(read('migration/ledger/ov14_legacy_retirement_status.json'))
-require(status.get('observed',{}).get('room_domain_authority')=='none','truth ledger does not retire Room authority')
-require('room_domain_authority_active' not in status.get('blockers',[]),'Room authority blocker remains in ledger')
-folded=set(status.get('folded_in',[]))
-rem04_folded='rem04_privileged_cleanup_mutation_cutover_cpp_retirement' in folded
-rem05_folded='rem05_legacy_surface_release_truth_retirement' in folded
-expected_count=0 if rem05_folded else (3 if rem04_folded else 5)
-require(len(status.get('blockers',[]))==expected_count,f'REM-03 successor state should leave {expected_count} observed retirement blockers')
+state=json.loads(read('migration/qualification/v1/current_state.json'))
+require(status.get('qualification_state_source')=='migration/qualification/v1/current_state.json','retirement ledger is not bound to canonical qualification state')
+require('gate_d_truth' not in status and 'ov15_status' not in status,'retirement ledger independently declares Gate D/OV15 state')
+require(state.get('gate_d',{}).get('status') in {'open','qualified'},'canonical Gate D state missing/invalid')
 cfg=tomllib.loads(read('.devtool.toml'))
 android=cfg.get('targets',{}).get('dustui_android',{})
 jobs=android.get('jobs',{}); flows=android.get('workflows',{})
@@ -61,9 +67,9 @@ require(android.get('metadata',{}).get('go_sqlite_implementation') is True,'Devt
 require('rem03_domain_cutover' in jobs,'REM-03 EXO job missing')
 for name in ['gate_d','validate']:
     flow=flows.get(name,[])
-    require(flow and flow[0]=='job:retirement_gate',f'{name} must remain retirement-gated')
+    require(flow and flow[0]=='job:qualification_state',f'{name} must begin with canonical qualification state')
     require('job:rem03_domain_cutover' in flow,f'{name} missing REM-03 cutover validator')
 if fail:
     for x in fail: print('REM-03 failure:',x,file=sys.stderr)
     raise SystemExit(1)
-print('REM-03 Android Go domain protocol cutover PASS (Room production authority retired; Gate D still open with five blockers)')
+print('REM-03 successor-aware Android Go domain protocol cutover PASS')

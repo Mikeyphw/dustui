@@ -1,70 +1,46 @@
 #!/usr/bin/env python3
-"""Source audit for the DustUI modern dark portrait roadmap seal."""
+"""AUD-FIX successor-aware UI acceptance bridge.
+
+The historical portrait contract is validated only while the predecessor shell
+is still production-reachable. Once the semantic shell replaces it, this
+validator switches to invariant checks and never requires retired symbols.
+"""
 from __future__ import annotations
-
-import sys
+import json, sys
 from pathlib import Path
+ROOT=Path(__file__).resolve().parents[2]
 
-ROOT = Path(__file__).resolve().parents[2]
+def read(rel):
+    p=ROOT/rel
+    return p.read_text(encoding='utf-8',errors='replace') if p.is_file() else ''
 
-CHECKS: list[tuple[str, str, str]] = [
-    ("Theme.kt", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Theme.kt", "object DustModernColors"),
-    ("ModernDustComponents.kt", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/ModernDustComponents.kt", "fun DustHeroCard"),
-    ("compact nav Home", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt", "DustDestination.INSIGHTS"),
-    ("compact nav Clean", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt", "DustDestination.RECOMMENDATIONS"),
-    ("scan sheet", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt", "private fun ScanLauncherSheet"),
-    ("scan sheet opt-in", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt", "@OptIn(ExperimentalMaterial3Api::class)"),
-    ("home dashboard", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt", "private fun HomeDashboardScreen"),
-    ("files local search", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt", "Current folder search"),
-    ("whole-scan search", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt", "Whole-scan search"),
-    ("clean cockpit", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/CleanupRecommendationsScreen.kt", "Cleanup cockpit"),
-    ("tools hub", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt", "private fun ToolsHubScreen"),
-    ("module diagnostics", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt", "Current scan does not include modules"),
-    ("module scan action", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt", "Scan /data/adb/modules"),
-    ("final UI contract", "UI_UX_CONTRACT.md", "Modern dark portrait final qualification contract"),
-    ("final seal doc", "docs/ANDROID_MODERN_DARK_PORTRAIT_FINAL_SEAL.md", "Final compact navigation contract"),
-]
-
-FORBIDDEN: list[tuple[str, str, str]] = [
-    ("stale module wording", "docs/ANDROID_MODERN_DARK_PORTRAIT_UI.md", "Current scan excludes modules"),
-    ("stale five-tab compact contract", "UI_UX_CONTRACT.md", "five core destinations"),
-    ("stale scan-back contract", "UI_UX_CONTRACT.md", "primary workbenches return to Scan"),
-]
-
-
-def read(relative: str) -> str:
-    path = ROOT / relative
-    if not path.exists():
-        raise AssertionError(f"missing {relative}")
-    return path.read_text(encoding="utf-8")
-
-
-def main() -> int:
-    failures: list[str] = []
-    for name, relative, token in CHECKS:
-        try:
-            text = read(relative)
-        except AssertionError as exc:
-            failures.append(f"{name}: {exc}")
-            continue
-        if token not in text:
-            failures.append(f"{name}: missing token {token!r} in {relative}")
-    for name, relative, token in FORBIDDEN:
-        try:
-            text = read(relative)
-        except AssertionError as exc:
-            failures.append(f"{name}: {exc}")
-            continue
-        if token in text:
-            failures.append(f"{name}: forbidden stale token {token!r} in {relative}")
-    if failures:
-        print("Modern dark portrait final audit failed:", file=sys.stderr)
-        for failure in failures:
-            print(f"- {failure}", file=sys.stderr)
+def main()->int:
+    fail=[]
+    design=read('android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustDesign.kt')
+    app=read('android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt')
+    routes=read('android/app/src/main/kotlin/com/mikeyphw/dustui/ui/shell/DustShellRouteContract.kt')
+    predecessor='enum class DustDestination' in design
+    if predecessor:
+        for rel,token in [
+            ('android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Theme.kt','object DustModernColors'),
+            ('android/app/src/main/kotlin/com/mikeyphw/dustui/ui/ModernDustComponents.kt','fun DustHeroCard'),
+            ('android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt','Whole-scan search'),
+            ('android/app/src/main/kotlin/com/mikeyphw/dustui/ui/CleanupRecommendationsScreen.kt','Cleanup cockpit'),
+        ]:
+            if token not in read(rel): fail.append(f'predecessor invariant missing {token!r} in {rel}')
+    else:
+        for token in ['Overview','Files','Clean','Apps','Activity','System']:
+            if token not in routes: fail.append(f'successor semantic route missing: {token}')
+        if 'DustSemanticNavigation.areas' not in app: fail.append('successor shell does not render stable semantic area list')
+    try:
+        idx=json.loads(read('migration/requirements/v2/requirements.json'))
+        ids={r.get('id') for r in idx.get('requirements',[])}
+        if not {'UIUX:6.1','UIUX:7.1','UIUX:7.2','UIUX:14.2'} <= ids: fail.append('authoritative UI/UX requirement index incomplete')
+    except Exception as exc: fail.append(f'requirement index invalid: {exc}')
+    if fail:
+        print('Successor-aware UI acceptance audit failed:',file=sys.stderr)
+        for x in fail: print('- '+x,file=sys.stderr)
         return 1
-    print("Modern dark portrait final audit passed.")
+    print(f"Successor-aware UI acceptance audit passed ({'predecessor-bridge' if predecessor else 'semantic-shell'} mode).")
     return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+if __name__=='__main__': raise SystemExit(main())

@@ -1,179 +1,65 @@
 #!/usr/bin/env python3
-"""Validate DustUI OV13 Gate D product reconnect contracts."""
+"""AUD-FIX successor-aware OV13/Gate-D contract validator."""
 from __future__ import annotations
 import argparse, json, subprocess, sys, tomllib
 from pathlib import Path
-ROOT = Path(__file__).resolve().parents[1]
+ROOT=Path(__file__).resolve().parents[1]
 
-def read(rel: str) -> str:
-    return (ROOT / rel).read_text(encoding='utf-8')
+def req(c,m,f):
+    if not c: f.append(m)
 
-def require(cond: bool, msg: str, failures: list[str]) -> None:
-    if not cond:
-        failures.append(msg)
+def run_json(args):
+    p=subprocess.run(args,cwd=ROOT/'go',text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    if p.returncode!=0: raise RuntimeError(p.stderr or p.stdout)
+    return json.loads(p.stdout)
 
-def run_json(args: list[str]) -> dict:
-    proc = subprocess.run(args, cwd=ROOT / 'go', text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if proc.returncode != 0:
-        raise RuntimeError(proc.stderr or proc.stdout)
-    return json.loads(proc.stdout)
-
-def validate(audit_loop: bool = False) -> list[str]:
-    failures: list[str] = []
-    devtool = tomllib.loads(read('.devtool.toml'))
-    targets = devtool.get('targets', {})
-    android = targets.get('dustui_android', {})
-    go = targets.get('dustui_go', {})
-    am = android.get('metadata', {})
-    gm = go.get('metadata', {})
-    require(am.get('migration_phase') == 'OV13', 'dustui_android migration_phase must be OV13', failures)
-    require(gm.get('migration_phase') == 'OV13', 'dustui_go migration_phase must be OV13', failures)
-    require(am.get('android_buildability') == 'mandatory', 'Android buildability must be mandatory at OV13', failures)
-    require(am.get('gate') == 'Gate D - Android reconnect mandatory', 'Android Gate D metadata missing', failures)
-    require(go.get('metadata', {}).get('product_default') is True, 'Go product default flag missing', failures)
-    require(gm.get('go_cli_default') is True, 'Go CLI default flag missing', failures)
-    require(gm.get('go_tui_default') is True, 'Go TUI default flag missing', failures)
-    require(gm.get('android_reconnect_gate') == 'Gate D', 'Android reconnect gate metadata mismatch', failures)
-    require(gm.get('legacy_python_textual_production') is False, 'legacy Python/Textual must not be production after Gate D', failures)
-    require(gm.get('legacy_kotlin_domain_truth') is False, 'legacy Kotlin domain truth must be false after Gate D', failures)
-    wrapper = devtool.get('wrapper', {})
-    require(wrapper.get('schema') == 1, 'DustUI devtool wrapper schema=1 missing', failures)
-    require(wrapper.get('default_command') == 'gate-d', 'DustUI wrapper default command must be gate-d', failures)
-    wrapper_commands = wrapper.get('commands', {})
-    for command in ['gate-d', 'cutover-audit', 'fast', 'unit', 'go-fast', 'build', 'test', 'lint']:
-        require(command in wrapper_commands, f'DustUI wrapper command missing: {command}', failures)
-    jobs = android.get('jobs', {})
-    workflows = android.get('workflows', {})
-    for job in ['retirement_audit', 'retirement_gate', 'ov13_contract', 'gradle_contract', 'go_test', 'android_unit', 'android_lint', 'android_assemble']:
-        require(job in jobs, f'DustUI android target-local EXO job missing: {job}', failures)
-    fast = workflows.get('fast', [])
-    fast_base = ['job:ov13_contract', 'job:go_test', 'job:android_unit']
-    require(len(fast) >= len(fast_base) and fast[-len(fast_base):] == fast_base and all(item.startswith('job:') for item in fast), 'DustUI fast workflow must use target-local jobs and retain the OV13 base tail', failures)
-    require(all(item.startswith('job:rem') for item in fast[:-len(fast_base)]), 'DustUI fast workflow successor prefixes must be REM target-local jobs', failures)
-    require(workflows.get('cutover_audit') == ['job:retirement_audit'], 'DustUI cutover_audit workflow must expose the non-sealing truth audit', failures)
-    gate = workflows.get('gate_d', [])
-    gate_tail = ['job:ov13_contract', 'job:go_test', 'job:gradle_contract', 'job:android_unit', 'job:android_lint', 'job:android_assemble']
-    require(bool(gate) and gate[0] == 'job:retirement_gate', 'DustUI Gate D workflow must begin with the retirement truth gate', failures)
-    require(len(gate) >= 1 + len(gate_tail) and gate[-len(gate_tail):] == gate_tail, 'DustUI Gate D workflow must retain the OV13 validation tail', failures)
-    require(all(item.startswith('job:rem') for item in gate[1:-len(gate_tail)]), 'DustUI Gate D successor jobs must remain target-local REM jobs', failures)
-    go_jobs = go.get('jobs', {})
-    go_workflows = go.get('workflows', {})
-    for job in ['go_test', 'product_contract', 'tui_smoke', 'schema_contract']:
-        require(job in go_jobs, f'DustUI Go target-local EXO job missing: {job}', failures)
-    require(go_workflows.get('fast') == ['job:go_test', 'job:product_contract', 'job:tui_smoke', 'job:schema_contract'], 'DustUI Go fast workflow must use target-local jobs', failures)
-    require((ROOT / 'devtoolw').is_file(), 'devtoolw launcher missing', failures)
-    require((ROOT / 'devtoolw.cmd').is_file(), 'devtoolw.cmd launcher missing', failures)
-    for rel in [
-        'go/internal/product/product.go',
-        'go/internal/product/product_test.go',
-        'go/internal/tui/tui.go',
-        'go/internal/tui/tui_test.go',
-        'android/app/src/main/kotlin/com/mikeyphw/dustui/go/ProductCutoverContract.kt',
-        'android/app/src/test/kotlin/com/mikeyphw/dustui/go/ProductCutoverContractTest.kt',
-        'go/internal/state/schema.go',
-        'go/internal/readiness/readiness.go',
-        'go/cmd/dustui-go/main.go',
-    ]:
-        require((ROOT / rel).is_file(), f'OV13 file missing: {rel}', failures)
-    product = run_json(['go', 'run', './cmd/dustui-go', 'product-contract'])
-    require(product.get('phase') == 'OV13', 'product contract phase must be OV13', failures)
-    require(product.get('protocol') == 'dustui.product.cutover.v1', 'product protocol mismatch', failures)
-    require(product.get('gate') == 'Gate D', 'product gate must be Gate D', failures)
-    require(product.get('androidBuildability') == 'mandatory', 'product contract must make Android mandatory', failures)
-    require(product.get('androidBuildabilityMandatory') is True, 'product contract must mark Android buildability mandatory', failures)
-    require(product.get('productionEngine') is True, 'product contract must make Go production engine', failures)
-    require(product.get('goSQLiteProductDefault') is True, 'Go SQLite must be product default', failures)
-    require(product.get('legacyDomainEnginesRequired') is False, 'legacy domain engines must not be required', failures)
-    require(product.get('legacyPythonTextualProduction') is False, 'Python/Textual must not be production', failures)
-    for route in ['overview', 'files', 'clean', 'apps', 'activity', 'system']:
-        require(route in product.get('routes', []), f'route missing: {route}', failures)
-    surfaces = {item.get('name'): item for item in product.get('surfaces', [])}
-    for surface in ['go-cli', 'go-tui', 'android-shell']:
-        require(surface in surfaces, f'surface missing: {surface}', failures)
-        if surface in surfaces:
-            require(surfaces[surface].get('productDefault') is True, f'{surface} must be product default', failures)
-            require(surfaces[surface].get('usesSameEngineSemantics') is True, f'{surface} must use same engine semantics', failures)
-            require(len(surfaces[surface].get('supportedWorkflows', [])) >= 7, f'{surface} workflow coverage incomplete', failures)
-    for evidence in ['android-compile', 'android-unit', 'android-lint', 'android-package', 'route-instrumentation', 'accessibility', 'runtime-apk-binding', 'go-tui-smoke']:
-        require(evidence in product.get('requiredEvidence', []), f'Gate D evidence missing: {evidence}', failures)
-    require(product.get('dustTuiAliasImplementation') == 'go-cli-or-go-tui-wrapper-after-gate-d', 'dust-tui alias implementation contract missing', failures)
-    require(product.get('gateDQualified') is False, 'product contract must expose reopened/unqualified Gate D truth', failures)
-    require(product.get('androidRuntimeBound') is True, 'folded Gate D contract must record the implemented Android Go runtime binding', failures)
-    require(product.get('goSQLiteImplemented') is True, 'folded Gate D contract must record implemented Go SQLite persistence', failures)
-    tui = run_json(['go', 'run', './cmd/dustui-go', 'tui-smoke'])
-    require(tui.get('phase') == 'OV13', 'TUI smoke phase must be OV13', failures)
-    require(tui.get('surface') == 'go-tui', 'TUI smoke surface mismatch', failures)
-    require(tui.get('sharedEngineSemantics') is True, 'TUI smoke must use shared engine semantics', failures)
-    require(set(tui.get('layouts', [])) == {'compact', 'wide'}, 'TUI smoke must cover compact/wide layouts', failures)
-    readiness = run_json(['go', 'run', './cmd/dustui-go', 'readiness'])
-    require(readiness.get('migrationPhase') == 'OV13', 'readiness phase must be OV13', failures)
-    require(readiness.get('productionEngine') is True, 'readiness must expose production engine', failures)
-    require(readiness.get('androidBuildability') == 'mandatory', 'readiness must expose mandatory Android buildability', failures)
-    require(readiness.get('goCliDefault') is True and readiness.get('goTuiDefault') is True, 'readiness must expose Go CLI/TUI defaults', failures)
-    require(readiness.get('gateDQualified') is False, 'readiness must expose reopened/unqualified Gate D truth', failures)
-    require(readiness.get('androidRuntimeBound') is True and readiness.get('goSQLiteImplemented') is True, 'readiness must record implemented Android runtime/SQLite cutover', failures)
-    schema = run_json(['go', 'run', './cmd/dustui-go', 'schema'])
-    require(schema.get('schemaVersion', 0) >= 10, 'folded OV13 schema must preserve version 10+ contracts', failures)
-    tables = schema.get('requiredTables', [])
-    for table in ['product_surface_parity', 'android_reconnect_evidence', 'route_accessibility_contracts']:
-        require(table in tables, f'schema must include {table}', failures)
-    joined = '\n'.join(schema.get('createStatements', []))
-    for token in ['legacy_python_textual_required', 'shared_engine_semantics', 'go_runtime_digest', 'apk_digest', 'signing_identity', 'semantic_identity', 'accessibility_label', 'traversal_group']:
-        require(token in joined, f'OV13 schema token missing: {token}', failures)
-    android_contract = read('android/app/src/main/kotlin/com/mikeyphw/dustui/go/ProductCutoverContract.kt')
-    for token in ['AndroidBuildability: String = "mandatory"', 'GoRuntimeAuthority', 'LegacyPythonTextualProduction: Boolean = false', 'LegacyKotlinDomainTruth: Boolean = false', 'phoneAndTabletFixtures']:
-        require(token in android_contract, f'Android product cutover token missing: {token}', failures)
-    gradle = read('android/build.gradle.kts')
-    require('scripts/validate_ov13_contract.py' in gradle, 'verifyDustMigrationContract must point at OV13 validator', failures)
-    for rel in [
-        'migration/contracts/v1/product_cutover_gateD_ov13.md',
-        'migration/contracts/v1/authority_transition_ov13.md',
-        'migration/contracts/v1/legacy_paths_ov13.md',
-        'migration/contracts/v1/source_token_retirement_ov13.md',
-        'migration/audit/v1/ov13_audit_loop.md',
-        'migration/ledger/ov13_status.json',
-    ]:
-        require((ROOT / rel).is_file(), f'OV13 contract missing: {rel}', failures)
-    findings = json.loads(read('migration/ledger/findings.json'))
-    require(findings.get('phase') == 'OV13', 'migration ledger phase must advance to OV13', failures)
-    by_id = {item.get('id'): item for item in findings.get('findings', [])}
-    for fid in ['RC-01', 'RC-06', 'RC-10', 'RC-11', 'RC-12', 'RC-13', 'RC-14', 'N-05', 'ABH-16']:
-        require(fid in by_id and 'OV13' in by_id[fid].get('overlays', []), f'OV13 ledger mapping missing: {fid}', failures)
-        require(by_id[fid].get('ov13_status'), f'OV13 ledger status missing: {fid}', failures)
-    status = json.loads(read('migration/ledger/ov13_status.json'))
-    require(status.get('android_buildability') == 'mandatory', 'OV13 status must mark Android mandatory', failures)
-    require(status.get('legacy_domain_engines_required') is False, 'OV13 historical target must make legacy domain engines unnecessary', failures)
-    require(status.get('gate_closure') == 'reopened-by-ov14-retirement-truth-audit', 'OV13 status must record Gate D reopening after source truth audit', failures)
-    require(status.get('ov15_eligible') is False, 'OV15 must remain ineligible while Gate D is reopened', failures)
-    if audit_loop:
-        combined = '\n'.join(read(rel) for rel in [
-            'migration/contracts/v1/product_cutover_gateD_ov13.md',
-            'migration/contracts/v1/authority_transition_ov13.md',
-            'migration/contracts/v1/legacy_paths_ov13.md',
-            'migration/contracts/v1/source_token_retirement_ov13.md',
-            'migration/audit/v1/ov13_audit_loop.md',
-        ])
-        for phrase in [
-            'Android buildability is mandatory again',
-            'Go CLI and Go TUI are product surfaces',
-            'Python/Textual is retained only as a frozen parity oracle',
-            'Overview, Files, Clean, Apps, Activity, and System',
-            'Gate D remains open until target-side Devtool Android validation',
-        ]:
-            require(phrase in combined, f'OV13 audit loop missing: {phrase}', failures)
-    return failures
-
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--audit-loop', action='store_true')
-    args = parser.parse_args()
-    failures = validate(args.audit_loop)
+def main()->int:
+    ap=argparse.ArgumentParser(); ap.add_argument('--audit-loop',action='store_true'); args=ap.parse_args(); failures=[]
+    cfg=tomllib.loads((ROOT/'.devtool.toml').read_text())
+    android=cfg.get('targets',{}).get('dustui_android',{}); go=cfg.get('targets',{}).get('dustui_go',{})
+    am=android.get('metadata',{}); gm=go.get('metadata',{}); jobs=android.get('jobs',{}); flows=android.get('workflows',{})
+    req(am.get('migration_phase')=='OV13','android migration phase must remain OV13',failures)
+    req(gm.get('migration_phase')=='OV13','go migration phase must remain OV13',failures)
+    req(am.get('android_buildability')=='mandatory','Android buildability must be mandatory at OV13',failures)
+    req(am.get('qualification_state_source')=='migration/qualification/v1/current_state.json','Android metadata must consume canonical qualification state',failures)
+    req(gm.get('qualification_state_source')=='migration/qualification/v1/current_state.json','Go metadata must consume canonical qualification state',failures)
+    for banned in ['gate_d_truth','ov15_status','production_authority_qualified','android_cutover_complete','product_default','go_cli_default','go_tui_default','legacy_python_textual_production','legacy_kotlin_domain_truth']:
+        req(banned not in am and banned not in gm,f'independent/aspirational metadata remains: {banned}',failures)
+    req(gm.get('target_product_default') is True and gm.get('target_go_cli_default') is True and gm.get('target_go_tui_default') is True,'target product declarations missing',failures)
+    req('qualification_state' in jobs,'qualification_state EXO job missing',failures)
+    req(flows.get('gate_d',[None])[0]=='job:qualification_state','Gate D must begin with canonical qualification check',failures)
+    req('job:retirement_gate' not in flows.get('gate_d',[]),'Gate D must not be sequenced after OV14 retirement',failures)
+    req(flows.get('cutover_audit',[None])[0]=='job:qualification_state','cutover audit must begin with qualification check',failures)
+    try:
+        state=json.loads((ROOT/'migration/qualification/v1/current_state.json').read_text())
+        product_src=(ROOT/'go/internal/product/product.go').read_text()
+        readiness_src=(ROOT/'go/internal/readiness/readiness.go').read_text()
+        shell_src=(ROOT/'go/internal/shell/routes.go').read_text()
+        generated_src=(ROOT/'go/internal/qualification/state_generated.go').read_text()
+    except Exception as exc:
+        failures.append(f'cannot load canonical static truth: {exc}'); state={'gate_d':{'qualified':False,'status':'unknown'}}; product_src=readiness_src=shell_src=generated_src=''
+    qualified=state.get('gate_d',{}).get('qualified') is True
+    literal='true' if qualified else 'false'
+    req(f'const GateDQualified = {literal}' in generated_src,'generated Gate D constant diverges from canonical state',failures)
+    req('ProductionEngine:              qualification.GateDQualified' in product_src,'product default must be evidence-derived',failures)
+    req('GoSQLiteProductDefault:        qualification.GateDQualified' in product_src,'Go SQLite default must be evidence-derived',failures)
+    req('DeclarationScope:           "canonical-evidence-derived:" + qualification.StateSource' in product_src,'product declaration scope not canonical',failures)
+    req('ProductionEngine:        qualification.GateDQualified' in readiness_src,'readiness product truth must be canonical',failures)
+    req('GoCLIDefault:            qualification.GateDQualified' in readiness_src and 'GoTUIDefault:            qualification.GateDQualified' in readiness_src,'CLI/TUI defaults must be evidence-derived',failures)
+    for route in ['overview','files','clean','apps','activity','system']:
+        req(f'RouteID = "{route}"' in shell_src,f'target semantic route missing: {route}',failures)
+    required=set(state.get('gate_d',{}).get('required_nodes',[]))
+    req('RequiredEvidence:           append([]string{}, qualification.RequiredEvidenceNodes...)' in product_src,'product required evidence must derive from canonical Gate D topology',failures)
+    kt=(ROOT/'android/app/src/main/kotlin/com/mikeyphw/dustui/go/ProductCutoverContract.kt').read_text()
+    req('QualificationStateSource' in kt and 'QualificationEvidenceSource' in kt,'Android target contract must point to canonical qualification sources',failures)
+    req('LegacyPythonTextualProduction' not in kt and 'LegacyKotlinDomainTruth' not in kt,'Android target contract must not declare observed legacy absence',failures)
+    if args.audit_loop:
+        for cmd in [['python3','scripts/refresh_qualification_state.py','--check'],['python3','scripts/validate_ov14_contract.py']]:
+            p=subprocess.run(cmd,cwd=ROOT,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+            req(p.returncode==0,f"{' '.join(cmd)} failed: {p.stdout.strip()}",failures)
     if failures:
-        for failure in failures:
-            print(f'OV13 contract failure: {failure}', file=sys.stderr)
+        for x in failures: print('OV13 contract failure:',x,file=sys.stderr)
         return 1
-    print('DustUI OV13 product cutover / Gate D contract passed')
+    print(f"DustUI OV13 successor-aware Gate D contract PASS (canonical status={state['gate_d']['status']})")
     return 0
-
-if __name__ == '__main__':
-    raise SystemExit(main())
+if __name__=='__main__': raise SystemExit(main())

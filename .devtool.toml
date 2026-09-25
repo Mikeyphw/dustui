@@ -88,8 +88,8 @@ structured_events = true
 max_gradle_nodes = 1
 abi_policy = "arm64-v8a production first; x86_64 is test-only until a matching Go runtime exists"
 release_authority = "devtool"
-gate_d_truth = "reopened-by-ov14-retirement-truth-audit"
-ov15_status = "blocked-on-real-android-go-cutover"
+qualification_state_source = "migration/qualification/v1/current_state.json"
+qualification_evidence_source = "migration/qualification/v1/gate_d_evidence.json"
 android_domain_authority = "go-process+go-sqlite"
 legacy_room_authority = false
 go_sqlite_implementation = true
@@ -102,16 +102,16 @@ outputs = ["go/bin", "go/build"]
 inputs = ["go"]
 
 [targets.dustui_go.metadata]
-production_authority = true
+target_production_authority = true
 migration_phase = "OV13"
 readiness_only = false
-product_default = true
-go_cli_default = true
-go_tui_default = true
+target_product_default = true
+target_go_cli_default = true
+target_go_tui_default = true
 android_reconnect_gate = "Gate D"
 android_buildability = "mandatory"
-legacy_python_textual_production = false
-legacy_kotlin_domain_truth = false
+legacy_python_observation_source = "migration/qualification/v1/current_state.json"
+legacy_kotlin_observation_source = "migration/qualification/v1/current_state.json"
 state_protocol_kernel = true
 query_history_engine = true
 runtime_contract_gate = "Gate B"
@@ -135,8 +135,8 @@ root_protocol = "dustui.privileged.runtime.v1"
 read_authority = "go-sqlite"
 android_runtime_packaging = "arm64-v8a-only"
 shell_scaffold = true
-production_authority_qualified = false
-android_cutover_complete = false
+qualification_state_source = "migration/qualification/v1/current_state.json"
+qualification_evidence_source = "migration/qualification/v1/gate_d_evidence.json"
 android_domain_authority = "go-process+go-sqlite"
 legacy_room_authority = false
 go_sqlite_implementation = true
@@ -238,6 +238,12 @@ lint = [
   ":app:lintDebug",
 ]
 
+[targets.dustui_android.jobs.qualification_state]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/refresh_qualification_state.py", "--check"]
+inputs = ["scripts/refresh_qualification_state.py", "scripts/audfix01_core.py", "migration/qualification/v1", "migration/requirements/v2/requirements.json", ".devtool.toml"]
+
 [targets.dustui_android.jobs.ov13_contract]
 runner = "command"
 root = ".."
@@ -296,11 +302,11 @@ gradle_tasks = [":app:assembleDebug"]
 outputs = ["app/build/outputs/apk/debug"]
 
 [targets.dustui_android.workflows]
-fast = ["job:rem04_privileged_cutover", "job:rem03_domain_cutover", "job:ov13_contract", "job:go_test", "job:android_unit"]
+fast = ["job:qualification_state", "job:rem04_privileged_cutover", "job:rem03_domain_cutover", "job:ov13_contract", "job:go_test", "job:android_unit"]
 unit = ["job:android_unit"]
-cutover_audit = ["job:retirement_audit"]
-gate_d = ["job:retirement_gate", "job:rem02_sqlite", "job:rem03_domain_cutover", "job:rem04_privileged_cutover", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
-validate = ["job:retirement_gate", "job:rem02_sqlite", "job:rem03_domain_cutover", "job:rem04_privileged_cutover", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
+cutover_audit = ["job:qualification_state", "job:retirement_audit"]
+gate_d = ["job:qualification_state", "job:rem02_sqlite", "job:rem03_domain_cutover", "job:rem04_privileged_cutover", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
+validate = ["job:qualification_state", "job:rem02_sqlite", "job:rem03_domain_cutover", "job:rem04_privileged_cutover", "job:ov13_contract", "job:go_test", "job:gradle_contract", "job:android_unit", "job:android_lint", "job:android_assemble"]
 
 [targets.dustui_go.jobs.go_test]
 runner = "command"

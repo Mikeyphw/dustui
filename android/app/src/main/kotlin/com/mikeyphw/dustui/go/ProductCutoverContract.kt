@@ -1,30 +1,25 @@
 package com.mikeyphw.dustui.go
 
 /**
- * OV13 Gate D: Android reconnect is build-critical again.  This contract keeps
- * Android as a thin semantic shell over the Go engine/runtime instead of
- * reintroducing Kotlin-local truth.
+ * Gate-D target contract.
+ *
+ * This object intentionally does not claim that Gate D is qualified or that
+ * legacy authorities are already absent. Runtime qualification truth lives in
+ * migration/qualification/v1/current_state.json and is produced only from the
+ * executed-evidence registry.
  */
 object ProductCutoverContract {
     const val Phase: String = "OV13"
     const val Gate: String = "Gate D"
     const val AndroidBuildability: String = "mandatory"
-    const val GoRuntimeAuthority: String = "go-sqlite-runtime"
-    const val LegacyPythonTextualProduction: Boolean = false
-    const val LegacyKotlinDomainTruth: Boolean = false
+    const val TargetGoRuntimeAuthority: String = "go-sqlite-runtime"
+    const val QualificationStateSource: String = "migration/qualification/v1/current_state.json"
+    const val QualificationEvidenceSource: String = "migration/qualification/v1/gate_d_evidence.json"
+    const val TargetLegacyPythonRetired: Boolean = true
+    const val TargetLegacyKotlinDomainRetired: Boolean = true
     val Routes: List<String> = listOf("overview", "files", "clean", "apps", "activity", "system")
     val RequiredStates: Set<String> = setOf("loading", "empty", "blocked", "error", "content")
     val RequiredActionGates: Set<String> = setOf("allowed", "blocked", "needs_fresh_scan", "needs_capability")
-    val MandatoryGateEvidence: Set<String> = setOf(
-        "compile",
-        "unit-test",
-        "lint",
-        "package",
-        "install-smoke",
-        "route-instrumentation",
-        "accessibility",
-        "runtime-apk-binding",
-    )
 }
 
 data class ProductRouteContract(
@@ -33,7 +28,7 @@ data class ProductRouteContract(
     val semanticIdentity: String = route,
     val state: String,
     val actionGate: String,
-    val sourceOfTruth: String = ProductCutoverContract.GoRuntimeAuthority,
+    val targetSourceOfTruth: String = ProductCutoverContract.TargetGoRuntimeAuthority,
 ) {
     init {
         require(route in ProductCutoverContract.Routes) { "unknown route: $route" }

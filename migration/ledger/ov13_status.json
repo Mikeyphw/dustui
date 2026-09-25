@@ -1,30 +1,19 @@
 {
   "android_buildability": "mandatory",
-  "android_shell_default": true,
   "artifact": "dustui_go_ov13_cli_android_cutover_gateD_v1.zip",
   "gate": "Gate D",
-  "gate_closure": "reopened-by-ov14-retirement-truth-audit",
-  "gate_closure_reason": "Gate D declarations existed, but actual Android source still uses C++/Room and lacks the packaged Go runtime + Go SQLite implementation.",
-  "go_cli_default": true,
-  "go_tui_default": true,
-  "legacy_domain_engines_required": false,
-  "legacy_python_textual_production": false,
-  "ov15_eligible": false,
+  "note": "Historical OV13 target declaration only. Current Gate D/OV14/Gate E truth is computed by the canonical qualification state and must not be inferred from this ledger.",
   "phase": "OV13",
-  "production_engine": "go",
-  "required_gate_evidence": [
-    "go-test",
-    "go-cli-smoke",
-    "go-tui-smoke",
-    "android-compile",
-    "android-unit",
-    "android-lint",
-    "android-package",
-    "install-smoke",
-    "route-instrumentation",
-    "accessibility",
-    "runtime-apk-binding",
-    "devtool-artifact-identity"
-  ],
-  "unsupported_devtool_jobs_workflows": false
+  "qualification_evidence_source": "migration/qualification/v1/gate_d_evidence.json",
+  "qualification_state_source": "migration/qualification/v1/current_state.json",
+  "required_gate_evidence_source": "migration/qualification/v1/gate_d_evidence.json",
+  "schema": "dustui.ov13-target-status.v2",
+  "target": {
+    "android_shell_default": true,
+    "go_cli_default": true,
+    "go_tui_default": true,
+    "legacy_domain_engines_required": false,
+    "legacy_python_textual_production": false,
+    "production_engine": "go"
+  }
 }

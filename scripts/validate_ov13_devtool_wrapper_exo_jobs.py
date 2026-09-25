@@ -79,13 +79,21 @@ def static_validate() -> list[str]:
 
     android_jobs = android.get('jobs', {})
     android_workflows = android.get('workflows', {})
-    for job in ['retirement_audit', 'retirement_gate', 'ov13_contract', 'gradle_contract', 'go_test', 'android_unit', 'android_lint', 'android_assemble']:
+    for job in ['qualification_state', 'retirement_audit', 'retirement_gate', 'ov13_contract', 'gradle_contract', 'go_test', 'android_unit', 'android_lint', 'android_assemble']:
         require(job in android_jobs, f'android target-local job missing: {job}', failures)
     require(android_jobs.get('go_test', {}).get('root') == '../go', 'android go_test job must execute from ../go', failures)
     require(android_jobs.get('android_unit', {}).get('gradle_tasks') == [':app:testDebugUnitTest'], 'android_unit gradle task mismatch', failures)
-    require(android_workflows.get('fast') == ['job:ov13_contract', 'job:go_test', 'job:android_unit'], 'android fast workflow mismatch', failures)
-    require(android_workflows.get('cutover_audit') == ['job:retirement_audit'], 'android cutover_audit workflow mismatch', failures)
-    require(android_workflows.get('gate_d') == ['job:retirement_gate', 'job:ov13_contract', 'job:go_test', 'job:gradle_contract', 'job:android_unit', 'job:android_lint', 'job:android_assemble'], 'android gate_d workflow must begin with retirement truth gate', failures)
+    fast = android_workflows.get('fast', [])
+    require(bool(fast) and fast[0] == 'job:qualification_state', 'android fast workflow must begin with canonical qualification truth', failures)
+    for item in ['job:ov13_contract', 'job:go_test', 'job:android_unit']:
+        require(item in fast, f'android fast workflow missing {item}', failures)
+    cutover = android_workflows.get('cutover_audit', [])
+    require(bool(cutover) and cutover[0] == 'job:qualification_state' and 'job:retirement_audit' in cutover, 'cutover_audit must compose canonical qualification + retirement truth audit', failures)
+    gate = android_workflows.get('gate_d', [])
+    require(bool(gate) and gate[0] == 'job:qualification_state', 'android gate_d workflow must begin with canonical qualification state', failures)
+    require('job:retirement_gate' not in gate, 'Gate D must not depend on post-Gate-D OV14 retirement', failures)
+    for item in ['job:ov13_contract', 'job:go_test', 'job:gradle_contract', 'job:android_unit', 'job:android_lint', 'job:android_assemble']:
+        require(item in gate, f'android gate_d workflow missing {item}', failures)
 
     go_jobs = go.get('jobs', {})
     go_workflows = go.get('workflows', {})
@@ -127,7 +135,7 @@ def dynamic_validate() -> list[str]:
 
     jobs_text, jobs_json = run_capture([devtool, '-r', str(ROOT), 'jobs', '--target', 'dustui_android', '--json'])
     jobs_blob = jobs_text + '\n' + (flatten_json(jobs_json) if jobs_json is not None else '')
-    for job in ['retirement_audit', 'retirement_gate', 'ov13_contract', 'gradle_contract', 'android_unit']:
+    for job in ['qualification_state', 'retirement_audit', 'retirement_gate', 'ov13_contract', 'gradle_contract', 'android_unit']:
         require(
             contains_any(jobs_blob, [job, f'job:{job}', f'local={job}', f'target:dustui_android.{job}']),
             f'devtool jobs missing dustui_android target job: {job}',
@@ -141,7 +149,7 @@ def dynamic_validate() -> list[str]:
         'Gate D plan must expose target-local jobs',
         failures,
     )
-    for job in ['retirement_gate', 'ov13_contract', 'android_unit']:
+    for job in ['qualification_state', 'ov13_contract', 'android_unit']:
         require(
             contains_any(plan_blob, [f'job:{job}', f'job-{job}', f'target:dustui_android.{job}', job]),
             f'Gate D plan missing job:{job}',
@@ -153,13 +161,19 @@ def dynamic_validate() -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--static-only', action='store_true', help='skip devtool CLI dynamic wrapper checks')
+    parser.add_argument('--require-dynamic', action='store_true', help='fail if installed Devtool dynamic checks cannot run')
     args = parser.parse_args()
     failures = static_validate()
     if not args.static_only:
-        try:
-            failures.extend(dynamic_validate())
-        except Exception as exc:
-            failures.append(f'dynamic Devtool wrapper validation failed: {exc}')
+        if shutil.which('devtool'):
+            try:
+                failures.extend(dynamic_validate())
+            except Exception as exc:
+                failures.append(f'dynamic Devtool wrapper validation failed: {exc}')
+        elif args.require_dynamic:
+            failures.append('devtool executable not found; dynamic wrapper validation required')
+        else:
+            print('DustUI wrapper/EXO dynamic check DEFERRED: devtool executable not installed in this audit environment')
     if failures:
         for failure in failures:
             print(f'DustUI wrapper/EXO validation failure: {failure}', file=sys.stderr)

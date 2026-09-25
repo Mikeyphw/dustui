@@ -3,6 +3,7 @@ package readiness
 import (
 	"github.com/mikeyphw/dustui/go/internal/product"
 	"github.com/mikeyphw/dustui/go/internal/protocol"
+	"github.com/mikeyphw/dustui/go/internal/qualification"
 	"github.com/mikeyphw/dustui/go/internal/state"
 	"github.com/mikeyphw/dustui/go/internal/version"
 )
@@ -46,7 +47,7 @@ func Current() Report {
 		MigrationPhase:          version.MigrationPhase,
 		Protocol:                version.Protocol,
 		SchemaProtocol:          version.SchemaProtocol,
-		ProductionEngine:        true,
+		ProductionEngine:        qualification.GateDQualified,
 		SQLiteAuthorityModel:    true,
 		ReadAuthority:           true,
 		RuntimePackaged:         true,
@@ -59,17 +60,17 @@ func Current() Report {
 		DiagnosticsEvidence:     true,
 		PrivacyBoundedSupport:   true,
 		CleanupCapability:       true,
-		GoCLIDefault:            true,
-		GoTUIDefault:            true,
+		GoCLIDefault:            qualification.GateDQualified,
+		GoTUIDefault:            qualification.GateDQualified,
 		AndroidReconnectGate:    product.Gate,
 		AndroidBuildability:     product.AndroidBuildState,
 		RequiredTables:          append([]string{}, state.RequiredTables...),
 		EnvelopeTypes:           protocol.SupportedEnvelopeTypes(),
-		Message:                 "REM-03: Android scan and cleanup domain state now flows through the Go runtime and Go-owned SQLite; Gate D remains reopened for C++/legacy/runtime retirement.",
-		GateDQualified:          false,
-		AndroidRuntimeBound:     true,
-		GoSQLiteImplemented:     true,
-		LegacyAndroidAuthority:  true,
+		Message:                 "Qualification truth is derived from migration/qualification/v1/gate_d_evidence.json; source capabilities do not close Gate D.",
+		GateDQualified:          qualification.GateDQualified,
+		AndroidRuntimeBound:     qualification.AndroidGoProcessBindingPresent && qualification.AndroidGoPackagingPresent,
+		GoSQLiteImplemented:     qualification.GoSQLiteImplementationPresent,
+		LegacyAndroidAuthority:  qualification.RoomArtifactsPresent || qualification.LegacyNavigationPresent,
 		PersistenceAuthority:    "go-sqlite",
 		PersistenceSchema:       state.SchemaVersion,
 	}

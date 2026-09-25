@@ -1,0 +1,1 @@
+{"shared_state_declared_but_unused":true,"expected_findings":["shared-state-gate-declaration-without-use"]}

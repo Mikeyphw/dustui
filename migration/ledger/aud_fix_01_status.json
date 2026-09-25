@@ -1,0 +1,20 @@
+{
+  "aud_fix_01_blockers": [],
+  "audit_evidence": "migration/audit/v2/aud_fix_01_audit_loop.json",
+  "gate_d": "open",
+  "later_gap_families_observed": [
+    "AUD-003",
+    "AUD-004",
+    "AUD-005",
+    "AUD-015",
+    "AUD-020",
+    "UIX-001",
+    "UIX-003",
+    "UIX-004"
+  ],
+  "overlay": "AUD-FIX-01",
+  "passes": 2,
+  "qualification_state_source": "migration/qualification/v1/current_state.json",
+  "schema": "dustui.aud-fix-status.v1",
+  "status": "complete"
+}

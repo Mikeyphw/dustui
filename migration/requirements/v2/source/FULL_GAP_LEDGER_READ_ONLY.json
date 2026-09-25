@@ -1,0 +1,657 @@
+{
+  "schema": 1,
+  "audit_date": "2026-09-24",
+  "mode": "read-only-no-fixes",
+  "authority_order": [
+    "authoritative merged audit",
+    "Android-suspended amendment where conflicting from OV03 onward",
+    "original 15-overlay roadmap for non-conflicting promises",
+    "fresh source/evidence",
+    "WIP as candidate comparison only"
+  ],
+  "input_sha256": {
+    "fresh_snapshot": {
+      "name": "dustui-20260924-194542-664219.tar.gz",
+      "sha256": "a0a9372c0065ecacf3c16c4db3a13df18bd043c972180c68d98dd29de149474b"
+    },
+    "handoff_bundle": {
+      "name": "dustui_master_audit_roadmap_updated_through_ov14_20260924_WITH_FULL_AUDIT_WIP.zip",
+      "sha256": "38edda255161b3adbfc35668753e0da83e96cfec15760dc493d42329c3320186"
+    }
+  },
+  "root_gap_count": 33,
+  "gaps": [
+    {
+      "id": "AUD-001",
+      "area": "Gate/ledger truth",
+      "impact": "blocking",
+      "fresh_status": "gap",
+      "wip_status": "gap",
+      "roadmap": "Original §2.2/§2.3, OV13 Gate D, OV14 required proof; amendment §2.2 and OV13 reconnect gate",
+      "finding": "The repository carries mutually exclusive closure states. `.devtool.toml` says Gate D is reopened and OV15 blocked; `ov14_legacy_retirement_status.json` says Gate D is closed and OV15 ready; the product contract remains GateDQualified=false. A closed OV14 ledger therefore cannot be treated as canonical truth.",
+      "evidence": [
+        ".devtool.toml: gate_d_truth=\"reopened-by-ov14-retirement-truth-audit\"; ov15_status=\"blocked-on-real-android-go-cutover\"",
+        "migration/ledger/ov14_legacy_retirement_status.json: status=closed, gate_d_truth=closed, ov15_status=ready_for_gate_e",
+        "go/internal/product/product.go: GateDQualified=false; DeclarationScope=observed-runtime-state-gate-d-reopened"
+      ],
+      "future_target": "Establish one canonical gate state derived from executed evidence; all ledgers/contracts/config must consume that state rather than independently declaring closure."
+    },
+    {
+      "id": "AUD-002",
+      "area": "Audit machinery / retirement truth",
+      "impact": "blocking",
+      "fresh_status": "gap",
+      "wip_status": "gap",
+      "roadmap": "Audit loop after every overlay; OV14 static/runtime retirement proof; gate evidence must be truthful",
+      "finding": "Current validators disagree on the same tree. The retirement-truth validator reports no blockers/Gate-D-ready, REM03 reports Gate D still open with five blockers, REM05 reports Gate D closed/OV15 ready, while the historical OV14 validator requires the predecessor reopened state. The retirement validators also prove absence using narrow tokens instead of full production reachability.",
+      "evidence": [
+        "read_only_validator_results.txt: retirement truth PASS, REM03 PASS with Gate D still open, REM05 PASS with Gate D closed, historical OV14 FAIL",
+        "scripts/validate_rem05_legacy_surface_retirement.py accepts retirement while Python/Room/old shell/source-token tests still exist in fresh tree"
+      ],
+      "future_target": "Make validators successor-aware and prove reachability/authority invariants rather than exact predecessor tokens or narrow symbol absence."
+    },
+    {
+      "id": "AUD-003",
+      "area": "OV13/OV14 host retirement",
+      "impact": "blocking",
+      "fresh_status": "gap",
+      "wip_status": "candidate-addressed-unvalidated",
+      "roadmap": "OV13 requires no production Python/Textual for supported host workflows; OV14 physically removes independent Python production backend",
+      "finding": "The fresh snapshot still has a production Python/Textual host and package entry points.",
+      "evidence": [
+        "src/dust_tui/* exists",
+        "pyproject.toml exposes dust-tui and dust-space -> dust_tui.__main__:main",
+        ".devtool.toml root [project] kind=\"python\" and run_module=\"dust_tui\"",
+        "top-level tests import textual and dust_tui"
+      ],
+      "future_target": "Retire/move the Python parity oracle out of production and make the compatible host command resolve to Go only after Gate D proof."
+    },
+    {
+      "id": "AUD-004",
+      "area": "OV13 Go CLI/TUI parity",
+      "impact": "blocking",
+      "fresh_status": "gap",
+      "wip_status": "candidate-addressed-unvalidated",
+      "roadmap": "OV13 requires real Go CLI + Go TUI for scan/query/search/status/activity/cleanup/diagnostics/evidence/machine-readable workflows using shared semantics",
+      "finding": "Fresh Go product metadata declares CLI/TUI product-default and seven supported workflows, but `main.go` exposes mostly contracts plus `scan`; there are no real query/search/activity/cleanup-review/cleanup-execute/diagnostics/export/tui host commands and `go/internal/tui/tui.go` has only Render/Smoke, not an interactive Run loop.",
+      "evidence": [
+        "go/internal/product/product.go declares CLI/TUI ProductDefault=true and workflow coverage",
+        "go/cmd/dustui-go/main.go command switch lacks query/search/activity/cleanup-review/cleanup-execute/diagnostics/export/tui",
+        "go/internal/tui/tui.go has LayoutFor/Render/Smoke only",
+        "no Go-backed root dust-tui launcher in fresh tree"
+      ],
+      "future_target": "Prove CLI/TUI parity against frozen behavior fixtures with real commands and shared engine packages before claiming product-default."
+    },
+    {
+      "id": "AUD-005",
+      "area": "OV13/OV14 Android navigation cutover",
+      "impact": "blocking",
+      "fresh_status": "gap",
+      "wip_status": "partial-gap",
+      "roadmap": "OV13 new semantic route hierarchy product-default; OV14 removes old 16-destination/remapping shell and legacy top-level Debug/Certification/Deletion Reports routes",
+      "finding": "A six-route semantic contract exists, but production `DustUiApp` still navigates through the old `DustDestination`/`DustShellNavigation` model, including Certification, Deletion Reports/Cleanup, and Debug as direct destinations. UI/UX recheck: the WIP removes the 16-value shell, but the semantic hierarchy is still incomplete: SystemHome is the old Tools catch-all and entity/run/review/runtime/automation/settings routes and Android deep links are absent.",
+      "evidence": [
+        "DustDesign.kt defines 16-value DustDestination and DustShellNavigation",
+        "DustUiApp.kt contains production DustDestination.CERTIFICATION/CLEANUP/DEBUG branches and DustShellNavigation remapping",
+        "ui/shell/DustShellRouteContract.kt six-route enum exists but is not the production shell authority"
+      ],
+      "future_target": "Make stable semantic routes the actual production navigation identity and nest tools/reports under those routes; then remove the old shell."
+    },
+    {
+      "id": "AUD-006",
+      "area": "OV09–OV13 domain authority",
+      "impact": "blocking",
+      "fresh_status": "gap",
+      "wip_status": "candidate-addressed-unvalidated",
+      "roadmap": "Merged audit: Kotlin owns platform/presentation adapters only; OV09–OV13 retire Kotlin domain truth route-by-route",
+      "finding": "Production Android still computes domain policy locally through analyzers/engines for snapshots, residue, advanced analysis, package intelligence, recommendations, rules, growth, verification, duplicate projection, and module analysis.",
+      "evidence": [
+        "ScanRepository.kt calls SnapshotAnalyzer, AppResidueAnalyzer, AdvancedStorageAnalyzer, PackageIntelligenceAnalyzer, AppStorageInspectorEngine, CleanupRecommendationEngine, CleanupRuleEngine, StorageGrowthEngine, CleanupVerificationEngine, RootModuleAnalyzer",
+        "DuplicateWorkbenchEngine.groupItem is reused in authorization-related flow"
+      ],
+      "future_target": "Route Android through typed Go product-authority operations; Kotlin should render/format already-authoritative models only."
+    },
+    {
+      "id": "AUD-007",
+      "area": "OV04 bounded query / scale",
+      "impact": "high",
+      "fresh_status": "gap",
+      "wip_status": "candidate-addressed-unvalidated",
+      "roadmap": "OV04 requires paged/bounded query responses and million-scale bounded memory; RC-07 closes through OV04/OV05 and final scale qualification",
+      "finding": "The Android product path materializes whole scans and repeatedly runs list-level analysis. `GoDomainStore.entriesOnce()` drains every page; `MainViewModel` holds `allEntries`; `ScanRepository` repeatedly requests full entry lists for analysis/recommendations/rules/growth.",
+      "evidence": [
+        "GoDomainStore.kt entriesOnce loops through all domain.scan.entries.page results into List",
+        "MainViewModel.kt maintains allEntries and local filter/sort/category projections",
+        "ScanRepository.kt repeatedly calls domainStore.entriesOnce for domain workflows",
+        "latest supplied Gate-D-ish run fails CleaningPerformanceContractTest bounded-ten-thousand-files case"
+      ],
+      "future_target": "Keep product browsing/analysis paged or aggregate/bounded in Go and prevent UI/domain adapters from rebuilding a full-scan in-memory authority."
+    },
+    {
+      "id": "AUD-008",
+      "area": "OV09–OV12 Go runtime authority exposure",
+      "impact": "blocking",
+      "fresh_status": "gap",
+      "wip_status": "candidate-addressed-unvalidated",
+      "roadmap": "OV09 package/storage, OV10 intelligence, OV11 automation/activity, OV12 diagnostics/support become Go authorities; OV13 all supported Android flows use Go",
+      "finding": "Go packages exist for these domains, but the Android runtime protocol does not expose the required product operations and Android does not consume them. The packages are therefore not yet the product authority.",
+      "evidence": [
+        "runtime_domain.go lacks package snapshot replace/latest, intelligence duplicates/residue/recommendations/rules, automation admit/observe, activity list, diagnostics record/health/list, support bundle operations",
+        "Android source lacks consumption of key package/activity/diagnostics/support operations"
+      ],
+      "future_target": "Expose domain operations through the Go runtime and bind Android adapters to them; prove stale-response/generation behavior and persistence."
+    },
+    {
+      "id": "AUD-009",
+      "area": "OV03/OV06 scan authority convergence",
+      "impact": "high",
+      "fresh_status": "gap",
+      "wip_status": "candidate-addressed-unvalidated",
+      "roadmap": "Authoritative merged audit requires the same Go domain implementation in normal and privileged execution rather than a second scanner implementation",
+      "finding": "`go/internal/rootworker/scan.go` contains its own filesystem traversal/size/hardlink logic instead of reusing `go/internal/scan` authority.",
+      "evidence": [
+        "rootworker/scan.go does not import internal/scan and defines independent scanState/traversal logic"
+      ],
+      "future_target": "Share the same scan semantics/implementation primitives between normal and privileged execution, keeping privilege transport as the only divergent layer."
+    },
+    {
+      "id": "AUD-010",
+      "area": "OV10 duplicate verification authority",
+      "impact": "high",
+      "fresh_status": "gap",
+      "wip_status": "candidate-addressed-unvalidated",
+      "roadmap": "OV10 duplicates migrate to Go; Kotlin must not retain domain verification policy",
+      "finding": "Exact duplicate verification remains in the Kotlin root service using SHA-256 edge/full hashing, while the Go privileged worker has no duplicate-verification command.",
+      "evidence": [
+        "DustRootService.kt imports MessageDigest and implements hashFileEdges/hashWholeFile",
+        "go/cmd/dustui-go/main.go lacks root-duplicates-verify"
+      ],
+      "future_target": "Move duplicate verification semantics into the Go privileged/domain path and keep Kotlin as IPC/platform adapter."
+    },
+    {
+      "id": "AUD-011",
+      "area": "OV11 automation and Activity ownership",
+      "impact": "blocking",
+      "fresh_status": "gap",
+      "wip_status": "partial-gap",
+      "roadmap": "OV11 request -> operationId -> observe durable operation -> report only terminal truth; WorkManager/Tasker/notifications/UI must share operation semantics",
+      "finding": "ScheduledScanWorker labels launch as non-terminal but still returns WorkManager Result.success immediately after launch; Tasker reports \"accepted\" immediately; there is no Android adapter consuming durable Go activity runs. UI/UX recheck: the WIP loads Go activityRuns into MainViewModel but DustUiApp never consumes them; ActivityList still renders CleanupReportsScreen, and there is no global active-operation/reconcile/recovery surface.",
+      "evidence": [
+        "ScheduledScanWorker.kt: STATUS_LAUNCHED_NOT_TERMINAL then Result.success",
+        "DustTaskerReceiver.kt: RESULT_STATUS=\"accepted\"",
+        "Android production lacks domain.activity.list adapter in fresh tree"
+      ],
+      "future_target": "Make automation surfaces observe the same durable Go operation to terminal/recovery-required state before reporting terminal outcome."
+    },
+    {
+      "id": "AUD-012",
+      "area": "OV11 notification cancellation capability",
+      "impact": "high",
+      "fresh_status": "gap",
+      "wip_status": "candidate-addressed-unvalidated",
+      "roadmap": "OV11 notification surface shares durable operation ownership; cleanup/operation actions retain one-use/fail-closed safety semantics",
+      "finding": "Foreground notification cancellation is keyed by scan ID/action only and does not show a Go-issued nonce/expiry/single-use replay guard.",
+      "evidence": [
+        "ScanForegroundService.kt ACTION_CANCEL PendingIntent carries scan identity but no notificationNonce/expiry/one-use capability"
+      ],
+      "future_target": "Bind notification mutation/cancel actions to durable Go operation identity and replay-resistant admission metadata."
+    },
+    {
+      "id": "AUD-013",
+      "area": "OV12 diagnostics / support authority",
+      "impact": "blocking",
+      "fresh_status": "gap",
+      "wip_status": "partial-gap",
+      "roadmap": "OV12 requires durable Go diagnostics/evidence/privacy/retention/support bundle; canonical UX System > Diagnostics",
+      "finding": "Go diagnostics contracts exist, but product diagnostics remain partly process-local Kotlin and support export is authored by Kotlin instead of a sealed Go support-evidence operation. UI/UX recheck: SystemDiagnostics still renders DebugWorkbenchScreen and Android does not present the Go ProblemGraph/root-cause/remediation model as the primary diagnostics experience.",
+      "evidence": [
+        "DebugEvents.kt contains in-memory DebugEventStore used by MainViewModel",
+        "ScanRepository.exportDebugBundle calls DebugExportBundleWriter.write",
+        "runtime_domain.go lacks domain.diagnostics.* and domain.support.bundle"
+      ],
+      "future_target": "Persist diagnostic truth in Go with bounded/redacted retention and have Android request sealed support evidence through Go."
+    },
+    {
+      "id": "AUD-014",
+      "area": "OV14 Room/NDJSON physical retirement",
+      "impact": "high",
+      "fresh_status": "gap",
+      "wip_status": "candidate-addressed-unvalidated",
+      "roadmap": "OV14 physically removes final Room/domain authority and migration-only writers plus retired scan lifecycle; only archived migration fixtures/contracts remain",
+      "finding": "Fresh production still contains Room database/DAO/schema integration and NDJSON tail reader files. Even where runtime authority metadata says Room=false, physical retirement is incomplete.",
+      "evidence": [
+        "DustDatabase.kt and ScanDao.kt under src/main",
+        "Room schema JSONs and migration instrumented test present",
+        "NdjsonTailReader.kt under src/main",
+        "Room framework tokens/dependencies remain in production build/model sources"
+      ],
+      "future_target": "Move any retained migration fixtures to explicit archive-only location and remove production Room/NDJSON code/dependencies after proof of Go persistence/runtime parity."
+    },
+    {
+      "id": "AUD-015",
+      "area": "OV01/OV14 Devtool generic authority",
+      "impact": "high",
+      "fresh_status": "gap",
+      "wip_status": "candidate-addressed-unvalidated",
+      "roadmap": "Devtool owns generic build/device/signing/install/artifact/release evidence; OV14 removes app-local generic duplicates",
+      "finding": "Fresh repo still contains generic scripts that discover/guess APK paths and invoke adb directly for install/device certification/launch/logcat. This duplicates the authority explicitly assigned to Devtool.",
+      "evidence": [
+        "build-android-app.sh hard-codes debug APK output",
+        "package-rc.sh/release-gate.sh search app/build/outputs/apk",
+        "device-certify.sh and install-smoke.sh call adb directly, including install/monkey/dumpsys/logcat"
+      ],
+      "future_target": "Retain only Dust-specific semantic gates; use Devtool operations/artifact identity for generic build/install/device/release evidence."
+    },
+    {
+      "id": "AUD-016",
+      "area": "Source/token test retirement",
+      "impact": "high",
+      "fresh_status": "gap",
+      "wip_status": "candidate-addressed-unvalidated",
+      "roadmap": "OV01 inventories each source/token guard and maps its replacement; each guard retires in the same overlay as authoritative behavioral evidence; OV14 only sweeps leftovers",
+      "finding": "Fourteen source-reading Contract/SourceContract tests remain. The retirement ledger is also not trustworthy: 27/33 records are generically classified as release/devtool evidence with replacement OV01/OV15, including unrelated domain tests.",
+      "evidence": [
+        "source-reading tests include CleaningRecoverySourceContractTest, DatabaseSchemaContractTest, ReleaseScriptContractTest, RootDiagnosticsSourceContractTest, UI/debug/accessibility/navigation contracts, OV01/OV14 migration contracts",
+        "migration/ledger/source_token_contract_tests.json: 33 records; 27 mapped to subsystem release/devtool evidence and OV01/OV15"
+      ],
+      "future_target": "Re-inventory actual source-reading guards, map each to the correct behavioral/failure/instrumentation evidence overlay, and retire only after replacement evidence exists."
+    },
+    {
+      "id": "AUD-017",
+      "area": "Repository/product identity declarations",
+      "impact": "high",
+      "fresh_status": "gap",
+      "wip_status": "partial-gap",
+      "roadmap": "OV13 product-default declarations must reflect actual runtime; audit loop forbids hidden Python/Kotlin fallback",
+      "finding": "Fresh `.devtool.toml` simultaneously declares a Python root project and Go product/CLI/TUI defaults with legacy_python_textual_production=false and legacy_kotlin_domain_truth=false, despite those production paths still existing. The WIP removes the root Python project declaration, but still leaves Gate-D unqualified/reopened while other ledgers claim closure.",
+      "evidence": [
+        "fresh .devtool.toml [project] kind=python plus dustui_go product_default/go_cli_default/go_tui_default=true",
+        "fresh source retains Python and Kotlin domain paths",
+        "WIP metadata production_authority_qualified=false and android_cutover_complete=false"
+      ],
+      "future_target": "Treat metadata as observed evidence-derived state, not an aspirational declaration."
+    },
+    {
+      "id": "AUD-018",
+      "area": "Gate D required evidence topology",
+      "impact": "blocking",
+      "fresh_status": "gap",
+      "wip_status": "gap",
+      "roadmap": "Original OV13 Gate D + amendment reconnect gate: compile, unit, lint, package, install/smoke, route/instrumentation/accessibility, Go-runtime/APK binding, artifact identity; original also requires release-variant unit/lint/build and rooted runtime smoke; canonical EXO proof",
+      "finding": "The configured Gate-D workflow runs retirement/remediation validators, Go test, migration contract, Debug unit/lint/assemble only. It has no install/smoke, connected route instrumentation, accessibility node, runtime/APK binding evidence node, Devtool artifact identity node, rooted runtime smoke, or Release unit/lint/build tasks. The same workflow persists in the WIP. UI/UX recheck: neither fresh nor WIP has Compose/device route, deep-link, rotation, or accessibility traversal instrumentation; source-string/static tests cannot satisfy the UX gate.",
+      "evidence": [
+        ".devtool.toml dustui_android.workflows.gate_d has 10 jobs ending android_unit/android_lint/android_assemble",
+        "android_unit=:app:testDebugUnitTest, android_lint=:app:lintDebug, android_assemble=:app:assembleDebug",
+        "product RequiredEvidence omits rooted runtime smoke and Release task evidence"
+      ],
+      "future_target": "Represent every mandatory Gate-D proof as canonical executable EXO evidence with stable dependencies and artifact/runtime identities."
+    },
+    {
+      "id": "AUD-019",
+      "area": "Historical Gate A/B/C EXO closure",
+      "impact": "blocking",
+      "fresh_status": "unverified-open",
+      "wip_status": "unverified-open",
+      "roadmap": "Amendment: canonical terminal/sealed/replayable EXO evidence is required before every milestone gate closes; unavailable EXO keeps gate open. Gate B also specifies ARM64 device/emulator/physical evidence.",
+      "finding": "Supplied Gate A/B/C audit notes explicitly leave canonical EXO evidence as an external/open dependency. The handoff contains no DustUI Gate-A/B/C terminal/sealed/replayable execution evidence showing those dependencies were later discharged, and no Gate-B ARM64 device run was found.",
+      "evidence": [
+        "migration/audit/v1/ov03_gateA_audit_loop.md: Gate A remains operationally open if canonical EXO unavailable",
+        "migration/audit/v1/ov05_gateB_audit_loop.md: Gate B remains open on canonical EXO dependency",
+        "mutation_recovery_gateC_ov08.md: canonical EXO remains gate dependency",
+        "handoff 09_gate_logs contains only five late Gate-D-era failed Android validation logs"
+      ],
+      "future_target": "Attach later canonical Devtool run IDs/evidence that actually close A/B/C, or keep their milestone closure state explicitly open/unverified."
+    },
+    {
+      "id": "AUD-020",
+      "area": "Gate D executed validation",
+      "impact": "blocking",
+      "fresh_status": "gap",
+      "wip_status": "unverified",
+      "roadmap": "Gate D may close only after successful hard Android reconnect validation and canonical evidence",
+      "finding": "No successful final Gate-D run is supplied. All five bundled late validation logs fail. The latest runs 235 unit tests with 234 passed/1 failed; the failure is the bounded cleaning performance contract. Earlier runs fail migration contract or OV01 transition/source tests.",
+      "evidence": [
+        "09_gate_logs/20260924-105940-168409.log: verifyDustMigrationContract failed",
+        "...111727...: verifyDustMigrationContract failed",
+        "...112607...: 228 passed, 7 failed",
+        "...120517...: 234 passed, 1 failed (OV01 readiness transition test)",
+        "...122515...: 234 passed, 1 failed (CleaningPerformanceContractTest bounded case)"
+      ],
+      "future_target": "A future Gate-D closure needs a successful full canonical run after source/audit truth is reconciled; old failing logs remain historical evidence, not a seal."
+    },
+    {
+      "id": "AUD-021",
+      "area": "Full-roadmap conformance checker quality",
+      "impact": "high",
+      "fresh_status": "gap",
+      "wip_status": "gap",
+      "roadmap": "Audit loop must cover the complete authoritative merged audit + original promises not superseded by amendment",
+      "finding": "The stricter full-roadmap checker is WIP-only, not in the fresh repo. Against fresh it reports 88 checks, but some are false positives (six semantic routes are present with enum syntax), while it misses Gate-D evidence completeness, historical EXO gates, state contradictions, source-token ledger quality, release-variant requirements, and raw adb via `$adb_bin`. It therefore cannot be a sole conformance seal even when it PASSes on WIP. UI/UX recheck: it also misses the handoff UI/UX requirements for staged scan review, shared state/gates actually used by screens, Activity/global operation UX, Apps evidence-state truth, tablet master/detail, deep links, and stale UI acceptance artifacts.",
+      "evidence": [
+        "WIP scripts/validate_full_roadmap_conformance.py",
+        "external read-only run against fresh -> 88 failures",
+        "checker searches Overview( etc while fresh enum uses Overview,",
+        "raw adb check searches literal \"adb \" and misses `$adb_bin`",
+        "WIP checker PASS coexists with Gate-D/status/validator gaps"
+      ],
+      "future_target": "Use a requirement-indexed checker with semantic parsing/reachability/evidence assertions and explicit original-vs-amendment coverage."
+    },
+    {
+      "id": "AUD-022",
+      "area": "Reconstructed WIP gate truth",
+      "impact": "blocking",
+      "fresh_status": "n/a",
+      "wip_status": "gap",
+      "roadmap": "Gate/ledger truth must be internally consistent; WIP is candidate work, not authoritative closure",
+      "finding": "The supplied WIP statically removes many fresh-source blockers and its conformance checker PASSes, but its own `.devtool.toml` still says Gate D reopened/OV15 blocked and `production_authority_qualified=false`, `android_cutover_complete=false`; its OV14 ledger still says closed/OV15 ready; product contract remains GateDQualified=false.",
+      "evidence": [
+        "WIP .devtool.toml gate_d_truth reopened; ov15 blocked; production_authority_qualified=false; android_cutover_complete=false",
+        "WIP ov14_legacy_retirement_status.json says closed/ready_for_gate_e",
+        "WIP product contract GateDQualified=false"
+      ],
+      "future_target": "Do not promote WIP closure ledgers until executed Gate-D evidence qualifies the state."
+    },
+    {
+      "id": "AUD-023",
+      "area": "Reconstructed WIP successor validator compatibility",
+      "impact": "high",
+      "fresh_status": "n/a",
+      "wip_status": "gap",
+      "roadmap": "Audit loop validators must remain valid after successor refactors and cannot require retired implementation tokens",
+      "finding": "Several validators become stale against the WIP: wrapper/EXO static validator fails exact workflow assumptions; historical OV14 validator requires predecessor state; REM03 expects a retired operation name; REM04 expects exact scanner implementation tokens; REM05 expects the old DustShellNavigation that WIP intentionally removes. UI/UX recheck: WIP still carries predecessor UI validators; validate-modern-dark-portrait-ui.py and validate-debug-workbench-contract.py both fail because they require the retired DustDestination/Debug Workbench-era implementation.",
+      "evidence": [
+        "wip_read_only_validator_results.txt: wrapper validator FAIL; historical OV14 FAIL; REM03 FAIL; REM04 FAIL; REM05 FAIL while full conformance checker PASSes"
+      ],
+      "future_target": "Version or successor-proof validators around behavioral/authority contracts and retire predecessor validators when their scope is superseded."
+    },
+    {
+      "id": "AUD-024",
+      "area": "OV15 / Gate E final qualification",
+      "impact": "open-final-gate",
+      "fresh_status": "open",
+      "wip_status": "open",
+      "roadmap": "OV15 requires adversarial/device/scale/privacy/accessibility/rooted/release qualification and validation/release EXO cross-binding by Git/runtime/APK/signing/semantic evidence",
+      "finding": "Gate E is not qualified. The bundled OV15 artifacts are explicitly future-reference-only and predate the reconstructed WIP. Without a qualifying Android/root/device environment and canonical release binding, final seal must remain open/deferred.",
+      "evidence": [
+        "handoff WIP_STATUS / future-reference-only OV15 Gate-E and qualification-deferred checkpoint artifacts",
+        "no qualifying Gate-E execution evidence in supplied handoff"
+      ],
+      "future_target": "Run the final adversarial and canonical release qualification only after Gate D/OV14 truth is reconciled; otherwise record qualification-deferred rather than a pass."
+    },
+    {
+      "id": "UIX-001",
+      "area": "Semantic route tree / deep links",
+      "impact": "blocking",
+      "fresh_status": "gap",
+      "wip_status": "gap",
+      "roadmap": "Authoritative UI/UX §§5–8; original OV13 Gate D stable semantic routes + deep-link tests",
+      "finding": "The semantic route tree is incomplete even after the WIP cutover. Ten authoritative entity/detail/runtime routes are absent; app/file/report selection remains local Compose state/sheets; Android has no ACTION_VIEW/navDeepLink integration; the Go deep-link translator accepts only top-level RouteID values. WIP SystemHome remains the old Tools catch-all rather than a System-specific task domain.",
+      "evidence": [
+        "WIP ui/shell/DustShellRouteContract.kt lacks files/item/{id}, clean/candidate/{id}, clean/review/{manifestId}, apps/package/{packageName}, apps/package/{packageName}/paths, activity/run/{operationId}, activity/run/{operationId}/evidence, system/runtime, system/automation, system/settings",
+        "WIP DustUiApp.kt keeps selectedApp/selectedEntry/selectedCleanupReport as local state/modal sheets",
+        "No ACTION_VIEW/navDeepLink/deepLinks symbols in Android source/manifest",
+        "go/internal/shell/routes.go validRoute accepts only six top-level RouteID values",
+        "WIP ToolsHubScreen remains the content for SystemHome and links storage intelligence, cleanup workbenches and deletion reports"
+      ],
+      "future_target": "Complete stable nested route identity and deep-link restoration for entity/review/run/system-detail flows; make System a real domain, not a renamed Tools catch-all."
+    },
+    {
+      "id": "UIX-002",
+      "area": "Route/stale-response binding",
+      "impact": "blocking",
+      "fresh_status": "gap",
+      "wip_status": "gap",
+      "roadmap": "Authoritative §8; OV13 stale-response tests",
+      "finding": "The required routeKey + routeGeneration + entityKind + entityId + requestId + query/draft fingerprint binding is not implemented as the screen protocol. BoundDustRoute contains only id/entityId/generation and is unused outside its declaration; MainViewModel has multiple ad-hoc AtomicLong request guards instead of one semantic route binding contract.",
+      "evidence": [
+        "ui/shell/DustShellRouteContract.kt BoundDustRoute has id/entityId/generation only",
+        "rg finds DustContent route binding types only in the contract file; no production acceptsResponse consumer",
+        "MainViewModel.kt has per-feature requestId counters/checks but no routeKey/entityKind/query-or-draft fingerprint binding"
+      ],
+      "future_target": "Expose revision/identity in Go responses and enforce one shared route/entity/request/fingerprint acceptance predicate before any late response mutates UI state."
+    },
+    {
+      "id": "UIX-003",
+      "area": "Shared screen-state contract",
+      "impact": "blocking",
+      "fresh_status": "gap",
+      "wip_status": "gap",
+      "roadmap": "Authoritative §9; original UI/UX acceptance #7; OV13 all content routes use shared screen states",
+      "finding": "Loading/Empty/Blocked/Error/Content are declared but not wired into production screen rendering. DustContentState appears only in DustShellRouteContract.kt; individual screens derive readiness from local nulls/booleans/empty lists and bespoke notices. The ProductRouteFixtures further test only state=\"content\"/actionGate=\"allowed\" fixtures rather than real state transitions.",
+      "evidence": [
+        "DustContentState occurs in one production Kotlin file only: ui/shell/DustShellRouteContract.kt (fresh and WIP)",
+        "ProductCutoverContract.kt phoneAndTabletFixtures hard-code state=\"content\" and actionGate=\"allowed\" for every route",
+        "screens continue using local EmptyState, scanDataStale, loading booleans and nullable models"
+      ],
+      "future_target": "Create one presentation-state model sourced from authoritative evidence and use it across every content route with explicit reason/recovery/problem/freshness/action-gate payloads."
+    },
+    {
+      "id": "UIX-004",
+      "area": "Typed action gates / disabled-state remediation",
+      "impact": "blocking",
+      "fresh_status": "gap",
+      "wip_status": "gap",
+      "roadmap": "Authoritative §13; original UI/UX acceptance #8; OV13 shared action gates",
+      "finding": "The required typed Go gate shape (allowed, reasonCode, message, remediationActions) does not exist end-to-end. Go/Android shell contracts expose only four coarse enum values, Android production never consumes DustActionGate, and risky controls still gate locally with booleans such as !scanDataStale. Scan cancellation is shown from local status alone rather than a Go gate.",
+      "evidence": [
+        "no reasonCode/remediationActions or required stable reason-code set in Android UI protocol",
+        "go/internal/shell/routes.go ActionGate is only allowed/blocked/needs_fresh_scan/needs_capability",
+        "DustActionGate appears only in ui/shell/DustShellRouteContract.kt",
+        "AppStorageInspectorScreen buttons use enabled = !scanDataStale; SessionCard shows Cancel when local session status is STARTING/RUNNING"
+      ],
+      "future_target": "Make Go return a typed gate object for every risky/evidence-dependent action and render message/remediation in context; remove UI-owned policy booleans."
+    },
+    {
+      "id": "UIX-005",
+      "area": "Scan workflow semantics",
+      "impact": "blocking",
+      "fresh_status": "gap",
+      "wip_status": "gap",
+      "roadmap": "Authoritative §§6.2 and 11.2; original UI/UX acceptance #4",
+      "finding": "The WIP removes Scan from the semantic destination enum, but the scan workflow still bypasses its required staged safety/clarity flow. Preset cards call vm.startPreset(preset) immediately; custom scanning can call vm.startCustom(custom) directly, while preflight is optional via a separate Check access button. There is no mandatory Review scan request step before Start.",
+      "evidence": [
+        "DustUiApp.kt ScanLauncherSheet preset onClick directly invokes vm.startPreset(preset)",
+        "DustUiApp.kt custom section has independent Check access and Start scan buttons",
+        "the same direct-start behavior remains in the WIP",
+        "first-launch copy claims root diagnostics run before indexing, but preset execution does not require the explicit preflight/review UI stage"
+      ],
+      "future_target": "Enforce choose scope -> preflight -> review request -> explicit Start, then hand operation identity to Activity/global-operation UX."
+    },
+    {
+      "id": "UIX-006",
+      "area": "Overview contract / next-action correctness",
+      "impact": "high",
+      "fresh_status": "gap",
+      "wip_status": "gap",
+      "roadmap": "Authoritative §§6.1 Overview, 11.1, 12; UX matrix “Understand current storage state”",
+      "finding": "Overview does not satisfy the complete storage-health contract. It has scan/warning/cleanup/composition content, but no active-operation card or recent activity, and it does not label logical versus allocated byte semantics. In both fresh and WIP, HomeDashboardScreen openDiagnostics is wired to openScanLauncher(), so “Review evidence” can open the scan sheet instead of Diagnostics.",
+      "evidence": [
+        "no “active operation” or “recent activity” UI symbols in fresh/WIP UI source",
+        "Home hero renders one “X analyzed” byte value without logical/allocated labels",
+        "DustUiApp.kt passes openDiagnostics = { openScanLauncher() } to HomeDashboardScreen",
+        "HomeDiagnosticsNotice actionLabel=\"Review evidence\" delegates to that callback"
+      ],
+      "future_target": "Bind Overview to current Go operation/recent run data, explicit size semantics and the real Diagnostics route; keep scan as a distinct remediation action."
+    },
+    {
+      "id": "UIX-007",
+      "area": "Apps evidence truthfulness",
+      "impact": "high",
+      "fresh_status": "gap",
+      "wip_status": "gap",
+      "roadmap": "Authoritative §§9 and 11.7; UX matrix “Inspect an app”",
+      "finding": "Apps cannot represent package/storage evidence completeness as a first-class state. packageInventoryComplete is used while calculating deletion eligibility but is not carried in AppStoragePackageReport; bucket convenience properties default missing buckets to 0, and AppStorageInspectorScreen has no supported/partial/unavailable evidence state for the package report.",
+      "evidence": [
+        "data/AppStorageInspector.kt accepts packageInventoryComplete during analyze/deletionEligibility",
+        "AppStoragePackageReport lacks packageInventoryComplete/evidenceStatus fields",
+        "cacheBytes/codeCacheBytes/obbBytes/sharedMediaBytes/etc use ?: 0L",
+        "AppStorageInspectorScreen renders measured metrics/buckets without package evidence completeness state"
+      ],
+      "future_target": "Carry evidence provenance/completeness from Go through the package report and render supported/partial/unavailable with reasons so unavailable evidence never masquerades as zero."
+    },
+    {
+      "id": "UIX-008",
+      "area": "Tablet/adaptive master-detail UX",
+      "impact": "high",
+      "fresh_status": "gap",
+      "wip_status": "gap",
+      "roadmap": "Authoritative §7 and UX matrix tablet requirement; original OV13 phone/tablet/rotation validation",
+      "finding": "The WIP fixes top-level route substitution but does not implement the promised denser tablet master/detail behavior. Wide mode is a NavigationRail plus one content column; no ListDetail/SupportingPane/TwoPane/adaptive pane implementation is present. There is also no device/Compose route/rotation instrumentation proving semantic identity across form factors.",
+      "evidence": [
+        "DustUiApp.kt uses BoxWithConstraints wide boolean + NavigationRail + single Column content",
+        "no SupportingPane/ListDetail/TwoPane/WindowSizeClass-style implementation in Android production source",
+        "no createAndroidComposeRule/createComposeRule/onNode semantics traversal in Android tests"
+      ],
+      "future_target": "Implement route-stable list/detail/supporting-pane layouts for appropriate domains and prove phone/tablet/rotation state/route preservation on device."
+    },
+    {
+      "id": "UIX-009",
+      "area": "UI/UX acceptance authority / stale predecessor artifacts",
+      "impact": "high",
+      "fresh_status": "gap",
+      "wip_status": "gap",
+      "roadmap": "Authoritative §14.1; OV14 source/token retirement; audit loop successor-awareness",
+      "finding": "The repository still contains a competing UI acceptance system for the predecessor product, including runtime copy, docs, release checklist and audit scripts that require Home/Files/Clean/Tools, DustDestination, wide Scan and Debug Workbench. These survive in the reconstructed WIP. The old modern-portrait and Debug Workbench validators actually fail on the WIP, proving the acceptance authorities are mutually incompatible.",
+      "evidence": [
+        "WIP UI_UX_CONTRACT.md still says compact Home/Files/Clean/Tools, wide full workbench list, SCAN internal/wide, routing must use DustDestination",
+        "WIP RELEASE_CHECKLIST.md still requires Tools -> Debug Workbench and old compact nav",
+        "WIP docs/ANDROID_MODERN_DARK_PORTRAIT_UI.md and docs/ANDROID_UI_UX_PHASE12_13.md retain predecessor navigation contract",
+        "WIP android/scripts/validate-modern-dark-portrait-ui.py requires DustDestination.INSIGHTS/RECOMMENDATIONS and exits 1",
+        "WIP android/scripts/validate-debug-workbench-contract.py requires DustDestination.DEBUG/old debug source contracts and exits 1",
+        "WIP production copy still says Tools/deletion reports/workbenches and SystemHome renders ToolsHubScreen"
+      ],
+      "future_target": "Retire/version predecessor UI contracts, scripts, docs and copy once behavioral replacements exist; leave one authoritative successor UI acceptance model."
+    }
+  ],
+  "overlay_matrix": [
+    {
+      "overlay": "OV01",
+      "status": "PARTIAL / GAP",
+      "conclusion": "Containment largely exists, but generic Devtool authority duplication and source-token retirement mapping remain; historical EXO prerequisite closure is not supplied. Current OV01 validator also contains predecessor-only assertions that are invalid on a post-cutover tree."
+    },
+    {
+      "overlay": "OV02",
+      "status": "SOURCE PRESENT / RUNTIME UNVERIFIED",
+      "conclusion": "Go SQLite/state/protocol implementation is present. Dynamic validator could not run in this sandbox because modernc.org/sqlite is unavailable with network/GOPROXY off. Final Room physical retirement is an OV14 gap, not an OV02 failure by itself."
+    },
+    {
+      "overlay": "OV03 / Gate A",
+      "status": "LOCAL SOURCE PRESENT; GATE OPEN/UNVERIFIED",
+      "conclusion": "Go scanner semantics appear present and Android suspension is documented. Supplied audit explicitly leaves canonical EXO closure open."
+    },
+    {
+      "overlay": "OV04",
+      "status": "GAP",
+      "conclusion": "Go query package exists, but the product path defeats bounded-query intent by draining pages/full scans into Android lists; latest supplied performance contract also fails."
+    },
+    {
+      "overlay": "OV05 / Gate B",
+      "status": "PARTIAL; GATE OPEN/UNVERIFIED",
+      "conclusion": "ARM64 Go runtime packaging and fixed native-library binding exist; x86_64 production ABI is absent. Historical canonical EXO closure/ARM64 device evidence is not supplied; later product shell cutover remains incomplete."
+    },
+    {
+      "overlay": "OV06",
+      "status": "PARTIAL",
+      "conclusion": "Privileged Go boundary exists, but root scanning remains a second Go scanner implementation instead of shared scan authority. Dynamic validator unverified in this sandbox."
+    },
+    {
+      "overlay": "OV07",
+      "status": "SOURCE PRESENT / RUNTIME UNVERIFIED",
+      "conclusion": "Cleanup manifest/capability implementation and contracts exist; no independent new gap found beyond downstream product wiring/evidence. Dynamic validator blocked by unavailable Go dependency."
+    },
+    {
+      "overlay": "OV08 / Gate C",
+      "status": "LOCAL SOURCE STRONG; GATE OPEN/UNVERIFIED",
+      "conclusion": "Fresh REM04 validator passes privileged mutation cutover and C++ production scanner is physically absent, but canonical Gate-C EXO closure evidence is not supplied."
+    },
+    {
+      "overlay": "OV09",
+      "status": "GAP",
+      "conclusion": "Package/storage Go package exists, but product runtime/Android authority exposure and consumption are incomplete."
+    },
+    {
+      "overlay": "OV10",
+      "status": "GAP",
+      "conclusion": "Go intelligence package exists, but Kotlin domain engines and Kotlin duplicate verification remain production-reachable."
+    },
+    {
+      "overlay": "OV11",
+      "status": "GAP",
+      "conclusion": "WorkManager/Tasker/notification/UI do not yet converge on the same durable Go terminal operation truth."
+    },
+    {
+      "overlay": "OV12",
+      "status": "GAP",
+      "conclusion": "Go diagnostics/privacy contracts exist, but Android diagnostics/support authority remains Kotlin/process-local and runtime operations are not wired."
+    },
+    {
+      "overlay": "OV13 / Gate D",
+      "status": "BLOCKED",
+      "conclusion": "Python host, old Android shell, Kotlin domain truth, CLI/TUI parity, mandatory evidence topology, and successful executed Gate-D proof are incomplete."
+    },
+    {
+      "overlay": "OV14",
+      "status": "NOT COMPLETE ON FRESH",
+      "conclusion": "C++ scanner is retired, but Python, Room/NDJSON, old shell, generic release scripts, and stale source-token tests remain. WIP statically addresses many of these but remains unqualified and internally inconsistent."
+    },
+    {
+      "overlay": "OV15 / Gate E",
+      "status": "OPEN / QUALIFICATION-DEFERRED",
+      "conclusion": "Reference artifacts only; no final adversarial/release qualification or cross-bound EXO evidence."
+    }
+  ],
+  "roadmap_overrides": [
+    {
+      "requirement": "OV03–OV12 Android compile/unit/lint/assemble/instrument/install/release hard gating",
+      "classification": "OVERRIDDEN",
+      "treatment": "Amendment explicitly makes these diagnostic during intentional Android suspension unless an overlay opts a subset back in."
+    },
+    {
+      "requirement": "OV05 original production Android cutover timing",
+      "classification": "OVERRIDDEN/PUSHED",
+      "treatment": "Amendment turns OV05 into Go read-authority/runtime-package contract while Android may remain non-buildable; mandatory product reconnect moves to OV13."
+    },
+    {
+      "requirement": "OV13 Android compile/unit/lint/package/install-smoke/route-instrumentation/accessibility/runtime-APK binding",
+      "classification": "NOT OVERRIDDEN",
+      "treatment": "Amendment explicitly restores these as hard requirements at Gate D."
+    },
+    {
+      "requirement": "Canonical EXO evidence at Gates A/B/C/D/E",
+      "classification": "NOT OVERRIDDEN",
+      "treatment": "Amendment explicitly says unavailable terminal/sealed/replayable EXO evidence keeps the milestone gate open."
+    },
+    {
+      "requirement": "OV14 physical retirement requirements",
+      "classification": "NOT OVERRIDDEN",
+      "treatment": "Python/Room/domain duplication/old shell/generic release duplicates/source-token leftovers still must be physically retired."
+    }
+  ],
+  "confirmed_satisfied": [
+    "C++ production scanner/CMake surface is absent from the fresh production tree.",
+    "Production ABI is ARM64-only and the Android build packages libdustui_go.so under arm64-v8a.",
+    "Go SQLite implementation and Android Go runtime process binding exist.",
+    "Fresh REM04 privileged cleanup cutover validator passes; no current evidence of a production C++ destructive fallback was found.",
+    "Go diagnostics/privacy packages contain meaningful bounded/redaction/support contracts, although Android product authority is not yet wired to them.",
+    "Six semantic shell route identities exist as a contract; the gap is that production navigation still uses the old shell."
+  ],
+  "limitations": [
+    "Dynamic Go-backed OV02–OV13 validators could not be fully rerun in the analysis container because modernc.org/sqlite v1.36.3 was not cached and outbound dependency download was unavailable. These are classified unverified rather than product failures.",
+    "No physical/rooted Android device was attached to this analysis environment; device-only Gate B/D/E evidence is assessed from the supplied logs/artifacts only.",
+    "The reconstructed WIP is not treated as live source or as an applied/source-pinned overlay. Static WIP observations are candidate-state observations only.",
+    "No files inside the fresh repo or WIP were modified during this audit; generated audit artifacts live under /mnt/data only."
+  ],
+  "audit_converged_for_supplied_artifacts": true,
+  "source_modified": false,
+  "uiux_audit_added_root_families": 9,
+  "uiux_authority_sections": [
+    "authoritative §§5–14",
+    "authoritative §17 UX validation matrix",
+    "authoritative §18 visual/product acceptance",
+    "original roadmap §7 UI/UX acceptance",
+    "original OV13 Gate D",
+    "original OV14 retirement",
+    "Android-suspended amendment (override only where conflicting)"
+  ],
+  "convergence_note": "Converged after requirement-indexed UI/UX passes plus a blind counterexample sweep: the final pass produced no new independent root family; observations mapped to one of the 33 families, a satisfied item, an amendment override, or runtime-unverified Gate-D evidence."
+}

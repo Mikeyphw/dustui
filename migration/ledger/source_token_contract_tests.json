@@ -1,204 +1,240 @@
 {
-  "schema": "dustui.source_contract_retirement.v1",
-  "phase": "OV01",
+  "authority": "governance-only; individual tests are not gate truth",
+  "phase": "AUD-FIX-01",
+  "policy": "Retire or successorize a token guard in the same AUD-FIX overlay that replaces its behavior. Never keep a predecessor implementation token as final acceptance authority.",
+  "qualification_state_source": "migration/qualification/v1/current_state.json",
+  "schema": "dustui.source-contract-lifecycle.v2",
   "tests": [
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/AppResidueTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/AppStorageInspectorTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleaningIntelligenceQualificationTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleaningIntelligenceRegressionTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleaningRecoverySourceContractTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleanupRecommendationsTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleanupRulesTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleanupSafetyPolicyTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleanupVerificationTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/DatabaseSchemaContractTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/FinalRcScriptContractTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/LargeFileWorkbenchTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/OperationRecoveryTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleasePackagingTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleaseReadinessTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleaseScriptContractTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootDiagnosticsSourceContractTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootFileSearchTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ValidationRoadmapContractTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/CleaningAccessibilityContractTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "invariant-only",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchFinalContractTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "AUD-FIX-01",
+      "status": "successor-aware-bridge",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "invariant-only",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchSourceContractTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "AUD-FIX-01",
+      "status": "successor-aware-bridge",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "invariant-only",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "AUD-FIX-01",
+      "status": "successor-aware-bridge",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "invariant-only",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/ModernDarkPortraitFinalContractTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "AUD-FIX-01",
+      "status": "successor-aware-bridge",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "invariant-only",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "AUD-FIX-01",
+      "status": "successor-aware-bridge",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/scripts/device-certify.sh",
-      "subsystem": "unknown",
-      "replacement_overlay": "OV14",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "unknown"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/scripts/final-rc-gate.sh",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/scripts/install-smoke.sh",
-      "subsystem": "unknown",
-      "replacement_overlay": "OV14",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "unknown"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/scripts/package-rc.sh",
-      "subsystem": "release/devtool evidence",
-      "replacement_overlay": "OV01/OV15",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "release/devtool evidence"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/scripts/run-multi-user-residue-validation.sh",
-      "subsystem": "unknown",
-      "replacement_overlay": "OV14",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "unknown"
     },
     {
+      "acceptance_authority": "invariant-only",
       "path": "android/scripts/validate-debug-workbench-contract.py",
-      "subsystem": "diagnostics",
-      "replacement_overlay": "OV12",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "AUD-FIX-01",
+      "status": "successor-aware-bridge",
+      "subsystem": "diagnostics"
     },
     {
+      "acceptance_authority": "invariant-only",
       "path": "android/scripts/validate-modern-dark-portrait-ui.py",
-      "subsystem": "ui/navigation",
-      "replacement_overlay": "OV05/OV13",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "AUD-FIX-01",
+      "status": "successor-aware-bridge",
+      "subsystem": "ui/navigation"
     },
     {
+      "acceptance_authority": "temporary-migration-guard",
       "path": "android/scripts/validate-root-scan-diagnostics.py",
-      "subsystem": "diagnostics",
-      "replacement_overlay": "OV12",
-      "ov01_policy": "kept as migration tripwire unless its replacement behavioral evidence lands in the same overlay"
+      "replacement_owner": "assigned-by-requirement-index",
+      "status": "historical-tripwire",
+      "subsystem": "diagnostics"
     }
   ]
 }

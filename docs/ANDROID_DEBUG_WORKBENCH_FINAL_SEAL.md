@@ -1,3 +1,5 @@
+> **AUD-FIX successor-aware:** This is a historical predecessor contract/evidence document. It is not current acceptance authority. Current requirements are indexed by `migration/requirements/v2/requirements.json` and the canonical UI/UX authority copied under `migration/requirements/v2/source/`.
+
 # Android Debug Workbench Final Contract Seal
 
 ## Phase 14 — Final debug contract seal

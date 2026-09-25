@@ -1,43 +1,39 @@
 {
-  "phase": "OV14",
-  "status": "closed",
-  "gate_d_truth": "closed",
-  "ov15_status": "ready_for_gate_e",
-  "reason": "REM-05 retires the legacy Python compatibility target, superseded navigation authority, and app-local generic release truth. All OV14 retirement observations now match the desired Go/Devtool authority state; Gate D is closed and OV15 Gate E may proceed.",
-  "desired": {
-    "cpp_scanner_runtime": "none",
-    "python_runtime": "none",
-    "room_domain_authority": "none",
-    "legacy_destructive_executor": "none",
-    "legacy_navigation": "none",
-    "go_authority": "product-default-qualified",
-    "android_go_runtime_binding": "production",
-    "go_sqlite_persistence": "go-owned-sqlite",
-    "generic_release_truth": "devtool-only"
-  },
-  "observed": {
-    "cpp_scanner_runtime": "none",
-    "python_runtime": "none",
-    "room_domain_authority": "none",
-    "legacy_destructive_executor": "none",
-    "legacy_navigation": "none",
-    "go_authority": "product-default-qualified",
-    "android_go_runtime_binding": "production",
-    "go_sqlite_persistence": "go-owned-sqlite",
-    "generic_release_truth": "devtool-only"
-  },
-  "blockers": [],
-  "folded_in": [
-    "ov13_cleaning_performance_termux_hotfix_validator_jobs_workflows_fix",
-    "ov14_validator_syntax_hotfix",
-    "ov14_retirement_truth_hotfix",
-    "rem01_android_go_runtime_binding_v2_layout_corrected",
-    "rem02_go_sqlite_persistence",
-    "rem02_sqlite_integrity_hotfix",
-    "rem02_reconciliation_hotfix",
-    "rem03_android_domain_protocol_cutover",
-    "rem04_privileged_cleanup_mutation_cutover_cpp_retirement",
-    "rem05_legacy_surface_release_truth_retirement"
+  "blockers": [
+    "android_go_runtime_binding:source-binding-present-unqualified",
+    "generic_release_truth:duplicated-app-local",
+    "go_authority:not-gate-d-qualified",
+    "legacy_navigation:predecessor-navigation-present",
+    "python_runtime:legacy-python-textual-present",
+    "room_domain_artifacts:legacy-room-artifacts-present"
   ],
-  "next": "ov15_gate_e_final_qualification"
+  "closure_rule": "OV14 physical retirement may close only after canonical Gate D qualification and behavioral/reachability retirement proof; this ledger cannot close Gate D.",
+  "desired": {
+    "android_go_runtime_binding": "production-qualified",
+    "cpp_scanner_runtime": "none",
+    "generic_release_truth": "devtool-only",
+    "go_authority": "product-default-qualified",
+    "go_sqlite_persistence": "go-owned-sqlite",
+    "legacy_destructive_executor": "none",
+    "legacy_navigation": "none",
+    "python_runtime": "none",
+    "room_domain_artifacts": "none"
+  },
+  "gate_d_observed_status": "open",
+  "next": "AUD-FIX-02",
+  "observed": {
+    "android_go_runtime_binding": "source-binding-present-unqualified",
+    "cpp_scanner_runtime": "none",
+    "generic_release_truth": "duplicated-app-local",
+    "go_authority": "not-gate-d-qualified",
+    "go_sqlite_persistence": "go-owned-sqlite",
+    "legacy_destructive_executor": "none",
+    "legacy_navigation": "predecessor-navigation-present",
+    "python_runtime": "legacy-python-textual-present",
+    "room_domain_artifacts": "legacy-room-artifacts-present"
+  },
+  "phase": "OV14",
+  "qualification_state_source": "migration/qualification/v1/current_state.json",
+  "schema": "dustui.ov14-retirement-observation.v2",
+  "status": "blocked_on_gate_d"
 }

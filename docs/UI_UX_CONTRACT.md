@@ -1,3 +1,5 @@
+> **AUD-FIX successor-aware:** This is a historical predecessor contract/evidence document. It is not current acceptance authority. Current requirements are indexed by `migration/requirements/v2/requirements.json` and the canonical UI/UX authority copied under `migration/requirements/v2/source/`.
+
 # UI/UX Contract
 
 This document is authoritative for the dust-tui terminal interface. New screens, panels, controls, and visual treatments must follow these rules unless this document and the guarding tests are updated in the same change.

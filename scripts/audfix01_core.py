@@ -1,0 +1,297 @@
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+from pathlib import Path
+from typing import Any
+
+REQUIRED_GATE_D_NODES = (
+    "historical_gate_a_exo",
+    "historical_gate_b_exo_arm64",
+    "historical_gate_c_exo",
+    "go_test",
+    "go_build",
+    "go_schema",
+    "go_product_contract",
+    "go_cli_smoke",
+    "go_tui_smoke",
+    "android_debug_unit",
+    "android_debug_lint",
+    "android_debug_assemble",
+    "android_release_unit",
+    "android_release_lint",
+    "android_release_assemble",
+    "migration_validators",
+    "install_launch_smoke",
+    "route_deeplink_recreation_rotation",
+    "accessibility",
+    "rooted_arm64_runtime",
+    "runtime_apk_binding",
+    "devtool_artifact_identity",
+    "durable_operation_terminal_truth",
+    "diagnostics_support_seal",
+    "production_reachability",
+)
+
+DESIRED_RETIREMENT = {
+    "cpp_scanner_runtime": "none",
+    "python_runtime": "none",
+    "room_domain_artifacts": "none",
+    "legacy_destructive_executor": "none",
+    "legacy_navigation": "none",
+    "go_authority": "product-default-qualified",
+    "android_go_runtime_binding": "production-qualified",
+    "go_sqlite_persistence": "go-owned-sqlite",
+    "generic_release_truth": "devtool-only",
+}
+
+
+def read_text(root: Path, rel: str) -> str:
+    p = root / rel
+    return p.read_text(encoding="utf-8", errors="replace") if p.is_file() else ""
+
+
+def load_json(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _any_file(root: Path, rels: list[str]) -> bool:
+    return any((root / r).is_file() for r in rels)
+
+
+def _all_source(root: Path, base: str, suffixes=(".kt", ".go", ".py", ".sh", ".md")) -> str:
+    p = root / base
+    if not p.exists():
+        return ""
+    chunks: list[str] = []
+    for f in sorted(p.rglob("*")):
+        if f.is_file() and f.suffix in suffixes:
+            chunks.append(f.read_text(encoding="utf-8", errors="replace"))
+    return "\n".join(chunks)
+
+
+def repository_observations(root: Path) -> dict[str, Any]:
+    devtool = read_text(root, ".devtool.toml")
+    android_src = _all_source(root, "android/app/src/main/kotlin", (".kt",))
+    ui_src = _all_source(root, "android/app/src/main/kotlin/com/mikeyphw/dustui/ui", (".kt",))
+    root_src = _all_source(root, "android/app/src/main/kotlin/com/mikeyphw/dustui/root", (".kt",))
+    gradle = read_text(root, "android/app/build.gradle.kts")
+    go_runtime = read_text(root, "go/cmd/dustui-go/runtime_domain.go") + "\n" + read_text(root, "go/cmd/dustui-go/main.go")
+    go_state = _all_source(root, "go/internal/state", (".go",))
+    gomod = read_text(root, "go/go.mod")
+
+    python_present = (root / "dust_tui").is_dir() or ("kind = \"python\"" in devtool and "run_module = \"dust_tui\"" in devtool)
+    room_artifacts = _any_file(root, [
+        "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DustDatabase.kt",
+        "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanDao.kt",
+    ]) or any(t in (gradle + android_src) for t in ["androidx.room", "RoomDatabase", "@Dao", "@Entity"])
+    ndjson_present = "NdjsonTailReader" in android_src or "scan-streams" in android_src
+    legacy_navigation = any(t in ui_src for t in ["enum class DustDestination", "object DustShellNavigation", "layoutDestination("])
+    cpp_scanner = "NativeDustScanner" in root_src and any(t in root_src for t in ["NativeDustScanner.scan(", "System.loadLibrary(\"dustui_scanner\")"])
+    destructive = "NativeDustScanner.deleteReviewedPath(" in root_src
+    go_process = "ProcessBuilder(" in android_src and "libdustui_go.so" in android_src
+    go_packaged = "libdustui_go.so" in gradle and any(t in gradle for t in ["jniLibs", "go build", "Exec"])
+    sqlite_code = "database/sql" in go_state and ("sql.Open(" in go_state or "sql.OpenDB(" in go_state)
+    sqlite_driver = any(t in gomod for t in ["modernc.org/sqlite", "github.com/mattn/go-sqlite3", "github.com/ncruces/go-sqlite3"])
+
+    raw_tooling: list[str] = []
+    scripts = root / "android/scripts"
+    if scripts.is_dir():
+        raw_adb = re.compile(r"(?m)(?:^|[;|&()\s])(?:adb|\$\{?adb_bin\}?|\"\$adb_bin\")\s+")
+        generic_names = re.compile(r"(?:install|release|package|final|certif|device|rooted|multi-user|performance)", re.I)
+        for p in sorted(scripts.glob("*")):
+            if not p.is_file():
+                continue
+            s = p.read_text(encoding="utf-8", errors="replace")
+            if generic_names.search(p.name) and (raw_adb.search(s) or "./gradlew" in s or "gradle " in s):
+                raw_tooling.append(str(p.relative_to(root)))
+
+    release_kotlin = [
+        r for r in [
+            "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ReleasePackaging.kt",
+            "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ReleaseReadiness.kt",
+        ] if (root / r).is_file()
+    ]
+
+    return {
+        "legacy_python_textual_present": python_present,
+        "room_artifacts_present": room_artifacts,
+        "ndjson_lifecycle_present": ndjson_present,
+        "legacy_navigation_present": legacy_navigation,
+        "cpp_scanner_present": cpp_scanner,
+        "legacy_destructive_executor_present": destructive,
+        "android_go_process_binding_present": go_process,
+        "android_go_packaging_present": go_packaged,
+        "go_sqlite_implementation_present": sqlite_code and sqlite_driver,
+        "generic_tooling_duplication_paths": raw_tooling,
+        "release_kotlin_authority_paths": release_kotlin,
+        "go_runtime_operation_count": len(set(re.findall(r'"(domain\.[a-z0-9_.-]+)"', go_runtime))),
+    }
+
+
+def compute_qualification(root: Path, registry: dict[str, Any]) -> dict[str, Any]:
+    nodes = {n.get("id"): n for n in registry.get("nodes", []) if isinstance(n, dict) and n.get("id")}
+    missing_definitions = [n for n in REQUIRED_GATE_D_NODES if n not in nodes]
+    nonpassing: list[str] = []
+    invalid_bindings: list[str] = []
+    passing_tree_hashes: set[str] = set()
+
+    for node_id in REQUIRED_GATE_D_NODES:
+        node = nodes.get(node_id)
+        if not node:
+            continue
+        if node.get("status") != "pass":
+            nonpassing.append(node_id)
+            continue
+        binding = node.get("binding") or {}
+        tree = binding.get("source_tree_sha256")
+        if not tree:
+            invalid_bindings.append(node_id)
+        else:
+            passing_tree_hashes.add(tree)
+        if node.get("requires_artifact_binding") and not binding.get("artifact_sha256"):
+            invalid_bindings.append(node_id)
+
+    coherent_tree = len(passing_tree_hashes) <= 1
+    qualified = not missing_definitions and not nonpassing and not invalid_bindings and coherent_tree
+    if qualified:
+        gate_status = "qualified"
+        reason = "all-required-gate-d-evidence-passed-and-bound"
+        ov14_status = "eligible-for-physical-retirement"
+        gate_e_status = "blocked-on-ov14-retirement"
+    else:
+        gate_status = "open"
+        reason = "required-gate-d-evidence-incomplete-or-unbound"
+        ov14_status = "blocked-on-gate-d"
+        gate_e_status = "blocked-on-gate-d-and-ov14-retirement"
+
+    return {
+        "schema": "dustui.qualification-state.v1",
+        "generated_by": "scripts/refresh_qualification_state.py",
+        "evidence_registry": "migration/qualification/v1/gate_d_evidence.json",
+        "requirement_index": "migration/requirements/v2/requirements.json",
+        "source_snapshot_sha256": registry.get("source_snapshot_sha256"),
+        "gate_d": {
+            "status": gate_status,
+            "qualified": qualified,
+            "reason": reason,
+            "required_nodes": list(REQUIRED_GATE_D_NODES),
+            "missing_node_definitions": missing_definitions,
+            "nonpassing_nodes": nonpassing,
+            "invalid_binding_nodes": sorted(set(invalid_bindings)),
+            "coherent_source_tree_binding": coherent_tree,
+            "passing_source_tree_sha256": next(iter(passing_tree_hashes), None) if coherent_tree else None,
+        },
+        "ov14": {"status": ov14_status},
+        "gate_e": {"status": gate_e_status},
+        "observed_repository": repository_observations(root),
+    }
+
+
+def retirement_observation(root: Path, qualification: dict[str, Any]) -> tuple[dict[str, str], list[str]]:
+    obs = qualification["observed_repository"]
+    q = qualification["gate_d"]["qualified"]
+    observed = {
+        "cpp_scanner_runtime": "legacy-artifact-or-runtime-present" if obs["cpp_scanner_present"] else "none",
+        "python_runtime": "legacy-python-textual-present" if obs["legacy_python_textual_present"] else "none",
+        "room_domain_artifacts": "legacy-room-artifacts-present" if obs["room_artifacts_present"] or obs["ndjson_lifecycle_present"] else "none",
+        "legacy_destructive_executor": "legacy-executor-present" if obs["legacy_destructive_executor_present"] else "none",
+        "legacy_navigation": "predecessor-navigation-present" if obs["legacy_navigation_present"] else "none",
+        "go_authority": "product-default-qualified" if q else "not-gate-d-qualified",
+        "android_go_runtime_binding": "production-qualified" if q else ("source-binding-present-unqualified" if obs["android_go_process_binding_present"] and obs["android_go_packaging_present"] else "missing-or-unqualified"),
+        "go_sqlite_persistence": "go-owned-sqlite" if obs["go_sqlite_implementation_present"] else "missing-implementation",
+        "generic_release_truth": "duplicated-app-local" if (obs["generic_tooling_duplication_paths"] or obs["release_kotlin_authority_paths"]) else "devtool-only",
+    }
+    blockers = []
+    for key, desired in DESIRED_RETIREMENT.items():
+        if observed[key] != desired:
+            blockers.append(f"{key}:{observed[key]}")
+    return observed, sorted(blockers)
+
+
+def predecessor_ui_authority_paths(root: Path) -> list[str]:
+    candidates = [
+        "UI_UX_CONTRACT.md",
+        "RELEASE_CHECKLIST.md",
+        "docs/UI_UX_CONTRACT.md",
+        "docs/ANDROID_MODERN_DARK_PORTRAIT_UI.md",
+        "docs/ANDROID_MODERN_DARK_PORTRAIT_FINAL_SEAL.md",
+        "docs/ANDROID_DEBUG_WORKBENCH.md",
+        "docs/ANDROID_DEBUG_WORKBENCH_FINAL_SEAL.md",
+        "android/scripts/validate-modern-dark-portrait-ui.py",
+        "android/scripts/validate-debug-workbench-contract.py",
+        "docs/ANDROID_UI_UX_PHASE12_13.md",
+        "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+        "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/ModernDarkPortraitFinalContractTest.kt",
+        "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+        "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchFinalContractTest.kt",
+        "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchSourceContractTest.kt",
+    ]
+    stale = []
+    marker = "AUD-FIX successor-aware"
+    for rel in candidates:
+        p = root / rel
+        if p.is_file() and marker not in p.read_text(encoding="utf-8", errors="replace"):
+            stale.append(rel)
+    return stale
+
+
+def independent_gate_claims(root: Path) -> list[str]:
+    claims: list[str] = []
+    dev = read_text(root, ".devtool.toml")
+    for key in ["gate_d_truth", "ov15_status", "production_authority_qualified", "android_cutover_complete"]:
+        if re.search(rf"(?m)^\s*{re.escape(key)}\s*=", dev):
+            claims.append(f".devtool.toml:{key}")
+    ledger = root / "migration/ledger/ov14_legacy_retirement_status.json"
+    if ledger.is_file():
+        try:
+            obj = load_json(ledger)
+            for key in ["gate_d_truth", "ov15_status"]:
+                if key in obj:
+                    claims.append(f"migration/ledger/ov14_legacy_retirement_status.json:{key}")
+            if obj.get("status") == "closed" and obj.get("qualification_state_source") != "migration/qualification/v1/current_state.json":
+                claims.append("migration/ledger/ov14_legacy_retirement_status.json:closed-without-canonical-state")
+        except Exception:
+            claims.append("migration/ledger/ov14_legacy_retirement_status.json:invalid-json")
+    for rel in [
+        "migration/audit/v1/rem05_legacy_surface_release_truth_retirement_audit.md",
+        "migration/contracts/v1/rem05_legacy_surface_release_truth_retirement.md",
+    ]:
+        body = read_text(root, rel)
+        if body and "AUD-FIX successor-aware" not in body and re.search(r"(?i)(gate d.{0,40}closed|ov15.{0,40}(ready|eligible))", body):
+            claims.append(f"{rel}:unmarked-predecessor-gate-claim")
+    product = read_text(root, "go/internal/product/product.go")
+    if re.search(r"GateDQualified:\s*(?:true|false)", product):
+        claims.append("go/internal/product/product.go:literal-GateDQualified")
+    return claims
+
+
+def evaluate_fixture(fixture: dict[str, Any]) -> list[str]:
+    failures: list[str] = []
+    if fixture.get("independent_gate_claims"):
+        failures.append("contradictory-independent-gate-truth")
+    if fixture.get("stale_predecessor_ui_authority"):
+        failures.append("stale-predecessor-ui-authority")
+    if fixture.get("retirement_claim") == "closed" and fixture.get("retirement_reachable_legacy", False):
+        failures.append("fake-retirement-closure")
+    missing = fixture.get("missing_required_evidence_nodes") or []
+    if missing and fixture.get("gate_d_claim") == "qualified":
+        failures.append("gate-d-qualified-with-missing-evidence")
+    if fixture.get("raw_tooling_duplication"):
+        failures.append("generic-devtool-authority-duplication")
+    if fixture.get("route_tree_missing"):
+        failures.append("semantic-route-tree-incomplete")
+    if fixture.get("shared_state_declared_but_unused"):
+        failures.append("shared-state-gate-declaration-without-use")
+    if fixture.get("historical_exo_missing"):
+        failures.append("historical-exo-gate-evidence-missing")
+    return failures

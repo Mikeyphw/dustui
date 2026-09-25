@@ -1,20 +1,19 @@
 package com.mikeyphw.dustui.go
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ProductCutoverContractTest {
     @Test
-    fun gateDMakesAndroidBuildabilityMandatoryAgain() {
+    fun gateDContractPointsToCanonicalQualificationTruth() {
         assertEquals("OV13", ProductCutoverContract.Phase)
         assertEquals("Gate D", ProductCutoverContract.Gate)
         assertEquals("mandatory", ProductCutoverContract.AndroidBuildability)
-        assertFalse(ProductCutoverContract.LegacyPythonTextualProduction)
-        assertFalse(ProductCutoverContract.LegacyKotlinDomainTruth)
-        assertTrue(ProductCutoverContract.MandatoryGateEvidence.contains("compile"))
-        assertTrue(ProductCutoverContract.MandatoryGateEvidence.contains("runtime-apk-binding"))
+        assertEquals("migration/qualification/v1/current_state.json", ProductCutoverContract.QualificationStateSource)
+        assertEquals("migration/qualification/v1/gate_d_evidence.json", ProductCutoverContract.QualificationEvidenceSource)
+        assertTrue(ProductCutoverContract.TargetLegacyPythonRetired)
+        assertTrue(ProductCutoverContract.TargetLegacyKotlinDomainRetired)
     }
 
     @Test
@@ -26,7 +25,7 @@ class ProductCutoverContractTest {
             assertEquals(setOf("phone", "tablet"), routeFixtures.map { it.layoutClass }.toSet())
             routeFixtures.forEach { fixture ->
                 assertEquals(route, fixture.semanticIdentity)
-                assertEquals(ProductCutoverContract.GoRuntimeAuthority, fixture.sourceOfTruth)
+                assertEquals(ProductCutoverContract.TargetGoRuntimeAuthority, fixture.targetSourceOfTruth)
             }
         }
     }

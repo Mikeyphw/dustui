@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""AUD-FIX successor-aware OV14 contract validator.
+
+This validator proves truth-model consistency. It does not require predecessor
+symbols and it does not make OV14 retirement a prerequisite for Gate D.
+"""
 from __future__ import annotations
 
 import argparse
@@ -10,97 +15,52 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-DESIRED = {
-    "cpp_scanner_runtime": "none",
-    "python_runtime": "none",
-    "room_domain_authority": "none",
-    "legacy_destructive_executor": "none",
-    "legacy_navigation": "none",
-    "go_authority": "product-default-qualified",
-    "android_go_runtime_binding": "production",
-    "go_sqlite_persistence": "go-owned-sqlite",
-    "generic_release_truth": "devtool-only",
-}
-
-
-def require(condition: bool, message: str, failures: list[str]) -> None:
-    if not condition:
-        failures.append(message)
-
-
-def read(path: Path) -> str:
-    return path.read_text(encoding="utf-8") if path.is_file() else ""
+def req(ok: bool, msg: str, failures: list[str]) -> None:
+    if not ok: failures.append(msg)
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--audit-loop", action="store_true")
-    args = parser.parse_args()
-
-    failures: list[str] = []
-    contract = ROOT / "migration/contracts/v1/ov14_legacy_retirement.md"
-    audit = ROOT / "migration/audit/v1/ov14_legacy_retirement_audit.md"
-    status_path = ROOT / "migration/ledger/ov14_legacy_retirement_status.json"
-    retirement_go = ROOT / "go/internal/retirement/retirement.go"
-    retirement_test = ROOT / "go/internal/retirement/retirement_test.go"
-    truth_validator = ROOT / "scripts/validate_ov14_retirement_truth_hotfix.py"
-    perf_validator = ROOT / "scripts/validate_ov13_cleaning_performance_termux_hotfix.py"
-
-    for path, label in [
-        (contract, "OV14 retirement contract"),
-        (audit, "OV14 audit note"),
-        (status_path, "OV14 status JSON"),
-        (retirement_go, "Go retirement status package"),
-        (retirement_test, "Go retirement status test"),
-        (truth_validator, "OV14 retirement truth validator"),
-        (perf_validator, "OV13 performance validator"),
+    ap=argparse.ArgumentParser(); ap.add_argument('--audit-loop',action='store_true'); args=ap.parse_args()
+    failures: list[str]=[]
+    for rel in [
+        'migration/qualification/v1/current_state.json',
+        'migration/qualification/v1/gate_d_evidence.json',
+        'migration/requirements/v2/requirements.json',
+        'migration/ledger/ov14_legacy_retirement_status.json',
+        'scripts/validate_ov14_retirement_truth_hotfix.py',
     ]:
-        require(path.is_file(), f"{label} missing", failures)
+        req((ROOT/rel).is_file(), f'missing {rel}', failures)
+    if failures:
+        for f in failures: print('OV14 contract failure:',f,file=sys.stderr)
+        return 1
 
-    contract_text = read(contract)
-    require("desired retirement state" in contract_text.lower(), "contract must distinguish desired retirement state", failures)
-    require("Observed state" in contract_text, "contract must record observed state", failures)
-    for key, value in DESIRED.items():
-        require(f"{key} = {value}" in contract_text, f"contract missing desired {key}={value}", failures)
+    state=json.loads((ROOT/'migration/qualification/v1/current_state.json').read_text())
+    ledger=json.loads((ROOT/'migration/ledger/ov14_legacy_retirement_status.json').read_text())
+    cfg=tomllib.loads((ROOT/'.devtool.toml').read_text())
+    android=cfg.get('targets',{}).get('dustui_android',{})
+    workflows=android.get('workflows',{}); jobs=android.get('jobs',{})
+    req('qualification_state' in jobs,'canonical qualification job missing',failures)
+    req(workflows.get('gate_d',[None])[0]=='job:qualification_state','Gate D must start from canonical qualification state, not OV14 retirement',failures)
+    req('job:retirement_gate' not in workflows.get('gate_d',[]),'Gate D must not depend on post-Gate-D OV14 retirement',failures)
+    req(workflows.get('cutover_audit',[None])[0]=='job:qualification_state','cutover audit must begin with canonical qualification state',failures)
+    req(ledger.get('qualification_state_source')=='migration/qualification/v1/current_state.json','OV14 ledger not bound to canonical state',failures)
+    req('gate_d_truth' not in ledger and 'ov15_status' not in ledger,'OV14 ledger independently declares Gate D/OV15 state',failures)
+    if state.get('gate_d',{}).get('status')=='open':
+        req(ledger.get('status')=='blocked_on_gate_d','OV14 must remain blocked while canonical Gate D is open',failures)
 
-    go_text = read(retirement_go)
-    for token in ["func Desired() Status", "func Observed() Status", "func Current() Status { return Observed() }"]:
-        require(token in go_text, f"retirement truth model missing {token}", failures)
-
-    if status_path.is_file():
-        try:
-            status = json.loads(read(status_path))
-        except json.JSONDecodeError as exc:
-            failures.append(f"OV14 status JSON invalid: {exc}")
-            status = {}
-        require(status.get("status") == "reopened_blocked", "OV14 must be reopened_blocked after source truth audit", failures)
-        require(status.get("gate_d_truth") == "reopened", "Gate D truth must be reopened", failures)
-        require(status.get("desired") == DESIRED, "desired retirement ledger mismatch", failures)
-        require(bool(status.get("blockers")), "OV14 blockers must remain explicit until cutover", failures)
-        require(status.get("ov15_status") == "blocked_until_real_android_go_cutover", "OV15 must be blocked behind real cutover", failures)
-
-    cfg = tomllib.loads(read(ROOT / ".devtool.toml")) if (ROOT / ".devtool.toml").is_file() else {}
-    wrapper = cfg.get("wrapper", {})
-    require(wrapper.get("schema") == 1, "Devtool wrapper schema=1 missing", failures)
-    android = cfg.get("targets", {}).get("dustui_android", {})
-    workflows = android.get("workflows", {})
-    require(workflows.get("cutover_audit") == ["job:retirement_audit"], "cutover_audit workflow missing", failures)
-    require(workflows.get("gate_d", [None])[0] == "job:retirement_gate", "Gate D must begin with retirement_gate", failures)
-    require(workflows.get("validate", [None])[0] == "job:retirement_gate", "validate must begin with retirement_gate", failures)
-
-    if args.audit_loop and truth_validator.is_file():
-        proc = subprocess.run(["python3", str(truth_validator)], cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        require(proc.returncode == 0, "retirement truth audit does not match source: " + (proc.stderr or proc.stdout).strip(), failures)
-        proc = subprocess.run(["python3", "scripts/validate_ov13_cleaning_performance_termux_hotfix.py"], cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        require(proc.returncode == 0, "folded OV13 performance validator does not pass: " + (proc.stderr or proc.stdout).strip(), failures)
+    if args.audit_loop:
+        for argv in [
+            ['python3','scripts/refresh_qualification_state.py','--check'],
+            ['python3','scripts/refresh_ov14_retirement_observation.py','--check'],
+            ['python3','scripts/validate_ov14_retirement_truth_hotfix.py'],
+        ]:
+            p=subprocess.run(argv,cwd=ROOT,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+            req(p.returncode==0, f"{' '.join(argv)} failed: {p.stdout.strip()}", failures)
 
     if failures:
-        for failure in failures:
-            print(f"OV14 legacy retirement failure: {failure}", file=sys.stderr)
+        for f in failures: print('OV14 contract failure:',f,file=sys.stderr)
         return 1
-    print("OV14 legacy retirement truth contract PASS (Gate D reopened; OV15 blocked)")
+    print(f"OV14 successor-aware contract PASS (Gate D={state['gate_d']['status']}; OV14={ledger['status']})")
     return 0
 
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+if __name__=='__main__': raise SystemExit(main())

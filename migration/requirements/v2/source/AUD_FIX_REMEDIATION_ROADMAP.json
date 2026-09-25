@@ -1,0 +1,804 @@
+{
+  "schema": "dustui-full-audit-remediation-roadmap-v2",
+  "created": "2026-09-24",
+  "campaign_prefix": "AUD-FIX",
+  "baseline_sha256": "a0a9372c0065ecacf3c16c4db3a13df18bd043c972180c68d98dd29de149474b",
+  "handoff_sha256": "38edda255161b3adbfc35668753e0da83e96cfec15760dc493d42329c3320186",
+  "input_gap_count": 33,
+  "overlay_count": 17,
+  "full_validation_overlays": [
+    "AUD-FIX-06",
+    "AUD-FIX-15",
+    "AUD-FIX-17"
+  ],
+  "overlays": [
+    {
+      "id": "AUD-FIX-01",
+      "title": "Canonical truth, requirement index, and successor-aware audit machinery",
+      "gate": false,
+      "gaps": [
+        "AUD-001",
+        "AUD-002",
+        "AUD-017",
+        "AUD-021",
+        "AUD-022",
+        "AUD-023",
+        "UIX-009"
+      ],
+      "deps": [],
+      "goal": "Make the repository incapable of simultaneously claiming incompatible product/gate/UI states, and make every later overlay auditable against one requirement index.",
+      "work": [
+        "Create one canonical qualification-state model generated from executed evidence; `.devtool.toml`, product contracts, ledgers, release docs, and validators consume it rather than independently declaring Gate D/OV15 state.",
+        "Convert the 33-family audit ledger plus original-roadmap and UI/UX requirements into a machine-readable requirement index with stable IDs, ownership, supersession rules, evidence kind, and closure criteria.",
+        "Rewrite predecessor-only validators to be successor-aware: test invariants/reachability rather than exact old symbols, tokens, operation names, shell classes, or workflow list equality.",
+        "Upgrade full-roadmap conformance checks so they detect gate-state contradictions, missing evidence topology, raw adb/build/install duplication, stale predecessor UI authority, route-tree omissions, shared-state/gate non-use, and historical EXO dependencies.",
+        "Add negative fixtures that deliberately create contradictory gate truth, stale predecessor routes, fake retirement, and missing evidence nodes; the checker must fail each fixture.",
+        "Keep Gate D explicitly OPEN throughout this overlay."
+      ],
+      "accept": [
+        "Exactly one canonical source computes Gate-D/OV15 qualification state.",
+        "All live validators agree that current Gate D is open before qualification.",
+        "Checker catches every known false-positive class from AUD-001/002/021/022/023 and UIX-009.",
+        "No code path can mark Gate D closed merely from source-token absence."
+      ],
+      "checks": [
+        "Targeted Python/unit tests for requirement-index and validator fixtures",
+        "Run all audit/retirement validators against the same tree and require non-contradictory results",
+        "No full Devtool validate; apply with `--no-validate`"
+      ]
+    },
+    {
+      "id": "AUD-FIX-02",
+      "title": "Bounded data, scanner convergence, and duplicate verification authority",
+      "gate": false,
+      "gaps": [
+        "AUD-007",
+        "AUD-009",
+        "AUD-010"
+      ],
+      "deps": [
+        "AUD-FIX-01"
+      ],
+      "goal": "Restore the original bounded-query/scanner/verification contract before more Android product code is migrated.",
+      "work": [
+        "Make privileged/root scanning reuse the single Go scan authority instead of maintaining a second traversal/size/hardlink implementation.",
+        "Move exact duplicate edge/full hashing and verification into the Go privileged/runtime boundary; Kotlin becomes presentation/transport only.",
+        "Redesign Android query adapters so routine screens never drain every page into `allEntries`; use bounded paging/aggregation contracts and server-side query/analysis operations.",
+        "Add hard contract tests for page bounds, cancellation, large scans, hardlinks, logical/allocated semantics, duplicate verification, and absence of Kotlin verification authority.",
+        "Remove or quarantine list-wide Android analyzers that defeat the Go query engine."
+      ],
+      "accept": [
+        "One Go scanner authority is used by normal and privileged scan paths.",
+        "No production Kotlin duplicate hash/verification authority remains.",
+        "No normal UI/domain flow materializes the complete scan merely to filter/sort/analyze it.",
+        "The previously failing bounded cleaning performance contract passes as a targeted check."
+      ],
+      "checks": [
+        "Go scanner/query/duplicate tests",
+        "Android adapter unit tests for bounded paging",
+        "Static authority/reachability audit",
+        "No full Devtool validate; apply with `--no-validate`"
+      ]
+    },
+    {
+      "id": "AUD-FIX-03",
+      "title": "Go domain runtime exposure, persistence parity, and Android authority cutover",
+      "gate": false,
+      "gaps": [
+        "AUD-006",
+        "AUD-008",
+        "AUD-014",
+        "UIX-007"
+      ],
+      "deps": [
+        "AUD-FIX-02"
+      ],
+      "goal": "Make the implemented Go package/storage/intelligence/rules/growth/recommendation/verification domains actual runtime product authorities.",
+      "work": [
+        "Expose typed runtime operations for package/storage evidence, residue, cleanup intelligence, recommendations, rules, growth/trends, module evidence, duplicate/residue projection, and verification.",
+        "Give every operation versioned request/response schemas, generation/freshness metadata, explicit unsupported/partial states, and bounded query semantics.",
+        "Wire Android repositories/ViewModels to those runtime operations and delete production-reachable Kotlin policy/analyzer engines as each operation reaches parity.",
+        "Keep Compose limited to presentation transformations; no eligibility/recommendation/evidence truth may be recomputed from incidental local state.",
+        "Add cross-language golden contract tests and malformed/old-schema compatibility tests.",
+        "Prove durable Go persistence/restart/migration parity for migrated authorities before later Room/NDJSON physical retirement."
+      ],
+      "accept": [
+        "Every Go domain claimed as production authority is reachable through the Android runtime protocol.",
+        "Android consumes Go results for all migrated domains.",
+        "No duplicate Kotlin domain-truth engine remains production-reachable for the covered areas.",
+        "Unsupported/partial evidence remains explicit end-to-end.",
+        "Restart/persistence fixtures prove migrated Go state is durable and sufficient for later Room/NDJSON retirement."
+      ],
+      "checks": [
+        "Go protocol/domain tests",
+        "Android runtime adapter tests",
+        "Cross-language golden fixtures",
+        "Static Kotlin-authority reachability audit",
+        "No full Devtool validate; apply with `--no-validate`"
+      ]
+    },
+    {
+      "id": "AUD-FIX-04",
+      "title": "Durable operation coordinator, Activity truth, and cancellation capability",
+      "gate": false,
+      "gaps": [
+        "AUD-011",
+        "AUD-012"
+      ],
+      "deps": [
+        "AUD-FIX-03"
+      ],
+      "goal": "Make scans, analyses, cleanup, scheduled/Tasker work, notifications, and Activity converge on one durable terminal Go operation truth.",
+      "work": [
+        "Define/finish the durable operation lifecycle: accepted \u2192 running \u2192 terminal success/failure/cancelled/recovery-required, with persisted generation and evidence correlation.",
+        "Make WorkManager and Tasker return/observe durable operation identity instead of treating launch/\"accepted\" as terminal success.",
+        "Expose durable activity list/detail/reconcile/retry/cancel operations to Android.",
+        "Replace notification cancellation with a Go-issued capability carrying nonce, expiry, operation binding, and single-use/replay protection.",
+        "Add process-death/reconnect tests proving terminal truth survives UI/worker recreation."
+      ],
+      "accept": [
+        "WorkManager, Tasker, notifications, and Android UI all reference the same operation IDs and terminal states.",
+        "No adapter reports success merely because a run was launched.",
+        "Cancel/retry/reconcile are action-gated by Go and replay-safe.",
+        "Durable run history is sufficient for the later Activity UI without process-local reconstruction."
+      ],
+      "checks": [
+        "Go operation lifecycle/replay tests",
+        "Android WorkManager/Tasker adapter tests",
+        "Notification capability tests",
+        "Process recreation unit/integration fixtures",
+        "No full Devtool validate; apply with `--no-validate`"
+      ]
+    },
+    {
+      "id": "AUD-FIX-05",
+      "title": "Go diagnostics, bounded retention, problem graph, and sealed support evidence authority",
+      "gate": false,
+      "gaps": [
+        "AUD-013"
+      ],
+      "deps": [
+        "AUD-FIX-04"
+      ],
+      "goal": "Move diagnostic explanation, remediation, freshness, privacy and support export to durable Go evidence before the Diagnostics UI is remodeled.",
+      "work": [
+        "Expose the Go ProblemGraph/root-cause model, runtime/scan/evidence health, remediation actions, and correlation to durable operations.",
+        "Move support-bundle authorship to a bounded Go operation that produces a sealed manifest with privacy classification, retention, hashes, and evidence generation.",
+        "Keep raw debug/probe/trace detail available only as secondary/developer evidence, never as the primary product diagnosis.",
+        "Add redaction/privacy tests and stale-evidence invalidation tests.",
+        "Define and test bounded diagnostic/support retention, compaction/expiry, deletion, redaction, and stale-evidence invalidation semantics in Go."
+      ],
+      "accept": [
+        "Android can obtain problem graph, health, remediation and support-export state from Go.",
+        "Support export is a durable/sealed Go operation, not a Kotlin process-local assembly.",
+        "Privacy/redaction and freshness are machine-testable contracts."
+      ],
+      "checks": [
+        "Go diagnostics/support tests",
+        "Android adapter contract tests",
+        "Privacy/redaction fixture tests",
+        "No full Devtool validate; apply with `--no-validate`"
+      ]
+    },
+    {
+      "id": "AUD-FIX-06",
+      "title": "Authority Convergence Gate R1",
+      "gate": true,
+      "gaps": [
+        "AUD-006",
+        "AUD-007",
+        "AUD-008",
+        "AUD-009",
+        "AUD-010",
+        "AUD-011",
+        "AUD-012",
+        "AUD-013",
+        "AUD-021"
+      ],
+      "deps": [
+        "AUD-FIX-05"
+      ],
+      "goal": "First full validation point: prove the new backend/runtime authorities are coherent before host and UI cutover continue.",
+      "work": [
+        "Run the upgraded requirement-index checker and authority/reachability validators.",
+        "Run Go test/build/product/schema evidence and Android Debug unit/lint/assemble plus migration contract.",
+        "Run bounded-query, duplicate, operation lifecycle, diagnostics/privacy, and cross-language contract suites.",
+        "Capture canonical EXO/Devtool execution evidence for this remediation gate; do not change Gate-D truth."
+      ],
+      "accept": [
+        "All AUD-FIX-02..05 authority contracts pass in one clean tree.",
+        "No known Kotlin/domain/scanner/duplicate/operation/diagnostic authority regression remains.",
+        "Gate R1 evidence is sealed/replayable and linked to exact tree/artifact identity.",
+        "Gate D remains OPEN."
+      ],
+      "checks": [
+        "FULL DEVTOOL VALIDATION #1",
+        "Validation tasks must be passed as separate `--task` flags where tasks are used",
+        "Canonical log/artifact hashes recorded"
+      ]
+    },
+    {
+      "id": "AUD-FIX-07",
+      "title": "Go CLI/TUI parity and Python/Textual production retirement",
+      "gate": false,
+      "gaps": [
+        "AUD-003",
+        "AUD-004",
+        "AUD-017"
+      ],
+      "deps": [
+        "AUD-FIX-06"
+      ],
+      "goal": "Only after Go runtime authority is real, provide equivalent Go host workflows and physically retire the Python/Textual production host.",
+      "work": [
+        "Implement real Go CLI commands for query/search, activity, cleanup review, cleanup execute, diagnostics, support export, readiness/schema/product inspection, and documented scan workflows.",
+        "Implement an interactive Go TUI run loop using the same domain/runtime contracts rather than Render/Smoke scaffolding.",
+        "Add CLI JSON/machine-readable parity and TUI smoke/interaction tests.",
+        "Cut supported host defaults over to Go and isolate any Python/Textual parity oracle as non-production/non-default/non-packaged until post-Gate-D physical retirement.",
+        "Update `.devtool.toml` identity so repository declarations match reachable production code.",
+        "Retire or successor-proof source/token guards and host validators invalidated by this cutover in the same overlay."
+      ],
+      "accept": [
+        "Product metadata claims only capabilities that real Go CLI/TUI commands implement.",
+        "Go CLI/TUI cover the promised workflows using the same authorities as Android.",
+        "No Python/Textual production host or default entry point remains.",
+        "Repository identity declarations are truthful."
+      ],
+      "checks": [
+        "Go CLI command tests and JSON contracts",
+        "TUI interaction/smoke tests",
+        "Static Python/Textual production reachability audit",
+        "No full Devtool validate; apply with `--no-validate`"
+      ]
+    },
+    {
+      "id": "AUD-FIX-08",
+      "title": "Stable semantic route tree, deep links, and System decomposition",
+      "gate": false,
+      "gaps": [
+        "AUD-005",
+        "UIX-001",
+        "UIX-009"
+      ],
+      "deps": [
+        "AUD-FIX-07"
+      ],
+      "goal": "Replace navigation veneers with the authoritative task/domain route tree and stable entity/detail routes.",
+      "work": [
+        "Implement stable semantic routes for Overview (`home/composition/trends/scan-history`), Files (`explorer/search/large/treemap/item/{id}`), Clean (`recommended/duplicates/residue/rules/candidate/{id}/review/{manifestId}`), Apps (`list/package/{packageName}/paths`), Activity (`list/run/{operationId}/evidence`), and System (`runtime/modules/automation/diagnostics/certification/settings`).",
+        "Remove the legacy 16-destination shell and any phone/tablet destination substitution; layout may change chrome only.",
+        "Implement Android deep links/ACTION_VIEW/nav integration and Go deep-link translation for nested/entity routes with missing/stale-entity behavior.",
+        "Decompose `SystemHome` so System is not the old Tools catch-all; keep canonical ownership and contextual links.",
+        "Persist/restores semantic route + entity identity across recreation.",
+        "Retire/version predecessor UI/source acceptance artifacts invalidated by this overlay in the same overlay; do not defer them solely to the final sweep."
+      ],
+      "accept": [
+        "Every authoritative route has a stable ID and canonical parent domain.",
+        "Compact/wide layouts preserve route meaning.",
+        "Entity/deep-link routes resolve or fail with typed stale/not-found state, never local ad-hoc sheets as the only identity.",
+        "Old top-level Scan/Debug/Certification/Deletion Reports semantics are retired as peer destinations."
+      ],
+      "checks": [
+        "Route inventory/round-trip tests",
+        "Deep-link translation tests",
+        "State restoration tests",
+        "Static no-legacy-shell/no-layout-remap checks",
+        "No full Devtool validate; apply with `--no-validate`"
+      ]
+    },
+    {
+      "id": "AUD-FIX-09",
+      "title": "Route-bound async protocol, shared screen states, and typed action gates",
+      "gate": false,
+      "gaps": [
+        "UIX-002",
+        "UIX-003",
+        "UIX-004",
+        "UIX-009"
+      ],
+      "deps": [
+        "AUD-FIX-08"
+      ],
+      "goal": "Give every content route the same stale-response, presentation-state, and domain-gating semantics.",
+      "work": [
+        "Implement the binding tuple `routeKey + routeGeneration + entityKind + entityId + requestId + optional query/draft fingerprint` through Go protocol, Android repository/ViewModel, and Compose consumption.",
+        "Reject late responses unless all relevant identities/generations still match; remove scattered AtomicLong/local heuristics once replaced.",
+        "Make every content route render through `Loading`, `Empty(reason + recovery)`, `Blocked(reason + remediation)`, `Error(problem + retry/support)`, or `Content(data + freshness + action gates)`.",
+        "Implement typed Go action gates exactly as `allowed`, stable `reasonCode`, plain-language `message`, and typed `remediationActions`; eliminate duplicate Kotlin gate logic for risky/evidence-dependent actions.",
+        "Add adversarial stale-response tests for directory/package/scan generation/cleanup review/Activity/diagnostics switching.",
+        "Retire/version predecessor UI/source acceptance artifacts invalidated by this overlay in the same overlay; do not defer them solely to the final sweep."
+      ],
+      "accept": [
+        "All production content routes consume the shared state contract.",
+        "All risky/evidence-dependent actions consume Go gates.",
+        "Late async results cannot populate a newer/different route or entity.",
+        "Blocked is distinguishable from empty/error and exposes remediation."
+      ],
+      "checks": [
+        "Protocol/generation tests",
+        "Compose/ViewModel state transition tests",
+        "Stale-response adversarial tests",
+        "Static no-local-gate duplication checks",
+        "No full Devtool validate; apply with `--no-validate`"
+      ]
+    },
+    {
+      "id": "AUD-FIX-10",
+      "title": "Scan, Overview, and Apps UX truth convergence",
+      "gate": false,
+      "gaps": [
+        "UIX-005",
+        "UIX-006",
+        "UIX-007",
+        "UIX-009"
+      ],
+      "deps": [
+        "AUD-FIX-09"
+      ],
+      "goal": "Close the three concrete task-flow truth gaps exposed by the UI/UX audit.",
+      "work": [
+        "Rebuild scan as mandatory scope/preset \u2192 preflight \u2192 review request \u2192 explicit Start \u2192 Activity/global active operation \u2192 completion health evaluation; remove one-tap preset/custom execution bypasses.",
+        "Make Overview show scan identity/freshness/integrity, explicit logical vs allocated semantics, active operation, recent activity, warnings/problems, and truthful best-next-actions; fix Review evidence to open Diagnostics rather than Scan.",
+        "Carry package inventory/storage evidence completeness through the Go report and Android UI as explicit supported/partial/unavailable state; never coerce missing evidence to ordinary zero-valued buckets.",
+        "Use typed action gates/remediation for no-scan, stale-after-mutation, wrong-scope, degraded integrity, root unavailable, and unsupported evidence states.",
+        "Retire/version predecessor UI/source acceptance artifacts invalidated by this overlay in the same overlay; do not defer them solely to the final sweep."
+      ],
+      "accept": [
+        "No scan starts before mandatory preflight and user review/Start.",
+        "Overview next actions navigate to the correct semantic routes and expose byte semantics.",
+        "Apps cannot visually confuse unavailable/partial evidence with measured zero.",
+        "First launch remains useful without redirecting to a Scan destination."
+      ],
+      "checks": [
+        "Scan flow state-machine tests",
+        "Overview semantic navigation tests",
+        "Apps evidence completeness tests",
+        "No direct scan-start bypass static checks",
+        "No full Devtool validate; apply with `--no-validate`"
+      ]
+    },
+    {
+      "id": "AUD-FIX-11",
+      "title": "Activity and Diagnostics product UX convergence",
+      "gate": false,
+      "gaps": [
+        "AUD-011",
+        "AUD-013",
+        "UIX-001",
+        "UIX-009"
+      ],
+      "deps": [
+        "AUD-FIX-10"
+      ],
+      "goal": "Make the two most important operational/explanatory surfaces render the durable authorities created earlier.",
+      "work": [
+        "Build Activity list/run/evidence screens from Go durable operation truth: active scans/analyses/cleanup/automation, completed/failed/interrupted/recovery-required states, filters, retry/cancel/reconcile gates, verification and diagnostics correlation.",
+        "Add the global active-operation surface (including Overview entry point) whose tap resolves to Activity run detail.",
+        "Replace primary Debug Workbench presentation with System \u2192 Diagnostics backed by Go ProblemGraph, runtime/scan/evidence health, root causes, remediation, freshness, and support actions.",
+        "Keep raw probes/traces/debug overlay behind progressive disclosure/advanced detail.",
+        "Treat deletion reports as Activity run details/evidence rather than a separate top-level product.",
+        "Retire/version predecessor UI/source acceptance artifacts invalidated by this overlay in the same overlay; do not defer them solely to the final sweep."
+      ],
+      "accept": [
+        "Activity no longer renders cleanup/deletion reports as a substitute for operation truth.",
+        "Run detail survives navigation/recreation and exposes recovery when required.",
+        "Diagnostics leads with user-comprehensible root cause/remediation, not developer console content.",
+        "Operation/evidence correlation is navigable in both directions."
+      ],
+      "checks": [
+        "Activity state/recovery UI tests",
+        "Diagnostics problem/remediation UI tests",
+        "Navigation/correlation tests",
+        "No full Devtool validate; apply with `--no-validate`"
+      ]
+    },
+    {
+      "id": "AUD-FIX-12",
+      "title": "Adaptive tablet/master-detail and route-continuity UX",
+      "gate": false,
+      "gaps": [
+        "UIX-008",
+        "UIX-009"
+      ],
+      "deps": [
+        "AUD-FIX-11"
+      ],
+      "goal": "Finish the adaptive contract: denser layouts without changing route identity or task semantics.",
+      "work": [
+        "Implement master/detail or supporting-pane layouts for high-density domains (Files, Clean, Apps, Activity, System where appropriate) rather than only NavigationRail + one content column.",
+        "Preserve the same semantic route/entity across compact\u2194expanded window changes, rotation, and recreation.",
+        "Keep selection/detail identity addressable through the route model rather than layout-local state.",
+        "Add tablet/phone previews and Compose/device tests for route continuity, pane behavior, focus/traversal, and accessibility equivalents for charts/treemap.",
+        "Retire/version predecessor UI/source acceptance artifacts invalidated by this overlay in the same overlay; do not defer them solely to the final sweep.",
+        "Turn the authoritative visual/product acceptance rules into executable checks where possible: dominant question/action, destructive-review containment, plain-language primary copy, distinct state semantics, and exact textual equivalents."
+      ],
+      "accept": [
+        "Phone/tablet differ in chrome/density only, not destination meaning.",
+        "Selected detail survives resize/rotation without substitution or stale response acceptance.",
+        "Wide layouts provide useful master/detail density for audited domains.",
+        "Accessibility semantics remain equivalent across layouts."
+      ],
+      "checks": [
+        "Compose adaptive layout tests",
+        "Rotation/window-size route-continuity tests",
+        "Accessibility semantics tests",
+        "No full Devtool validate; apply with `--no-validate`"
+      ]
+    },
+    {
+      "id": "AUD-FIX-13",
+      "title": "Pre-Gate-D acceptance convergence, evidence-derived metadata, and validator lifecycle closure",
+      "gate": false,
+      "gaps": [
+        "AUD-016",
+        "AUD-017",
+        "AUD-021",
+        "AUD-023",
+        "UIX-009"
+      ],
+      "deps": [
+        "AUD-FIX-12"
+      ],
+      "goal": "Ensure the candidate Gate-D tree has one successor-aware acceptance system and truthful metadata before qualification without prematurely performing original-OV14 physical retirement.",
+      "work": [
+        "Re-inventory remaining source-reading guards and map each to exact behavioral/evidence successors; retire or rewrite guards whose replacements already exist.",
+        "Version/archive historical validators and make live validators successor-aware.",
+        "Rewrite current UI docs/checklists/runtime copy/acceptance scripts to the successor semantic product; historical material must be non-authoritative.",
+        "Make config/product/ledger/release metadata evidence-derived after every overlay.",
+        "Ensure Gate-D workflow uses Devtool generic authority and does not depend on quarantined repo-local adb/APK/release helpers.",
+        "Run blind full-UI/UX requirement counterexample pass."
+      ],
+      "accept": [
+        "No live source-token test or validator contradicts the implementation it validates.",
+        "Every retired guard names a concrete successor; leftovers are explicitly physical-sweep-only.",
+        "Current docs/checklists/copy assert one product and acceptance model.",
+        "Metadata remains truthful and Gate D open.",
+        "Gate-D config does not depend on quarantined generic helpers."
+      ],
+      "checks": [
+        "Source-token guard inventory and successor map",
+        "Successor-validator compatibility suite",
+        "UI acceptance-authority scan",
+        "Evidence-derived metadata contradiction fixtures",
+        "No full Devtool validate; apply with --no-validate"
+      ]
+    },
+    {
+      "id": "AUD-FIX-14",
+      "title": "Historical Gate A/B/C evidence recovery and complete Gate-D topology",
+      "gate": false,
+      "gaps": [
+        "AUD-018",
+        "AUD-019",
+        "AUD-021",
+        "AUD-023"
+      ],
+      "deps": [
+        "AUD-FIX-13"
+      ],
+      "goal": "Recover truthful historical evidence and build complete OV13/Gate-D topology without confusing production cutover with later physical retirement.",
+      "work": [
+        "Recover/replay exact Gate A/B/C tree evidence where possible; Gate B includes ARM64 device/runtime proof.",
+        "Record tree/tool/target/host-device/result/artifact/log/replay metadata; unrecoverable evidence stays explicit.",
+        "Build complete Gate-D topology including Go, Debug+Release Android, migration, install/smoke, connected route/deep-link/rotation, accessibility, rooted runtime, runtime/APK, Devtool artifact identity and privacy/support nodes.",
+        "Gate D proves predecessor authorities are not production-reachable; physical deletion remains AUD-FIX-16.",
+        "Bind every Gate-D evidence node to one clean tree/build identity."
+      ],
+      "accept": [
+        "Historical evidence is recovered or explicitly blocking, never fabricated.",
+        "Gate-D graph contains every OV13 proof node.",
+        "Checker distinguishes production cutover from post-Gate-D physical retirement.",
+        "Gate D remains open."
+      ],
+      "checks": [
+        "Historical evidence inventory/replay checks",
+        "Gate-D workflow graph tests",
+        "EXO identity/replayability checks",
+        "No full Devtool validate; apply with --no-validate"
+      ]
+    },
+    {
+      "id": "AUD-FIX-15",
+      "title": "Gate D requalification and Android/Go semantic cutover seal",
+      "gate": true,
+      "gaps": [
+        "AUD-001",
+        "AUD-003",
+        "AUD-018",
+        "AUD-020",
+        "AUD-022"
+      ],
+      "deps": [
+        "AUD-FIX-14"
+      ],
+      "goal": "Qualify the OV13-equivalent product cutover on real evidence and derive Gate-D closure only from that execution.",
+      "work": [
+        "Run complete Gate-D workflow on one clean tree through Devtool/EXO.",
+        "Execute Debug+Release unit/lint/build, install/smoke, connected semantic route/deep-link/rotation/accessibility, ARM64/root runtime, Go CLI/TUI, support/privacy and production-reachability checks.",
+        "Bind APK/runtime/Git/Devtool/device/log identities.",
+        "Prove supported host entry points resolve to Go while any surviving Python oracle is unreachable from production.",
+        "Run audit loop and record exact Gate-D tree hash separately from future current-tree identity."
+      ],
+      "accept": [
+        "Complete Gate-D graph passes reproducibly.",
+        "All through-OV13 root families are closed; physical-removal-only families remain explicitly assigned to AUD-FIX-16.",
+        "Gate-D state is evidence-derived and bound to exact tree identity.",
+        "OV14 retirement becomes eligible."
+      ],
+      "checks": [
+        "FULL DEVTOOL VALIDATION #2 \u2014 Gate D",
+        "Separate Gradle --task flags where applicable",
+        "No new independent pre-OV14 gap family"
+      ]
+    },
+    {
+      "id": "AUD-FIX-16",
+      "title": "Original-OV14 physical retirement and final predecessor sweep",
+      "gate": false,
+      "gaps": [
+        "AUD-003",
+        "AUD-014",
+        "AUD-015",
+        "AUD-016",
+        "AUD-017",
+        "AUD-023",
+        "UIX-009"
+      ],
+      "deps": [
+        "AUD-FIX-15"
+      ],
+      "goal": "Perform original-OV14 physical retirement after Gate-D proof while preserving the qualified successor behavior.",
+      "work": [
+        "Physically remove isolated Python/Textual parity oracle and obsolete host scaffolding.",
+        "Remove Room/DAO/schema production integration, NDJSON remnants and obsolete dependencies; archive historical fixtures only.",
+        "Remove quarantined generic adb/install/launch/logcat/APK-discovery/release helpers.",
+        "Sweep remaining source-token tests, predecessor validators/docs/checklists/copy; historical leftovers must be non-authoritative.",
+        "Recompute evidence-derived post-OV14 current-tree identity while preserving Gate-D qualified ancestor identity.",
+        "Run successor targeted tests/build/lint and full audit loop without creating a fake second Gate-D seal."
+      ],
+      "accept": [
+        "No live Python/Textual, Room/NDJSON, legacy shell, stale predecessor validator/doc/source-token guard, or generic raw adb/release authority remains.",
+        "Historical material is clearly archived/non-authoritative.",
+        "Post-retirement tree remains buildable and successor checks pass.",
+        "Gate-D milestone remains bound to AUD-FIX-15 tree; current tree is ready for Gate E."
+      ],
+      "checks": [
+        "Physical-file/dependency/reachability audit",
+        "Raw adb/generic tooling scan",
+        "Archive/non-authority checks",
+        "Successor validator + targeted build/lint tests",
+        "No full Devtool validate; apply with --no-validate"
+      ]
+    },
+    {
+      "id": "AUD-FIX-17",
+      "title": "Gate E final qualification, adversarial release proof, and convergence seal",
+      "gate": true,
+      "gaps": [
+        "AUD-024"
+      ],
+      "deps": [
+        "AUD-FIX-16"
+      ],
+      "goal": "Qualify the final signed post-OV14 release product and prove no regression of any prior family.",
+      "work": [
+        "Qualify signed release artifact/runtime and install/upgrade path.",
+        "Re-run Gate-D core regression on final post-retirement tree.",
+        "Exercise root/non-root, process death, reconnect, cancellation/replay, cleanup recovery, automation terminal truth and stale/deleted deep links.",
+        "Run complete UI/UX task matrix on phone/tablet including accessibility and explicit visual/product acceptance rules.",
+        "Validate diagnostics/support privacy, redaction, bounded retention/expiry, sealing and freshness.",
+        "Run full requirement checker and independent counterexample audit loop until no new root family; otherwise keep Gate E open/deferred."
+      ],
+      "accept": [
+        "Final artifact is bound to post-OV14 tree/runtime/evidence.",
+        "All 33 root families are closed with appropriate evidence.",
+        "All non-superseded original/amended/UIUX requirements are satisfied.",
+        "Final audit has zero open gaps and no new family.",
+        "Gate E closes only from executed qualifying evidence."
+      ],
+      "checks": [
+        "FULL DEVTOOL VALIDATION #3 \u2014 Gate E",
+        "Gate-D core regression plus adversarial/root/device/UI/accessibility/privacy/retirement qualification",
+        "Final independent audit convergence loop"
+      ]
+    }
+  ],
+  "gap_coverage": {
+    "AUD-001": [
+      "AUD-FIX-01",
+      "AUD-FIX-15"
+    ],
+    "AUD-002": [
+      "AUD-FIX-01",
+      "AUD-FIX-13"
+    ],
+    "AUD-003": [
+      "AUD-FIX-07",
+      "AUD-FIX-15",
+      "AUD-FIX-16"
+    ],
+    "AUD-004": [
+      "AUD-FIX-07",
+      "AUD-FIX-15"
+    ],
+    "AUD-005": [
+      "AUD-FIX-08",
+      "AUD-FIX-15"
+    ],
+    "AUD-006": [
+      "AUD-FIX-03",
+      "AUD-FIX-06",
+      "AUD-FIX-15"
+    ],
+    "AUD-007": [
+      "AUD-FIX-02",
+      "AUD-FIX-06",
+      "AUD-FIX-17"
+    ],
+    "AUD-008": [
+      "AUD-FIX-03",
+      "AUD-FIX-06",
+      "AUD-FIX-15"
+    ],
+    "AUD-009": [
+      "AUD-FIX-02",
+      "AUD-FIX-06"
+    ],
+    "AUD-010": [
+      "AUD-FIX-02",
+      "AUD-FIX-06"
+    ],
+    "AUD-011": [
+      "AUD-FIX-04",
+      "AUD-FIX-06",
+      "AUD-FIX-11",
+      "AUD-FIX-17"
+    ],
+    "AUD-012": [
+      "AUD-FIX-04",
+      "AUD-FIX-06",
+      "AUD-FIX-17"
+    ],
+    "AUD-013": [
+      "AUD-FIX-05",
+      "AUD-FIX-06",
+      "AUD-FIX-11",
+      "AUD-FIX-17"
+    ],
+    "AUD-014": [
+      "AUD-FIX-03",
+      "AUD-FIX-16",
+      "AUD-FIX-17"
+    ],
+    "AUD-015": [
+      "AUD-FIX-13",
+      "AUD-FIX-16",
+      "AUD-FIX-17"
+    ],
+    "AUD-016": [
+      "AUD-FIX-01",
+      "AUD-FIX-02",
+      "AUD-FIX-03",
+      "AUD-FIX-04",
+      "AUD-FIX-05",
+      "AUD-FIX-07",
+      "AUD-FIX-08",
+      "AUD-FIX-09",
+      "AUD-FIX-10",
+      "AUD-FIX-11",
+      "AUD-FIX-12",
+      "AUD-FIX-13",
+      "AUD-FIX-16"
+    ],
+    "AUD-017": [
+      "AUD-FIX-01",
+      "AUD-FIX-07",
+      "AUD-FIX-13",
+      "AUD-FIX-15",
+      "AUD-FIX-16",
+      "AUD-FIX-17"
+    ],
+    "AUD-018": [
+      "AUD-FIX-14",
+      "AUD-FIX-15"
+    ],
+    "AUD-019": [
+      "AUD-FIX-14"
+    ],
+    "AUD-020": [
+      "AUD-FIX-15"
+    ],
+    "AUD-021": [
+      "AUD-FIX-01",
+      "AUD-FIX-06",
+      "AUD-FIX-13",
+      "AUD-FIX-14",
+      "AUD-FIX-17"
+    ],
+    "AUD-022": [
+      "AUD-FIX-01",
+      "AUD-FIX-15"
+    ],
+    "AUD-023": [
+      "AUD-FIX-01",
+      "AUD-FIX-13",
+      "AUD-FIX-14",
+      "AUD-FIX-16"
+    ],
+    "AUD-024": [
+      "AUD-FIX-17"
+    ],
+    "UIX-001": [
+      "AUD-FIX-08",
+      "AUD-FIX-11",
+      "AUD-FIX-15"
+    ],
+    "UIX-002": [
+      "AUD-FIX-09",
+      "AUD-FIX-15"
+    ],
+    "UIX-003": [
+      "AUD-FIX-09",
+      "AUD-FIX-12",
+      "AUD-FIX-15",
+      "AUD-FIX-17"
+    ],
+    "UIX-004": [
+      "AUD-FIX-09",
+      "AUD-FIX-12",
+      "AUD-FIX-15",
+      "AUD-FIX-17"
+    ],
+    "UIX-005": [
+      "AUD-FIX-10",
+      "AUD-FIX-15",
+      "AUD-FIX-17"
+    ],
+    "UIX-006": [
+      "AUD-FIX-10",
+      "AUD-FIX-15",
+      "AUD-FIX-17"
+    ],
+    "UIX-007": [
+      "AUD-FIX-03",
+      "AUD-FIX-10",
+      "AUD-FIX-15",
+      "AUD-FIX-17"
+    ],
+    "UIX-008": [
+      "AUD-FIX-12",
+      "AUD-FIX-15",
+      "AUD-FIX-17"
+    ],
+    "UIX-009": [
+      "AUD-FIX-01",
+      "AUD-FIX-08",
+      "AUD-FIX-09",
+      "AUD-FIX-10",
+      "AUD-FIX-11",
+      "AUD-FIX-12",
+      "AUD-FIX-13",
+      "AUD-FIX-16",
+      "AUD-FIX-17"
+    ]
+  },
+  "coverage_recheck": {
+    "syntactic_ids_covered": 33,
+    "semantic_full": 33,
+    "partial": 0,
+    "missing": 0,
+    "corrected_weaknesses": [
+      "restore post-Gate-D OV14 physical-retirement ordering",
+      "same-overlay source/token guard lifecycle",
+      "continuous successor-validator and UI acceptance migration",
+      "persistence/restart parity before Room/NDJSON retirement",
+      "bounded diagnostics retention/expiry/compaction",
+      "evidence-derived metadata after every overlay",
+      "explicit full UI/UX visual/product acceptance rules"
+    ]
+  },
+  "coverage_complete": true,
+  "gate_d_overlay": "AUD-FIX-15",
+  "physical_retirement_overlay": "AUD-FIX-16",
+  "gate_e_overlay": "AUD-FIX-17"
+}

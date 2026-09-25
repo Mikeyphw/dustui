@@ -1,3 +1,5 @@
+> **AUD-FIX successor-aware:** This is a historical predecessor contract/evidence document. It is not current acceptance authority. Current requirements are indexed by `migration/requirements/v2/requirements.json` and the canonical UI/UX authority copied under `migration/requirements/v2/source/`.
+
 # DustUI Android UI/UX Contract
 
 DustUI is a rooted Android storage workbench. The UI must remain readable on phones before it adds another dial to the cockpit.

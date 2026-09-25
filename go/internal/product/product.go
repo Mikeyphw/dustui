@@ -9,6 +9,7 @@ import (
 	"github.com/mikeyphw/dustui/go/internal/diagnostics"
 	"github.com/mikeyphw/dustui/go/internal/intelligence"
 	"github.com/mikeyphw/dustui/go/internal/packageevidence"
+	"github.com/mikeyphw/dustui/go/internal/qualification"
 	"github.com/mikeyphw/dustui/go/internal/query"
 	"github.com/mikeyphw/dustui/go/internal/scan"
 	"github.com/mikeyphw/dustui/go/internal/shell"
@@ -107,29 +108,29 @@ func CurrentContract() Contract {
 		Gate:                          Gate,
 		AndroidBuildability:           AndroidBuildState,
 		AndroidBuildabilityMandatory:  true,
-		ProductionEngine:              true,
-		GoSQLiteProductDefault:        true,
-		LegacyDomainEnginesRequired:   false,
-		LegacyPythonTextualProduction: false,
+		ProductionEngine:              qualification.GateDQualified,
+		GoSQLiteProductDefault:        qualification.GateDQualified,
+		LegacyDomainEnginesRequired:   qualification.RoomArtifactsPresent,
+		LegacyPythonTextualProduction: qualification.LegacyPythonTextualPresent,
 		SourceOfTruth:                 "go-sqlite + go runtime protocols",
 		Routes:                        routes,
 		States:                        append([]shell.ContentState{}, shellContract.States...),
 		ActionGates:                   append([]shell.ActionGate{}, shellContract.Gates...),
 		Surfaces: []SurfaceContract{
-			{Name: SurfaceCLI, ProductDefault: true, MachineReadable: true, Interactive: false, PreservesDustTuiAlias: true, SupportedWorkflows: workflows, UsesSameEngineSemantics: true},
-			{Name: SurfaceTUI, ProductDefault: true, MachineReadable: false, Interactive: true, PreservesDustTuiAlias: true, SupportedWorkflows: workflows, UsesSameEngineSemantics: true},
-			{Name: SurfaceAndroid, ProductDefault: true, MachineReadable: false, Interactive: true, PreservesDustTuiAlias: false, SupportedWorkflows: workflows, UsesSameEngineSemantics: true},
+			{Name: SurfaceCLI, ProductDefault: qualification.GateDQualified, MachineReadable: true, Interactive: false, PreservesDustTuiAlias: true, SupportedWorkflows: workflows, UsesSameEngineSemantics: true},
+			{Name: SurfaceTUI, ProductDefault: qualification.GateDQualified, MachineReadable: false, Interactive: true, PreservesDustTuiAlias: true, SupportedWorkflows: workflows, UsesSameEngineSemantics: true},
+			{Name: SurfaceAndroid, ProductDefault: qualification.GateDQualified, MachineReadable: false, Interactive: true, PreservesDustTuiAlias: false, SupportedWorkflows: workflows, UsesSameEngineSemantics: true},
 		},
 		AndroidTaskFlows:           flows,
-		RequiredEvidence:           []string{"go-test", "go-cli-smoke", "go-tui-smoke", "android-compile", "android-unit", "android-lint", "android-package", "route-instrumentation", "accessibility", "runtime-apk-binding", "devtool-artifact-identity"},
+		RequiredEvidence:           append([]string{}, qualification.RequiredEvidenceNodes...),
 		BoundProtocols:             boundProtocols(),
 		FrozenPythonParityOracle:   true,
 		DustTuiAliasImplementation: "go-cli-or-go-tui-wrapper-after-gate-d",
-		DeclarationScope:           "observed-runtime-state-gate-d-reopened",
-		GateDQualified:             false,
-		AndroidRuntimeBound:        true,
-		GoSQLiteImplemented:        true,
-		ObservedAndroidAuthority:   "go-sqlite-domain-authority-with-legacy-cpp-root-runtime",
+		DeclarationScope:           "canonical-evidence-derived:" + qualification.StateSource,
+		GateDQualified:             qualification.GateDQualified,
+		AndroidRuntimeBound:        qualification.AndroidGoProcessBindingPresent && qualification.AndroidGoPackagingPresent,
+		GoSQLiteImplemented:        qualification.GoSQLiteImplementationPresent,
+		ObservedAndroidAuthority:   observedAndroidAuthority(),
 	}
 }
 
@@ -150,6 +151,16 @@ func authoritiesFor(route shell.RouteID) (string, string) {
 	default:
 		return "unknown", "blocked"
 	}
+}
+
+func observedAndroidAuthority() string {
+	if qualification.GateDQualified {
+		return "go-product-qualified"
+	}
+	if qualification.AndroidGoProcessBindingPresent && qualification.AndroidGoPackagingPresent && qualification.GoSQLiteImplementationPresent {
+		return "go-runtime-and-sqlite-source-present-gate-d-unqualified"
+	}
+	return "successor-runtime-not-yet-qualified"
 }
 
 func boundProtocols() []string {
@@ -175,14 +186,17 @@ func ValidateContract(c Contract) error {
 	if !c.AndroidBuildabilityMandatory || c.AndroidBuildability != AndroidBuildState {
 		return errors.New("android buildability must be mandatory at OV13")
 	}
-	if !c.ProductionEngine || !c.GoSQLiteProductDefault || c.LegacyDomainEnginesRequired || c.LegacyPythonTextualProduction {
-		return errors.New("Gate D must make Go the product default and legacy engines unnecessary")
+	if c.GateDQualified != qualification.GateDQualified || c.ProductionEngine != qualification.GateDQualified || c.GoSQLiteProductDefault != qualification.GateDQualified {
+		return errors.New("product-default qualification must come from canonical Gate D evidence")
 	}
-	if c.GateDQualified || !c.AndroidRuntimeBound || !c.GoSQLiteImplemented {
-		return errors.New("REM-03 must keep Gate D unqualified while recording the real Android runtime and Go SQLite cutover")
+	if c.LegacyDomainEnginesRequired != qualification.RoomArtifactsPresent || c.LegacyPythonTextualProduction != qualification.LegacyPythonTextualPresent {
+		return errors.New("legacy production observations must come from the canonical generated state")
 	}
-	if c.DeclarationScope != "observed-runtime-state-gate-d-reopened" || c.ObservedAndroidAuthority == "" {
-		return errors.New("product contract must distinguish declared target from observed Android authority")
+	if c.AndroidRuntimeBound != (qualification.AndroidGoProcessBindingPresent && qualification.AndroidGoPackagingPresent) || c.GoSQLiteImplemented != qualification.GoSQLiteImplementationPresent {
+		return errors.New("runtime/persistence observations must come from canonical generated state")
+	}
+	if c.DeclarationScope != "canonical-evidence-derived:"+qualification.StateSource || c.ObservedAndroidAuthority == "" {
+		return errors.New("product contract must identify canonical evidence-derived state")
 	}
 	if len(c.Routes) != 6 {
 		return fmt.Errorf("expected six semantic routes, got %d", len(c.Routes))
@@ -192,8 +206,8 @@ func ValidateContract(c Contract) error {
 		if _, ok := requiredSurfaces[surface.Name]; !ok {
 			return fmt.Errorf("unexpected surface %q", surface.Name)
 		}
-		if !surface.ProductDefault || !surface.UsesSameEngineSemantics {
-			return fmt.Errorf("surface %s is not default/shared semantics", surface.Name)
+		if surface.ProductDefault != qualification.GateDQualified || !surface.UsesSameEngineSemantics {
+			return fmt.Errorf("surface %s default truth does not match canonical qualification/shared semantics", surface.Name)
 		}
 		if len(surface.SupportedWorkflows) < 7 {
 			return fmt.Errorf("surface %s lacks supported workflows", surface.Name)
@@ -213,8 +227,13 @@ func ValidateContract(c Contract) error {
 			return fmt.Errorf("invalid Android task flow: %+v", flow)
 		}
 	}
-	if !contains(c.RequiredEvidence, "android-compile") || !contains(c.RequiredEvidence, "runtime-apk-binding") || !contains(c.RequiredEvidence, "go-tui-smoke") {
-		return errors.New("Gate D evidence set missing compile/runtime/tui requirements")
+	if len(c.RequiredEvidence) != len(qualification.RequiredEvidenceNodes) {
+		return errors.New("Gate D evidence set must come from canonical qualification registry")
+	}
+	for _, required := range qualification.RequiredEvidenceNodes {
+		if !contains(c.RequiredEvidence, required) {
+			return fmt.Errorf("Gate D evidence set missing %s", required)
+		}
 	}
 	_ = query.MaxPageLimit
 	_ = scan.IntegrityComplete

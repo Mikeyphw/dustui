@@ -1,0 +1,24 @@
+{
+  "schema": "devtool.overlay.schema-v2",
+  "artifact": "dustui_aud_fix_01_canonical_truth_v1.zip",
+  "target": "dustui_android",
+  "phase": "AUD-FIX-01",
+  "source_snapshot": {
+    "artifact": "dustui-20260924-194542-664219.tar.gz",
+    "sha256": "a0a9372c0065ecacf3c16c4db3a13df18bd043c972180c68d98dd29de149474b"
+  },
+  "purpose": "Canonical qualification truth, requirement index, successor-aware validators, and negative-fixture audit machinery. Gate D remains open.",
+  "apply_policy": {
+    "android_buildability": "mandatory",
+    "full_validation_gate": false,
+    "devtool_command": "devtool -r \"$HOME/Code/dustui\" --target dustui_android apply /sdcard/Download/dustui_aud_fix_01_canonical_truth_v1.zip --no-validate --commit \"DustUI AUD-FIX-01 canonical truth\"",
+    "evidence_commands": [
+      "python3 scripts/build_audfix_requirement_index.py --check",
+      "python3 scripts/refresh_qualification_state.py --check",
+      "python3 scripts/refresh_ov14_retirement_observation.py --check",
+      "python3 scripts/validate_audfix01_contract.py --audit-loop --write-evidence"
+    ],
+    "gate_d_must_remain": "open",
+    "generic_tooling_authority": "devtool-only-for-new-work"
+  }
+}

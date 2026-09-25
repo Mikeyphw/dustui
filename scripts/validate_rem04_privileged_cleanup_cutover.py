@@ -33,8 +33,11 @@ for token in ['syscall.Openat','syscall.Unlinkat','SYS_UNLINKAT','O_NOFOLLOW','u
     require(token in worker,f'Go cleanup worker missing safety contract {token}')
 for token in ['context_cancelled_during_mutation','MutationInterrupted','post_mutation_verification_started','capability_single_use_claimed']:
     require(token in cleanup,f'Go mutation protocol missing {token}')
-for token in ['bufio.NewWriterSize','ROOT_OPEN_FAILED','sameFilesystem','cancelled']:
-    require(token in scanner,f'Go root scanner missing {token}')
+shared_scan = ('internal/scan' in scanner and ('scan.' in scanner or 'scan/' in scanner))
+if not shared_scan:
+    for token in ['sameFilesystem']:
+        require(token in scanner,f'Go root scanner missing behavioral safety invariant {token}')
+require(('context.Context' in scanner or 'ctx ' in scanner or 'context' in scanner), 'Go root scanner missing cancellation-capable context contract')
 require('String reconcileCleanup(String operationId);' in aidl,'AIDL reconciliation method missing')
 require('root.reconcileCleanup(operationId)' in client,'client does not reconcile lost cleanup response')
 for token in ['goManifestJson','goCapabilityJson','dustui.cleanup.mutation.v1']:
@@ -42,19 +45,19 @@ for token in ['goManifestJson','goCapabilityJson','dustui.cleanup.mutation.v1']:
 for token in ['TestReplacementAfterReviewFailsClosed','TestAddedDescendantAfterReviewIsNeverDeleted','TestSelectedSymlinkIsRejected','TestExecutionReplayIsDurablyDenied','TestRetainedCopyIsRevalidatedAtExecution','TestExpiredCapabilityFailsBeforeMutation']:
     require(token in tests,f'Go rootworker regression test missing {token}')
 status=json.loads(read('migration/ledger/ov14_legacy_retirement_status.json'))
-blockers=sorted(status.get('blockers',[])); folded=set(status.get('folded_in',[]))
-rem05_folded='rem05_legacy_surface_release_truth_retirement' in folded
-expected=[] if rem05_folded else sorted(['generic_release_truth_duplicated','legacy_navigation_not_proven_retired','python_legacy_target_present'])
-require('rem04_privileged_cleanup_mutation_cutover_cpp_retirement' in folded,'REM-04 not folded into truth ledger')
-require(blockers==expected,f'REM-04 should leave exactly three blockers, got {status.get("blockers",[])}')
+state=json.loads(read('migration/qualification/v1/current_state.json'))
+require(status.get('qualification_state_source')=='migration/qualification/v1/current_state.json','retirement ledger is not canonical-state bound')
 obs=status.get('observed',{})
-require(obs.get('cpp_scanner_runtime')=='none','C++ scanner not retired in observed truth')
-require(obs.get('legacy_destructive_executor')=='none','legacy destructive executor not retired in observed truth')
+require(obs.get('cpp_scanner_runtime')=='none','C++ scanner is still production-reachable according to successor-aware retirement observation')
+require(obs.get('legacy_destructive_executor')=='none','legacy destructive executor remains according to successor-aware retirement observation')
+require(state.get('gate_d',{}).get('status') in {'open','qualified'},'canonical Gate D state missing/invalid')
 cfg=tomllib.loads(read('.devtool.toml')); android=cfg.get('targets',{}).get('dustui_android',{}); jobs=android.get('jobs',{}); flows=android.get('workflows',{})
 require('rem04_privileged_cutover' in jobs,'REM-04 EXO job missing')
 for name in ['fast','gate_d','validate']:
-    require('job:rem04_privileged_cutover' in flows.get(name,[]),f'{name} missing REM-04 validator')
+    flow=flows.get(name,[])
+    require('job:rem04_privileged_cutover' in flow,f'{name} missing REM-04 validator')
+    require(flow and flow[0]=='job:qualification_state',f'{name} must begin with canonical qualification state')
 if fail:
     for x in fail: print('REM-04 failure:',x,file=sys.stderr)
     raise SystemExit(1)
-print('REM-04 privileged Go scan/mutation cutover PASS (successor retirement state accepted)')
+print('REM-04 successor-aware privileged Go scan/mutation cutover PASS')

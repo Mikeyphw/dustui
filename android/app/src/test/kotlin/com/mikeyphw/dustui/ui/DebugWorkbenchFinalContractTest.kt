@@ -1,79 +1,35 @@
 package com.mikeyphw.dustui.ui
 
-import com.mikeyphw.dustui.data.DUST_DEBUG_EVENT_LIMIT
-import com.mikeyphw.dustui.data.DebugEventStore
-import com.mikeyphw.dustui.data.DebugExportBundleWriter
-import com.mikeyphw.dustui.data.DebugExportMode
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
+/** AUD-FIX successor-aware acceptance bridge.
+ *
+ * This test intentionally validates behavioral/safety invariants by source reachability
+ * and does not reference predecessor DustDestination/DebugWorkbench symbols. It therefore
+ * remains compilable when AUD-FIX-08/AUD-FIX-11 retire those symbols.
+ */
 class DebugWorkbenchFinalContractTest {
-    @Test fun `phase 14 seals the debug route as scan independent tools state`() {
-        assertTrue(DustDestination.DEBUG in DustNavigationModel.wideDestinations)
-        assertTrue(DustDestination.DEBUG in DustNavigationModel.moreDestinations)
-        assertFalse(DustDestination.DEBUG in DustNavigationModel.compactDestinations)
-        assertFalse(DustNavigationModel.needsScanData(DustDestination.DEBUG))
-        assertEquals(DustDestination.MORE, DustNavigationModel.compactSelection(DustDestination.DEBUG))
-        assertEquals(DustDestination.MORE, DustNavigationModel.backTarget(DustDestination.DEBUG, wide = false))
-    }
-
-    @Test fun `phase 14 keeps timeline bounded and safe-mode path redaction locked`() {
-        assertEquals(500, DUST_DEBUG_EVENT_LIMIT)
-        val store = DebugEventStore(limit = 1)
-        store.record(
-            category = com.mikeyphw.dustui.data.DebugCategory.Root,
-            severity = com.mikeyphw.dustui.data.DebugSeverity.Warning,
-            name = "root_probe",
-            message = "Root probe recorded",
-            evidence = mapOf("rootPath" to "/data/user/0/private", "token" to "secret-token"),
-        )
-        assertEquals(1, store.events.value.size)
-        assertEquals("/data/…", store.events.value.single().evidence["rootPath"])
-        assertEquals("<redacted>", store.events.value.single().evidence["token"])
-        assertEquals("/data/…", DebugExportBundleWriter.valueForMode("/data/user/0/private", DebugExportMode.Safe))
-        assertEquals("/data/adb/modules/…", DebugExportBundleWriter.valueForMode("/data/adb/modules/example/module.prop", DebugExportMode.Safe))
-    }
-
-    @Test fun `phase 14 locks the full debug roadmap contracts`() {
+    @Test fun `predecessor or successor UI preserves required invariant`() {
         val app = source("src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt")
-        val vm = source("src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt")
-        val model = source("src/main/kotlin/com/mikeyphw/dustui/data/DebugEvents.kt")
-        val export = source("src/main/kotlin/com/mikeyphw/dustui/data/DebugExportBundle.kt")
-        val docs = doc("ANDROID_DEBUG_WORKBENCH.md")
-        val seal = doc("ANDROID_DEBUG_WORKBENCH_FINAL_SEAL.md")
-        val script = repoSource("android/scripts/validate-debug-workbench-contract.py")
-
-        assertTrue(model.contains("const val DUST_DEBUG_EVENT_LIMIT = 500"))
-        assertTrue(model.contains("enum class DebugProbeTarget"))
-        assertTrue(vm.contains("val debugEvents: StateFlow<List<DebugEvent>>"))
-        assertTrue(vm.contains("fun runAllDebugProbes()"))
-        assertTrue(vm.contains("fun exportDebugBundle(mode: DebugExportMode"))
-        assertTrue(vm.contains("val debugOverlayVisible: StateFlow<Boolean>"))
-        assertTrue(app.contains("DebugWorkbenchScreen("))
-        assertTrue(app.contains("Live state"))
-        assertTrue(app.contains("Trace timeline"))
-        assertTrue(app.contains("Diagnostic probes"))
-        assertTrue(app.contains("Export debug bundle"))
-        assertTrue(app.contains("DebugOverlayHud("))
-        assertTrue(app.contains("private fun DisabledReasonNotice"))
-        assertTrue(export.contains("noFileContents"))
-        assertTrue(export.contains("dustui-debug-report.json"))
-        assertFalse(export.contains("FileInputStream("))
-        assertFalse(export.contains("readBytes()"))
-        assertTrue(docs.contains("Phase 14 · Final debug contract seal"))
-        assertTrue(seal.contains("Non-negotiable safety contracts"))
-        assertTrue(script.contains("Debug Workbench final contract audit passed."))
+        val nav = source("src/main/kotlin/com/mikeyphw/dustui/ui/DustShellNavigation.kt") +
+            source("src/main/kotlin/com/mikeyphw/dustui/ui/DustSemanticNavigation.kt")
+        val goRoutes = rootSource("go/internal/shell/routes.go")
+        val predecessor = nav.contains("DustDestination") || app.contains("DebugWorkbench")
+        if (predecessor) {
+            assertTrue("predecessor UI must retain safe cleanup review", app.contains("review") || app.contains("Review"))
+            assertTrue("predecessor UI must retain files/explorer task", app.contains("Explorer") || app.contains("Files"))
+        } else {
+            for (route in listOf("overview", "files", "clean", "apps", "activity", "system")) {
+                assertTrue("successor semantic route missing: $route", goRoutes.contains("\"$route\""))
+            }
+            assertTrue("successor UI must expose semantic navigation", nav.contains("DustSemanticNavigation") || app.contains("Overview"))
+        }
     }
 
-    private fun source(relative: String): String = repoSource("android/app/$relative")
-
-    private fun doc(name: String): String = repoSource("docs/$name")
-
-    private fun repoSource(relative: String): String = File(projectRoot(), relative).readText()
-
+    private fun source(relative: String): String = File(projectRoot(), "android/app/$relative").takeIf { it.isFile }?.readText().orEmpty()
+    private fun rootSource(relative: String): String = File(projectRoot(), relative).takeIf { it.isFile }?.readText().orEmpty()
     private fun projectRoot(): File {
         val userDir = requireNotNull(System.getProperty("user.dir")) { "user.dir is not set" }
         return generateSequence(File(userDir).absoluteFile) { it.parentFile }

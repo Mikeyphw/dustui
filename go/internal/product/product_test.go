@@ -1,8 +1,12 @@
 package product
 
-import "testing"
+import (
+	"testing"
 
-func TestCurrentContractCutsOverAllProductSurfaces(t *testing.T) {
+	"github.com/mikeyphw/dustui/go/internal/qualification"
+)
+
+func TestCurrentContractUsesCanonicalQualificationTruth(t *testing.T) {
 	contract := CurrentContract()
 	if err := ValidateContract(contract); err != nil {
 		t.Fatal(err)
@@ -10,20 +14,27 @@ func TestCurrentContractCutsOverAllProductSurfaces(t *testing.T) {
 	if contract.AndroidBuildability != "mandatory" || !contract.AndroidBuildabilityMandatory {
 		t.Fatalf("android buildability not mandatory: %+v", contract)
 	}
-	if contract.LegacyDomainEnginesRequired || contract.LegacyPythonTextualProduction {
-		t.Fatalf("legacy engines must not be required after Gate D: %+v", contract)
+	if contract.GateDQualified != qualification.GateDQualified {
+		t.Fatalf("Gate D truth diverged from canonical qualification state: %+v", contract)
 	}
-	if contract.GateDQualified || !contract.AndroidRuntimeBound || !contract.GoSQLiteImplemented {
-		t.Fatalf("Gate D must remain truthfully unqualified after domain cutover while legacy runtime blockers remain: %+v", contract)
+	if contract.ProductionEngine != qualification.GateDQualified || contract.GoSQLiteProductDefault != qualification.GateDQualified {
+		t.Fatalf("product default must not be declared before canonical qualification: %+v", contract)
 	}
-	if contract.ObservedAndroidAuthority != "go-sqlite-domain-authority-with-legacy-cpp-root-runtime" {
-		t.Fatalf("unexpected observed Android authority: %+v", contract)
+	if contract.LegacyPythonTextualProduction != qualification.LegacyPythonTextualPresent || contract.LegacyDomainEnginesRequired != qualification.RoomArtifactsPresent {
+		t.Fatalf("legacy observations are not evidence-derived: %+v", contract)
 	}
+	if len(contract.RequiredEvidence) != len(qualification.RequiredEvidenceNodes) {
+		t.Fatalf("required evidence topology diverged from canonical qualification state: %+v", contract.RequiredEvidence)
+	}
+}
+
+func TestCurrentContractStillDescribesAllTargetSurfaces(t *testing.T) {
+	contract := CurrentContract()
 	required := map[Surface]bool{SurfaceCLI: false, SurfaceTUI: false, SurfaceAndroid: false}
 	for _, surface := range contract.Surfaces {
 		required[surface.Name] = true
-		if !surface.UsesSameEngineSemantics {
-			t.Fatalf("surface %s must use shared Go semantics", surface.Name)
+		if surface.ProductDefault != qualification.GateDQualified {
+			t.Fatalf("surface %s default state does not match canonical qualification", surface.Name)
 		}
 	}
 	for surface, ok := range required {

@@ -1,0 +1,232 @@
+{
+  "nodes": [
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "historical_gate_a_exo",
+      "kind": "historical-exo",
+      "required": true,
+      "requires_artifact_binding": false,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "historical_gate_b_exo_arm64",
+      "kind": "historical-exo-device",
+      "required": true,
+      "requires_artifact_binding": false,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "historical_gate_c_exo",
+      "kind": "historical-exo",
+      "required": true,
+      "requires_artifact_binding": false,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "go_test",
+      "kind": "go-test",
+      "required": true,
+      "requires_artifact_binding": false,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "go_build",
+      "kind": "go-build",
+      "required": true,
+      "requires_artifact_binding": false,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "go_schema",
+      "kind": "go-contract",
+      "required": true,
+      "requires_artifact_binding": false,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "go_product_contract",
+      "kind": "go-contract",
+      "required": true,
+      "requires_artifact_binding": false,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "go_cli_smoke",
+      "kind": "go-runtime",
+      "required": true,
+      "requires_artifact_binding": false,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "go_tui_smoke",
+      "kind": "go-runtime",
+      "required": true,
+      "requires_artifact_binding": false,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "android_debug_unit",
+      "kind": "android-unit",
+      "required": true,
+      "requires_artifact_binding": false,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "android_debug_lint",
+      "kind": "android-lint",
+      "required": true,
+      "requires_artifact_binding": false,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "android_debug_assemble",
+      "kind": "android-build",
+      "required": true,
+      "requires_artifact_binding": true,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "android_release_unit",
+      "kind": "android-unit",
+      "required": true,
+      "requires_artifact_binding": false,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "android_release_lint",
+      "kind": "android-lint",
+      "required": true,
+      "requires_artifact_binding": false,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "android_release_assemble",
+      "kind": "android-build",
+      "required": true,
+      "requires_artifact_binding": true,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "migration_validators",
+      "kind": "migration-validation",
+      "required": true,
+      "requires_artifact_binding": false,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "install_launch_smoke",
+      "kind": "device-runtime",
+      "required": true,
+      "requires_artifact_binding": true,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "route_deeplink_recreation_rotation",
+      "kind": "instrumentation",
+      "required": true,
+      "requires_artifact_binding": false,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "accessibility",
+      "kind": "accessibility",
+      "required": true,
+      "requires_artifact_binding": false,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "rooted_arm64_runtime",
+      "kind": "rooted-device-runtime",
+      "required": true,
+      "requires_artifact_binding": true,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "runtime_apk_binding",
+      "kind": "artifact-binding",
+      "required": true,
+      "requires_artifact_binding": true,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "devtool_artifact_identity",
+      "kind": "artifact-binding",
+      "required": true,
+      "requires_artifact_binding": true,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "durable_operation_terminal_truth",
+      "kind": "runtime-truth",
+      "required": true,
+      "requires_artifact_binding": false,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "diagnostics_support_seal",
+      "kind": "privacy-diagnostics",
+      "required": true,
+      "requires_artifact_binding": false,
+      "status": "not-run"
+    },
+    {
+      "binding": {},
+      "evidence": [],
+      "id": "production_reachability",
+      "kind": "reachability",
+      "required": true,
+      "requires_artifact_binding": false,
+      "status": "not-run"
+    }
+  ],
+  "qualification_rule": "Gate D may be qualified only when every required node is pass, every passing node is bound to one source tree, and artifact-required nodes carry artifact hashes. Source-token absence cannot qualify Gate D.",
+  "schema": "dustui.gate-d-evidence-registry.v1",
+  "source_snapshot_sha256": "a0a9372c0065ecacf3c16c4db3a13df18bd043c972180c68d98dd29de149474b"
+}
