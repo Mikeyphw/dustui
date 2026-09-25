@@ -35,6 +35,7 @@ data class DuplicateAnalysisSnapshot(
     val currentSizeBytes: Long? = null,
     val message: String? = null,
     val scanGeneration: Long = 1L,
+    val operationId: String? = null,
 ) {
     val reclaimableBytes: Long get() = groups.sumOf { it.reclaimableBytes }
     val safeReclaimableBytes: Long get() = groups.sumOf { it.safeReclaimableBytes }

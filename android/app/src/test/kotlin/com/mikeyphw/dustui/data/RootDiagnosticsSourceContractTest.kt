@@ -67,8 +67,12 @@ class RootDiagnosticsSourceContractTest {
         assertTrue(cleaning.contains("val growthFilter by vm.storageGrowthFilter.collectAsStateWithLifecycle()"))
         assertFalse(cleaning.contains("vm.storageGrowthFilter.value"))
         assertTrue(tasker.contains("import androidx.core.os.bundleOf"))
-        assertTrue(tasker.contains("bundleOf(RESULT_STATUS to \"accepted\""))
-        assertTrue(tasker.contains("bundleOf(RESULT_STATUS to \"cancel_requested\""))
+        assertTrue(tasker.contains("GoAutomationAdapter(context)"))
+        assertTrue(tasker.contains("ACTION_STATUS"))
+        assertTrue(tasker.contains("RESULT_TERMINAL"))
+        assertTrue(tasker.contains("RESULT_OPERATION_ID"))
+        assertFalse(tasker.contains("RESULT_STATUS to \"accepted\""))
+        assertFalse(tasker.contains("RESULT_STATUS to \"cancel_requested\""))
         assertFalse(tasker.contains("Bundle().apply"))
     }
 

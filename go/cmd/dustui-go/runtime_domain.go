@@ -124,6 +124,52 @@ type duplicateAuthorityPayload struct {
 	Generation int64                         `json:"generation"`
 	Inputs     []intelligence.DuplicateInput `json:"inputs"`
 }
+
+type automationAdmitPayload struct {
+	RequestID   string `json:"requestId"`
+	Source      string `json:"source"`
+	Kind        string `json:"kind"`
+	Generation  int64  `json:"generation"`
+	Fingerprint string `json:"fingerprint"`
+}
+type automationAdvancePayload struct {
+	OperationID string `json:"operationId"`
+	State       string `json:"state"`
+	Reason      string `json:"reason"`
+	Message     string `json:"message"`
+}
+type automationObservePayload struct {
+	OperationID string `json:"operationId"`
+}
+type automationByRequestPayload struct {
+	RequestID string `json:"requestId"`
+}
+type automationActivityPayload struct {
+	Limit int `json:"limit"`
+}
+type automationCancelPayload struct {
+	OperationID string `json:"operationId"`
+	Source      string `json:"source"`
+}
+type automationRetryPayload struct {
+	OperationID   string `json:"operationId"`
+	NewRequestID  string `json:"newRequestId"`
+	Source        string `json:"source"`
+	NewGeneration int64  `json:"newGeneration"`
+}
+type notificationCreatePayload struct {
+	OperationID string `json:"operationId"`
+	Action      string `json:"action"`
+	TTLMS       int64  `json:"ttlMs"`
+}
+type notificationClaimPayload struct {
+	Nonce            string `json:"nonce"`
+	OperationID      string `json:"operationId"`
+	Action           string `json:"action"`
+	OperationBinding string `json:"operationBinding"`
+	NowMS            int64  `json:"nowMs"`
+}
+
 type verificationBuildPayload = state.VerificationBuildInput
 type verificationReverifyPayload = state.VerificationReverifyInput
 
@@ -509,6 +555,121 @@ func domainPayload(ctx context.Context, store *state.SQLiteStore, frame runtimeF
 			return nil, err
 		}
 		return map[string]any{"ok": true, "schema": authority.ResponseSchema, "records": records}, nil
+
+	case "domain.automation.admit":
+		p, err := decodePayload[automationAdmitPayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		generation := p.Generation
+		if generation <= 0 {
+			generation = frame.Generation
+		}
+		v, err := store.AdmitAutomation(ctx, p.RequestID, p.Source, p.Kind, generation, p.Fingerprint)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "admission": v}, nil
+	case "domain.automation.advance":
+		p, err := decodePayload[automationAdvancePayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		v, err := store.AdvanceAutomation(ctx, p.OperationID, p.State, p.Reason, p.Message)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "operation": v}, nil
+	case "domain.automation.observe":
+		p, err := decodePayload[automationObservePayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		v, err := store.ObserveAutomation(ctx, p.OperationID)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "operation": v}, nil
+	case "domain.automation.by-request":
+		p, err := decodePayload[automationByRequestPayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		v, err := store.AutomationByRequest(ctx, p.RequestID)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "operation": v}, nil
+	case "domain.automation.activity.list":
+		p, err := decodePayload[automationActivityPayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		v, err := store.ActivityRuns(ctx, p.Limit)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "runs": v}, nil
+	case "domain.automation.activity.detail":
+		p, err := decodePayload[automationObservePayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		v, err := store.ActivityRunByID(ctx, p.OperationID)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "run": v}, nil
+	case "domain.automation.cancel":
+		p, err := decodePayload[automationCancelPayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		v, err := store.RequestAutomationCancel(ctx, p.OperationID, p.Source)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "action": v}, nil
+	case "domain.automation.reconcile":
+		p, err := decodePayload[automationObservePayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		v, err := store.ReconcileAutomation(ctx, p.OperationID)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "action": v}, nil
+	case "domain.automation.retry":
+		p, err := decodePayload[automationRetryPayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		v, err := store.RetryAutomation(ctx, p.OperationID, p.NewRequestID, p.Source, p.NewGeneration)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "admission": v}, nil
+	case "domain.automation.notification.create":
+		p, err := decodePayload[notificationCreatePayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		v, err := store.CreateNotificationCapability(ctx, p.OperationID, p.Action, p.TTLMS)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "capability": v}, nil
+	case "domain.automation.notification.claim":
+		p, err := decodePayload[notificationClaimPayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		v, err := store.ClaimNotificationCapability(ctx, p.Nonce, p.OperationID, p.Action, p.OperationBinding, p.NowMS)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "claim": v}, nil
 	case "domain.product.rules.preview":
 		p, err := decodePayload[rulePreviewPayload](frame.Payload)
 		if err != nil {

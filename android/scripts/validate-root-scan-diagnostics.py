@@ -146,10 +146,14 @@ def validate(repository_root: Path, root: Path) -> None:
 
     for marker in (
         "import androidx.core.os.bundleOf",
-        'bundleOf(RESULT_STATUS to "accepted", RESULT_SCAN_ID to request.scanId, RESULT_PATH to request.rootPath)',
-        'bundleOf(RESULT_STATUS to "cancel_requested", RESULT_SCAN_ID to it)',
+        "GoAutomationAdapter(context)",
+        "ACTION_STATUS",
+        "RESULT_TERMINAL",
+        "RESULT_OPERATION_ID",
     ):
-        require(tasker, marker, "Tasker Bundle KTX compatibility")
+        require(tasker, marker, "Tasker durable-operation compatibility")
+    reject(tasker, 'RESULT_STATUS to "accepted"', "Tasker must not report admission as terminal success")
+    reject(tasker, 'RESULT_STATUS to "cancel_requested"', "Tasker must wait for durable cancellation truth")
     reject(tasker, "Bundle().apply", "Tasker Bundle KTX compatibility")
 
     kotlin_tree = "\n".join(

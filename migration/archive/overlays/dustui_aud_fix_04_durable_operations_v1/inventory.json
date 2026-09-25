@@ -1,0 +1,233 @@
+{
+  "artifact": "dustui_aud_fix_04_durable_operations_v1.zip",
+  "required_parent_commit": "02e37c8",
+  "entries": [
+    {
+      "path": ".devtool.toml",
+      "sha256": "bc60caf136427ca956a2c4efe762d146de01f1a97a1bd5dc5c24065f7cda43dd",
+      "size_bytes": 11916,
+      "action": "modify",
+      "source_sha256": "f6257933488b6790814c786fe756333aced8df6174717b9eee033a78fa394080"
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ActivityModels.kt",
+      "sha256": "d20e11929700fc7d59ab5be5a0ef49e7bb325b2d17b08f63258e16280ad22327",
+      "size_bytes": 3295,
+      "action": "add"
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DuplicateAnalysisStore.kt",
+      "sha256": "e642a5805ba2347e913a587408fe07868f16b82031703cf40beeafbb5b06a8ee",
+      "size_bytes": 7012,
+      "action": "modify",
+      "source_sha256": "878a1c7431eaa2795308b15600b329c57e2e82434c403bb794d4cf8e701816db"
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DuplicateWorkbench.kt",
+      "sha256": "5dae22d24fcd19b4e6d65e4903762cbe1c9abffc8d571233c815ac355ea1f92d",
+      "size_bytes": 7925,
+      "action": "modify",
+      "source_sha256": "176f9056b1c11e359e8d4416f3348dcc891395fc77928a67ae047abcb3ef754a"
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/GoAutomationAdapter.kt",
+      "sha256": "bf67d4cced8fa24ed21f93731203cd8a24c6e1df359fa260df4a1d424baabd03",
+      "size_bytes": 9087,
+      "action": "add"
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+      "sha256": "91e6a6056d384b3db2a385535ee30dd7ca5fa9cc25c501b66d257fca2ea0e181",
+      "size_bytes": 62618,
+      "action": "modify",
+      "source_sha256": "f0266ba7836cfccc97069462c2958196279d396c825609513f246d49775f4d68"
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/go/AutomationActivityContract.kt",
+      "sha256": "8f2eab887bec4dfd48a69a85cecdbe4e2ec6162c346b3fcab276fb146d3c4b3a",
+      "size_bytes": 1238,
+      "action": "modify",
+      "source_sha256": "4d0e00c1c31a4d79de0fe193ffc7c07235e3ee8e53f300736cbdbe3d2f2c4e0c"
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/root/RootServiceClient.kt",
+      "sha256": "4724fc89dfb00b97e8c889634cdf3498dfe2c5502e82c7c8aed1b2fdec12c86d",
+      "size_bytes": 22971,
+      "action": "modify",
+      "source_sha256": "d31b82c2ac87524382cd8b68dc39ced25a505944a9e48b521dcac38f90198837"
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/scan/ScanForegroundService.kt",
+      "sha256": "521c8ebc569190a6d272a86250ee78b3b7623a8ded95f2c5c7f741fc81468c5b",
+      "size_bytes": 35428,
+      "action": "modify",
+      "source_sha256": "baf5a17d252e5d749af9c4a984c19ae011f5706dc54ea5ada34f1d235b5a809e"
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/scan/ScheduledScanWorker.kt",
+      "sha256": "c5425175ae6d385cc98a8886728b12655d6bab4f2baf01a63193ea0db202d4fa",
+      "size_bytes": 4914,
+      "action": "modify",
+      "source_sha256": "a5cc1c96dffdfa5d4a839a191f5ed812a890b9a0a82208535911d16934e7f527"
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/tasker/DustTaskerReceiver.kt",
+      "sha256": "787fce8a78329631ca1bb16a9d63dde3a6a662c7836d00a49ef900962e3f2ed5",
+      "size_bytes": 5347,
+      "action": "modify",
+      "source_sha256": "4758120f4d61b97ff024e71938ec705b0e82cbf55b959a1b9ebfd4630905f5dc"
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+      "sha256": "3631ef0b6c5d23b48f3f7ad231987229b86f41a0b4ba6b09cf803296af930ebb",
+      "size_bytes": 124762,
+      "action": "modify",
+      "source_sha256": "d477fd5b5ccf4a0f81bd18c62e5e9d70418d99e54e007129ebe38fed174f5f0e"
+    },
+    {
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/automation/AudFix04AutomationContractTest.kt",
+      "sha256": "325d94172632ad82c946d6901383dea17aedc71f2ad704f5844d2f5113bc15e2",
+      "size_bytes": 5641,
+      "action": "add"
+    },
+    {
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootDiagnosticsSourceContractTest.kt",
+      "sha256": "47e073a14d259ce4494428d7afa977d108153e84f60e40d49dfab02246b66f36",
+      "size_bytes": 5313,
+      "action": "modify",
+      "source_sha256": "f849b4fb5dfd8823e1cdb97da8561a611c9f93639025fe6f67d8677b027a8a36"
+    },
+    {
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/migration/Ov01MigrationContractTest.kt",
+      "sha256": "36271327dcc722bfe5145f9ad74a61e62962adc2eebec8377b7b105c6579896a",
+      "size_bytes": 5367,
+      "action": "modify",
+      "source_sha256": "2a21dd4e113f242955e9f8d0c124df1127c8b74c383b9e70eb7a5d32937abd77"
+    },
+    {
+      "path": "android/scripts/validate-root-scan-diagnostics.py",
+      "sha256": "c196efea9debe244b73e87e1301d9b3a13aa844a9b35be256cf1b7cb43a50734",
+      "size_bytes": 12516,
+      "action": "modify",
+      "source_sha256": "882b2db70ea7ba1dd18ba5e4a9ef24ebf7417b89e144c36673a68c4ae020debd"
+    },
+    {
+      "path": "go/cmd/dustui-go/runtime_domain.go",
+      "sha256": "801d4f0a608577570f4f703d94a56b8bc9f2b31491ca24e31fd503c74aa4e0dc",
+      "size_bytes": 23777,
+      "action": "modify",
+      "source_sha256": "10b907d567870c2dc7bcd6950b293430e02080568b89488675b640bb7bc687e5"
+    },
+    {
+      "path": "go/internal/automation/automation.go",
+      "sha256": "924f62e9fcf3186d321547c9fe90151ae1ce93e93ab055ba8e4216e6821a3d57",
+      "size_bytes": 2484,
+      "action": "modify",
+      "source_sha256": "3d957a8133748ddd72c5b060990be818b27ecaec41f4fc95409f6b9cb84959d3"
+    },
+    {
+      "path": "go/internal/automation/automation_test.go",
+      "sha256": "93fe950abae2a741ad72f9b80c0f12b2e78ed941753906e67a5ebf787fb92f40",
+      "size_bytes": 1340,
+      "action": "modify",
+      "source_sha256": "d89366c732f8417fcb0ae7d740d8572b9f06760efca9fd359ed11cbf9fcb9a3d"
+    },
+    {
+      "path": "go/internal/product/product.go",
+      "sha256": "7c03087aecf8c1898cc4cb6874568c642ce0bffba01f77f5aaab494949cc9038",
+      "size_bytes": 11147,
+      "action": "modify",
+      "source_sha256": "71dddbc1c3b892605b716d7ed3642adc64647e386ba5b3d52d681784120fd4f6"
+    },
+    {
+      "path": "go/internal/state/android_domain.go",
+      "sha256": "ed7727e12d424be8e7636b057725593cc4ff824c5bc877c26a1c6c1b45ec0a3d",
+      "size_bytes": 34414,
+      "action": "modify",
+      "source_sha256": "5e587c2487f8c0fd309993f5edc5a3071cd80a1d4b23f3daa3b8695ed8c08976"
+    },
+    {
+      "path": "go/internal/state/automation_authority.go",
+      "sha256": "d5a391e29d2bdd4cf86256b7f71fc6f8278761833b503d23f0dc7f9f4b367900",
+      "size_bytes": 26242,
+      "action": "add"
+    },
+    {
+      "path": "go/internal/state/automation_authority_test.go",
+      "sha256": "c649ab4893844fd09a23d605a51b7b1523663215d70e05d1705de7451a0d3dd2",
+      "size_bytes": 10512,
+      "action": "add"
+    },
+    {
+      "path": "migration/archive/overlays/dustui_aud_fix_04_durable_operations_v1/README.md",
+      "sha256": "d107b6b5c54071dbea177e6e90f31210439a4a95afc8d36b3c5a052567a50aa9",
+      "size_bytes": 426,
+      "action": "add"
+    },
+    {
+      "path": "migration/archive/overlays/dustui_aud_fix_04_durable_operations_v1/manifest.schema-v2.json",
+      "sha256": "66fd1e0ba851d250fbc853a0e93be8d7e994712f863b2a0fa4316b06fbd36774",
+      "size_bytes": 1797,
+      "action": "add"
+    },
+    {
+      "path": "migration/audit/v2/aud_fix_01_audit_loop.json",
+      "sha256": "562c094b42cdfe341b1fa78a80410808f6a702d315d5cbc60612d69a679f3043",
+      "size_bytes": 11416,
+      "action": "modify",
+      "source_sha256": "2aa736c03b2da48bd57939d3b2682df768b91a489876356c2990d316ecf5df85"
+    },
+    {
+      "path": "migration/audit/v2/aud_fix_02_audit_loop.json",
+      "sha256": "8bd354a05080042b326747a5e17d0976493f7330758a782261efc6acf16bbb86",
+      "size_bytes": 959,
+      "action": "modify",
+      "source_sha256": "e96810f4203877466f61e10ade36808bb6819231da69e4005445419c6183ad7a"
+    },
+    {
+      "path": "migration/audit/v2/aud_fix_03_audit_loop.json",
+      "sha256": "ac659dd874f79d5c203f32a88bca2bf392924911651de0d26cf82f20bb9a1c30",
+      "size_bytes": 2000,
+      "action": "modify",
+      "source_sha256": "8079c0b07bde2c843ae05567fe118b9dfab82adfe697e58028801a2f612c9edd"
+    },
+    {
+      "path": "migration/audit/v2/aud_fix_04_audit_loop.json",
+      "sha256": "7eff4a87752d14f25da1c9943852dd9a680fd746ac3cfc4dbe83e25355264954",
+      "size_bytes": 1998,
+      "action": "add"
+    },
+    {
+      "path": "migration/contracts/v2/aud_fix_04_durable_operations.md",
+      "sha256": "115dd4437817c7a185118872653fdc0f0bfbfce64dcea241189e4eb5d51d62f1",
+      "size_bytes": 3634,
+      "action": "add"
+    },
+    {
+      "path": "migration/ledger/aud_fix_04_status.json",
+      "sha256": "71accfd77c8711534bd7e8b0dd4a7cb43f7beb262f3272b4c01df0e76a87ad3c",
+      "size_bytes": 459,
+      "action": "add"
+    },
+    {
+      "path": "migration/qualification/v1/current_state.json",
+      "sha256": "f3a3f4f7efa77c30929bf165053a29de87e584cb7f8250ec8d6bad63abfc0873",
+      "size_bytes": 3173,
+      "action": "modify",
+      "source_sha256": "b084b7eec2c8dac7641a22264f302dbeaeac65cb7ef55ddb9d864cd3919df49a"
+    },
+    {
+      "path": "scripts/validate_audfix04_contract.py",
+      "sha256": "a72e3e5882905c4cf2de133893b813f6146ea77e8359cb85dbf95362103d6d18",
+      "size_bytes": 18742,
+      "action": "add"
+    },
+    {
+      "path": "scripts/validate_ov11_contract.py",
+      "sha256": "26ff7b3672b2a9c9b71b8697452285d6c38c1f23e9aa8536a34e399edf9b387d",
+      "size_bytes": 7718,
+      "action": "modify",
+      "source_sha256": "da600590fced8271687b21a3e960f8024d3b12ac397ea8daa8bdcaba5516efe6"
+    }
+  ]
+}

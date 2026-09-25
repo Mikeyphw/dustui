@@ -12,7 +12,7 @@
       "failures": [],
       "go_tests": {
         "ok": true,
-        "output": "ok  \tgithub.com/mikeyphw/dustui/go/internal/scan\t(cached)\nok  \tgithub.com/mikeyphw/dustui/go/internal/rootworker\t(cached)\n"
+        "output": "ok  \tgithub.com/mikeyphw/dustui/go/internal/scan\t0.007s\nok  \tgithub.com/mikeyphw/dustui/go/internal/rootworker\t0.011s\n"
       }
     },
     {

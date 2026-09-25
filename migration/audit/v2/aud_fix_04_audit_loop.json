@@ -1,0 +1,74 @@
+{
+  "schema": "dustui.aud-fix-04-audit.v1",
+  "overlay": "AUD-FIX-04",
+  "scope_gap_families": [
+    "AUD-011",
+    "AUD-012",
+    "AUD-016"
+  ],
+  "passes": [
+    {
+      "pass": 1,
+      "failures": [],
+      "go_fast": {
+        "status": "passed",
+        "output": "ok  \tgithub.com/mikeyphw/dustui/go/internal/automation\t(cached)\n"
+      },
+      "state_tests": {
+        "status": "environment-deferred",
+        "reason": "modernc.org/sqlite v1.36.3 is absent from this sandbox module cache; CGO sqlite substitution is forbidden"
+      },
+      "android_contract_test": {
+        "status": "environment-deferred",
+        "reason": "Gradle wrapper distribution is not cached in this network-isolated sandbox"
+      }
+    },
+    {
+      "pass": 2,
+      "failures": [],
+      "go_fast": {
+        "status": "passed",
+        "output": "ok  \tgithub.com/mikeyphw/dustui/go/internal/automation\t(cached)\n"
+      },
+      "state_tests": {
+        "status": "environment-deferred",
+        "reason": "modernc.org/sqlite v1.36.3 is absent from this sandbox module cache; CGO sqlite substitution is forbidden"
+      },
+      "android_contract_test": {
+        "status": "environment-deferred",
+        "reason": "Gradle wrapper distribution is not cached in this network-isolated sandbox"
+      }
+    }
+  ],
+  "converged": true,
+  "environment_deferred_evidence": [
+    "modernc SQLite lifecycle/replay tests",
+    "Android Gradle contract test"
+  ],
+  "later_roadmap_gaps_intentionally_open": [
+    "AUD-003",
+    "AUD-004",
+    "AUD-005",
+    "AUD-013",
+    "AUD-015",
+    "AUD-016",
+    "AUD-017",
+    "AUD-018",
+    "AUD-019",
+    "AUD-020",
+    "AUD-021",
+    "AUD-022",
+    "AUD-023",
+    "AUD-024",
+    "UIX-001",
+    "UIX-002",
+    "UIX-003",
+    "UIX-004",
+    "UIX-005",
+    "UIX-006",
+    "UIX-008",
+    "UIX-009"
+  ],
+  "gate_d": "open",
+  "activity_ui_note": "durable UI state/adapters are wired in AUD-FIX-04; final Activity route/list/detail UX remains assigned to AUD-FIX-11"
+}

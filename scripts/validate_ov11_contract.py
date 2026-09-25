@@ -24,13 +24,18 @@ def validate(audit_loop: bool=False) -> list[str]:
     require(am.get('android_buildability')=='intentionally-suspended','Android buildability must remain intentionally suspended',failures)
     require(am.get('android_buildability_suspended_until')=='OV13','Android reconnect gate must remain OV13',failures)
     require(gm.get('automation_activity_authority') is True,'OV11 must claim automation/activity authority',failures)
-    require(gm.get('automation_activity_protocol')=='dustui.automation.activity.v1','automation/activity protocol mismatch',failures)
+    require(gm.get('automation_activity_protocol') in {'dustui.automation.activity.v1','dustui.automation.activity.v2'},'automation/activity protocol mismatch',failures)
     require('jobs' not in android and 'workflows' not in android,'unsupported Devtool jobs/workflows must not be reintroduced',failures)
     for rel in ['go/internal/automation/automation.go','go/internal/automation/automation_test.go','android/app/src/main/kotlin/com/mikeyphw/dustui/go/AutomationActivityContract.kt','go/internal/state/schema.go','go/internal/readiness/readiness.go','go/cmd/dustui-go/main.go']:
         require((ROOT/rel).is_file(),f'OV11 file missing: {rel}',failures)
     contract=run_json(['go','run','./cmd/dustui-go','automation-contract'])
-    require(contract.get('protocol')=='dustui.automation.activity.v1','automation/activity protocol mismatch',failures)
-    require(contract.get('phase')=='OV11','automation/activity phase must be OV11',failures)
+    require(contract.get('protocol') in {'dustui.automation.activity.v1','dustui.automation.activity.v2'},'automation/activity protocol mismatch',failures)
+    successor = contract.get('protocol') == 'dustui.automation.activity.v2'
+    require(contract.get('phase')==('AUD-FIX-04' if successor else 'OV11'),'automation/activity phase mismatch',failures)
+    if successor:
+        require(contract.get('persistence')=='go-owned-sqlite','AUD-FIX-04 successor must use durable Go SQLite authority',failures)
+        require('single_durable_sqlite_authority' in contract.get('safetyRules',[]),'AUD-FIX-04 successor must retire in-memory authority',failures)
+        require('analysis' in contract.get('operationKinds',[]),'AUD-FIX-04 successor must include analysis operations',failures)
     require(contract.get('goAuthority') is True,'automation/activity must claim Go authority',failures)
     require(contract.get('acceptedIsSuccess') is False,'accepted must not be success',failures)
     require(contract.get('queuedIsSuccess') is False,'queued must not be success',failures)

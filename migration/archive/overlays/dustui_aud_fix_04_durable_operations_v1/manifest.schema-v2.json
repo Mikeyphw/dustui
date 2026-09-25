@@ -1,0 +1,39 @@
+{
+  "schema": "devtool.overlay.schema-v2",
+  "artifact": "dustui_aud_fix_04_durable_operations_v1.zip",
+  "target": "dustui_android",
+  "phase": "AUD-FIX-04",
+  "source_state": {
+    "required_parent_commit": "02e37c8",
+    "requires_overlays": [
+      "AUD-FIX-01",
+      "AUD-FIX-02",
+      "AUD-FIX-03"
+    ]
+  },
+  "purpose": "Durable Go operation coordinator, shared Activity truth, terminal WorkManager/Tasker semantics, process-recovery reconciliation, and replay-safe notification cancellation capability.",
+  "gap_families": [
+    "AUD-011",
+    "AUD-012"
+  ],
+  "roadmap_contract": "DUSTUI_FULL_AUDIT_REMEDIATION_ROADMAP_AUD_FIX01_AUD_FIX17_20260924.md#AUD-FIX-04",
+  "apply_policy": {
+    "android_buildability": "mandatory_on_user_host",
+    "full_validation_gate": false,
+    "devtool_command": "devtool -r \"$HOME/Code/dustui\" --target dustui_android apply /sdcard/Download/dustui_aud_fix_04_durable_operations_v1.zip --no-validate --commit \"DustUI AUD-FIX-04 durable operations\"",
+    "evidence_commands": [
+      "python3 scripts/validate_audfix01_contract.py --audit-loop",
+      "python3 scripts/validate_audfix02_contract.py --audit-loop",
+      "python3 scripts/validate_audfix03_contract.py --audit-loop",
+      "python3 scripts/validate_audfix04_contract.py --audit-loop --write-evidence",
+      "cd go && go test ./internal/automation ./internal/product",
+      "cd go && go test ./internal/state -run ^TestAUD_FIX04 -count=1",
+      "cd android && ./gradlew :app:testDebugUnitTest --tests com.mikeyphw.dustui.automation.AudFix04AutomationContractTest"
+    ],
+    "sandbox_deferred_evidence": [
+      "modernc.org/sqlite v1.36.3 unavailable in model sandbox",
+      "Gradle wrapper distribution unavailable in model sandbox"
+    ],
+    "gate_d_must_remain": "open"
+  }
+}

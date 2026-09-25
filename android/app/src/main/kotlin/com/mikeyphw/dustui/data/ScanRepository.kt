@@ -28,6 +28,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
+import java.util.UUID
 
 
 class ScanRepository(
@@ -49,8 +50,74 @@ class ScanRepository(
     private val packageEvidenceAttemptedGeneration = mutableMapOf<String, Long>()
     private val authorityStatuses = ConcurrentHashMap<String, GoDomainAuthorityStatus>()
     fun domainAuthorityStatus(scanId: String, domain: String): GoDomainAuthorityStatus? = authorityStatuses["$scanId|$domain"]
+
+    private suspend fun <T> trackedAnalysis(
+        scanId: String,
+        analysisName: String,
+        block: suspend () -> T,
+    ): T {
+        val generation = domainStore.session(scanId)?.generation ?: 1L
+        val requestId = "analysis-$analysisName-${UUID.randomUUID()}"
+        val correlation = "analysis:$analysisName:$scanId:$generation"
+        return GoAutomationAdapter(context, domainStore).use { adapter ->
+            val operation = adapter.admitOperation(
+                requestId = requestId,
+                source = "ui",
+                kind = "analysis",
+                generation = generation,
+                fingerprint = correlation,
+            )
+            adapter.report(operation.operationId, "running", "analysis_started", analysisName)
+            try {
+                block().also {
+                    adapter.report(operation.operationId, "success", "analysis_completed", analysisName)
+                }
+            } catch (cancelled: CancellationException) {
+                runCatching { adapter.report(operation.operationId, "cancelled", "analysis_cancelled", analysisName) }
+                throw cancelled
+            } catch (failure: Throwable) {
+                runCatching {
+                    adapter.report(
+                        operation.operationId,
+                        "failure",
+                        "analysis_failed",
+                        failure.message ?: analysisName,
+                    )
+                }
+                throw failure
+            }
+        }
+    }
     fun observeLatestSession(): Flow<ScanSessionEntity?> = domainStore.observeLatestSession()
     fun observeCleanupOperations(): Flow<List<CleanupOperationEntity>> = domainStore.observeCleanupOperations(50)
+
+    /** AUD-FIX-04: UI-facing durable operation truth. Product rendering is completed in AUD-FIX-11. */
+    suspend fun activityRuns(limit: Int = 100): List<ActivityRun> =
+        GoAutomationAdapter(context, domainStore).use { it.activity(limit) }
+
+    suspend fun activityRun(operationId: String): ActivityRun =
+        GoAutomationAdapter(context, domainStore).use { it.activityDetail(operationId) }
+
+    suspend fun cancelActivityRun(operationId: String): Boolean {
+        val run = activityRun(operationId)
+        return when (run.kind) {
+            "scan" -> GoAutomationAdapter(context, domainStore).use { it.cancelOperation(operationId, "ui") }
+            "duplicate-analysis" -> {
+                val scanId = run.requestId.removePrefix("duplicate-analysis:").substringBeforeLast(':', missingDelimiterValue = "")
+                scanId.isNotBlank() && cancelDuplicateAnalysis(scanId)
+            }
+            else -> false
+        }
+    }
+
+    suspend fun reconcileActivityRun(operationId: String): ActivityRun =
+        GoAutomationAdapter(context, domainStore).use { adapter ->
+            adapter.reconcile(operationId)
+            adapter.activityDetail(operationId)
+        }
+
+    suspend fun retryActivityRun(operationId: String): DurableOperation =
+        GoAutomationAdapter(context, domainStore).use { it.retry(operationId, "ui") }
     suspend fun browsePage(scanId: String, generation: Long, request: ScanBrowseRequest): ScanBrowsePage =
         domainStore.browsePage(scanId, generation, request)
     suspend fun rootAvailable(): Boolean = runCatching {
@@ -129,8 +196,9 @@ class ScanRepository(
 
     suspend fun appSummaries(scanId: String, entries: List<ScanEntryEntity>): List<AppStorageSummary> = appSummaries(scanId)
 
-    suspend fun appResidueAnalysis(scanId: String): AppResidueAnalysis =
+    suspend fun appResidueAnalysis(scanId: String): AppResidueAnalysis = trackedAnalysis(scanId, "residue") {
         GoProductAuthorityMapper.residue(authorityData(scanId, "residue", true))
+    }
 
     suspend fun appResidueAnalysis(scanId: String, entries: List<ScanEntryEntity>): AppResidueAnalysis = appResidueAnalysis(scanId)
 
@@ -312,8 +380,9 @@ class ScanRepository(
         return LargeFileWorkbenchEngine.fromAuthorityPage(domainStore.browsePage(scanId, generation, request), filter)
     }
 
-    suspend fun advancedAnalysis(scanId: String): AdvancedStorageReport =
+    suspend fun advancedAnalysis(scanId: String): AdvancedStorageReport = trackedAnalysis(scanId, "advanced-storage") {
         GoProductAuthorityMapper.advanced(authorityData(scanId, "cleanup-intelligence", true).getJSONObject("advanced"))
+    }
 
     suspend fun advancedAnalysis(scanId: String, entries: List<ScanEntryEntity>): AdvancedStorageReport = advancedAnalysis(scanId)
 
@@ -323,7 +392,9 @@ class ScanRepository(
     suspend fun appStorageInspector(
         scanId: String,
         providedResidueAnalysis: AppResidueAnalysis? = null,
-    ): AppStorageInspectorAnalysis = GoProductAuthorityMapper.appStorage(authorityData(scanId, "package-storage", true).getJSONObject("appStorage"))
+    ): AppStorageInspectorAnalysis = trackedAnalysis(scanId, "app-storage") {
+        GoProductAuthorityMapper.appStorage(authorityData(scanId, "package-storage", true).getJSONObject("appStorage"))
+    }
 
     suspend fun appStorageInspector(
         scanId: String,
@@ -381,14 +452,16 @@ class ScanRepository(
 
     suspend fun moduleAnalysis(scanId: String): RootModuleReport = moduleAnalysis(scanId, emptyList())
 
-    suspend fun moduleAnalysis(scanId: String, entries: List<ScanEntryEntity>): RootModuleReport {
-        return GoProductAuthorityMapper.modules(authorityData(scanId, "modules", false))
+    suspend fun moduleAnalysis(scanId: String, entries: List<ScanEntryEntity>): RootModuleReport = trackedAnalysis(scanId, "modules") {
+        GoProductAuthorityMapper.modules(authorityData(scanId, "modules", false))
     }
 
     suspend fun cleanupRecommendations(
         scanId: String,
         providedResidueAnalysis: AppResidueAnalysis? = null,
-    ): CleanupRecommendationAnalysis = GoProductAuthorityMapper.recommendations(authorityData(scanId, "recommendations", true))
+    ): CleanupRecommendationAnalysis = trackedAnalysis(scanId, "recommendations") {
+        GoProductAuthorityMapper.recommendations(authorityData(scanId, "recommendations", true))
+    }
 
     suspend fun cleanupRecommendations(
         scanId: String,
@@ -433,7 +506,7 @@ class ScanRepository(
         scanId: String,
         rules: List<CleanupRule> = cleanupRuleStore.rules(),
         includeDisabled: Boolean = false,
-    ): CleanupRulePreview {
+    ): CleanupRulePreview = trackedAnalysis(scanId, "rule-preview") {
         val encodedRules = JSONArray(rules.map { rule ->
             JSONObject()
                 .put("id", rule.id).put("name", rule.name).put("enabled", rule.enabled).put("imported", rule.imported)
@@ -463,7 +536,7 @@ class ScanRepository(
                 .put("rules", encodedRules)
                 .put("includeDisabled", includeDisabled),
         )
-        return GoProductAuthorityMapper.rulePreview(payload.getJSONObject("data"))
+        GoProductAuthorityMapper.rulePreview(payload.getJSONObject("data"))
     }
 
 
@@ -474,7 +547,9 @@ class ScanRepository(
         val sessions = domainStore.completedSessions(storageGrowthPreferenceStore.retentionLimit())
         val current = sessions.getOrNull(currentOffset.coerceAtLeast(0)) ?: return null
         storageGrowthPreferenceStore.prune(sessions.mapTo(linkedSetOf()) { it.id })
-        return GoProductAuthorityMapper.growth(authorityData(current.id, "growth", false))
+        return trackedAnalysis(current.id, "storage-growth") {
+            GoProductAuthorityMapper.growth(authorityData(current.id, "growth", false))
+        }
     }
 
 
@@ -549,7 +624,18 @@ class ScanRepository(
 
     suspend fun loadDuplicateAnalysis(scanId: String): DuplicateAnalysisSnapshot? = duplicateStore.load(scanId)
 
-    suspend fun cancelDuplicateAnalysis(scanId: String): Boolean = rootClient.cancelDuplicateVerification(scanId)
+    suspend fun cancelDuplicateAnalysis(scanId: String): Boolean {
+        val snapshot = duplicateStore.load(scanId) ?: return false
+        val operationId = snapshot.operationId ?: return false
+        val authorized = GoAutomationAdapter(context, domainStore).use { adapter ->
+            adapter.requestCancel(operationId, "ui")
+        }
+        if (!authorized) return false
+        // The root process may be between bounded buckets; coroutine cancellation still
+        // completes the durable transition in analyzeDuplicates. Authorization is the truth.
+        rootClient.cancelDuplicateVerification(scanId)
+        return true
+    }
 
     suspend fun clearDuplicateAnalysis(scanId: String) = duplicateStore.clear(scanId)
 
@@ -565,8 +651,18 @@ class ScanRepository(
         val buckets = domainStore.duplicateSizeBuckets(scanId, minSizeBytes)
         val bucketSizes = buckets.mapTo(linkedSetOf()) { it.sizeBytes }
         val now = System.currentTimeMillis()
+        val automation = GoAutomationAdapter(context, domainStore)
+        val durable = automation.admitOperation(
+            requestId = "duplicate-analysis:$scanId:${UUID.randomUUID()}",
+            generation = session.generation,
+            fingerprint = "$scanId:${session.generation}:$minSizeBytes:${buckets.size}",
+            source = "ui",
+            kind = "duplicate-analysis",
+        )
+        automation.report(durable.operationId, "running", "duplicate_analysis_started", "Verifying exact duplicate content")
         var snapshot = (existing ?: DuplicateAnalysisSnapshot.empty(scanId, minSizeBytes, now, session.generation)).copy(
             status = "RUNNING",
+            operationId = durable.operationId,
             totalBuckets = buckets.size,
             completedBuckets = existing?.completedSizes?.count { it in bucketSizes } ?: 0,
             completedSizes = existing?.completedSizes?.filterTo(linkedSetOf()) { it in bucketSizes }.orEmpty(),
@@ -601,7 +697,13 @@ class ScanRepository(
                         message = "Skipped an unusually large same-size bucket with ${bucket.candidateCount} files",
                     )
                 } else {
-                    val report = rootClient.verifyDuplicates(scanId, candidates.map { it.path }, bucket.sizeBytes, session.rootPath)
+                    automation.report(
+                        durable.operationId,
+                        "running",
+                        "duplicate_bucket",
+                        "Verifying ${bucket.candidateCount} files sized ${formatDeletedBytes(bucket.sizeBytes)}",
+                    )
+                    val report = rootClient.verifyDuplicates(durable.operationId, scanId, candidates.map { it.path }, bucket.sizeBytes, session.rootPath)
                     persistDuplicateAuthority(scanId, session, candidates, report)
                     val mergedGroups = snapshot.groups.filterNot { it.sizeBytes == bucket.sizeBytes } + report.groups
                     snapshot = snapshot.copy(
@@ -628,6 +730,7 @@ class ScanRepository(
             )
             duplicateStore.save(snapshot)
             onUpdate(snapshot)
+            automation.report(durable.operationId, "success", "duplicate_analysis_complete", snapshot.message ?: "Duplicate analysis complete")
             return snapshot
         } catch (cancelled: CancellationException) {
             snapshot = snapshot.copy(
@@ -638,6 +741,7 @@ class ScanRepository(
             )
             duplicateStore.save(snapshot)
             onUpdate(snapshot)
+            runCatching { automation.report(durable.operationId, "cancelled", "duplicate_analysis_cancelled", snapshot.message ?: "Duplicate analysis cancelled") }
             throw cancelled
         } catch (error: Throwable) {
             snapshot = snapshot.copy(
@@ -648,7 +752,10 @@ class ScanRepository(
             )
             duplicateStore.save(snapshot)
             onUpdate(snapshot)
+            runCatching { automation.report(durable.operationId, "failure", "duplicate_analysis_failed", snapshot.message ?: "Duplicate analysis failed") }
             return snapshot
+        } finally {
+            automation.close()
         }
     }
 
@@ -972,10 +1079,19 @@ class ScanRepository(
 
     suspend fun recoverInterruptedOperations(): Int {
         val now = System.currentTimeMillis()
-        val operations = domainStore.executingCleanupOperations()
-        operations.forEach { domainStore.upsertCleanupOperation(OperationRecovery.recover(it, now)) }
+        val cleanupOperations = domainStore.executingCleanupOperations()
+        cleanupOperations.forEach { domainStore.upsertCleanupOperation(OperationRecovery.recover(it, now)) }
         val scans = domainStore.interruptActiveScanSessions(now)
-        return operations.size + scans
+        var reconciled = 0
+        GoAutomationAdapter(context, domainStore).use { adapter ->
+            adapter.activity(500)
+                .asSequence()
+                .filter { it.active && (it.kind == "scan" || it.kind == "analysis") }
+                .forEach { run ->
+                    if (runCatching { adapter.reconcile(run.operationId) }.isSuccess) reconciled++
+                }
+        }
+        return cleanupOperations.size + scans + reconciled
     }
 
     fun schedule(request: ScanRequest, hours: Long) = ScheduledScanWorker.set(context, request, hours)

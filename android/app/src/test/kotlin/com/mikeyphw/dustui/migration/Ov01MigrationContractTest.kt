@@ -54,9 +54,12 @@ class Ov01MigrationContractTest {
 
     @Test fun `scheduled scan launch is not represented as terminal scan success`() {
         val source = repoFile("android/app/src/main/kotlin/com/mikeyphw/dustui/scan/ScheduledScanWorker.kt").readText()
-        assertTrue(source.contains("STATUS_LAUNCHED_NOT_TERMINAL"))
-        assertTrue(source.contains("KEY_SCAN_STATUS"))
-        assertFalse(source.contains("ScanForegroundService.start(applicationContext, request, launchedFromForegroundWorker = true)\n            Result.success()"))
+        assertTrue(source.contains("GoAutomationAdapter(applicationContext)"))
+        assertTrue(source.contains("runScanToTerminal"))
+        assertTrue(source.contains("terminal.terminalTruth"))
+        assertTrue(source.contains("KEY_OPERATION_ID"))
+        assertFalse(source.contains("STATUS_LAUNCHED_NOT_TERMINAL"))
+        assertFalse(source.contains("RESULT_STATUS to \"accepted\""))
     }
 
     @Test fun `release plan is variant correct and avoids debug tasks`() {

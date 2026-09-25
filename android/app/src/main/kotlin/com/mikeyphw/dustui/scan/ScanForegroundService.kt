@@ -13,6 +13,8 @@ import androidx.core.content.ContextCompat
 import com.mikeyphw.dustui.DustUiApplication
 import com.mikeyphw.dustui.MainActivity
 import com.mikeyphw.dustui.R
+import com.mikeyphw.dustui.data.GoAutomationAdapter
+import com.mikeyphw.dustui.data.NotificationCapability
 import com.mikeyphw.dustui.data.ScanDiagnosticIssue
 import com.mikeyphw.dustui.data.ScanDiagnosticSeverity
 import com.mikeyphw.dustui.data.ScanDiagnostics
@@ -56,10 +58,14 @@ class ScanForegroundService : Service() {
                     stopSelfResult(startId)
                     return START_NOT_STICKY
                 }
+                val operationId = intent.getStringExtra(EXTRA_OPERATION_ID)
+                val automationSource = intent.getStringExtra(EXTRA_AUTOMATION_SOURCE).orEmpty().ifBlank { SOURCE_UI }
                 if (scanJob?.isActive == true) {
                     scope.launch {
-                        domainStore.upsertSession(
-                            ScanSessionEntity(
+                        GoAutomationAdapter(this@ScanForegroundService, domainStore).use { automation ->
+                            val operation = operationId?.let { id -> automation.observe(id) } ?: automation.admitScan(request, automationSource)
+                            if (operation.requestId != request.scanId || operation.kind != "scan") return@use
+                            val failure = ScanSessionEntity(
                                 id = request.scanId,
                                 presetId = request.presetId,
                                 rootPath = request.rootPath,
@@ -68,29 +74,33 @@ class ScanForegroundService : Service() {
                                 startedAt = System.currentTimeMillis(),
                                 completedAt = System.currentTimeMillis(),
                                 errorMessage = "Another scan is already running",
+                                generation = operation.generation,
                                 integrityStatus = ScanIntegrityStatus.FAILED_INTEGRITY.name,
-                            ),
-                        )
+                            )
+                            domainStore.upsertSession(failure)
+                            automation.report(operation.operationId, "failure", "scan_busy", failure.errorMessage.orEmpty())
+                        }
                     }
                     return START_NOT_STICKY
                 }
                 activeScanId = request.scanId
-                scanJob = scope.launch { execute(request, startId) }
+                scanJob = scope.launch { execute(request, startId, operationId, automationSource) }
             }
             ACTION_CANCEL -> {
-                intent.getStringExtra(EXTRA_SCAN_ID)?.let { scanId ->
-                    if (activeScanId == scanId) {
-                        scanJob?.cancel()
-                    } else {
-                        scope.launch { rootClient.cancelScan(scanId) }
-                    }
+                val scanId = intent.getStringExtra(EXTRA_SCAN_ID).orEmpty()
+                val operationId = intent.getStringExtra(EXTRA_OPERATION_ID)
+                val automationSource = intent.getStringExtra(EXTRA_AUTOMATION_SOURCE).orEmpty().ifBlank { SOURCE_UI }
+                val nonce = intent.getStringExtra(EXTRA_NOTIFICATION_NONCE)
+                val binding = intent.getStringExtra(EXTRA_NOTIFICATION_BINDING)
+                if (scanId.isNotBlank() || !operationId.isNullOrBlank()) {
+                    scope.launch { handleCancel(scanId, operationId, automationSource, nonce, binding) }
                 }
             }
         }
         return START_NOT_STICKY
     }
 
-    private suspend fun execute(request: ScanRequest, startId: Int) {
+    private suspend fun execute(request: ScanRequest, startId: Int, providedOperationId: String?, automationSource: String) {
         var session = ScanSessionEntity(
             id = request.scanId,
             presetId = request.presetId,
@@ -105,6 +115,32 @@ class ScanForegroundService : Service() {
             startedAt = session.startedAt,
         )
         var foregroundStarted = false
+        val automation = GoAutomationAdapter(this, domainStore)
+        var operationId = providedOperationId
+        var notificationCapability: NotificationCapability? = null
+
+        suspend fun ensureOperation(): String {
+            val existing = operationId?.takeIf(String::isNotBlank)
+            if (existing != null) {
+                val observed = runCatching { automation.observe(existing) }.getOrElse { error ->
+                    operationId = null
+                    throw ScanStartFailure("AUTOMATION_OPERATION_UNAVAILABLE", request.rootPath, error.message ?: "Durable operation is unavailable")
+                }
+                if (observed.requestId != request.scanId || observed.kind != "scan") {
+                    operationId = null
+                    throw ScanStartFailure("AUTOMATION_OPERATION_BINDING_MISMATCH", request.rootPath, "Durable operation is not bound to this scan request")
+                }
+                return existing
+            }
+            return automation.admitScan(request, automationSource).operationId.also { operationId = it }
+        }
+
+        suspend fun refreshNotificationCapability(force: Boolean = false): NotificationCapability? {
+            val id = ensureOperation()
+            val current = notificationCapability
+            if (!force && current != null && current.expiresAtMs - System.currentTimeMillis() > NOTIFICATION_REFRESH_WINDOW_MS) return current
+            return runCatching { automation.notificationCancelCapability(id) }.getOrNull().also { notificationCapability = it }
+        }
 
         fun saveDiagnostics() = runCatching { diagnosticStore.save(diagnostics) }
         fun issue(
@@ -129,10 +165,14 @@ class ScanForegroundService : Service() {
         }
 
         try {
+            val durableOperationId = ensureOperation()
+            val durableOperation = automation.observe(durableOperationId)
+            session = session.copy(generation = durableOperation.generation)
             domainStore.deleteEntries(request.scanId)
             domainStore.upsertSession(session)
             saveDiagnostics()
-            startForeground(NOTIFICATION_ID, notification(session, running = true))
+            val initialCapability = refreshNotificationCapability(force = true)
+            startForeground(NOTIFICATION_ID, notification(session, running = true, operationId = durableOperationId, capability = initialCapability))
             foregroundStarted = true
 
             val serviceInfo = rootClient.serviceInfo()
@@ -192,6 +232,7 @@ class ScanForegroundService : Service() {
 
             session = session.copy(status = ScanStatus.RUNNING.name)
             domainStore.upsertSession(session)
+            automation.report(ensureOperation(), "running", "scan_started", "Root scan entered running state")
             val pending = ArrayList<ScanEntryEntity>(ENTRY_BATCH_SIZE)
             var persistedEntries = 0L
             var terminalEvent = false
@@ -346,7 +387,8 @@ class ScanForegroundService : Service() {
                     persistedEntries += flush(pending)
                     session = session.copy(persistedEntryCount = persistedEntries)
                     domainStore.upsertSession(session)
-                    notifications.notify(NOTIFICATION_ID, notification(session, running = !terminalEvent))
+                    val refreshedCapability = if (!terminalEvent) refreshNotificationCapability() else null
+                    notifications.notify(NOTIFICATION_ID, notification(session, running = !terminalEvent, operationId = ensureOperation(), capability = refreshedCapability))
 
                     val remote = rootClient.scanState(request.scanId)
                     if (terminalEvent || remote.terminal || !remote.ok) {
@@ -427,8 +469,18 @@ class ScanForegroundService : Service() {
         } finally {
             withContext(NonCancellable) {
                 if (activeScanId == request.scanId) activeScanId = null
+                val terminalState = when (session.status) {
+                    ScanStatus.COMPLETED.name, ScanStatus.COMPLETED_TRUNCATED.name -> "success"
+                    ScanStatus.FAILED.name, ScanStatus.FAILED_INTEGRITY.name -> "failure"
+                    ScanStatus.CANCELLED.name -> "cancelled"
+                    ScanStatus.INTERRUPTED.name -> "interrupted"
+                    else -> "recovery_required"
+                }
+                operationId?.let { id ->
+                    runCatching { automation.report(id, terminalState, "scan_terminal", session.errorMessage ?: session.status) }
+                }
                 if (session.status == ScanStatus.COMPLETED.name) runCatching { StorageAlertNotifier.evaluate(this@ScanForegroundService, domainStore) }
-                if (foregroundStarted) finishNotification(session)
+                if (foregroundStarted) finishNotification(session, operationId)
                 stopSelfResult(startId)
             }
         }
@@ -450,7 +502,12 @@ class ScanForegroundService : Service() {
         return copy.size.toLong()
     }
 
-    private fun notification(session: ScanSessionEntity, running: Boolean) = NotificationCompat.Builder(this, CHANNEL_ID)
+    private fun notification(
+        session: ScanSessionEntity,
+        running: Boolean,
+        operationId: String? = null,
+        capability: NotificationCapability? = null,
+    ) = NotificationCompat.Builder(this, CHANNEL_ID)
         .setSmallIcon(R.drawable.ic_scan)
         .setContentTitle(if (running) getString(R.string.scanning_title) else getString(R.string.scan_finished_title))
         .setContentText(
@@ -479,16 +536,20 @@ class ScanForegroundService : Service() {
             ),
         )
         .apply {
-            if (running) {
+            if (running && operationId != null && capability != null && capability.operationId == operationId) {
                 addAction(
                     0,
                     getString(R.string.cancel),
                     PendingIntent.getService(
                         this@ScanForegroundService,
-                        session.id.hashCode(),
+                        capability.nonce.hashCode(),
                         Intent(this@ScanForegroundService, ScanForegroundService::class.java)
                             .setAction(ACTION_CANCEL)
-                            .putExtra(EXTRA_SCAN_ID, session.id),
+                            .putExtra(EXTRA_SCAN_ID, session.id)
+                            .putExtra(EXTRA_OPERATION_ID, operationId)
+                            .putExtra(EXTRA_AUTOMATION_SOURCE, SOURCE_NOTIFICATION)
+                            .putExtra(EXTRA_NOTIFICATION_NONCE, capability.nonce)
+                            .putExtra(EXTRA_NOTIFICATION_BINDING, capability.operationBinding),
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                     ),
                 )
@@ -496,16 +557,53 @@ class ScanForegroundService : Service() {
         }
         .build()
 
-    private fun finishNotification(session: ScanSessionEntity) {
+    private fun finishNotification(session: ScanSessionEntity, operationId: String?) {
         stopForeground(STOP_FOREGROUND_DETACH)
-        notifications.notify(NOTIFICATION_ID, notification(session, running = false))
+        notifications.notify(NOTIFICATION_ID, notification(session, running = false, operationId = operationId))
+    }
+
+    private suspend fun handleCancel(
+        scanIdHint: String,
+        operationIdHint: String?,
+        source: String,
+        nonce: String?,
+        binding: String?,
+    ) {
+        GoAutomationAdapter(this, domainStore).use { automation ->
+            var operationId = operationIdHint
+            var scanId = scanIdHint
+            if (!nonce.isNullOrBlank() || !binding.isNullOrBlank()) {
+                if (nonce.isNullOrBlank() || binding.isNullOrBlank() || operationId.isNullOrBlank()) return
+                val claim = automation.claimNotificationCancel(
+                    NotificationCapability(
+                        nonce = nonce,
+                        operationId = operationId,
+                        requestId = scanId,
+                        action = "cancel",
+                        expiresAtMs = Long.MAX_VALUE,
+                        operationBinding = binding,
+                    ),
+                )
+                if (!claim.accepted) return
+                operationId = claim.operationId
+                scanId = claim.requestId.orEmpty()
+            }
+            if (operationId.isNullOrBlank()) {
+                if (scanId.isBlank()) return
+                operationId = runCatching { automation.operationForRequest(scanId).operationId }.getOrNull() ?: return
+            }
+            if (scanId.isBlank()) {
+                scanId = runCatching { automation.observe(operationId).requestId }.getOrNull().orEmpty()
+            }
+            if (!automation.requestCancel(operationId, source)) return
+            if (activeScanId == scanId) scanJob?.cancel() else if (scanId.isNotBlank()) rootClient.cancelScan(scanId)
+        }
     }
 
     override fun onTimeout(startId: Int, fgsType: Int) {
         val scanId = activeScanId
         if (scanId != null) {
-            scanJob?.cancel()
-            scope.launch { runCatching { rootClient.cancelScan(scanId) } }
+            scope.launch { handleCancel(scanId, null, SOURCE_RECOVERY, null, null) }
         }
         stopSelfResult(startId)
     }
@@ -535,12 +633,28 @@ class ScanForegroundService : Service() {
         private const val EXTRA_REQUEST = "request"
         private const val EXTRA_SCAN_ID = "scanId"
         private const val EXTRA_FOREGROUND_WORKER = "foregroundWorker"
+        private const val EXTRA_OPERATION_ID = "operationId"
+        private const val EXTRA_AUTOMATION_SOURCE = "automationSource"
+        private const val EXTRA_NOTIFICATION_NONCE = "notificationNonce"
+        private const val EXTRA_NOTIFICATION_BINDING = "notificationBinding"
+        private const val SOURCE_UI = "ui"
+        private const val SOURCE_NOTIFICATION = "notification"
+        private const val SOURCE_RECOVERY = "recovery"
+        private const val NOTIFICATION_REFRESH_WINDOW_MS = 2L * 60L * 1000L
 
-        fun start(context: Context, request: ScanRequest, launchedFromForegroundWorker: Boolean = false) {
+        fun start(
+            context: Context,
+            request: ScanRequest,
+            launchedFromForegroundWorker: Boolean = false,
+            operationId: String? = null,
+            automationSource: String = SOURCE_UI,
+        ) {
             val intent = Intent(context, ScanForegroundService::class.java)
                 .setAction(ACTION_START)
                 .putExtra(EXTRA_REQUEST, request.validated().toJson())
                 .putExtra(EXTRA_FOREGROUND_WORKER, launchedFromForegroundWorker)
+                .putExtra(EXTRA_OPERATION_ID, operationId)
+                .putExtra(EXTRA_AUTOMATION_SOURCE, automationSource)
             if (launchedFromForegroundWorker) {
                 context.startService(intent)
             } else {
@@ -548,11 +662,13 @@ class ScanForegroundService : Service() {
             }
         }
 
-        fun cancel(context: Context, scanId: String) {
+        fun cancel(context: Context, scanId: String, operationId: String? = null, automationSource: String = SOURCE_UI) {
             context.startService(
                 Intent(context, ScanForegroundService::class.java)
                     .setAction(ACTION_CANCEL)
-                    .putExtra(EXTRA_SCAN_ID, scanId),
+                    .putExtra(EXTRA_SCAN_ID, scanId)
+                    .putExtra(EXTRA_OPERATION_ID, operationId)
+                    .putExtra(EXTRA_AUTOMATION_SOURCE, automationSource),
             )
         }
     }

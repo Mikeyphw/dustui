@@ -3,6 +3,7 @@ package com.mikeyphw.dustui.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.mikeyphw.dustui.data.ActivityRun
 import com.mikeyphw.dustui.data.EntryIntelligence
 import com.mikeyphw.dustui.data.AppResidueAnalysis
 import com.mikeyphw.dustui.data.AppResidueConfidence
@@ -117,6 +118,72 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val debugExportResult: StateFlow<DebugExportResult?> = _debugExportResult
     private val _debugOverlayVisible = MutableStateFlow(false)
     val debugOverlayVisible: StateFlow<Boolean> = _debugOverlayVisible
+
+    // AUD-FIX-04 exposes one durable Go operation identity/truth to Android UI state.
+    // AUD-FIX-11 owns the final Activity information architecture/rendering.
+    private val _activityRuns = MutableStateFlow<List<ActivityRun>>(emptyList())
+    val activityRuns: StateFlow<List<ActivityRun>> = _activityRuns
+    private val _selectedActivityRun = MutableStateFlow<ActivityRun?>(null)
+    val selectedActivityRun: StateFlow<ActivityRun?> = _selectedActivityRun
+
+    fun refreshActivityRuns(limit: Int = 100) {
+        viewModelScope.launch {
+            runCatching { repository.activityRuns(limit) }
+                .onSuccess { runs ->
+                    _activityRuns.value = runs
+                    _selectedActivityRun.value = _selectedActivityRun.value?.operationId
+                        ?.let { id -> runs.firstOrNull { it.operationId == id } }
+                }
+                .onFailure { error ->
+                    recordDebugEvent(DebugCategory.App, DebugSeverity.Warning, "activity_refresh_failed", error.message ?: "Unable to load durable activity")
+                }
+        }
+    }
+
+    fun selectActivityRun(operationId: String?) {
+        if (operationId == null) {
+            _selectedActivityRun.value = null
+            return
+        }
+        viewModelScope.launch {
+            runCatching { repository.activityRun(operationId) }
+                .onSuccess { _selectedActivityRun.value = it }
+                .onFailure { error -> recordDebugEvent(DebugCategory.App, DebugSeverity.Warning, "activity_detail_failed", error.message ?: "Unable to load operation") }
+        }
+    }
+
+    fun cancelActivityRun(operationId: String) {
+        viewModelScope.launch {
+            runCatching { repository.cancelActivityRun(operationId) }
+                .onSuccess { allowed ->
+                    if (!allowed) _message.value = "Cancellation is not allowed for this operation"
+                    refreshActivityRuns()
+                }
+                .onFailure { _message.value = it.message ?: "Unable to request cancellation" }
+        }
+    }
+
+    fun reconcileActivityRun(operationId: String) {
+        viewModelScope.launch {
+            runCatching { repository.reconcileActivityRun(operationId) }
+                .onSuccess { run ->
+                    _selectedActivityRun.value = run
+                    refreshActivityRuns()
+                }
+                .onFailure { _message.value = it.message ?: "Unable to reconcile operation" }
+        }
+    }
+
+    fun retryActivityRun(operationId: String) {
+        viewModelScope.launch {
+            runCatching { repository.retryActivityRun(operationId) }
+                .onSuccess { retry ->
+                    _message.value = "Retry admitted as ${retry.operationId}"
+                    refreshActivityRuns()
+                }
+                .onFailure { _message.value = it.message ?: "Unable to retry operation" }
+        }
+    }
 
     private fun recordDebugEvent(
         category: DebugCategory,

@@ -3,10 +3,12 @@ package state
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // AndroidScanSession is the wire/storage model used by the Android shell after
@@ -272,7 +274,93 @@ func (s *SQLiteStore) UpsertAndroidCleanupOperation(ctx context.Context, v Andro
 		return errors.New("android_cleanup_operation_identity_required")
 	}
 	_, err := s.db.ExecContext(ctx, `INSERT INTO android_cleanup_operations(id,scan_id,root_path,status,selected_count,planned_bytes,deleted_bytes,created_at_ms,completed_at_ms,message,review_id,scan_generation,plan_hash,expires_at_ms,outcome_certainty) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET scan_id=excluded.scan_id,root_path=excluded.root_path,status=excluded.status,selected_count=excluded.selected_count,planned_bytes=excluded.planned_bytes,deleted_bytes=excluded.deleted_bytes,created_at_ms=excluded.created_at_ms,completed_at_ms=excluded.completed_at_ms,message=excluded.message,review_id=excluded.review_id,scan_generation=excluded.scan_generation,plan_hash=excluded.plan_hash,expires_at_ms=excluded.expires_at_ms,outcome_certainty=excluded.outcome_certainty`, v.ID, v.ScanID, v.RootPath, v.Status, v.SelectedCount, v.PlannedBytes, v.DeletedBytes, v.CreatedAt, v.CompletedAt, v.Message, v.ReviewID, v.ScanGeneration, v.PlanHash, v.ExpiresAt, v.OutcomeCertainty)
-	return err
+	if err != nil {
+		return err
+	}
+	return s.syncCleanupActivity(ctx, v)
+}
+
+func cleanupOperationState(status string) (state, truth string, terminal, recovery bool) {
+	switch strings.ToUpper(strings.TrimSpace(status)) {
+	case "REVIEWED":
+		return "accepted", "pending", false, false
+	case "EXECUTING", "VERIFYING":
+		return "running", "pending", false, false
+	case "COMPLETED":
+		return "success", "success", true, false
+	case "CANCELLED":
+		return "cancelled", "cancelled", true, false
+	case "INTERRUPTED":
+		return "interrupted", "interrupted", true, true
+	case "UNKNOWN_OUTCOME", "RECOVERY_REQUIRED":
+		return "recovery_required", "recovery_required", true, true
+	case "FAILED", "PARTIAL", "BLOCKED":
+		return "failure", "failure", true, false
+	default:
+		return "recovery_required", "recovery_required", true, true
+	}
+}
+
+func (s *SQLiteStore) syncCleanupActivity(ctx context.Context, v AndroidCleanupOperation) error {
+	stateValue, truth, terminal, recovery := cleanupOperationState(v.Status)
+	if strings.EqualFold(v.OutcomeCertainty, "UNKNOWN") {
+		stateValue, truth, terminal, recovery = "recovery_required", "recovery_required", true, true
+	}
+	now := v.CreatedAt
+	if v.CompletedAt != nil {
+		now = *v.CompletedAt
+	}
+	if now <= 0 {
+		now = time.Now().UnixMilli()
+	}
+	fingerprint := stableProductID("cleanup", v.ScanID, v.PlanHash, v.ReviewID)
+	requestID := "cleanup:" + v.ID
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	var current string
+	var sequence int64
+	err = tx.QueryRowContext(ctx, `SELECT state,last_sequence FROM operations WHERE id=?`, v.ID).Scan(&current, &sequence)
+	if errors.Is(err, sql.ErrNoRows) {
+		current, sequence = "accepted", 1
+		if _, err := tx.ExecContext(ctx, `INSERT INTO operations(id,request_id,request_fingerprint,generation,state,last_sequence,recovery_required,created_at_ms,updated_at_ms) VALUES(?,?,?,?,?,?,?,?,?)`, v.ID, requestID, fingerprint, max64(1, v.ScanGeneration), current, sequence, 0, v.CreatedAt, now); err != nil {
+			return err
+		}
+		if _, err := tx.ExecContext(ctx, `INSERT INTO operation_events(operation_id,sequence,generation,state,reason,message,created_at_ms) VALUES(?,?,?,?,?,?,?)`, v.ID, sequence, max64(1, v.ScanGeneration), current, "cleanup_reviewed", "cleanup review admitted", v.CreatedAt); err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+	if current != stateValue {
+		sequence++
+		if _, err := tx.ExecContext(ctx, `UPDATE operations SET state=?,last_sequence=?,terminal_sequence=CASE WHEN ? THEN ? ELSE terminal_sequence END,recovery_required=?,updated_at_ms=? WHERE id=?`, stateValue, sequence, boolInt(terminal), sequence, boolInt(recovery), now, v.ID); err != nil {
+			return err
+		}
+		if _, err := tx.ExecContext(ctx, `INSERT OR REPLACE INTO operation_events(operation_id,sequence,generation,state,reason,message,created_at_ms) VALUES(?,?,?,?,?,?,?)`, v.ID, sequence, max64(1, v.ScanGeneration), stateValue, "cleanup_state", strings.ToLower(v.Status), now); err != nil {
+			return err
+		}
+	}
+	if _, err := tx.ExecContext(ctx, `INSERT OR REPLACE INTO automation_sources(operation_id,source,adapter_role,thin_adapter,last_observed_state,last_observed_sequence,terminal_reported) VALUES(?,?,?,?,?,?,?)`, v.ID, "ui", "cleanup-platform-adapter", 1, stateValue, sequence, boolInt(terminal)); err != nil {
+		return err
+	}
+	progress, _ := json.Marshal(map[string]any{"state": strings.ToLower(v.Status), "plannedBytes": v.PlannedBytes, "deletedBytes": v.DeletedBytes, "selectedCount": v.SelectedCount})
+	result, _ := json.Marshal(map[string]any{"terminalTruth": truth, "message": v.Message, "deletedBytes": v.DeletedBytes})
+	verification, _ := json.Marshal(map[string]any{"outcomeCertainty": v.OutcomeCertainty, "reviewId": v.ReviewID, "planHash": v.PlanHash})
+	retry, cancel, reconcile := "blocked_cleanup_review_required", "blocked_cleanup_owned", "blocked_cleanup_recovery_surface"
+	if _, err := tx.ExecContext(ctx, `INSERT OR REPLACE INTO activity_runs(operation_id,active,history,recovery_required,terminal_truth,progress_json,result_json,verification_json,retry_gate,cancel_gate,reconcile_gate,evidence_correlation,updated_at_ms) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`, v.ID, boolInt(!terminal), boolInt(terminal), boolInt(recovery), truth, string(progress), string(result), string(verification), retry, cancel, reconcile, "cleanup:"+v.ScanID+":"+v.PlanHash, now); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func max64(a, b int64) int64 {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 func (s *SQLiteStore) InsertAndroidCleanupOperationIfAbsent(ctx context.Context, v AndroidCleanupOperation) (bool, error) {
@@ -281,7 +369,15 @@ func (s *SQLiteStore) InsertAndroidCleanupOperationIfAbsent(ctx context.Context,
 		return false, err
 	}
 	n, err := result.RowsAffected()
-	return n == 1, err
+	if err != nil {
+		return false, err
+	}
+	if n == 1 {
+		if err := s.syncCleanupActivity(ctx, v); err != nil {
+			return false, err
+		}
+	}
+	return n == 1, nil
 }
 
 func (s *SQLiteStore) ReplaceAndroidCleanupPlan(ctx context.Context, operationID string, items []AndroidCleanupPlanItem) error {
@@ -310,7 +406,19 @@ func (s *SQLiteStore) ClaimAndroidCleanupOperation(ctx context.Context, id strin
 	if err != nil {
 		return 0, err
 	}
-	return result.RowsAffected()
+	count, err := result.RowsAffected()
+	if err != nil || count != 1 {
+		return count, err
+	}
+	row := s.db.QueryRowContext(ctx, `SELECT `+androidCleanupColumns+` FROM android_cleanup_operations WHERE id=?`, id)
+	operation, err := scanAndroidCleanupOperation(row)
+	if err != nil {
+		return count, err
+	}
+	if err := s.syncCleanupActivity(ctx, operation); err != nil {
+		return count, err
+	}
+	return count, nil
 }
 
 func scanAndroidCleanupOperation(scanner interface{ Scan(...any) error }) (AndroidCleanupOperation, error) {

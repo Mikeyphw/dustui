@@ -90,8 +90,8 @@ class RootServiceClient(private val context: Context) {
     suspend fun scanState(scanId: String): RootScanState = call { it.scanState(scanId) }
     suspend fun cancelScan(scanId: String): RootScanState = call { it.cancelScan(scanId) }
 
-    suspend fun verifyDuplicates(scanId: String, paths: List<String>, sizeBytes: Long, scanRoot: String): DuplicateVerificationReport {
-        val operationId = UUID.randomUUID().toString()
+    suspend fun verifyDuplicates(operationId: String, scanId: String, paths: List<String>, sizeBytes: Long, scanRoot: String): DuplicateVerificationReport {
+        require(operationId.isNotBlank()) { "Duplicate verification requires durable operation identity" }
         activeDuplicateOperations[scanId] = operationId
         val raw = try {
             duplicateExecutionCall(operationId, DUPLICATE_TIMEOUT_MS) { service ->

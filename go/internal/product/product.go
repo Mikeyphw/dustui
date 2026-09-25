@@ -173,7 +173,7 @@ func boundProtocols() []string {
 		intelligence.Protocol,
 		packageevidence.Protocol,
 		diagnostics.Protocol,
-		"dustui.automation.activity.v1",
+		"dustui.automation.activity.v2",
 	}
 	sort.Strings(protocols)
 	return protocols

@@ -1,18 +1,15 @@
 package com.mikeyphw.dustui.go
 
-/**
- * OV11 reconnect scaffold: UI, WorkManager, Tasker, notifications, and recovery
- * must observe the same durable Go operation. Android buildability remains
- * intentionally suspended until OV13, so this file is a thin contract only.
- */
+/** AUD-FIX-04 durable automation/activity contract consumed by thin Android adapters. */
 object AutomationActivityContract {
-    const val Protocol = "dustui.automation.activity.v1"
-    const val Phase = "OV11"
-    const val Authority = "go-automation-activity"
+    const val Protocol = "dustui.automation.activity.v2"
+    const val Phase = "AUD-FIX-04"
+    const val Authority = "go-sqlite-automation-activity"
     val ThinAdapters = listOf("ui", "workmanager", "tasker", "notification", "recovery")
-    val NonDestructiveAutomation = listOf("scan", "status", "cancel", "inspect")
-    val ForbiddenSuccessAliases = listOf("accepted", "queued", "running")
+    val Lifecycle = listOf("accepted", "running", "success", "failure", "cancelled", "recovery_required")
+    val ForbiddenSuccessAliases = listOf("accepted", "queued", "running", "cancelling")
     val NotificationGuards = listOf("nonce", "expiry", "single_use", "operation_binding", "replay_rejection")
+    val ActivityActions = listOf("detail", "cancel", "retry", "reconcile")
 }
 
 data class AutomationAdmissionContract(
@@ -20,6 +17,7 @@ data class AutomationAdmissionContract(
     val source: String,
     val operation: String,
     val generation: Long,
+    val acceptedNotSuccess: Boolean,
 )
 
 data class ActivityRunContract(

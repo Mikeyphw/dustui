@@ -1,0 +1,18 @@
+{
+  "schema": "dustui.aud-fix-status.v1",
+  "overlay": "AUD-FIX-04",
+  "status": "implementation-complete-evidence-deferred",
+  "closed_or_advanced_gap_families": [
+    "AUD-011",
+    "AUD-012",
+    "AUD-016"
+  ],
+  "audit_evidence": "migration/audit/v2/aud_fix_04_audit_loop.json",
+  "gate_d": "open",
+  "passes": 2,
+  "blockers": [],
+  "environment_deferred_evidence": [
+    "modernc SQLite lifecycle/replay tests",
+    "Android Gradle contract test"
+  ]
+}
