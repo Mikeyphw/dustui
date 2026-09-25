@@ -77,6 +77,17 @@ def topology_failures() -> list[str]:
     hist_job = cfg.get("targets", {}).get("dustui_android", {}).get("jobs", {}).get("historical_gate_inventory", {})
     if hist_job.get("inputs") or hist_job.get("outputs"):
         failures.append("historical_gate_inventory must leave inputs/outputs undeclared for exclusive Git-metadata-safe scheduling")
+
+    history_source = (ROOT / "scripts/audfix14_history.py").read_text(encoding="utf-8", errors="replace")
+    required_isolation_tokens = [
+        "_tracked_legacy_python",
+        "removed-preexisting-untracked-exact-historical-copy",
+        "FAILED_PREEXISTING_LEGACY_PYTHON_UNPROVEN",
+        "final_matches_expected",
+    ]
+    for token in required_isolation_tokens:
+        if token not in history_source:
+            failures.append(f"AUD-FIX-14 historical isolation missing preexisting-residue guard token: {token}")
     return failures
 
 

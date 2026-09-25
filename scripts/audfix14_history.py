@@ -85,10 +85,34 @@ def _live_tree_baseline() -> dict[str, Any]:
 
 
 def _status_for_legacy_python() -> list[str]:
-    cp = _run("git", "status", "--porcelain=v1", "--untracked-files=all", "--", "src/dust_tui")
+    cp = _run("git", "status", "--porcelain=v1", "--untracked-files=all", "--ignored=matching", "--", "src/dust_tui")
     if cp.returncode != 0:
         return [f"git-status-error:{cp.stderr.strip() or cp.stdout.strip()}"]
     return [line for line in cp.stdout.splitlines() if line.strip()]
+
+
+def _tracked_legacy_python() -> list[str]:
+    cp = _run("git", "ls-files", "--", "src/dust_tui")
+    if cp.returncode != 0:
+        return [f"git-ls-files-error:{cp.stderr.strip() or cp.stdout.strip()}"]
+    return [line for line in cp.stdout.splitlines() if line.strip()]
+
+
+def _current_config_uses_legacy_python() -> bool:
+    text = DEVTOOL_CONFIG.read_text(encoding="utf-8", errors="replace") if DEVTOOL_CONFIG.is_file() else ""
+    return 'kind = "python"' in text and 'run_module = "dust_tui"' in text
+
+
+def _remove_legacy_python_tree() -> None:
+    if LEGACY_PYTHON.is_symlink() or LEGACY_PYTHON.is_file():
+        LEGACY_PYTHON.unlink()
+    elif LEGACY_PYTHON.is_dir():
+        shutil.rmtree(LEGACY_PYTHON)
+    src_parent = LEGACY_PYTHON.parent
+    try:
+        src_parent.rmdir()
+    except OSError:
+        pass
 
 
 def _prepared_legacy_matches(prepared: list[str], observed: dict[str, Any]) -> list[str]:
@@ -104,72 +128,95 @@ def _prepared_legacy_matches(prepared: list[str], observed: dict[str, Any]) -> l
 
 
 def enforce_live_tree_isolation(report: dict[str, Any], baseline: dict[str, Any]) -> bool:
-    """Protect current-tree qualification from historical-worktree checkout residue.
+    """Protect current-tree qualification from historical-worktree residue.
 
-    A historical `git worktree add` must not alter current production source. On
-    some hosts the checkout has materialized the retired top-level
-    `src/dust_tui` tree in the main worktree. We only clean it when all of the
-    following are proven: it was absent before preparation, every resulting Git
-    status entry is untracked, and its complete content fingerprint exactly
-    matches a prepared historical worktree. Any other change fails closed and
-    is left untouched.
+    Historical replay must never make retired Python/Textual source look current.
+    There are two safe cleanup cases:
+
+    * transient residue created during this preparation run; and
+    * preexisting residue left by an earlier failed preparation run.
+
+    The preexisting case is intentionally stricter: the live `src/dust_tui`
+    tree must be wholly untracked by Git, the current Devtool configuration
+    must not select the Python runtime, and the complete content fingerprint
+    must exactly match a prepared historical worktree. Any tracked, modified,
+    configured, or nonhistorical tree is preserved and fails closed.
     """
     prepared = list(report.get("prepared_worktrees", []))
     before_legacy = baseline["legacy_python"]
     observed_legacy = _tree_fingerprint(LEGACY_PYTHON)
     before_devtool = baseline["devtool_config_sha256"]
     observed_devtool = _sha256(DEVTOOL_CONFIG)
+    statuses = _status_for_legacy_python() if observed_legacy.get("exists") else []
+    tracked = _tracked_legacy_python() if observed_legacy.get("exists") else []
+    matches = _prepared_legacy_matches(prepared, observed_legacy)
+    configured_current = _current_config_uses_legacy_python()
     isolation: dict[str, Any] = {
         "baseline": baseline,
         "observed_after_prepare": {
             "legacy_python": observed_legacy,
             "devtool_config_sha256": observed_devtool,
         },
-        "git_status": [],
-        "historical_matches": [],
+        "git_status": statuses,
+        "tracked_paths": tracked,
+        "historical_matches": matches,
+        "configured_as_current_python": configured_current,
         "action": "none",
         "status": "clean",
         "final_matches_baseline": False,
+        "final_matches_expected": False,
     }
+    expected_final = baseline
 
     if before_devtool != observed_devtool:
         isolation["status"] = "FAILED_LIVE_DEVTOOL_CONFIG_MUTATION"
         isolation["reason"] = ".devtool.toml changed while preparing historical worktrees"
     elif observed_legacy != before_legacy:
-        statuses = _status_for_legacy_python()
-        isolation["git_status"] = statuses
-        matches = _prepared_legacy_matches(prepared, observed_legacy)
-        isolation["historical_matches"] = matches
         baseline_absent = before_legacy.get("exists") is False
-        purely_untracked = bool(statuses) and all(line.startswith("?? ") for line in statuses)
+        wholly_untracked = not tracked and not any(x.startswith("git-ls-files-error:") for x in tracked)
         exact_historical_copy = bool(matches)
-        if baseline_absent and observed_legacy.get("exists") and purely_untracked and exact_historical_copy:
-            if LEGACY_PYTHON.is_symlink() or LEGACY_PYTHON.is_file():
-                LEGACY_PYTHON.unlink()
-            elif LEGACY_PYTHON.is_dir():
-                shutil.rmtree(LEGACY_PYTHON)
-            src_parent = LEGACY_PYTHON.parent
-            try:
-                src_parent.rmdir()
-            except OSError:
-                pass
+        if baseline_absent and observed_legacy.get("exists") and wholly_untracked and exact_historical_copy and not configured_current:
+            _remove_legacy_python_tree()
             isolation["action"] = "removed-untracked-exact-historical-copy"
             isolation["status"] = "cleaned-transient-historical-copy"
         else:
             isolation["status"] = "FAILED_LIVE_TREE_CONTAMINATION"
             isolation["reason"] = (
                 "current src/dust_tui changed during historical preparation but was not proven "
-                "to be a newly-created untracked exact copy of a prepared historical worktree"
+                "to be a newly-created wholly-untracked exact copy of a prepared historical worktree"
+            )
+    elif before_legacy.get("exists") and observed_legacy.get("exists") and not configured_current:
+        wholly_untracked = not tracked and not any(x.startswith("git-ls-files-error:") for x in tracked)
+        exact_historical_copy = bool(matches)
+        if wholly_untracked and exact_historical_copy:
+            _remove_legacy_python_tree()
+            isolation["action"] = "removed-preexisting-untracked-exact-historical-copy"
+            isolation["status"] = "cleaned-preexisting-historical-copy"
+            expected_final = {
+                "legacy_python": {"exists": False, "kind": "missing", "sha256": None, "entries": 0},
+                "devtool_config_sha256": before_devtool,
+            }
+        else:
+            isolation["status"] = "FAILED_PREEXISTING_LEGACY_PYTHON_UNPROVEN"
+            isolation["reason"] = (
+                "preexisting src/dust_tui is not selected by current Devtool configuration, but it was not proven "
+                "to be a wholly-untracked exact copy of a prepared historical worktree; preserving it"
             )
 
+    isolation["expected_final"] = expected_final
     final = _live_tree_baseline()
     isolation["final"] = final
     isolation["final_matches_baseline"] = final == baseline
-    if not isolation["final_matches_baseline"] and not isolation["status"].startswith("FAILED_"):
+    isolation["final_matches_expected"] = final == expected_final
+    if not isolation["final_matches_expected"] and not isolation["status"].startswith("FAILED_"):
         isolation["status"] = "FAILED_LIVE_TREE_RESTORE_MISMATCH"
-        isolation["reason"] = "historical preparation did not leave the current-tree qualification inputs unchanged"
+        isolation["reason"] = "historical preparation did not leave the current-tree qualification inputs at the proven expected state"
     report["live_tree_isolation"] = isolation
-    return isolation["status"] in {"clean", "cleaned-transient-historical-copy"} and isolation["final_matches_baseline"]
+    return isolation["status"] in {
+        "clean",
+        "cleaned-transient-historical-copy",
+        "cleaned-preexisting-historical-copy",
+    } and isolation["final_matches_expected"]
 
 
 def discover_gate(entry: dict[str, Any]) -> dict[str, Any]:
