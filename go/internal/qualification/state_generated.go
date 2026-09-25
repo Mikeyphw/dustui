@@ -5,7 +5,7 @@ const StateSource = "migration/qualification/v1/current_state.json"
 const EvidenceRegistry = "migration/qualification/v1/gate_d_evidence.json"
 const GateDQualified = false
 const GateDStatus = "open"
-const GateDReason = "required-gate-d-evidence-incomplete-or-unbound"
+const GateDReason = "historical-gate-evidence-incomplete-or-unrecoverable"
 const OV14Status = "blocked-on-gate-d"
 const GateEStatus = "blocked-on-gate-d-and-ov14-retirement"
 const LegacyPythonTextualPresent = false
@@ -21,6 +21,7 @@ var RequiredEvidenceNodes = []string{
 	"historical_gate_a_exo",
 	"historical_gate_b_exo_arm64",
 	"historical_gate_c_exo",
+	"requirement_index_conformance",
 	"go_test",
 	"go_build",
 	"go_schema",
@@ -68,6 +69,7 @@ var MissingRequiredEvidence = []string{
 	"install_launch_smoke",
 	"migration_validators",
 	"production_reachability",
+	"requirement_index_conformance",
 	"rooted_arm64_runtime",
 	"route_deeplink_recreation_rotation",
 	"runtime_apk_binding",

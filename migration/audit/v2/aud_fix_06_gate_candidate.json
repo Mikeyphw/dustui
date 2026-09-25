@@ -80,8 +80,16 @@
     "parallel": true
   },
   "schema": "dustui.aud-fix-gate-candidate.v1",
-  "status": "candidate-awaiting-required-devtool-validation",
+  "status": "validated-attempt-failed-then-force-applied",
   "validate_workflow_same_authority": true,
   "validation_tasks_declared": false,
-  "workflow": "dustui_android#authority_gate_r1"
+  "workflow": "dustui_android#authority_gate_r1",
+  "validated_gate_result": "failed",
+  "rollback": "succeeded",
+  "post_failure_force_apply": true,
+  "force_apply_validation": "not-run",
+  "failed_node": "dustui_android.gradle_contract",
+  "failed_task": "verifyDustMigrationContract",
+  "attempt_record": "migration/qualification/v1/authority_gate_r1_attempt.json",
+  "gate_r1_passed": false
 }

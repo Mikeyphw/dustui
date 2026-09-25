@@ -62,8 +62,8 @@ android {
     }
 
     sourceSets {
-        getByName("main").jniLibs.srcDir(layout.buildDirectory.dir("generated/goRuntime/jniLibs"))
-        getByName("androidTest").assets.srcDir("$projectDir/schemas")
+        getByName("main").jniLibs.directories.add(layout.buildDirectory.dir("generated/goRuntime/jniLibs").get().asFile)
+        getByName("androidTest").assets.directories.add(file("$projectDir/schemas"))
     }
 
 

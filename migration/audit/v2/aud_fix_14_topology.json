@@ -1,0 +1,22 @@
+{
+  "schema": "dustui.aud-fix-14-audit.v1",
+  "overlay": "AUD-FIX-14",
+  "gate_d_closure_allowed": false,
+  "preflight_workflow": "dustui_android#gate_d_preflight",
+  "preflight_top_level_nodes": 7,
+  "gate_d_required_proof_nodes": 26,
+  "gate_d_effective_exo_nodes_at_plan_time": 49,
+  "historical_gates": ["A", "B", "C"],
+  "historical_resolution": "runtime-from-real-git-history",
+  "historical_missing_policy": "UNRECOVERABLE_HISTORICAL_EVIDENCE",
+  "same_current_tree_binding": true,
+  "gate_b_arm64_device_required": true,
+  "r1_validated_attempt": "failed",
+  "r1_force_apply_counts_as_pass": false,
+  "known_r1_gradle_blocker_repaired": true,
+  "aud_fix_14_topology_blockers": 0,
+  "gate_d_expected_blocker_until_history_replay": "AUD-019",
+  "later_physical_retirement": ["AUD-014", "AUD-015"],
+  "validation_mode": "non-gate-no-validate",
+  "next": "AUD-FIX-15 executes and binds the full Gate-D qualification graph"
+}

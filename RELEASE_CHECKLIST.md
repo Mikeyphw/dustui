@@ -280,3 +280,13 @@ Ship only when `SHIP_STATUS.md` says `SHIP` or when every warning listed under `
 - [ ] `.devtool.toml` and Go product metadata consume generated acceptance + qualification state.
 - [ ] Quarantined app-local adb/APK/release helpers are not referenced by `aud_fix_13` or Gate-D orchestration.
 - [ ] Gate D remains OPEN until AUD-FIX-15 executes the complete qualified evidence graph.
+
+### AUD-FIX-14 pre-Gate-D evidence
+
+- [ ] Gate A exact commit/tree discovered and canonical EXO replay bound.
+- [ ] Gate B exact commit/tree discovered and canonical EXO replay includes ARM64 device/runtime proof.
+- [ ] Gate C exact commit/tree discovered and canonical EXO replay bound.
+- [x] Complete Gate-D topology is declared and self-tested.
+- [x] Current Gate-D nodes require one clean-tree identity; historical nodes require exact original/replay identity.
+- [x] Failed R1 validation remains recorded as failed despite later force-apply.
+- [ ] Gate D remains open until AUD-FIX-15 executes and binds every required node.

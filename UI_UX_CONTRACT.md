@@ -357,3 +357,7 @@ Traversal order is primary navigation → master pane → detail → context act
 ## AUD-FIX-13 acceptance authority
 
 The current UI/UX acceptance authority is `migration/acceptance/v1/ui_acceptance_matrix.json`, derived from the canonical requirement index. It covers every UIUX requirement plus the 14 user-task outcomes and ten visual/product rules. Historical portrait/Debug Workbench/source-token contracts are archived and cannot override the semantic-route/adaptive successor. Candidate coverage is distinct from executed Gate-D/Gate-E qualification.
+
+## AUD-FIX-14 qualification boundary
+
+Gate D proves that predecessor authorities are not production-reachable and successor surfaces are product-default. It does not require physical deletion of the Python parity oracle, Room/NDJSON remnants, or quarantined helper scripts; those are AUD-FIX-16 retirement work. Route/deep-link/rotation and accessibility proof are explicit Gate-D device nodes and must bind to the same current qualification tree.

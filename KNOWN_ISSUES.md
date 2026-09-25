@@ -26,3 +26,7 @@ Any item written as `- [blocker] ...`, `- [p0] ...`, or `- [p1] ...` blocks `scr
 
 - AUD-FIX-12 implements and statically/unit-tests adaptive route continuity; connected-device rotation/accessibility evidence is defined by `./devtoolw aud-fix-12-device` and remains qualification evidence to execute on a qualifying device/tree. Gate D remains open.
 - AUD-FIX-13 converges candidate acceptance only. Gate D remains open; historical Gate A/B/C evidence and complete Gate-D topology remain AUD-FIX-14, while quarantined generic helpers and Room/NDJSON retirement remain later roadmap work.
+
+### AUD-FIX-14 historical qualification evidence
+
+Gate A/B/C exact-tree evidence must be discovered from the real repository history. A checkout without those commits reports `UNRECOVERABLE_HISTORICAL_EVIDENCE`; this is an explicit Gate-D blocker rather than permission to substitute current-tree evidence.

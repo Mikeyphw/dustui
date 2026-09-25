@@ -1,0 +1,15 @@
+{
+  "schema": "dustui.authority-gate-r1-attempt.v1",
+  "run_id": "unknown-from-attached-log-header",
+  "log_file": "20260925-092731-073962-dustui_aud_fix_05_06_diagnostics_authority_gate_r1_hotfix_v3.log",
+  "log_sha256": "26c40035a2670de3e0ea5518b1db232f1b963d1b94bff5595c92c57ad37963b6",
+  "status": "failed",
+  "rollback": "succeeded",
+  "post_failure_force_apply": true,
+  "force_apply_validation": "not-run",
+  "gate_r1_passed": false,
+  "failing_node": "dustui_android.gradle_contract",
+  "failing_task": "verifyDustMigrationContract",
+  "failure": "Gradle 9.7.1 rejected Provider-backed Android source-set srcDir at android/app/build.gradle.kts:65",
+  "note": "The later force-apply landed AUD-FIX-05/06 code but does not convert the failed validated run into a passed gate."
+}

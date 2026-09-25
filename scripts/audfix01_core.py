@@ -6,10 +6,15 @@ import re
 from pathlib import Path
 from typing import Any
 
-REQUIRED_GATE_D_NODES = (
+HISTORICAL_GATE_D_NODES = (
     "historical_gate_a_exo",
     "historical_gate_b_exo_arm64",
     "historical_gate_c_exo",
+)
+
+REQUIRED_GATE_D_NODES = (
+    *HISTORICAL_GATE_D_NODES,
+    "requirement_index_conformance",
     "go_test",
     "go_build",
     "go_schema",
@@ -149,25 +154,53 @@ def compute_qualification(root: Path, registry: dict[str, Any]) -> dict[str, Any
     missing_definitions = [n for n in REQUIRED_GATE_D_NODES if n not in nodes]
     nonpassing: list[str] = []
     invalid_bindings: list[str] = []
-    passing_tree_hashes: set[str] = set()
+    historical_blockers: list[str] = []
+    gate_tree_hashes: set[str] = set()
 
+    historical = set(HISTORICAL_GATE_D_NODES)
     for node_id in REQUIRED_GATE_D_NODES:
         node = nodes.get(node_id)
         if not node:
             continue
-        if node.get("status") != "pass":
-            nonpassing.append(node_id)
-            continue
+        status = str(node.get("status") or "")
         binding = node.get("binding") or {}
-        tree = binding.get("source_tree_sha256")
+        if status != "pass":
+            nonpassing.append(node_id)
+            if node_id in historical:
+                historical_blockers.append(f"{node_id}:{status or 'missing-status'}")
+            continue
+
+        if node_id in historical:
+            commit = str(binding.get("historical_commit") or "").strip()
+            tree = str(binding.get("historical_tree") or "").strip()
+            replay_tree = str(binding.get("replay_tree") or "").strip()
+            workflow = str(binding.get("workflow") or "").strip()
+            devtool_version = str(binding.get("devtool_version") or "").strip()
+            run_id = str(binding.get("run_id") or "").strip()
+            log_sha = str(binding.get("log_sha256") or "").strip()
+            if not (commit and tree and replay_tree and workflow and devtool_version and run_id and log_sha):
+                invalid_bindings.append(node_id)
+                historical_blockers.append(f"{node_id}:historical-binding-incomplete")
+            elif tree != replay_tree:
+                invalid_bindings.append(node_id)
+                historical_blockers.append(f"{node_id}:replay-tree-mismatch")
+            if node_id == "historical_gate_b_exo_arm64":
+                arch = str(binding.get("device_arch") or "").lower()
+                device_evidence = str(binding.get("device_evidence_sha256") or "").strip()
+                if arch not in {"arm64", "arm64-v8a", "aarch64"} or not device_evidence:
+                    invalid_bindings.append(node_id)
+                    historical_blockers.append(f"{node_id}:arm64-device-proof-missing")
+            continue
+
+        tree = str(binding.get("source_tree_sha256") or "").strip()
         if not tree:
             invalid_bindings.append(node_id)
         else:
-            passing_tree_hashes.add(tree)
+            gate_tree_hashes.add(tree)
         if node.get("requires_artifact_binding") and not binding.get("artifact_sha256"):
             invalid_bindings.append(node_id)
 
-    coherent_tree = len(passing_tree_hashes) <= 1
+    coherent_tree = len(gate_tree_hashes) <= 1
     qualified = not missing_definitions and not nonpassing and not invalid_bindings and coherent_tree
     if qualified:
         gate_status = "qualified"
@@ -176,14 +209,16 @@ def compute_qualification(root: Path, registry: dict[str, Any]) -> dict[str, Any
         gate_e_status = "blocked-on-ov14-retirement"
     else:
         gate_status = "open"
-        reason = "required-gate-d-evidence-incomplete-or-unbound"
+        reason = "historical-gate-evidence-incomplete-or-unrecoverable" if historical_blockers else "required-gate-d-evidence-incomplete-or-unbound"
         ov14_status = "blocked-on-gate-d"
         gate_e_status = "blocked-on-gate-d-and-ov14-retirement"
 
     return {
-        "schema": "dustui.qualification-state.v1",
+        "schema": "dustui.qualification-state.v2",
         "generated_by": "scripts/refresh_qualification_state.py",
         "evidence_registry": "migration/qualification/v1/gate_d_evidence.json",
+        "historical_evidence_inventory": "migration/qualification/v1/historical_gate_evidence.json",
+        "gate_d_topology": "migration/qualification/v1/gate_d_topology.json",
         "requirement_index": "migration/requirements/v2/requirements.json",
         "source_snapshot_sha256": registry.get("source_snapshot_sha256"),
         "gate_d": {
@@ -191,11 +226,13 @@ def compute_qualification(root: Path, registry: dict[str, Any]) -> dict[str, Any
             "qualified": qualified,
             "reason": reason,
             "required_nodes": list(REQUIRED_GATE_D_NODES),
+            "historical_nodes": list(HISTORICAL_GATE_D_NODES),
+            "historical_blockers": sorted(set(historical_blockers)),
             "missing_node_definitions": missing_definitions,
             "nonpassing_nodes": nonpassing,
             "invalid_binding_nodes": sorted(set(invalid_bindings)),
             "coherent_source_tree_binding": coherent_tree,
-            "passing_source_tree_sha256": next(iter(passing_tree_hashes), None) if coherent_tree else None,
+            "passing_source_tree_sha256": next(iter(gate_tree_hashes), None) if coherent_tree else None,
         },
         "ov14": {"status": ov14_status},
         "gate_e": {"status": gate_e_status},

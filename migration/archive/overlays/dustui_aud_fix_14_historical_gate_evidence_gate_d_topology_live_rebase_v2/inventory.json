@@ -1,0 +1,41 @@
+{
+  "format": 1,
+  "overlay": "dustui_aud_fix_14_historical_gate_evidence_gate_d_topology_live_rebase_v2",
+  "target": "dustui_android",
+  "phase": "AUD-FIX-14",
+  "files": [
+    ".devtool.toml",
+    ".gitignore",
+    "CHANGELOG.md",
+    "KNOWN_ISSUES.md",
+    "README.md",
+    "RELEASE_CHECKLIST.md",
+    "UI_UX_CONTRACT.md",
+    "VALIDATION.md",
+    "android/app/build.gradle.kts",
+    "go/internal/qualification/state_generated.go",
+    "migration/audit/v2/aud_fix_06_gate_candidate.json",
+    "migration/audit/v2/aud_fix_14_topology.json",
+    "migration/contracts/v2/aud_fix_14_gate_d_preflight.md",
+    "migration/ledger/aud_fix_06_status.json",
+    "migration/ledger/aud_fix_14_status.json",
+    "migration/qualification/v1/authority_gate_r1_attempt.json",
+    "migration/qualification/v1/current_state.json",
+    "migration/qualification/v1/gate_d_evidence.json",
+    "migration/qualification/v1/gate_d_topology.json",
+    "migration/qualification/v1/historical_gate_evidence.json",
+    "scripts/audfix01_core.py",
+    "scripts/audfix14_gate_d_probe.py",
+    "scripts/audfix14_history.py",
+    "scripts/validate_audfix13_contract.py",
+    "scripts/validate_audfix14_contract.py",
+    "scripts/validate_full_roadmap_conformance.py"
+  ],
+  "notes": [
+    "live rebase baseline: dustui-20260925-111656-706953",
+    "live .gitignore state is preserved; AUD-FIX-14 only adds .devtool/historical/",
+    "historical evidence is never fabricated or relabelled",
+    "Gate D remains open",
+    "AUD-FIX-15 owns full qualification execution"
+  ]
+}

@@ -1,4 +1,9 @@
 {
+  "schema": "dustui.gate-d-evidence-registry.v2",
+  "source_snapshot_sha256": "a0a9372c0065ecacf3c16c4db3a13df18bd043c972180c68d98dd29de149474b",
+  "topology": "migration/qualification/v1/gate_d_topology.json",
+  "historical_inventory": "migration/qualification/v1/historical_gate_evidence.json",
+  "qualification_rule": "Gate D may be qualified only when exact-tree historical Gate A/B/C replays pass, every current-tree mandatory node passes on one identical Gate-D source tree, and artifact-required nodes carry artifact hashes. Historical trees are deliberately distinct from the Gate-D tree.",
   "nodes": [
     {
       "binding": {},
@@ -7,7 +12,20 @@
       "kind": "historical-exo",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run"
+      "status": "historical-replay-required",
+      "workflow_ref": "target:dustui_gate_a_history#requalify",
+      "binding_contract": {
+        "required": [
+          "historical_commit",
+          "historical_tree",
+          "replay_tree",
+          "workflow",
+          "devtool_version",
+          "run_id",
+          "log_sha256"
+        ]
+      },
+      "historical": true
     },
     {
       "binding": {},
@@ -16,7 +34,22 @@
       "kind": "historical-exo-device",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run"
+      "status": "historical-replay-required",
+      "workflow_ref": "target:dustui_gate_b_history#requalify",
+      "binding_contract": {
+        "required": [
+          "historical_commit",
+          "historical_tree",
+          "replay_tree",
+          "workflow",
+          "devtool_version",
+          "run_id",
+          "log_sha256",
+          "device_arch",
+          "device_evidence_sha256"
+        ]
+      },
+      "historical": true
     },
     {
       "binding": {},
@@ -25,7 +58,38 @@
       "kind": "historical-exo",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run"
+      "status": "historical-replay-required",
+      "workflow_ref": "target:dustui_gate_c_history#requalify",
+      "binding_contract": {
+        "required": [
+          "historical_commit",
+          "historical_tree",
+          "replay_tree",
+          "workflow",
+          "devtool_version",
+          "run_id",
+          "log_sha256"
+        ]
+      },
+      "historical": true
+    },
+    {
+      "id": "requirement_index_conformance",
+      "kind": "requirement-conformance",
+      "required": true,
+      "binding": {},
+      "evidence": [],
+      "status": "not-run",
+      "workflow_ref": "job:gate_d_requirement_conformance",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      },
+      "historical": false,
+      "requires_artifact_binding": false
     },
     {
       "binding": {},
@@ -34,7 +98,16 @@
       "kind": "go-test",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "target:dustui_go#gate_d_tests",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -43,7 +116,16 @@
       "kind": "go-build",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "target:dustui_go#gate_d_build",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -52,7 +134,16 @@
       "kind": "go-contract",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "target:dustui_go#gate_d_schema",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -61,7 +152,16 @@
       "kind": "go-contract",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "target:dustui_go#gate_d_product",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -70,7 +170,16 @@
       "kind": "go-runtime",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "target:dustui_go#gate_d_cli",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -79,7 +188,16 @@
       "kind": "go-runtime",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "target:dustui_go#gate_d_tui",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -88,7 +206,16 @@
       "kind": "android-unit",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "job:android_unit",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -97,7 +224,16 @@
       "kind": "android-lint",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "job:android_lint",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -106,7 +242,17 @@
       "kind": "android-build",
       "required": true,
       "requires_artifact_binding": true,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "job:android_assemble",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version",
+          "artifact_sha256"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -115,7 +261,16 @@
       "kind": "android-unit",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "job:android_release_unit",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -124,7 +279,16 @@
       "kind": "android-lint",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "job:android_release_lint",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -133,7 +297,17 @@
       "kind": "android-build",
       "required": true,
       "requires_artifact_binding": true,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "job:android_release_assemble",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version",
+          "artifact_sha256"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -142,7 +316,16 @@
       "kind": "migration-validation",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "target:dustui_android#gate_d_successor_validators",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -151,7 +334,17 @@
       "kind": "device-runtime",
       "required": true,
       "requires_artifact_binding": true,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "job:gate_d_install_launch_smoke",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version",
+          "artifact_sha256"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -160,7 +353,16 @@
       "kind": "instrumentation",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "job:gate_d_route_instrumentation",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -169,7 +371,16 @@
       "kind": "accessibility",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "job:gate_d_accessibility_instrumentation",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -178,7 +389,17 @@
       "kind": "rooted-device-runtime",
       "required": true,
       "requires_artifact_binding": true,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "job:gate_d_rooted_arm64_runtime",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version",
+          "artifact_sha256"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -187,7 +408,17 @@
       "kind": "artifact-binding",
       "required": true,
       "requires_artifact_binding": true,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "job:gate_d_runtime_apk_binding",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version",
+          "artifact_sha256"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -196,7 +427,17 @@
       "kind": "artifact-binding",
       "required": true,
       "requires_artifact_binding": true,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "job:gate_d_devtool_artifact_identity",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version",
+          "artifact_sha256"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -205,7 +446,16 @@
       "kind": "runtime-truth",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "target:dustui_go#gate_d_durable",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -214,7 +464,16 @@
       "kind": "privacy-diagnostics",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "target:dustui_go#gate_d_diagnostics",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      },
+      "historical": false
     },
     {
       "binding": {},
@@ -223,10 +482,16 @@
       "kind": "reachability",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run"
+      "status": "not-run",
+      "workflow_ref": "job:gate_d_production_reachability",
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      },
+      "historical": false
     }
-  ],
-  "qualification_rule": "Gate D may be qualified only when every required node is pass, every passing node is bound to one source tree, and artifact-required nodes carry artifact hashes. Source-token absence cannot qualify Gate D.",
-  "schema": "dustui.gate-d-evidence-registry.v1",
-  "source_snapshot_sha256": "a0a9372c0065ecacf3c16c4db3a13df18bd043c972180c68d98dd29de149474b"
+  ]
 }

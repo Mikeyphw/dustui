@@ -2,12 +2,23 @@
   "evidence_registry": "migration/qualification/v1/gate_d_evidence.json",
   "gate_d": {
     "coherent_source_tree_binding": true,
+    "historical_blockers": [
+      "historical_gate_a_exo:historical-replay-required",
+      "historical_gate_b_exo_arm64:historical-replay-required",
+      "historical_gate_c_exo:historical-replay-required"
+    ],
+    "historical_nodes": [
+      "historical_gate_a_exo",
+      "historical_gate_b_exo_arm64",
+      "historical_gate_c_exo"
+    ],
     "invalid_binding_nodes": [],
     "missing_node_definitions": [],
     "nonpassing_nodes": [
       "historical_gate_a_exo",
       "historical_gate_b_exo_arm64",
       "historical_gate_c_exo",
+      "requirement_index_conformance",
       "go_test",
       "go_build",
       "go_schema",
@@ -33,11 +44,12 @@
     ],
     "passing_source_tree_sha256": null,
     "qualified": false,
-    "reason": "required-gate-d-evidence-incomplete-or-unbound",
+    "reason": "historical-gate-evidence-incomplete-or-unrecoverable",
     "required_nodes": [
       "historical_gate_a_exo",
       "historical_gate_b_exo_arm64",
       "historical_gate_c_exo",
+      "requirement_index_conformance",
       "go_test",
       "go_build",
       "go_schema",
@@ -63,10 +75,12 @@
     ],
     "status": "open"
   },
+  "gate_d_topology": "migration/qualification/v1/gate_d_topology.json",
   "gate_e": {
     "status": "blocked-on-gate-d-and-ov14-retirement"
   },
   "generated_by": "scripts/refresh_qualification_state.py",
+  "historical_evidence_inventory": "migration/qualification/v1/historical_gate_evidence.json",
   "observed_repository": {
     "android_go_packaging_present": true,
     "android_go_process_binding_present": true,
@@ -94,6 +108,6 @@
     "status": "blocked-on-gate-d"
   },
   "requirement_index": "migration/requirements/v2/requirements.json",
-  "schema": "dustui.qualification-state.v1",
+  "schema": "dustui.qualification-state.v2",
   "source_snapshot_sha256": "a0a9372c0065ecacf3c16c4db3a13df18bd043c972180c68d98dd29de149474b"
 }

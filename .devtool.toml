@@ -435,6 +435,120 @@ gradle_tasks = [":app:assembleDebug"]
 inputs = ["app/src", "build.gradle.kts", "settings.gradle.kts", "../go", "../migration"]
 outputs = ["app/build/outputs/apk/debug"]
 
+
+[targets.dustui_android.jobs.historical_gate_inventory]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/audfix14_history.py", "--prepare"]
+inputs = ["scripts/audfix14_history.py", "migration/qualification/v1/historical_gate_evidence.json", ".git"]
+outputs = ["build/evidence/aud-fix/14/historical_discovery.json"]
+
+[targets.dustui_android.jobs.gate_d_topology]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix14_contract.py", "--section", "topology"]
+inputs = ["scripts/validate_audfix14_contract.py", ".devtool.toml", "migration/qualification/v1/gate_d_topology.json", "migration/qualification/v1/gate_d_evidence.json"]
+[targets.dustui_android.jobs.gate_d_topology.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.gate_d_binding_preflight]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix14_contract.py", "--section", "identity"]
+inputs = ["scripts/validate_audfix14_contract.py", "migration/qualification/v1/gate_d_topology.json", "migration/qualification/v1/gate_d_evidence.json"]
+[targets.dustui_android.jobs.gate_d_binding_preflight.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.gate_d_successor_contract]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix14_contract.py", "--section", "successors"]
+inputs = ["scripts/validate_audfix14_contract.py", "migration/acceptance/v1", "scripts/validate_audfix13_contract.py", "scripts/validate_ov13_contract.py", "scripts/validate_ov14_contract.py"]
+[targets.dustui_android.jobs.gate_d_successor_contract.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.gate_d_r1_truth]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix14_contract.py", "--section", "r1"]
+inputs = ["scripts/validate_audfix14_contract.py", "migration/qualification/v1/authority_gate_r1_attempt.json", "android/app/build.gradle.kts"]
+[targets.dustui_android.jobs.gate_d_r1_truth.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.gate_d_preflight_conformance]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_full_roadmap_conformance.py", "--scope", "AUD-FIX-14"]
+inputs = ["scripts/validate_full_roadmap_conformance.py", "migration/qualification/v1", "migration/acceptance/v1", "migration/requirements/v2", ".devtool.toml"]
+[targets.dustui_android.jobs.gate_d_preflight_conformance.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.gate_d_requirement_conformance]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_full_roadmap_conformance.py", "--scope", "GATE-D"]
+inputs = ["scripts/validate_full_roadmap_conformance.py", "migration/qualification/v1", "migration/acceptance/v1", "migration/requirements/v2", ".devtool.toml"]
+[targets.dustui_android.jobs.gate_d_requirement_conformance.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.android_release_unit]
+gradle_tasks = [":app:testReleaseUnitTest"]
+inputs = ["app/src", "build.gradle.kts", "settings.gradle.kts", "../go", "../migration"]
+outputs = ["app/build/test-results/testReleaseUnitTest", "app/build/reports/tests/testReleaseUnitTest"]
+
+[targets.dustui_android.jobs.android_release_lint]
+gradle_tasks = [":app:lintRelease"]
+inputs = ["app/src", "build.gradle.kts", "settings.gradle.kts", "../go", "../migration"]
+outputs = ["app/build/reports/lint-results-release.html", "app/build/reports/lint-results-release.xml"]
+
+[targets.dustui_android.jobs.android_release_assemble]
+gradle_tasks = [":app:assembleRelease"]
+inputs = ["app/src", "build.gradle.kts", "settings.gradle.kts", "../go", "../migration"]
+outputs = ["app/build/outputs/apk/release"]
+
+[targets.dustui_android.jobs.gate_d_install_launch_smoke]
+gradle_tasks = [":app:connectedDebugAndroidTest"]
+inputs = ["app/src/main", "app/src/androidTest", "build.gradle.kts", "settings.gradle.kts", "../migration"]
+outputs = ["app/build/outputs/androidTest-results", "app/build/reports/androidTests"]
+
+[targets.dustui_android.jobs.gate_d_route_instrumentation]
+gradle_tasks = [":app:connectedDebugAndroidTest"]
+inputs = ["app/src/main", "app/src/androidTest/kotlin/com/mikeyphw/dustui/ui/AdaptiveRouteContinuityInstrumentedTest.kt", "build.gradle.kts", "settings.gradle.kts"]
+outputs = ["app/build/outputs/androidTest-results", "app/build/reports/androidTests"]
+
+[targets.dustui_android.jobs.gate_d_accessibility_instrumentation]
+gradle_tasks = [":app:connectedDebugAndroidTest"]
+inputs = ["app/src/main", "app/src/androidTest", "app/src/test/kotlin/com/mikeyphw/dustui/ui/DustAdaptiveLayoutTest.kt", "build.gradle.kts", "settings.gradle.kts"]
+outputs = ["app/build/outputs/androidTest-results", "app/build/reports/androidTests"]
+
+[targets.dustui_android.jobs.gate_d_rooted_arm64_runtime]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/audfix14_gate_d_probe.py", "rooted-runtime"]
+inputs = ["scripts/audfix14_gate_d_probe.py", "android/app/build.gradle.kts", "go/internal/runtime"]
+outputs = ["build/evidence/gate-d/rooted-arm64-runtime.json"]
+
+[targets.dustui_android.jobs.gate_d_runtime_apk_binding]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/audfix14_gate_d_probe.py", "runtime-apk-binding"]
+inputs = ["scripts/audfix14_gate_d_probe.py", "android/app/build.gradle.kts", "android/app/build/outputs/apk", "android/app/build/generated/goRuntime"]
+outputs = ["build/evidence/gate-d/runtime-apk-binding.json"]
+
+[targets.dustui_android.jobs.gate_d_devtool_artifact_identity]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/audfix14_gate_d_probe.py", "devtool-artifact-identity"]
+inputs = ["scripts/audfix14_gate_d_probe.py", "migration/qualification/v1/gate_d_topology.json", ".devtool.toml"]
+outputs = ["build/evidence/gate-d/devtool-artifact-identity.json"]
+
+[targets.dustui_android.jobs.gate_d_production_reachability]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/audfix14_gate_d_probe.py", "production-reachability"]
+inputs = ["scripts/audfix14_gate_d_probe.py", "scripts/validate_audfix07_contract.py", "scripts/validate_audfix08_contract.py", "scripts/validate_audfix09_contract.py", "migration/oracle/python_textual", "android/app/src/main", "go/internal/product"]
+outputs = ["build/evidence/gate-d/production-reachability.json"]
+
 [targets.dustui_android.workflows]
 aud_fix_regression = [
   { id = "a01", ref = "job:audfix01_truth", depends_on = [] },
@@ -507,6 +621,36 @@ aud_fix_13 = [
   { id = "conformance", ref = "job:pre_gate_d_conformance", depends_on = ["inventory", "validators", "metadata", "go13"] },
   { id = "truth", ref = "job:qualification_state", depends_on = ["conformance"] },
 ]
+gate_d_successor_validators = [
+  { id = "a01", ref = "job:audfix01_truth", depends_on = [] },
+  { id = "a02", ref = "job:audfix02_bounded", depends_on = [] },
+  { id = "a03", ref = "job:audfix03_domain", depends_on = [] },
+  { id = "a04", ref = "job:audfix04_operations", depends_on = [] },
+  { id = "a05", ref = "job:audfix05_android_contract", depends_on = [] },
+  { id = "a07host", ref = "job:audfix07_host_reachability", depends_on = [] },
+  { id = "a07identity", ref = "job:audfix07_product_identity", depends_on = [] },
+  { id = "a08", ref = "job:audfix08_android_contract", depends_on = [] },
+  { id = "a09", ref = "job:audfix09_async_state_contract", depends_on = [] },
+  { id = "a10", ref = "job:audfix10_ux_truth_contract", depends_on = [] },
+  { id = "a11activity", ref = "job:activity_ui_contract", depends_on = [] },
+  { id = "a11diagnostics", ref = "job:diagnostics_ui_contract", depends_on = [] },
+  { id = "a11navigation", ref = "job:operation_evidence_navigation", depends_on = [] },
+  { id = "a12adaptive", ref = "job:audfix12_adaptive_layout", depends_on = [] },
+  { id = "a12continuity", ref = "job:audfix12_route_continuity", depends_on = [] },
+  { id = "a12accessibility", ref = "job:audfix12_accessibility", depends_on = [] },
+  { id = "a13inventory", ref = "job:acceptance_inventory", depends_on = [] },
+  { id = "a13validators", ref = "job:successor_validator_contract", depends_on = [] },
+  { id = "a13metadata", ref = "job:evidence_metadata_truth", depends_on = [] },
+]
+gate_d_preflight = [
+  { id = "history", ref = "job:historical_gate_inventory", depends_on = [] },
+  { id = "topology", ref = "job:gate_d_topology", depends_on = [] },
+  { id = "binding", ref = "job:gate_d_binding_preflight", depends_on = ["topology"] },
+  { id = "successors", ref = "job:gate_d_successor_contract", depends_on = ["topology"] },
+  { id = "r1truth", ref = "job:gate_d_r1_truth", depends_on = [] },
+  { id = "conformance", ref = "job:gate_d_preflight_conformance", depends_on = ["history", "binding", "successors", "r1truth"] },
+  { id = "truth", ref = "job:qualification_state", depends_on = ["conformance"] },
+]
 authority_gate_r1 = [
   { id = "a01", ref = "job:audfix01_truth", depends_on = [] },
   { id = "a02", ref = "job:audfix02_bounded", depends_on = [] },
@@ -547,7 +691,34 @@ validate = [
 fast = ["job:audfix05_android_contract", "target:dustui_go#aud_fix_05"]
 unit = ["job:android_unit"]
 cutover_audit = ["job:audfix01_truth", "job:audfix02_bounded", "job:audfix03_domain", "job:audfix04_operations", "job:audfix05_android_contract", "job:qualification_state"]
-gate_d = ["job:audfix01_truth", "job:audfix02_bounded", "job:audfix03_domain", "job:audfix04_operations", "job:audfix05_android_contract", "job:qualification_state"]
+gate_d = [
+  { id = "historical_gate_a_exo", ref = "target:dustui_gate_a_history#requalify", depends_on = [] },
+  { id = "historical_gate_b_exo_arm64", ref = "target:dustui_gate_b_history#requalify", depends_on = [] },
+  { id = "historical_gate_c_exo", ref = "target:dustui_gate_c_history#requalify", depends_on = [] },
+  { id = "requirement_index_conformance", ref = "job:gate_d_requirement_conformance", depends_on = ["historical_gate_a_exo", "historical_gate_b_exo_arm64", "historical_gate_c_exo"] },
+  { id = "go_test", ref = "target:dustui_go#gate_d_tests", depends_on = ["requirement_index_conformance"] },
+  { id = "go_build", ref = "target:dustui_go#gate_d_build", depends_on = ["go_test"] },
+  { id = "go_schema", ref = "target:dustui_go#gate_d_schema", depends_on = ["go_test"] },
+  { id = "go_product_contract", ref = "target:dustui_go#gate_d_product", depends_on = ["go_test"] },
+  { id = "go_cli_smoke", ref = "target:dustui_go#gate_d_cli", depends_on = ["go_build", "go_product_contract"] },
+  { id = "go_tui_smoke", ref = "target:dustui_go#gate_d_tui", depends_on = ["go_build", "go_product_contract"] },
+  { id = "android_debug_unit", ref = "job:android_unit", depends_on = ["requirement_index_conformance", "go_build"] },
+  { id = "android_debug_lint", ref = "job:android_lint", depends_on = ["android_debug_unit"] },
+  { id = "android_debug_assemble", ref = "job:android_assemble", depends_on = ["android_debug_lint"] },
+  { id = "android_release_unit", ref = "job:android_release_unit", depends_on = ["requirement_index_conformance", "go_build"] },
+  { id = "android_release_lint", ref = "job:android_release_lint", depends_on = ["android_release_unit"] },
+  { id = "android_release_assemble", ref = "job:android_release_assemble", depends_on = ["android_release_lint"] },
+  { id = "migration_validators", ref = "target:dustui_android#gate_d_successor_validators", depends_on = ["go_test"] },
+  { id = "install_launch_smoke", ref = "job:gate_d_install_launch_smoke", depends_on = ["android_debug_assemble"] },
+  { id = "route_deeplink_recreation_rotation", ref = "job:gate_d_route_instrumentation", depends_on = ["install_launch_smoke"] },
+  { id = "accessibility", ref = "job:gate_d_accessibility_instrumentation", depends_on = ["install_launch_smoke"] },
+  { id = "rooted_arm64_runtime", ref = "job:gate_d_rooted_arm64_runtime", depends_on = ["android_debug_assemble"] },
+  { id = "runtime_apk_binding", ref = "job:gate_d_runtime_apk_binding", depends_on = ["android_debug_assemble", "android_release_assemble", "rooted_arm64_runtime"] },
+  { id = "devtool_artifact_identity", ref = "job:gate_d_devtool_artifact_identity", depends_on = ["runtime_apk_binding"] },
+  { id = "durable_operation_terminal_truth", ref = "target:dustui_go#gate_d_durable", depends_on = ["go_test", "migration_validators"] },
+  { id = "diagnostics_support_seal", ref = "target:dustui_go#gate_d_diagnostics", depends_on = ["durable_operation_terminal_truth"] },
+  { id = "production_reachability", ref = "job:gate_d_production_reachability", depends_on = ["go_cli_smoke", "go_tui_smoke", "route_deeplink_recreation_rotation", "accessibility", "diagnostics_support_seal", "devtool_artifact_identity"] },
+]
 
 [targets.dustui_go.jobs.go_test_all]
 runner = "command"
@@ -640,6 +811,35 @@ inputs = ["internal/product", "internal/qualification", "../migration/acceptance
 [targets.dustui_go.jobs.audfix13_product_metadata.metadata]
 read_only = true
 
+
+[targets.dustui_go.jobs.gate_d_cli_smoke]
+runner = "command"
+command = ["go", "test", "./internal/host", "-run", "AUD_FIX07", "-count=1"]
+inputs = ["internal/host", "internal/product", "cmd/dustui-go", "go.mod", "go.sum"]
+[targets.dustui_go.jobs.gate_d_cli_smoke.metadata]
+read_only = true
+
+[targets.dustui_go.jobs.gate_d_tui_smoke]
+runner = "command"
+command = ["go", "test", "./internal/tui", "-count=1"]
+inputs = ["internal/tui", "internal/product", "internal/shell", "go.mod", "go.sum"]
+[targets.dustui_go.jobs.gate_d_tui_smoke.metadata]
+read_only = true
+
+[targets.dustui_go.jobs.gate_d_durable_truth]
+runner = "command"
+command = ["go", "test", "./internal/state", "-run", "AUD_FIX04|AUD_FIX11", "-count=1"]
+inputs = ["internal/state", "internal/automation", "go.mod", "go.sum"]
+[targets.dustui_go.jobs.gate_d_durable_truth.metadata]
+read_only = true
+
+[targets.dustui_go.jobs.gate_d_diagnostics]
+runner = "command"
+command = ["go", "test", "./internal/diagnostics", "./internal/state", "-run", "AUD_FIX05|AUD_FIX11", "-count=1"]
+inputs = ["internal/diagnostics", "internal/state", "cmd/dustui-go/runtime_domain.go", "go.mod", "go.sum"]
+[targets.dustui_go.jobs.gate_d_diagnostics.metadata]
+read_only = true
+
 [targets.dustui_go.workflows]
 aud_fix_regression = [
   { id = "tests", ref = "job:go_test_all", depends_on = [] },
@@ -677,6 +877,14 @@ aud_fix_13 = [
   { id = "metadata", ref = "job:audfix13_product_metadata", depends_on = [] },
   { id = "product", ref = "job:product_contract", depends_on = ["metadata"] },
 ]
+gate_d_tests = [{ id = "tests", ref = "job:go_test_all", depends_on = [] }]
+gate_d_build = [{ id = "build", ref = "job:go_build", depends_on = [] }]
+gate_d_schema = [{ id = "schema", ref = "job:schema_contract", depends_on = [] }]
+gate_d_product = [{ id = "product", ref = "job:product_contract", depends_on = [] }]
+gate_d_cli = [{ id = "cli", ref = "job:gate_d_cli_smoke", depends_on = [] }]
+gate_d_tui = [{ id = "tui", ref = "job:gate_d_tui_smoke", depends_on = [] }]
+gate_d_durable = [{ id = "durable", ref = "job:gate_d_durable_truth", depends_on = [] }]
+gate_d_diagnostics = [{ id = "diagnostics", ref = "job:gate_d_diagnostics", depends_on = [] }]
 authority_gate_r1 = [
   { id = "tests", ref = "job:go_test_all", depends_on = [] },
   { id = "diagnostics", ref = "job:audfix05_diagnostics_go", depends_on = [] },
@@ -697,11 +905,79 @@ validate = [
   { id = "build", ref = "job:go_build", depends_on = ["tests", "diagnostics", "product", "schema", "a08routes", "a09async", "a10truth", "a11activity"] },
 ]
 
+
+[targets.dustui_gate_a_history]
+type = "command"
+root = ".devtool/historical/gate-a"
+execution_environment = "native-termux"
+[targets.dustui_gate_a_history.jobs.contract]
+runner = "command"
+command = ["python3", "scripts/validate_ov03_contract.py", "--audit-loop"]
+[targets.dustui_gate_a_history.jobs.go_test]
+runner = "command"
+root = "go"
+command = ["go", "test", "./..."]
+[targets.dustui_gate_a_history.workflows]
+requalify = [
+  { id = "contract", ref = "job:contract", depends_on = [] },
+  { id = "go_test", ref = "job:go_test", depends_on = ["contract"] },
+]
+
+[targets.dustui_gate_b_history]
+type = "command"
+root = ".devtool/historical/gate-b"
+execution_environment = "native-termux"
+[targets.dustui_gate_b_history.jobs.contract]
+runner = "command"
+command = ["python3", "scripts/validate_ov05_contract.py", "--audit-loop"]
+[targets.dustui_gate_b_history.jobs.go_test]
+runner = "command"
+root = "go"
+command = ["go", "test", "./..."]
+[targets.dustui_gate_b_history.jobs.runtime_contract]
+runner = "command"
+root = "go"
+command = ["go", "run", "./cmd/dustui-go", "runtime-contract"]
+[targets.dustui_gate_b_history.jobs.arm64_arch]
+runner = "command"
+command = ["adb", "shell", "getprop", "ro.product.cpu.abi"]
+[targets.dustui_gate_b_history.workflows]
+requalify = [
+  { id = "contract", ref = "job:contract", depends_on = [] },
+  { id = "go_test", ref = "job:go_test", depends_on = ["contract"] },
+  { id = "runtime_contract", ref = "job:runtime_contract", depends_on = ["contract"] },
+  { id = "arm64_arch", ref = "job:arm64_arch", depends_on = ["runtime_contract"] },
+]
+
+[targets.dustui_gate_c_history]
+type = "command"
+root = ".devtool/historical/gate-c"
+execution_environment = "native-termux"
+[targets.dustui_gate_c_history.jobs.contract]
+runner = "command"
+command = ["python3", "scripts/validate_ov08_contract.py", "--audit-loop"]
+[targets.dustui_gate_c_history.jobs.go_test]
+runner = "command"
+root = "go"
+command = ["go", "test", "./..."]
+[targets.dustui_gate_c_history.workflows]
+requalify = [
+  { id = "contract", ref = "job:contract", depends_on = [] },
+  { id = "go_test", ref = "job:go_test", depends_on = ["contract"] },
+]
+
 [wrapper]
 schema = 1
-default_command = "aud-fix-13"
+default_command = "aud-fix-14"
 
 
+
+
+[wrapper.commands.aud-fix-14]
+description = "Run DustUI AUD-FIX-14 historical evidence discovery and Gate-D topology preflight without closing Gate D"
+workflow = "gate_d_preflight"
+target = "dustui_android"
+aliases = ["gate-d-preflight", "historical-evidence"]
 
 [wrapper.commands.aud-fix-13]
 description = "Run DustUI AUD-FIX-13 pre-Gate-D acceptance convergence and evidence-derived metadata workflow"
@@ -764,7 +1040,7 @@ target = "dustui_android"
 aliases = ["diag-authority"]
 
 [wrapper.commands.gate-d]
-description = "Compatibility audit alias only; Gate D remains open until AUD-FIX-15"
+description = "Execute the complete Gate-D qualification topology; remains blocked until AUD-FIX-15 evidence prerequisites are satisfied"
 workflow = "gate_d"
 target = "dustui_android"
 aliases = ["gate", "validate-gate"]

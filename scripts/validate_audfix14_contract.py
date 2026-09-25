@@ -1,0 +1,118 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import tomllib
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+from audfix14_history import discover_all  # noqa:E402
+
+QUAL = ROOT / "migration/qualification/v1"
+HIST = QUAL / "historical_gate_evidence.json"
+TOPO = QUAL / "gate_d_topology.json"
+REG = QUAL / "gate_d_evidence.json"
+R1 = QUAL / "authority_gate_r1_attempt.json"
+HIST_IDS = {"historical_gate_a_exo", "historical_gate_b_exo_arm64", "historical_gate_c_exo"}
+
+
+def load(path: Path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def topology_failures() -> list[str]:
+    failures: list[str] = []
+    cfg = tomllib.loads((ROOT / ".devtool.toml").read_text())
+    topo = load(TOPO); reg = load(REG)
+    required = list(topo.get("required_nodes", [])); required_set = set(required)
+    topo_nodes = {n.get("id"): n for n in topo.get("nodes", []) if isinstance(n, dict)}
+    reg_ids = {n.get("id") for n in reg.get("nodes", []) if isinstance(n, dict)}
+    if not required: failures.append("topology required_nodes is empty")
+    if required_set != set(topo_nodes): failures.append(f"topology node mismatch missing={sorted(required_set-set(topo_nodes))} extra={sorted(set(topo_nodes)-required_set)}")
+    if not required_set.issubset(reg_ids): failures.append(f"registry missing topology nodes {sorted(required_set-reg_ids)}")
+    aw = cfg.get("targets", {}).get("dustui_android", {}).get("workflows", {})
+    for wf in ["gate_d_preflight", "gate_d", "gate_d_successor_validators"]:
+        if wf not in aw: failures.append(f"Devtool workflow missing {wf}")
+    gate = aw.get("gate_d", [])
+    gate_ids = [x.get("id") for x in gate if isinstance(x, dict)]
+    if gate_ids != required:
+        failures.append("gate_d workflow node IDs must exactly match gate_d_topology.required_nodes in order")
+    gate_refs = {x.get("id"): x.get("ref") for x in gate if isinstance(x, dict)}
+    for node_id, spec in topo_nodes.items():
+        if gate_refs.get(node_id) != spec.get("workflow_ref"):
+            failures.append(f"{node_id}: workflow ref mismatch topology={spec.get('workflow_ref')} gate_d={gate_refs.get(node_id)}")
+    pre = aw.get("gate_d_preflight", [])
+    pre_refs = {str(x.get("ref")) for x in pre if isinstance(x, dict)}
+    forbidden = {spec["workflow_ref"] for spec in topo_nodes.values()} & pre_refs
+    if forbidden: failures.append(f"gate_d_preflight executes qualification nodes {sorted(forbidden)}")
+    # AUD-FIX-14 is topology/preflight only; validate must not silently become Gate D until AUD-FIX-15.
+    if aw.get("validate") == aw.get("gate_d"): failures.append("validate points to gate_d before AUD-FIX-15")
+    for target in ["dustui_gate_a_history", "dustui_gate_b_history", "dustui_gate_c_history"]:
+        t = cfg.get("targets", {}).get(target, {})
+        if t.get("type") != "command" or "requalify" not in t.get("workflows", {}):
+            failures.append(f"historical target incomplete: {target}")
+    return failures
+
+
+def identity_failures() -> list[str]:
+    failures=[]; topo=load(TOPO); reg=load(REG)
+    regmap={n.get("id"):n for n in reg.get("nodes",[]) if isinstance(n,dict)}
+    for n in topo.get("nodes",[]):
+        nid=n.get("id"); req=set((n.get("binding_contract") or {}).get("required",[]))
+        if n.get("historical"):
+            if n.get("same_gate_d_tree"): failures.append(f"{nid}: historical node incorrectly requires current Gate-D tree")
+            for field in ["historical_commit","historical_tree","replay_tree","workflow","devtool_version","run_id","log_sha256"]:
+                if field not in req: failures.append(f"{nid}: historical binding missing {field}")
+            if nid=="historical_gate_b_exo_arm64" and not {"device_arch","device_evidence_sha256"}.issubset(req): failures.append(f"{nid}: ARM64 device binding incomplete")
+        else:
+            if not n.get("same_gate_d_tree"): failures.append(f"{nid}: current node must bind to one Gate-D tree")
+            for field in ["source_tree_sha256","devtool_run_id","devtool_version"]:
+                if field not in req: failures.append(f"{nid}: current binding missing {field}")
+            if n.get("requires_artifact_binding") and "artifact_sha256" not in req: failures.append(f"{nid}: artifact hash binding missing")
+        r=regmap.get(nid,{})
+        if r.get("workflow_ref") != n.get("workflow_ref"): failures.append(f"{nid}: registry/topology workflow_ref drift")
+        if r.get("binding_contract") != n.get("binding_contract"): failures.append(f"{nid}: registry/topology binding contract drift")
+    return failures
+
+
+def successor_failures() -> list[str]:
+    failures=[]
+    for rel in ["migration/acceptance/v1/validator_lifecycle.json","scripts/validate_audfix13_contract.py","scripts/validate_ov13_contract.py","scripts/validate_ov14_contract.py"]:
+        if not (ROOT/rel).is_file(): failures.append(f"successor authority missing {rel}")
+    return failures
+
+
+def r1_failures() -> list[str]:
+    failures=[]
+    if not R1.is_file(): return ["Authority Gate R1 failed-attempt record missing"]
+    obj=load(R1)
+    if obj.get("gate_r1_passed") is not False or obj.get("status") != "failed": failures.append("R1 attempt must remain failed despite later force-apply")
+    if obj.get("post_failure_force_apply") is not True or obj.get("force_apply_validation") != "not-run": failures.append("R1 force-apply truth missing")
+    app=(ROOT/"android/app/build.gradle.kts").read_text(errors="replace")
+    if 'jniLibs.srcDir(layout.buildDirectory.dir(' in app: failures.append("Gradle Provider-backed jniLibs srcDir blocker still present")
+    if 'jniLibs.directories.add(layout.buildDirectory.dir("generated/goRuntime/jniLibs").get().asFile)' not in app: failures.append("Gradle 9.7 source-set directories fix missing")
+    return failures
+
+
+def run(section: str, require_recoverable: bool) -> int:
+    if section=="historical":
+        report=discover_all(); print(json.dumps(report,indent=2))
+        return 1 if require_recoverable and report["blockers"] else 0
+    fn={"topology":topology_failures,"identity":identity_failures,"successors":successor_failures,"r1":r1_failures}[section]
+    failures=fn(); print(f"AUD-FIX-14 {section}: failures={len(failures)}")
+    for x in failures: print(f"  - {x}")
+    return 1 if failures else 0
+
+
+def main()->int:
+    ap=argparse.ArgumentParser(); ap.add_argument("--section",choices=["historical","topology","identity","successors","r1","all"],default="all"); ap.add_argument("--require-recoverable",action="store_true"); ap.add_argument("--audit-loop",action="store_true")
+    a=ap.parse_args(); sections=["historical","topology","identity","successors","r1"] if a.section=="all" else [a.section]
+    for i in range(2 if a.audit_loop else 1):
+        print(f"AUD-FIX-14 pass {i+1}")
+        for s in sections:
+            if run(s,a.require_recoverable): return 1
+    print("converged=true"); return 0
+if __name__=="__main__": raise SystemExit(main())

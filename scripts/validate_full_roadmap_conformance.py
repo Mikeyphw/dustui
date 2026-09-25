@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 from audfix01_core import (  # noqa:E402
-    REQUIRED_GATE_D_NODES, independent_gate_claims, load_json,
+    REQUIRED_GATE_D_NODES, HISTORICAL_GATE_D_NODES, independent_gate_claims, load_json,
     predecessor_ui_authority_paths, repository_observations,
 )
 from audfix13_acceptance import lifecycle_failures, ui_matrix_failures, metadata_failures, docs_failures, evaluate_counterexample  # noqa:E402
@@ -78,9 +78,29 @@ def evaluate() -> list[dict]:
         out.append(finding('LATER-SHARED-STATE-UNUSED','DustContentState has no production consumer','UIX-003'))
     if production_uses('DustActionGate') == 0:
         out.append(finding('LATER-ACTION-GATE-UNUSED','DustActionGate has no production consumer','UIX-004'))
-    hist=['historical_gate_a_exo','historical_gate_b_exo_arm64','historical_gate_c_exo']
+    hist=list(HISTORICAL_GATE_D_NODES)
     if any(nodes.get(x,{}).get('status')!='pass' for x in hist):
-        out.append(finding('LATER-HISTORICAL-EXO','Gate A/B/C EXO evidence not qualified','AUD-020'))
+        out.append(finding('AF14-HISTORICAL-EXO','Gate A/B/C exact-tree EXO evidence unresolved','AUD-019'))
+    topo_path=ROOT/'migration/qualification/v1/gate_d_topology.json'
+    hist_path=ROOT/'migration/qualification/v1/historical_gate_evidence.json'
+    if not topo_path.is_file():
+        out.append(finding('AF14-GATE-D-TOPOLOGY','gate_d_topology.json missing','AUD-018'))
+    else:
+        topo=load_json(topo_path)
+        topo_ids={x.get('id') for x in topo.get('nodes',[]) if isinstance(x,dict)}
+        req=set(REQUIRED_GATE_D_NODES)
+        if topo_ids != req or set(topo.get('required_nodes',[])) != req:
+            out.append(finding('AF14-GATE-D-TOPOLOGY',f'topology mismatch missing={sorted(req-topo_ids)} extra={sorted(topo_ids-req)}','AUD-018'))
+        for node in topo.get('nodes',[]):
+            nid=node.get('id'); histnode=nid in HISTORICAL_GATE_D_NODES
+            if bool(node.get('historical')) != histnode:
+                out.append(finding('AF14-GATE-D-TOPOLOGY',f'{nid}: historical classification mismatch','AUD-018'))
+            if histnode and node.get('same_gate_d_tree'):
+                out.append(finding('AF14-HISTORICAL-BINDING',f'{nid}: historical node incorrectly bound to Gate-D tree','AUD-019'))
+            if not histnode and not node.get('same_gate_d_tree'):
+                out.append(finding('AF14-TREE-BINDING',f'{nid}: current node lacks same-tree binding','AUD-018'))
+    if not hist_path.is_file():
+        out.append(finding('AF14-HISTORICAL-INVENTORY','historical_gate_evidence.json missing','AUD-019'))
     for detail in lifecycle_failures(ROOT):
         out.append(finding('AF13-VALIDATOR-LIFECYCLE',detail,'AUD-016',blocking_fix13=True))
     for detail in ui_matrix_failures(ROOT):
@@ -102,17 +122,27 @@ def evaluate() -> list[dict]:
 
 
 def main():
-    ap=argparse.ArgumentParser(); ap.add_argument('--scope',default='all',choices=['all','AUD-FIX-01','AUD-FIX-13']); ap.add_argument('--json',action='store_true')
+    ap=argparse.ArgumentParser(); ap.add_argument('--scope',default='all',choices=['all','AUD-FIX-01','AUD-FIX-13','AUD-FIX-14','GATE-D']); ap.add_argument('--json',action='store_true')
     args=ap.parse_args(); findings=evaluate()
     blocking=[x for x in findings if x['blocks_aud_fix_01']]
     blocking13=[x for x in findings if x.get('blocks_aud_fix_13')]
-    payload={'schema':'dustui.full-roadmap-conformance.v3','scope':args.scope,'aud_fix_01_blockers':blocking,'aud_fix_13_blockers':blocking13,'findings':findings}
+    topology_families={'AUD-018','AUD-021','AUD-023'}
+    blocking14=[x for x in findings if x['family'] in topology_families]
+    gate_d_allowed_open={'AUD-014','AUD-015'}
+    gate_d_blockers=[x for x in findings if x['family'] not in gate_d_allowed_open]
+    payload={'schema':'dustui.full-roadmap-conformance.v4','scope':args.scope,'aud_fix_01_blockers':blocking,'aud_fix_13_blockers':blocking13,'aud_fix_14_topology_blockers':blocking14,'gate_d_blockers':gate_d_blockers,'findings':findings}
     if args.json: print(json.dumps(payload,indent=2))
     else:
         print(f"FULL ROADMAP CONFORMANCE [{args.scope}]")
         for x in findings: print(f"- {x['id']} [{x['family']}]: {x['detail']}")
         print(f"AUD-FIX-01 blockers: {len(blocking)}")
         print(f"AUD-FIX-13 blockers: {len(blocking13)}")
-    selected = blocking if args.scope=='AUD-FIX-01' else (blocking13 if args.scope=='AUD-FIX-13' else findings)
+        print(f"AUD-FIX-14 topology blockers: {len(blocking14)}")
+        print(f"Gate-D blockers: {len(gate_d_blockers)}")
+    if args.scope=='AUD-FIX-01': selected=blocking
+    elif args.scope=='AUD-FIX-13': selected=blocking13
+    elif args.scope=='AUD-FIX-14': selected=blocking14
+    elif args.scope=='GATE-D': selected=gate_d_blockers
+    else: selected=findings
     return 1 if selected else 0
 if __name__=='__main__': raise SystemExit(main())

@@ -146,3 +146,7 @@ AUD-FIX-12 derives compact/medium/expanded layout from the active semantic route
 ## AUD-FIX-13 acceptance authority
 
 Current pre-Gate-D acceptance metadata is generated at `migration/acceptance/v1/current_state.json`. It inventories live/static validators, maps archived source-token guards to exact successor evidence, and maps the complete UI/UX requirement/task/rule matrix. `candidate.acceptance_converged=true` means the candidate acceptance system is internally coherent; it **does not** qualify Gate D. Gate-D qualification remains exclusively evidence-derived from `migration/qualification/v1/current_state.json`. App-local adb/APK/release helpers are quarantined compatibility artifacts and are not acceptance or Gate-D orchestration authority.
+
+### AUD-FIX-14 Gate-D preflight
+
+AUD-FIX-14 adds exact-tree Gate A/B/C history discovery and the complete Gate-D Devtool topology. It does **not** close Gate D. Historical proof is accepted only from the original Git tree replayed through its canonical Devtool workflow; missing history is reported as `UNRECOVERABLE_HISTORICAL_EVIDENCE`. The latest AUD-FIX-05/06 R1 validation remains failed even though its code was later force-applied.

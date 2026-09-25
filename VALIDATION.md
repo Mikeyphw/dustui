@@ -130,3 +130,7 @@ That device workflow runs `:app:connectedDebugAndroidTest`, including phone/tabl
 ## AUD-FIX-13 acceptance authority
 
 Run `./devtoolw aud-fix-13` for pre-Gate-D acceptance convergence. Its leaf jobs are `acceptance_inventory`, `successor_validator_contract`, `evidence_metadata_truth`, and `pre_gate_d_conformance`; runtime/build evidence is supplied by Devtool nodes rather than launched by those checkers. Gate D remains open and unqualified after this workflow. Historical OV/source-token validators live only under `migration/archive/validators/aud_fix_13_pre_gate_d/`.
+
+## AUD-FIX-14 — Gate-D topology preflight
+
+Run `./devtoolw aud-fix-14` to discover/prepare exact historical Gate A/B/C worktrees and validate Gate-D topology/binding contracts without executing Gate D. The complete qualification graph is exposed as `./devtoolw gate-d` for AUD-FIX-15; it remains blocked while historical proof or current-node evidence is incomplete. Debug and Release Android proof are separate nodes, and the Gradle 9.7.1 `jniLibs` source-set configuration blocker from the failed R1 attempt is repaired before Gate D.

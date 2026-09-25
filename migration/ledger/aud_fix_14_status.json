@@ -1,0 +1,22 @@
+{
+  "schema": "dustui.aud-fix-status.v2",
+  "overlay": "AUD-FIX-14",
+  "status": "preflight-topology-complete-gate-d-open",
+  "closes_or_advances": [
+    "AUD-018",
+    "AUD-019",
+    "AUD-021",
+    "AUD-023"
+  ],
+  "gate_d": "open",
+  "gate_d_closure_allowed": false,
+  "historical_authority": "migration/qualification/v1/historical_gate_evidence.json",
+  "topology_authority": "migration/qualification/v1/gate_d_topology.json",
+  "evidence_registry": "migration/qualification/v1/gate_d_evidence.json",
+  "preflight_workflow": "dustui_android#gate_d_preflight",
+  "qualification_workflow": "dustui_android#gate_d",
+  "qualification_overlay": "AUD-FIX-15",
+  "r1_attempt": "migration/qualification/v1/authority_gate_r1_attempt.json",
+  "note": "Historical blockers are reported, never fabricated. AUD-FIX-14 validates topology/config only and does not execute or close Gate D.",
+  "audit": "migration/audit/v2/aud_fix_14_topology.json"
+}

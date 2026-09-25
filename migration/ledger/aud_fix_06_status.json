@@ -1,7 +1,7 @@
 {
   "schema": "dustui.aud-fix-status.v1",
   "overlay": "AUD-FIX-06",
-  "status": "candidate-awaiting-devtool-gate",
+  "status": "failed-validation-force-applied-unqualified",
   "closed_or_advanced_gap_families": [
     "AUD-006",
     "AUD-007",
@@ -16,5 +16,9 @@
   "gate_d": "open",
   "validation_authority": "devtool-exo",
   "workflow": "dustui_android#authority_gate_r1",
-  "closure_condition": "overlay application succeeds with required Devtool validation on the source-pinned tree"
+  "closure_condition": "R1 is not passed. AUD-FIX-14 records and repairs the known Gradle configuration blocker; final qualification remains Gate D/AUD-FIX-15 authority.",
+  "gate_r1": "failed",
+  "latest_validated_attempt": "migration/qualification/v1/authority_gate_r1_attempt.json",
+  "force_applied_after_failure": true,
+  "force_apply_validation": "not-run"
 }

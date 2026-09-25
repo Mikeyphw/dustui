@@ -1,0 +1,139 @@
+{
+  "schema": "dustui.historical-gate-evidence.v2",
+  "authority": "AUD-FIX-14 exact-tree discovery/requalification contract",
+  "rule": "Current-tree evidence may never be relabelled as Gate A/B/C evidence. Exact historical Git tree + canonical Devtool/EXO replay is mandatory; Gate B additionally requires ARM64 device/runtime evidence.",
+  "worktree_root": ".devtool/historical",
+  "gates": [
+    {
+      "gate": "A",
+      "node_id": "historical_gate_a_exo",
+      "original_phase": "OV03",
+      "overlay": "dustui_go_ov03_scanner_size_scanauthority_gateA_v1.zip",
+      "overlay_sha256": "373783758fddc8da876e0dd4469aa48837ca48ff9f19ef463ba4acc380a2bdf6",
+      "replay_target": "dustui_gate_a_history",
+      "replay_workflow": "requalify",
+      "requires_arm64_device": false,
+      "status": "LOCAL_HISTORY_DISCOVERY_REQUIRED",
+      "fingerprints": [
+        {
+          "path": ".devtool.toml",
+          "sha256": "e87d8fe7c4d11fd0e397e9f30104b7a61808096d791e997a17d45259b2e0a3ed"
+        },
+        {
+          "path": "go/internal/scan/scan.go",
+          "sha256": "0221cb32319841825dd29630cd8bf17a5302eab2f3debc63554cbb98564c11a6"
+        },
+        {
+          "path": "migration/ledger/ov03_gateA_status.json",
+          "sha256": "f4332fe46406f3a9af31613a6090834f47b13e03c363aad1c180ae3b0fa247b9"
+        },
+        {
+          "path": "scripts/validate_ov03_contract.py",
+          "sha256": "89fd0b8a174c910357c9fcdd84adbec4f18d512909651c77969257fe02d278c4"
+        }
+      ],
+      "required_replay_nodes": [
+        "contract",
+        "go_test"
+      ],
+      "required_binding": [
+        "historical_commit",
+        "historical_tree",
+        "replay_tree",
+        "workflow",
+        "devtool_version",
+        "run_id",
+        "log_sha256"
+      ]
+    },
+    {
+      "gate": "B",
+      "node_id": "historical_gate_b_exo_arm64",
+      "original_phase": "OV05",
+      "overlay": "dustui_go_ov05_android_runtime_shell_gateB_v1.zip",
+      "overlay_sha256": "52f7fe425fa918bc0569658349ce39bc649329db6e0d32ce655879eee23ef228",
+      "replay_target": "dustui_gate_b_history",
+      "replay_workflow": "requalify",
+      "requires_arm64_device": true,
+      "status": "LOCAL_HISTORY_DISCOVERY_REQUIRED",
+      "fingerprints": [
+        {
+          "path": ".devtool.toml",
+          "sha256": "869df8eaf3017096ca042d41c667fd8eb3928bfc6f72132c3cab1a477189a2a6"
+        },
+        {
+          "path": "go/internal/runtime/spec.go",
+          "sha256": "6165e72e51276a551f83c943c58e79e04bbf3c43c18435b303aa492b35fdf627"
+        },
+        {
+          "path": "migration/ledger/ov05_gateB_status.json",
+          "sha256": "0729eb46d2804bb9db0829a22543dc95d0e591ffaffff93d5a83de3be80ddfb5"
+        },
+        {
+          "path": "scripts/validate_ov05_contract.py",
+          "sha256": "c410a2685a88b048237644863435878cbcf1a6679733d9affe76dbb493083b30"
+        }
+      ],
+      "required_replay_nodes": [
+        "contract",
+        "go_test",
+        "runtime_contract",
+        "arm64_arch"
+      ],
+      "required_binding": [
+        "historical_commit",
+        "historical_tree",
+        "replay_tree",
+        "workflow",
+        "devtool_version",
+        "run_id",
+        "log_sha256",
+        "device_arch",
+        "device_evidence_sha256"
+      ]
+    },
+    {
+      "gate": "C",
+      "node_id": "historical_gate_c_exo",
+      "original_phase": "OV08",
+      "overlay": "dustui_go_ov08_mutation_recovery_gateC_v1.zip",
+      "overlay_sha256": "e97f17f3215f6a1bad861496855327e364b168c6c87489285f0e16ad7611335c",
+      "replay_target": "dustui_gate_c_history",
+      "replay_workflow": "requalify",
+      "requires_arm64_device": false,
+      "status": "LOCAL_HISTORY_DISCOVERY_REQUIRED",
+      "fingerprints": [
+        {
+          "path": ".devtool.toml",
+          "sha256": "eee2e5f824e126d4b98582ce43ef6fdcf244a6c150e49fdaaed4a38b729b6fe6"
+        },
+        {
+          "path": "go/internal/cleanup/cleanup.go",
+          "sha256": "3f3863f41887b39fa043f38fee0c2c0d6eabaa9cab4f680a6b7a337d762eb946"
+        },
+        {
+          "path": "migration/ledger/ov08_status.json",
+          "sha256": "4fafe8f66af15504a3482305c2b4ac649b47b19bfdf88e2b645d1b0edc73cbf8"
+        },
+        {
+          "path": "scripts/validate_ov08_contract.py",
+          "sha256": "fc99a2de808e2fcc17bd1011c07b10423931d4681070e4d7c963dca94c2eb32c"
+        }
+      ],
+      "required_replay_nodes": [
+        "contract",
+        "go_test"
+      ],
+      "required_binding": [
+        "historical_commit",
+        "historical_tree",
+        "replay_tree",
+        "workflow",
+        "devtool_version",
+        "run_id",
+        "log_sha256"
+      ]
+    }
+  ],
+  "handoff_limit": "The retained handoff contains original gate overlays/contracts but no trusted exact Git commit/tree identities and no replayed Gate-B ARM64 EXO evidence. Discovery must use the real repository history and remains blocking until canonical replay evidence is bound."
+}

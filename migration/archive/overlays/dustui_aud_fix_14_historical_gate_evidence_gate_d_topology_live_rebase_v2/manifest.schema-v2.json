@@ -1,0 +1,29 @@
+{
+  "schema_version": 2,
+  "artifact": "dustui_aud_fix_14_historical_gate_evidence_gate_d_topology_live_rebase_v2.zip",
+  "target": "dustui_android",
+  "phases": [
+    "AUD-FIX-14"
+  ],
+  "gap_families": [
+    "AUD-018",
+    "AUD-019",
+    "AUD-021",
+    "AUD-023"
+  ],
+  "purpose": "Recover/identify historical Gate A/B/C evidence and declare complete Gate-D topology without executing or closing Gate D.",
+  "source_state": {
+    "requires": [
+      "AUD-FIX-01 through AUD-FIX-13 applied",
+      "AUD-FIX-05/06 v3 code may be force-applied but R1 remains failed/unqualified"
+    ],
+    "baseline": "post-AUD-FIX-13 live tree: dustui-20260925-111656-706953"
+  },
+  "validation": {
+    "apply": "--no-validate",
+    "gate": false,
+    "workflow": "dustui_android#gate_d_preflight",
+    "gate_d_must_remain": "open"
+  },
+  "next": "AUD-FIX-15 full Gate-D qualification"
+}

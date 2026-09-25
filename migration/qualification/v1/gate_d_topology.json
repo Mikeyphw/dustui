@@ -1,0 +1,424 @@
+{
+  "schema": "dustui.gate-d-topology.v2",
+  "planned_by": "AUD-FIX-14",
+  "gate_closure_allowed": false,
+  "qualification_overlay": "AUD-FIX-15",
+  "required_nodes": [
+    "historical_gate_a_exo",
+    "historical_gate_b_exo_arm64",
+    "historical_gate_c_exo",
+    "requirement_index_conformance",
+    "go_test",
+    "go_build",
+    "go_schema",
+    "go_product_contract",
+    "go_cli_smoke",
+    "go_tui_smoke",
+    "android_debug_unit",
+    "android_debug_lint",
+    "android_debug_assemble",
+    "android_release_unit",
+    "android_release_lint",
+    "android_release_assemble",
+    "migration_validators",
+    "install_launch_smoke",
+    "route_deeplink_recreation_rotation",
+    "accessibility",
+    "rooted_arm64_runtime",
+    "runtime_apk_binding",
+    "devtool_artifact_identity",
+    "durable_operation_terminal_truth",
+    "diagnostics_support_seal",
+    "production_reachability"
+  ],
+  "nodes": [
+    {
+      "id": "historical_gate_a_exo",
+      "workflow_ref": "target:dustui_gate_a_history#requalify",
+      "historical": true,
+      "same_gate_d_tree": false,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "historical_commit",
+          "historical_tree",
+          "replay_tree",
+          "workflow",
+          "devtool_version",
+          "run_id",
+          "log_sha256"
+        ]
+      }
+    },
+    {
+      "id": "historical_gate_b_exo_arm64",
+      "workflow_ref": "target:dustui_gate_b_history#requalify",
+      "historical": true,
+      "same_gate_d_tree": false,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "historical_commit",
+          "historical_tree",
+          "replay_tree",
+          "workflow",
+          "devtool_version",
+          "run_id",
+          "log_sha256",
+          "device_arch",
+          "device_evidence_sha256"
+        ]
+      }
+    },
+    {
+      "id": "historical_gate_c_exo",
+      "workflow_ref": "target:dustui_gate_c_history#requalify",
+      "historical": true,
+      "same_gate_d_tree": false,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "historical_commit",
+          "historical_tree",
+          "replay_tree",
+          "workflow",
+          "devtool_version",
+          "run_id",
+          "log_sha256"
+        ]
+      }
+    },
+    {
+      "id": "requirement_index_conformance",
+      "workflow_ref": "job:gate_d_requirement_conformance",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      }
+    },
+    {
+      "id": "go_test",
+      "workflow_ref": "target:dustui_go#gate_d_tests",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      }
+    },
+    {
+      "id": "go_build",
+      "workflow_ref": "target:dustui_go#gate_d_build",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      }
+    },
+    {
+      "id": "go_schema",
+      "workflow_ref": "target:dustui_go#gate_d_schema",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      }
+    },
+    {
+      "id": "go_product_contract",
+      "workflow_ref": "target:dustui_go#gate_d_product",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      }
+    },
+    {
+      "id": "go_cli_smoke",
+      "workflow_ref": "target:dustui_go#gate_d_cli",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      }
+    },
+    {
+      "id": "go_tui_smoke",
+      "workflow_ref": "target:dustui_go#gate_d_tui",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      }
+    },
+    {
+      "id": "android_debug_unit",
+      "workflow_ref": "job:android_unit",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      }
+    },
+    {
+      "id": "android_debug_lint",
+      "workflow_ref": "job:android_lint",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      }
+    },
+    {
+      "id": "android_debug_assemble",
+      "workflow_ref": "job:android_assemble",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": true,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version",
+          "artifact_sha256"
+        ]
+      }
+    },
+    {
+      "id": "android_release_unit",
+      "workflow_ref": "job:android_release_unit",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      }
+    },
+    {
+      "id": "android_release_lint",
+      "workflow_ref": "job:android_release_lint",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      }
+    },
+    {
+      "id": "android_release_assemble",
+      "workflow_ref": "job:android_release_assemble",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": true,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version",
+          "artifact_sha256"
+        ]
+      }
+    },
+    {
+      "id": "migration_validators",
+      "workflow_ref": "target:dustui_android#gate_d_successor_validators",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      }
+    },
+    {
+      "id": "install_launch_smoke",
+      "workflow_ref": "job:gate_d_install_launch_smoke",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": true,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version",
+          "artifact_sha256"
+        ]
+      }
+    },
+    {
+      "id": "route_deeplink_recreation_rotation",
+      "workflow_ref": "job:gate_d_route_instrumentation",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      }
+    },
+    {
+      "id": "accessibility",
+      "workflow_ref": "job:gate_d_accessibility_instrumentation",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      }
+    },
+    {
+      "id": "rooted_arm64_runtime",
+      "workflow_ref": "job:gate_d_rooted_arm64_runtime",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": true,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version",
+          "artifact_sha256"
+        ]
+      }
+    },
+    {
+      "id": "runtime_apk_binding",
+      "workflow_ref": "job:gate_d_runtime_apk_binding",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": true,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version",
+          "artifact_sha256"
+        ]
+      }
+    },
+    {
+      "id": "devtool_artifact_identity",
+      "workflow_ref": "job:gate_d_devtool_artifact_identity",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": true,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version",
+          "artifact_sha256"
+        ]
+      }
+    },
+    {
+      "id": "durable_operation_terminal_truth",
+      "workflow_ref": "target:dustui_go#gate_d_durable",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      }
+    },
+    {
+      "id": "diagnostics_support_seal",
+      "workflow_ref": "target:dustui_go#gate_d_diagnostics",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      }
+    },
+    {
+      "id": "production_reachability",
+      "workflow_ref": "job:gate_d_production_reachability",
+      "historical": false,
+      "same_gate_d_tree": true,
+      "requires_artifact_binding": false,
+      "binding_contract": {
+        "required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ]
+      }
+    }
+  ],
+  "retirement_boundary": {
+    "gate_d_proves": "production predecessor authorities unreachable and successor product-default",
+    "aud_fix_16_proves": "physical deletion of quarantined Python oracle, Room/NDJSON remnants, generic app-local helpers and remaining predecessor artifacts"
+  }
+}

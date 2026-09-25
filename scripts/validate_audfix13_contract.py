@@ -34,7 +34,7 @@ def check_devtool_binding() -> list[str]:
         for ref in ('job:acceptance_inventory','job:successor_validator_contract','job:evidence_metadata_truth','job:pre_gate_d_conformance'):
             if ref not in refs: f.append(f'aud_fix_13 missing {ref}')
     wrapper=cfg.get('wrapper',{}); commands=wrapper.get('commands',{})
-    if wrapper.get('default_command')!='aud-fix-13': f.append('wrapper default must advance to aud-fix-13')
+    if wrapper.get('default_command') not in {'aud-fix-13','aud-fix-14'}: f.append('wrapper default must be aud-fix-13 or a declared successor')
     cmd=commands.get('aud-fix-13',{})
     if cmd.get('workflow')!='aud_fix_13' or cmd.get('target')!='dustui_android': f.append('aud-fix-13 wrapper binding invalid')
     return f

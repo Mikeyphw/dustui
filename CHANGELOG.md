@@ -330,3 +330,10 @@ Final release-candidate hardening for the rooted Android storage workbench.
 - Bound Android/Go product metadata and Devtool acceptance workflows to canonical acceptance + qualification state without claiming Gate-D qualification.
 - Kept app-local ADB/APK/release helpers quarantined for AUD-FIX-16 and historical Gate A/B/C evidence/topology work for AUD-FIX-14.
 
+
+## AUD-FIX-14
+
+- Added exact-tree historical Gate A/B/C discovery/requalification contracts and worktree preparation.
+- Declared the complete 26-node Gate-D Devtool topology with exact binding requirements.
+- Added Debug/Release Android, device/runtime, runtime/APK, Devtool identity, durable-operation, diagnostics, and production-reachability leaves.
+- Preserved the failed AUD-FIX-05/06 R1 result and repaired its known Gradle 9.7.1 SourceSet blocker without retroactively marking R1 passed.
