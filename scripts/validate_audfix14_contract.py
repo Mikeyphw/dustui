@@ -50,6 +50,18 @@ def topology_failures() -> list[str]:
     if forbidden: failures.append(f"gate_d_preflight executes qualification nodes {sorted(forbidden)}")
     # AUD-FIX-14 is topology/preflight only; validate must not silently become Gate D until AUD-FIX-15.
     if aw.get("validate") == aw.get("gate_d"): failures.append("validate points to gate_d before AUD-FIX-15")
+    # Gate A must be pinned to the actual OV03 Gate-A tree, not the immediately
+    # following Termux hardlink-fixture hotfix. The archived Gate-A overlay
+    # records the pre-hotfix scan_test.go payload hash; using it as an immutable
+    # fingerprint disambiguates otherwise identical Gate-A candidates without
+    # guessing from commit subjects or chronology.
+    hist = load(HIST)
+    gate_a = next((g for g in hist.get("gates", []) if g.get("gate") == "A"), {})
+    gate_a_fps = {x.get("path"): x.get("sha256") for x in gate_a.get("fingerprints", []) if isinstance(x, dict)}
+    expected_gate_a_scan_test = "de239d170aaf76f9f198ae9bcbe479d7902c056de9e10b63d00e16e32475cd6a"
+    if gate_a_fps.get("go/internal/scan/scan_test.go") != expected_gate_a_scan_test:
+        failures.append("Gate A historical inventory must fingerprint archived pre-hotfix go/internal/scan/scan_test.go")
+
     for target in ["dustui_gate_a_history", "dustui_gate_b_history", "dustui_gate_c_history"]:
         t = cfg.get("targets", {}).get(target, {})
         if t.get("type") != "command" or "requalify" not in t.get("workflows", {}):

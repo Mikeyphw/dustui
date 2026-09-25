@@ -24,6 +24,10 @@
           "sha256": "0221cb32319841825dd29630cd8bf17a5302eab2f3debc63554cbb98564c11a6"
         },
         {
+          "path": "go/internal/scan/scan_test.go",
+          "sha256": "de239d170aaf76f9f198ae9bcbe479d7902c056de9e10b63d00e16e32475cd6a"
+        },
+        {
           "path": "migration/ledger/ov03_gateA_status.json",
           "sha256": "f4332fe46406f3a9af31613a6090834f47b13e03c363aad1c180ae3b0fa247b9"
         },

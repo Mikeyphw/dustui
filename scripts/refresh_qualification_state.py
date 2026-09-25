@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import difflib
 import json
 from pathlib import Path
 
@@ -38,6 +39,31 @@ def main() -> int:
         if not GO_STATE.is_file() or GO_STATE.read_text() != go_text: bad.append(str(GO_STATE.relative_to(ROOT)))
         if bad:
             print('qualification generated state is stale: ' + ', '.join(bad))
+            # Keep --check strictly read-only, but make the failure actionable.
+            # A Gate-D preflight must never repair or hand-edit generated truth
+            # implicitly; show a bounded exact diff so the audit loop can identify
+            # what observation/evidence changed on the live tree.
+            pairs = [
+                (STATE, state_text, 'current_state.json'),
+                (GO_STATE, go_text, 'state_generated.go'),
+            ]
+            for path, expected, label in pairs:
+                actual = path.read_text() if path.is_file() else ''
+                if actual == expected:
+                    continue
+                print(f'--- stale diff: {label} ---')
+                diff = list(difflib.unified_diff(
+                    actual.splitlines(),
+                    expected.splitlines(),
+                    fromfile=f'checked-in/{label}',
+                    tofile=f'expected/{label}',
+                    lineterm='',
+                    n=3,
+                ))
+                for line in diff[:120]:
+                    print(line)
+                if len(diff) > 120:
+                    print(f'... diff truncated: {len(diff) - 120} additional lines')
             return 1
     else:
         STATE.write_text(state_text)
