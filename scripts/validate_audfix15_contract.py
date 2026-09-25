@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -14,6 +15,7 @@ QUAL = ROOT / "migration/qualification/v1"
 TOPOLOGY = QUAL / "gate_d_topology.json"
 REGISTRY = QUAL / "gate_d_evidence.json"
 SCRIPT = ROOT / "scripts/audfix15_gate_d_evidence.py"
+LIFECYCLE = ROOT / "scripts/audfix15_lifecycle.py"
 
 
 def load(path: Path):
@@ -37,7 +39,10 @@ def lifecycle_failures() -> list[str]:
     workflow = _toml_workflow_slice()
     for token in [
         "[targets.dustui_android.jobs.gate_d_evidence_finalize]",
+        "[targets.dustui_android.jobs.audfix15_lifecycle_plan]",
+        "[targets.dustui_android.jobs.audfix15_evidence_lifecycle]",
         "scripts/audfix15_gate_d_evidence.py",
+        "scripts/audfix15_lifecycle.py",
         "migration/qualification/v1/gate_d_bundle.json",
         "[wrapper.commands.aud-fix-15]",
         "workflow = \"gate_d\"",
@@ -48,8 +53,20 @@ def lifecycle_failures() -> list[str]:
         failures.append("gate_d workflow must finalize canonical evidence after production_reachability")
     if not re.search(r'id\s*=\s*"qualification_state"[^\n]+depends_on\s*=\s*\["gate_d_evidence_finalize"\]', workflow):
         failures.append("gate_d workflow must run qualification_state after Gate-D evidence finalization")
+    validate_match = re.search(r'validate\s*=\s*\[(.*?)\n\]', workflow, flags=re.S)
+    validate_body = validate_match.group(1) if validate_match else ""
+    if 'af15_lifecycle' in validate_body or 'audfix15_lifecycle_plan' in validate_body:
+        failures.append("ordinary validate workflow must not own AUD-FIX-15 lifecycle; artifact manifest validation.tests owns it")
+    if 'af15_contract' in validate_body or 'audfix15_evidence_lifecycle' in validate_body:
+        failures.append("ordinary validate workflow must not own AUD-FIX-15 contract; artifact manifest validation.tests owns it")
     if 'validate = [' in workflow and 'ref = "target:dustui_android#gate_d"' in workflow:
         failures.append("ordinary validate must not silently run full Gate-D")
+    if not re.search(r'id\s*=\s*"historical_inventory"[^\n]+ref\s*=\s*"job:historical_gate_inventory"', workflow):
+        failures.append("gate_d workflow must prepare historical worktrees before historical replay targets")
+    lifecycle_source = text(LIFECYCLE)
+    for token in ["apply_validates_itself", "manual_post_apply_commands_required", "required-by-artifact-manifest", "do_not_add_no_validate", "artifact-manifest-validation-tests"]:
+        if token not in lifecycle_source:
+            failures.append(f"AUD-FIX-15 lifecycle script missing token: {token}")
     script = text(SCRIPT)
     for token in [
         "source_projection_sha256",
@@ -96,7 +113,10 @@ def registry_failures() -> list[str]:
 
 def finalize_fail_closed_failures() -> list[str]:
     failures: list[str] = []
-    cp = subprocess.run([sys.executable, str(SCRIPT), "finalize"], cwd=ROOT, text=True, capture_output=True)
+    env = dict(os.environ)
+    env.pop("DEVTOOL_RUN_ID", None)
+    env.pop("DEVTOOL_RUN_UUID", None)
+    cp = subprocess.run([sys.executable, str(SCRIPT), "finalize"], cwd=ROOT, text=True, capture_output=True, env=env)
     if cp.returncode == 0:
         failures.append("manual Gate-D finalization without DEVTOOL_RUN_ID unexpectedly succeeded")
     if "DEVTOOL_RUN_ID is required" not in (cp.stdout + cp.stderr):
