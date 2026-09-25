@@ -18,6 +18,7 @@ SCRIPT = ROOT / "scripts/audfix15_gate_d_evidence.py"
 LIFECYCLE = ROOT / "scripts/audfix15_lifecycle.py"
 DOCTOR = ROOT / "scripts/audfix15_gate_d_doctor.py"
 BRIDGE = ROOT / "scripts/audfix15_gate_d_bridge.py"
+CLOSURE = ROOT / "scripts/audfix15_gate_d_closure.py"
 
 
 def load(path: Path):
@@ -44,14 +45,17 @@ def lifecycle_failures() -> list[str]:
         "[targets.dustui_android.jobs.audfix15_lifecycle_plan]",
         "[targets.dustui_android.jobs.audfix15_gate_d_doctor]",
         "[targets.dustui_android.jobs.audfix15_gate_d_bridge]",
+        "[targets.dustui_android.jobs.audfix15_gate_d_closure]",
         "[targets.dustui_android.jobs.audfix15_evidence_lifecycle]",
         "scripts/audfix15_gate_d_evidence.py",
         "scripts/audfix15_lifecycle.py",
         "scripts/audfix15_gate_d_doctor.py",
         "scripts/audfix15_gate_d_bridge.py",
+        "scripts/audfix15_gate_d_closure.py",
         "migration/qualification/v1/gate_d_bundle.json",
         "[wrapper.commands.aud-fix-15]",
         "[wrapper.commands.aud-fix-15-doctor]",
+        "[wrapper.commands.aud-fix-15-closure]",
         "workflow = \"gate_d\"",
     ]:
         if token not in body:
@@ -76,12 +80,14 @@ def lifecycle_failures() -> list[str]:
         failures.append("aud_fix_15_contract workflow must run the Gate-D bridge after lifecycle plan")
     if not re.search(r'id\s*=\s*"doctor"[^\n]+ref\s*=\s*"job:audfix15_gate_d_doctor"[^\n]+depends_on\s*=\s*\["bridge"\]', workflow):
         failures.append("aud_fix_15_contract workflow must run the Gate-D doctor after bridge")
-    if not re.search(r'id\s*=\s*"contract"[^\n]+depends_on\s*=\s*\["doctor"\]', workflow):
-        failures.append("aud_fix_15_contract workflow must run evidence contract after doctor")
+    if not re.search(r'id\s*=\s*"closure"[^\n]+ref\s*=\s*"job:audfix15_gate_d_closure"[^\n]+depends_on\s*=\s*\["doctor"\]', workflow):
+        failures.append("aud_fix_15_contract workflow must run closure after doctor")
+    if not re.search(r'id\s*=\s*"contract"[^\n]+depends_on\s*=\s*\["closure"\]', workflow):
+        failures.append("aud_fix_15_contract workflow must run evidence contract after closure")
     if not re.search(r'id\s*=\s*"historical_inventory"[^\n]+ref\s*=\s*"job:historical_gate_inventory"', workflow):
         failures.append("gate_d workflow must prepare historical worktrees before historical replay targets")
     lifecycle_source = text(LIFECYCLE)
-    for token in ["apply_validates_itself", "manual_post_apply_commands_required", "required-by-artifact-manifest", "do_not_add_no_validate", "artifact-manifest-validation-tests", "af15_bridge", "af15_doctor", "diagnostics_workflow"]:
+    for token in ["apply_validates_itself", "manual_post_apply_commands_required", "required-by-artifact-manifest", "do_not_add_no_validate", "artifact-manifest-validation-tests", "af15_bridge", "af15_doctor", "af15_closure", "closure_contract_workflow", "diagnostics_workflow"]:
         if token not in lifecycle_source:
             failures.append(f"AUD-FIX-15 lifecycle script missing token: {token}")
     doctor = text(DOCTOR)
@@ -103,6 +109,21 @@ def lifecycle_failures() -> list[str]:
     if cp_bridge.returncode != 0:
         failures.append("AUD-FIX-15 evidence bridge contract check failed")
 
+    closure_source = text(CLOSURE)
+    for token in [
+        "dustui.aud-fix-15.gate-d-closure-contract.v1",
+        "single_execution_command",
+        "gate_d_evidence_finalize",
+        "ARTIFACT_NODES",
+        "historical_inventory",
+        "audfix15_gate_d_closure",
+    ]:
+        if token not in closure_source:
+            failures.append(f"AUD-FIX-15 closure contract missing token: {token}")
+    cp_closure = subprocess.run([sys.executable, str(CLOSURE), "--check"], cwd=ROOT, text=True, capture_output=True)
+    if cp_closure.returncode != 0:
+        failures.append("AUD-FIX-15 Gate-D closure contract check failed")
+
     script = text(SCRIPT)
     for token in [
         "source_projection_sha256",
@@ -114,6 +135,7 @@ def lifecycle_failures() -> list[str]:
         "refresh_generated_state",
         "build_bridge_report",
         "material_finalizer_blockers",
+        "closure_contract",
         "GATE_D",
     ]:
         if token not in script:

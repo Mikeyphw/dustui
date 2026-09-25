@@ -7,7 +7,7 @@ import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACT_NAME = "dustui_aud_fix_15_gate_d_evidence_bridge_v12.zip"
+ARTIFACT_NAME = "dustui_aud_fix_15_gate_d_full_closure_v13.zip"
 
 
 def _load_config() -> dict:
@@ -41,19 +41,24 @@ def plan() -> dict:
         "embedded_validation": {
             "mode": "artifact-manifest-validation-tests",
             "target": "dustui_android",
-            "required_tests": ["af15_lifecycle_plan", "af15_bridge", "af15_doctor", "af15_contract", "af14_topology", "qualification_state"],
+            "required_tests": ["af15_lifecycle_plan", "af15_bridge", "af15_doctor", "af15_closure", "af15_contract", "af14_topology", "qualification_state"],
             "normal_validate_workflow_is_not_required": True,
             "present": True,
         },
         "contract_workflow": {
             "workflow": "aud_fix_15_contract",
-            "required_nodes": ["lifecycle", "bridge", "doctor", "contract", "truth"],
-            "present": all(node in contract_ids for node in ["lifecycle", "bridge", "doctor", "contract", "truth"]),
+            "required_nodes": ["lifecycle", "bridge", "doctor", "closure", "contract", "truth"],
+            "present": all(node in contract_ids for node in ["lifecycle", "bridge", "doctor", "closure", "contract", "truth"]),
         },
         "diagnostics_workflow": {
             "workflow": "aud_fix_15_diagnostics",
             "required_nodes": ["bridge", "doctor"],
             "present": all(node in diagnostics_ids for node in ["bridge", "doctor"]),
+        },
+        "closure_contract_workflow": {
+            "workflow": "aud_fix_15_gate_d_closure",
+            "required_nodes": ["bridge", "doctor", "closure"],
+            "present": all(node in _ids(_workflow("aud_fix_15_gate_d_closure")) for node in ["bridge", "doctor", "closure"]),
         },
         "gate_d_workflow": {
             "workflow": "gate_d",
@@ -78,7 +83,7 @@ def main() -> int:
             print("AUD-FIX-15 lifecycle is embedded in artifact manifest validation tests.")
             print(f"Apply: devtool --yes apply-overlay /sdcard/Download/{ARTIFACT_NAME}")
             print("Do not add --no-validate; the artifact manifest requires validation.")
-        return 0 if obj["embedded_validation"]["present"] and obj["contract_workflow"]["present"] and obj["diagnostics_workflow"]["present"] and obj["gate_d_workflow"]["prepares_history_before_replay"] else 1
+        return 0 if obj["embedded_validation"]["present"] and obj["contract_workflow"]["present"] and obj["diagnostics_workflow"]["present"] and obj["closure_contract_workflow"]["present"] and obj["gate_d_workflow"]["prepares_history_before_replay"] and obj["gate_d_workflow"]["finalizes_evidence"] else 1
     raise AssertionError(args.cmd)
 
 

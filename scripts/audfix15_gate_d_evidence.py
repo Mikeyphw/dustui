@@ -20,6 +20,7 @@ REGISTRY = QUAL / "gate_d_evidence.json"
 HIST_DISCOVERY = ROOT / "build/evidence/aud-fix/14/historical_discovery.json"
 BUNDLE = QUAL / "gate_d_bundle.json"
 NODE_EVIDENCE_DIR = ROOT / "build/evidence/gate-d/nodes"
+CLOSURE_CONTRACT = ROOT / "scripts/audfix15_gate_d_closure.py"
 
 STABLE_BLOCKER_PREFIX_EXAMPLES = ["GATE_D", "GATE_D.ARTIFACT", "GATE_D.CONTEXT"]
 
@@ -313,6 +314,11 @@ def build_registry(require_run_id: bool = True) -> dict[str, Any]:
         "node_evidence": [entry for node in nodes for entry in node.get("evidence", [])],
         "evidence_bridge_schema": bridge.get("schema"),
         "evidence_requirement_count": bridge.get("node_count"),
+        "closure_contract": {
+            "schema": "dustui.aud-fix-15.gate-d-closure-contract.v1",
+            "path": str(CLOSURE_CONTRACT.relative_to(ROOT)),
+            "sha256": _sha_file(CLOSURE_CONTRACT) if CLOSURE_CONTRACT.is_file() else None,
+        },
     }
     _dump(BUNDLE, bundle_payload)
     registry = {
@@ -332,6 +338,11 @@ def build_registry(require_run_id: bool = True) -> dict[str, Any]:
             "blocker_ids": bridge.get("blocker_ids", []),
             "material_finalizer_blocker_ids": bridge.get("material_finalizer_blocker_ids", []),
             "requirements": bridge.get("requirements", []),
+        },
+        "closure_contract": {
+            "schema": "dustui.aud-fix-15.gate-d-closure-contract.v1",
+            "path": str(CLOSURE_CONTRACT.relative_to(ROOT)),
+            "sha256": _sha_file(CLOSURE_CONTRACT) if CLOSURE_CONTRACT.is_file() else None,
         },
         "nodes": nodes,
     }
@@ -386,6 +397,11 @@ def diagnose(_: argparse.Namespace) -> int:
         "evidence_bridge": {
             "schema": build_bridge_report(require_devtool_context=False).get("schema"),
             "material_finalizer_blocker_ids": build_bridge_report(require_devtool_context=False).get("material_finalizer_blocker_ids", []),
+        },
+        "closure_contract": {
+            "schema": "dustui.aud-fix-15.gate-d-closure-contract.v1",
+            "present": CLOSURE_CONTRACT.is_file(),
+            "path": str(CLOSURE_CONTRACT.relative_to(ROOT)),
         },
     }
     print(json.dumps(obj, indent=2, sort_keys=True))
