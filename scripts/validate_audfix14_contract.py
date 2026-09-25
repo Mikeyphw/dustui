@@ -54,6 +54,14 @@ def topology_failures() -> list[str]:
         t = cfg.get("targets", {}).get(target, {})
         if t.get("type") != "command" or "requalify" not in t.get("workflows", {}):
             failures.append(f"historical target incomplete: {target}")
+    # The history preparation job invokes `git worktree add/remove`, which mutates
+    # Git metadata in addition to .devtool/historical. Devtool forbids reserving
+    # .git explicitly, and advertising only the JSON report as an output would
+    # understate the write-set. Keep the job deliberately unbounded so the
+    # scheduler takes an exclusive repository reservation for this first wave.
+    hist_job = cfg.get("targets", {}).get("dustui_android", {}).get("jobs", {}).get("historical_gate_inventory", {})
+    if hist_job.get("inputs") or hist_job.get("outputs"):
+        failures.append("historical_gate_inventory must leave inputs/outputs undeclared for exclusive Git-metadata-safe scheduling")
     return failures
 
 

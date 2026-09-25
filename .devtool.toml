@@ -440,8 +440,10 @@ outputs = ["app/build/outputs/apk/debug"]
 runner = "command"
 root = ".."
 command = ["python3", "scripts/audfix14_history.py", "--prepare"]
-inputs = ["scripts/audfix14_history.py", "migration/qualification/v1/historical_gate_evidence.json", ".git"]
-outputs = ["build/evidence/aud-fix/14/historical_discovery.json"]
+# This job runs `git worktree add/remove`, which mutates Git metadata as well as
+# .devtool/historical. Devtool intentionally cannot reserve .git paths. Leave
+# inputs/outputs undeclared so the scheduler takes the exclusive repository
+# reservation instead of advertising an incomplete bounded write-set.
 
 [targets.dustui_android.jobs.gate_d_topology]
 runner = "command"
