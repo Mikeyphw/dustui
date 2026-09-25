@@ -15,6 +15,8 @@ DEFAULT_REPORT = ROOT / "build/evidence/aud-fix/14/historical_discovery.json"
 WORKTREE_ROOT = ROOT / ".devtool/historical"
 LEGACY_PYTHON = ROOT / "src/dust_tui"
 DEVTOOL_CONFIG = ROOT / ".devtool.toml"
+ORACLE_LEGACY_PYTHON = ROOT / "migration/oracle/python_textual/src/dust_tui"
+EXPECTED_ORACLE_SOURCE_SHA256 = "3255c9fad5be02656c5efdc660f433f2b363b587109a2713b556530d370b1a8e"
 
 
 def _run(*args: str, cwd: Path = ROOT, text: bool = True) -> subprocess.CompletedProcess:
@@ -127,6 +129,96 @@ def _prepared_legacy_matches(prepared: list[str], observed: dict[str, Any]) -> l
     return matches
 
 
+def _source_projection(path: Path) -> dict[str, Any]:
+    """Fingerprint source files while rejecting generated-cache ambiguity.
+
+    The retired Textual tree may have generated ``__pycache__/*.pyc`` files
+    left behind by an earlier invocation. Those bytecode files are not source
+    provenance and are intentionally excluded from the source projection, but
+    *only* after every other path is proven safe. Symlinks, unexpected
+    directories, and non-bytecode files under ``__pycache__`` fail closed.
+    """
+    result: dict[str, Any] = {
+        "exists": path.is_dir() and not path.is_symlink(),
+        "source_sha256": None,
+        "source_entries": 0,
+        "generated_cache_files": [],
+        "unsafe_paths": [],
+        "files": {},
+    }
+    if not result["exists"]:
+        return result
+
+    rows: list[bytes] = []
+    files: dict[str, str] = {}
+    cache_files: list[str] = []
+    unsafe: list[str] = []
+    for child in sorted(path.rglob("*"), key=lambda p: p.as_posix()):
+        rel = child.relative_to(path).as_posix()
+        if child.is_symlink():
+            unsafe.append(rel)
+            continue
+        if child.is_dir():
+            if rel != "__pycache__":
+                unsafe.append(rel + "/")
+            continue
+        if not child.is_file():
+            unsafe.append(rel)
+            continue
+        if rel.startswith("__pycache__/"):
+            if child.suffix == ".pyc" and "/" not in rel[len("__pycache__/"):]:
+                cache_files.append(rel)
+            else:
+                unsafe.append(rel)
+            continue
+        digest = _sha256(child)
+        if digest is None:
+            unsafe.append(rel)
+            continue
+        files[rel] = digest
+        rows.append(f"F\0{rel}\0{digest}\n".encode())
+
+    h = hashlib.sha256()
+    for row in rows:
+        h.update(row)
+    result.update(
+        source_sha256=h.hexdigest(),
+        source_entries=len(files),
+        generated_cache_files=cache_files,
+        unsafe_paths=unsafe,
+        files=files,
+    )
+    return result
+
+
+def _oracle_legacy_proof() -> dict[str, Any]:
+    live = _source_projection(LEGACY_PYTHON)
+    oracle = _source_projection(ORACLE_LEGACY_PYTHON)
+    oracle_stable = (
+        oracle.get("exists")
+        and not oracle.get("unsafe_paths")
+        and not oracle.get("generated_cache_files")
+        and oracle.get("source_sha256") == EXPECTED_ORACLE_SOURCE_SHA256
+    )
+    matches = (
+        live.get("exists")
+        and oracle_stable
+        and not live.get("unsafe_paths")
+        and live.get("source_sha256") == oracle.get("source_sha256")
+        and live.get("files") == oracle.get("files")
+    )
+    return {
+        "matches": bool(matches),
+        "expected_oracle_source_sha256": EXPECTED_ORACLE_SOURCE_SHA256,
+        "oracle_source_sha256": oracle.get("source_sha256"),
+        "oracle_stable": bool(oracle_stable),
+        "live_source_sha256": live.get("source_sha256"),
+        "source_entries": live.get("source_entries"),
+        "generated_cache_files": live.get("generated_cache_files", []),
+        "unsafe_paths": live.get("unsafe_paths", []),
+    }
+
+
 def enforce_live_tree_isolation(report: dict[str, Any], baseline: dict[str, Any]) -> bool:
     """Protect current-tree qualification from historical-worktree residue.
 
@@ -150,6 +242,7 @@ def enforce_live_tree_isolation(report: dict[str, Any], baseline: dict[str, Any]
     statuses = _status_for_legacy_python() if observed_legacy.get("exists") else []
     tracked = _tracked_legacy_python() if observed_legacy.get("exists") else []
     matches = _prepared_legacy_matches(prepared, observed_legacy)
+    oracle_proof = _oracle_legacy_proof() if observed_legacy.get("exists") else {"matches": False}
     configured_current = _current_config_uses_legacy_python()
     isolation: dict[str, Any] = {
         "baseline": baseline,
@@ -160,6 +253,7 @@ def enforce_live_tree_isolation(report: dict[str, Any], baseline: dict[str, Any]
         "git_status": statuses,
         "tracked_paths": tracked,
         "historical_matches": matches,
+        "retired_oracle_proof": oracle_proof,
         "configured_as_current_python": configured_current,
         "action": "none",
         "status": "clean",
@@ -175,23 +269,41 @@ def enforce_live_tree_isolation(report: dict[str, Any], baseline: dict[str, Any]
         baseline_absent = before_legacy.get("exists") is False
         wholly_untracked = not tracked and not any(x.startswith("git-ls-files-error:") for x in tracked)
         exact_historical_copy = bool(matches)
-        if baseline_absent and observed_legacy.get("exists") and wholly_untracked and exact_historical_copy and not configured_current:
+        exact_retired_oracle_copy = bool(oracle_proof.get("matches"))
+        if baseline_absent and observed_legacy.get("exists") and wholly_untracked and (exact_historical_copy or exact_retired_oracle_copy) and not configured_current:
             _remove_legacy_python_tree()
-            isolation["action"] = "removed-untracked-exact-historical-copy"
-            isolation["status"] = "cleaned-transient-historical-copy"
+            isolation["action"] = (
+                "removed-untracked-exact-historical-copy"
+                if exact_historical_copy
+                else "removed-untracked-exact-retired-oracle-copy-with-generated-cache"
+            )
+            isolation["status"] = (
+                "cleaned-transient-historical-copy"
+                if exact_historical_copy
+                else "cleaned-transient-retired-oracle-copy"
+            )
         else:
             isolation["status"] = "FAILED_LIVE_TREE_CONTAMINATION"
             isolation["reason"] = (
                 "current src/dust_tui changed during historical preparation but was not proven "
-                "to be a newly-created wholly-untracked exact copy of a prepared historical worktree"
+                "to be a newly-created wholly-untracked exact copy of a prepared historical worktree or the immutable retired oracle"
             )
     elif before_legacy.get("exists") and observed_legacy.get("exists") and not configured_current:
         wholly_untracked = not tracked and not any(x.startswith("git-ls-files-error:") for x in tracked)
         exact_historical_copy = bool(matches)
-        if wholly_untracked and exact_historical_copy:
+        exact_retired_oracle_copy = bool(oracle_proof.get("matches"))
+        if wholly_untracked and (exact_historical_copy or exact_retired_oracle_copy):
             _remove_legacy_python_tree()
-            isolation["action"] = "removed-preexisting-untracked-exact-historical-copy"
-            isolation["status"] = "cleaned-preexisting-historical-copy"
+            isolation["action"] = (
+                "removed-preexisting-untracked-exact-historical-copy"
+                if exact_historical_copy
+                else "removed-preexisting-untracked-exact-retired-oracle-copy-with-generated-cache"
+            )
+            isolation["status"] = (
+                "cleaned-preexisting-historical-copy"
+                if exact_historical_copy
+                else "cleaned-preexisting-retired-oracle-copy"
+            )
             expected_final = {
                 "legacy_python": {"exists": False, "kind": "missing", "sha256": None, "entries": 0},
                 "devtool_config_sha256": before_devtool,
@@ -200,7 +312,7 @@ def enforce_live_tree_isolation(report: dict[str, Any], baseline: dict[str, Any]
             isolation["status"] = "FAILED_PREEXISTING_LEGACY_PYTHON_UNPROVEN"
             isolation["reason"] = (
                 "preexisting src/dust_tui is not selected by current Devtool configuration, but it was not proven "
-                "to be a wholly-untracked exact copy of a prepared historical worktree; preserving it"
+                "to be a wholly-untracked exact copy of a prepared historical worktree or the immutable retired oracle; preserving it"
             )
 
     isolation["expected_final"] = expected_final
@@ -215,7 +327,9 @@ def enforce_live_tree_isolation(report: dict[str, Any], baseline: dict[str, Any]
     return isolation["status"] in {
         "clean",
         "cleaned-transient-historical-copy",
+        "cleaned-transient-retired-oracle-copy",
         "cleaned-preexisting-historical-copy",
+        "cleaned-preexisting-retired-oracle-copy",
     } and isolation["final_matches_expected"]
 
 

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 import tomllib
@@ -82,12 +83,24 @@ def topology_failures() -> list[str]:
     required_isolation_tokens = [
         "_tracked_legacy_python",
         "removed-preexisting-untracked-exact-historical-copy",
+        "removed-preexisting-untracked-exact-retired-oracle-copy-with-generated-cache",
+        "EXPECTED_ORACLE_SOURCE_SHA256",
         "FAILED_PREEXISTING_LEGACY_PYTHON_UNPROVEN",
         "final_matches_expected",
     ]
     for token in required_isolation_tokens:
         if token not in history_source:
             failures.append(f"AUD-FIX-14 historical isolation missing preexisting-residue guard token: {token}")
+    oracle = ROOT / "migration/oracle/python_textual/src/dust_tui"
+    oracle_files = {
+        p.relative_to(oracle).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+        for p in oracle.rglob("*") if p.is_file() and not p.is_symlink()
+    } if oracle.is_dir() else {}
+    h = hashlib.sha256()
+    for rel, digest in sorted(oracle_files.items()):
+        h.update(f"F\0{rel}\0{digest}\n".encode())
+    if h.hexdigest() != "3255c9fad5be02656c5efdc660f433f2b363b587109a2713b556530d370b1a8e":
+        failures.append("retired Python/Textual oracle source projection drifted from retained authoritative snapshots")
     return failures
 
 
