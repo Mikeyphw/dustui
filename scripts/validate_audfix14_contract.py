@@ -43,9 +43,23 @@ def topology_failures() -> list[str]:
     # allowed to append the evidence finalizer and generated-state check after
     # those nodes, but it must not reorder, drop, or inject nodes inside the
     # required topology prefix.
-    allowed_gate_ids = required + ["gate_d_evidence_finalize", "qualification_state"]
-    if gate_ids not in (required, allowed_gate_ids):
-        failures.append("gate_d workflow node IDs must preserve gate_d_topology.required_nodes in order, with only the AUD-FIX-15 finalizer/check suffix allowed")
+    suffix = ["gate_d_evidence_finalize", "qualification_state"]
+    allowed_shapes = [
+        required,
+        required + suffix,
+        ["historical_inventory"] + required,
+        ["historical_inventory"] + required + suffix,
+    ]
+    if gate_ids not in allowed_shapes:
+        failures.append("gate_d workflow node IDs must preserve gate_d_topology.required_nodes in order, with only the AUD-FIX-15 historical-inventory prefix and finalizer/check suffix allowed")
+    if gate_ids and gate_ids[0] == "historical_inventory":
+        inv = next((x for x in gate if isinstance(x, dict) and x.get("id") == "historical_inventory"), {})
+        if inv.get("ref") != "job:historical_gate_inventory" or inv.get("depends_on") != []:
+            failures.append("gate_d historical_inventory prefix must be the root historical_gate_inventory job")
+        for hist_id in ["historical_gate_a_exo", "historical_gate_b_exo_arm64", "historical_gate_c_exo"]:
+            node = next((x for x in gate if isinstance(x, dict) and x.get("id") == hist_id), {})
+            if node.get("depends_on") != ["historical_inventory"]:
+                failures.append(f"{hist_id}: Gate-D historical replay must depend on historical_inventory")
     gate_refs = {x.get("id"): x.get("ref") for x in gate if isinstance(x, dict)}
     for node_id, spec in topo_nodes.items():
         if gate_refs.get(node_id) != spec.get("workflow_ref"):
