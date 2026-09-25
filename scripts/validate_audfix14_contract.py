@@ -45,6 +45,9 @@ def topology_failures() -> list[str]:
         if gate_refs.get(node_id) != spec.get("workflow_ref"):
             failures.append(f"{node_id}: workflow ref mismatch topology={spec.get('workflow_ref')} gate_d={gate_refs.get(node_id)}")
     pre = aw.get("gate_d_preflight", [])
+    pre_nodes = {str(x.get("id")): x for x in pre if isinstance(x, dict)}
+    if pre_nodes.get("topology", {}).get("depends_on") != ["history"]:
+        failures.append("gate_d_preflight topology must depend on history so live-tree isolation completes before topology/truth checks")
     pre_refs = {str(x.get("ref")) for x in pre if isinstance(x, dict)}
     forbidden = {spec["workflow_ref"] for spec in topo_nodes.values()} & pre_refs
     if forbidden: failures.append(f"gate_d_preflight executes qualification nodes {sorted(forbidden)}")

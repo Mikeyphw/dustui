@@ -646,7 +646,7 @@ gate_d_successor_validators = [
 ]
 gate_d_preflight = [
   { id = "history", ref = "job:historical_gate_inventory", depends_on = [] },
-  { id = "topology", ref = "job:gate_d_topology", depends_on = [] },
+  { id = "topology", ref = "job:gate_d_topology", depends_on = ["history"] },
   { id = "binding", ref = "job:gate_d_binding_preflight", depends_on = ["topology"] },
   { id = "successors", ref = "job:gate_d_successor_contract", depends_on = ["topology"] },
   { id = "r1truth", ref = "job:gate_d_r1_truth", depends_on = [] },
