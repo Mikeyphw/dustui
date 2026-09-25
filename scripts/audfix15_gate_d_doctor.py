@@ -9,6 +9,8 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
+from audfix15_gate_d_bridge import build_bridge_report
+
 ROOT = Path(__file__).resolve().parents[1]
 QUAL = ROOT / "migration/qualification/v1"
 TOPOLOGY = QUAL / "gate_d_topology.json"
@@ -193,12 +195,14 @@ def tool_diagnostics() -> dict[str, Any]:
 
 
 def build_report() -> dict[str, Any]:
+    bridge = build_bridge_report(require_devtool_context=False)
     workflow = workflow_diagnostics()
     topology = topology_diagnostics()
     state = current_state_diagnostics()
+    structural_ok = workflow["ok"] and topology["ok"]
     report = {
-        "schema": "dustui.aud-fix-15.gate-d-doctor.v1",
-        "status": "ready-to-run-gate-d" if workflow["ok"] and topology["ok"] else "structural-blocked",
+        "schema": "dustui.aud-fix-15.gate-d-doctor.v2",
+        "status": "ready-to-run-gate-d" if structural_ok else "structural-blocked",
         "gate_d_current_state": state,
         "workflow": workflow,
         "topology": topology,
@@ -206,12 +210,17 @@ def build_report() -> dict[str, Any]:
         "artifacts": artifact_diagnostics(),
         "tools": tool_diagnostics(),
         "git": git_clean(),
-        "note": "This doctor is diagnostic only. It must not mark Gate D qualified; only the complete Devtool gate_d workflow and finalizer may do that.",
+        "bridge": bridge,
+        "stable_blocker_ids": bridge.get("blocker_ids", []),
+        "material_finalizer_blocker_ids": bridge.get("material_finalizer_blocker_ids", []),
+        "evidence_requirements": bridge.get("requirements", []),
+        "note": "This Gate-D doctor is diagnostic only. It emits stable blocker IDs and evidence requirements, but it must not mark Gate D qualified; only the complete Devtool gate_d workflow and finalizer may do that.",
     }
     if state.get("qualified"):
         report["status"] = "gate-d-qualified"
+    elif bridge.get("material_finalizer_blockers"):
+        report["status"] = "gate-d-material-evidence-blocked" if structural_ok else report["status"]
     return report
-
 
 def main() -> int:
     ap = argparse.ArgumentParser()

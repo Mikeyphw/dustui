@@ -17,6 +17,7 @@ REGISTRY = QUAL / "gate_d_evidence.json"
 SCRIPT = ROOT / "scripts/audfix15_gate_d_evidence.py"
 LIFECYCLE = ROOT / "scripts/audfix15_lifecycle.py"
 DOCTOR = ROOT / "scripts/audfix15_gate_d_doctor.py"
+BRIDGE = ROOT / "scripts/audfix15_gate_d_bridge.py"
 
 
 def load(path: Path):
@@ -42,10 +43,12 @@ def lifecycle_failures() -> list[str]:
         "[targets.dustui_android.jobs.gate_d_evidence_finalize]",
         "[targets.dustui_android.jobs.audfix15_lifecycle_plan]",
         "[targets.dustui_android.jobs.audfix15_gate_d_doctor]",
+        "[targets.dustui_android.jobs.audfix15_gate_d_bridge]",
         "[targets.dustui_android.jobs.audfix15_evidence_lifecycle]",
         "scripts/audfix15_gate_d_evidence.py",
         "scripts/audfix15_lifecycle.py",
         "scripts/audfix15_gate_d_doctor.py",
+        "scripts/audfix15_gate_d_bridge.py",
         "migration/qualification/v1/gate_d_bundle.json",
         "[wrapper.commands.aud-fix-15]",
         "[wrapper.commands.aud-fix-15-doctor]",
@@ -65,22 +68,41 @@ def lifecycle_failures() -> list[str]:
         failures.append("ordinary validate workflow must not own AUD-FIX-15 contract; artifact manifest validation.tests owns it")
     if 'validate = [' in workflow and 'ref = "target:dustui_android#gate_d"' in workflow:
         failures.append("ordinary validate must not silently run full Gate-D")
-    if not re.search(r'aud_fix_15_diagnostics\s*=\s*\[\s*\n\s*\{ id\s*=\s*"doctor"[^\n]+ref\s*=\s*"job:audfix15_gate_d_doctor"', workflow):
-        failures.append("AUD-FIX-15 diagnostics workflow must expose the Gate-D doctor")
-    if not re.search(r'id\s*=\s*"doctor"[^\n]+ref\s*=\s*"job:audfix15_gate_d_doctor"[^\n]+depends_on\s*=\s*\["lifecycle"\]', workflow):
-        failures.append("aud_fix_15_contract workflow must run the Gate-D doctor after lifecycle plan")
+    if not re.search(r'aud_fix_15_diagnostics\s*=\s*\[\s*\n\s*\{ id\s*=\s*"bridge"[^\n]+ref\s*=\s*"job:audfix15_gate_d_bridge"', workflow):
+        failures.append("AUD-FIX-15 diagnostics workflow must start with the Gate-D bridge")
+    if not re.search(r'id\s*=\s*"doctor"[^\n]+ref\s*=\s*"job:audfix15_gate_d_doctor"[^\n]+depends_on\s*=\s*\["bridge"\]', workflow):
+        failures.append("AUD-FIX-15 diagnostics workflow must expose the Gate-D doctor after bridge")
+    if not re.search(r'id\s*=\s*"bridge"[^\n]+ref\s*=\s*"job:audfix15_gate_d_bridge"[^\n]+depends_on\s*=\s*\["lifecycle"\]', workflow):
+        failures.append("aud_fix_15_contract workflow must run the Gate-D bridge after lifecycle plan")
+    if not re.search(r'id\s*=\s*"doctor"[^\n]+ref\s*=\s*"job:audfix15_gate_d_doctor"[^\n]+depends_on\s*=\s*\["bridge"\]', workflow):
+        failures.append("aud_fix_15_contract workflow must run the Gate-D doctor after bridge")
     if not re.search(r'id\s*=\s*"contract"[^\n]+depends_on\s*=\s*\["doctor"\]', workflow):
         failures.append("aud_fix_15_contract workflow must run evidence contract after doctor")
     if not re.search(r'id\s*=\s*"historical_inventory"[^\n]+ref\s*=\s*"job:historical_gate_inventory"', workflow):
         failures.append("gate_d workflow must prepare historical worktrees before historical replay targets")
     lifecycle_source = text(LIFECYCLE)
-    for token in ["apply_validates_itself", "manual_post_apply_commands_required", "required-by-artifact-manifest", "do_not_add_no_validate", "artifact-manifest-validation-tests", "af15_doctor", "diagnostics_workflow"]:
+    for token in ["apply_validates_itself", "manual_post_apply_commands_required", "required-by-artifact-manifest", "do_not_add_no_validate", "artifact-manifest-validation-tests", "af15_bridge", "af15_doctor", "diagnostics_workflow"]:
         if token not in lifecycle_source:
             failures.append(f"AUD-FIX-15 lifecycle script missing token: {token}")
     doctor = text(DOCTOR)
-    for token in ["dustui.aud-fix-15.gate-d-doctor.v1", "historical", "artifacts", "tools", "Gate-D doctor", "diagnostic only"]:
+    for token in ["dustui.aud-fix-15.gate-d-doctor.v2", "stable_blocker_ids", "evidence_requirements", "historical", "artifacts", "tools", "Gate-D doctor", "diagnostic only"]:
         if token not in doctor:
             failures.append(f"AUD-FIX-15 Gate-D doctor missing token: {token}")
+    bridge_source = text(BRIDGE)
+    for token in [
+        "dustui.aud-fix-15.gate-d-evidence-bridge.v1",
+        "material_finalizer_blockers",
+        "satisfier",
+        "workflow_ref",
+        "GATE_D.ARTIFACT",
+        "assert_bridge_contract",
+    ]:
+        if token not in bridge_source:
+            failures.append(f"AUD-FIX-15 evidence bridge missing token: {token}")
+    cp_bridge = subprocess.run([sys.executable, str(BRIDGE), "--check"], cwd=ROOT, text=True, capture_output=True)
+    if cp_bridge.returncode != 0:
+        failures.append("AUD-FIX-15 evidence bridge contract check failed")
+
     script = text(SCRIPT)
     for token in [
         "source_projection_sha256",
@@ -90,6 +112,9 @@ def lifecycle_failures() -> list[str]:
         "runtime_apk_binding",
         "historical_gate_b_exo_arm64",
         "refresh_generated_state",
+        "build_bridge_report",
+        "material_finalizer_blockers",
+        "GATE_D",
     ]:
         if token not in script:
             failures.append(f"AUD-FIX-15 evidence finalizer missing token: {token}")
@@ -135,6 +160,20 @@ def finalize_fail_closed_failures() -> list[str]:
         failures.append("manual Gate-D finalization without DEVTOOL_RUN_ID unexpectedly succeeded")
     if "DEVTOOL_RUN_ID is required" not in (cp.stdout + cp.stderr):
         failures.append("manual Gate-D finalization did not explain required Devtool run context")
+    bridge = subprocess.run([sys.executable, str(BRIDGE), "--json"], cwd=ROOT, text=True, capture_output=True)
+    if bridge.returncode != 0:
+        failures.append("Gate-D evidence bridge JSON command failed")
+    else:
+        try:
+            obj = json.loads(bridge.stdout)
+            if obj.get("schema") != "dustui.aud-fix-15.gate-d-evidence-bridge.v1":
+                failures.append("bridge schema mismatch")
+            if not obj.get("requirements"):
+                failures.append("bridge emitted no evidence requirements")
+            if not all(str(bid).startswith("GATE_D.") for bid in obj.get("blocker_ids", [])):
+                failures.append("bridge emitted a non-stable blocker id")
+        except Exception as exc:
+            failures.append(f"bridge output is not JSON: {exc}")
     diag = subprocess.run([sys.executable, str(SCRIPT), "diagnose"], cwd=ROOT, text=True, capture_output=True)
     if diag.returncode != 0:
         failures.append("Gate-D evidence diagnostic command failed")

@@ -11,6 +11,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from audfix15_gate_d_bridge import build_bridge_report
+
 ROOT = Path(__file__).resolve().parents[1]
 QUAL = ROOT / "migration/qualification/v1"
 TOPOLOGY = QUAL / "gate_d_topology.json"
@@ -18,6 +20,8 @@ REGISTRY = QUAL / "gate_d_evidence.json"
 HIST_DISCOVERY = ROOT / "build/evidence/aud-fix/14/historical_discovery.json"
 BUNDLE = QUAL / "gate_d_bundle.json"
 NODE_EVIDENCE_DIR = ROOT / "build/evidence/gate-d/nodes"
+
+STABLE_BLOCKER_PREFIX_EXAMPLES = ["GATE_D", "GATE_D.ARTIFACT", "GATE_D.CONTEXT"]
 
 HISTORICAL_NODES = {
     "historical_gate_a_exo": "A",
@@ -28,6 +32,7 @@ ARTIFACT_EVIDENCE = {
     "rooted_arm64_runtime": ROOT / "build/evidence/gate-d/rooted-arm64-runtime.json",
     "runtime_apk_binding": ROOT / "build/evidence/gate-d/runtime-apk-binding.json",
     "devtool_artifact_identity": ROOT / "build/evidence/gate-d/devtool-artifact-identity.json",
+    "production_reachability": ROOT / "build/evidence/gate-d/production-reachability.json",
 }
 OUTPUT_ARTIFACT_GLOBS = {
     "android_debug_assemble": ["android/app/build/outputs/apk/debug/**/*.apk"],
@@ -246,7 +251,7 @@ def _current_binding(node_id: str, spec: dict[str, Any], source_sha: str, run_id
         "devtool_run_id": run_id,
         "devtool_version": devtool_version,
     }
-    if spec.get("requires_artifact_binding"):
+    if spec.get("requires_artifact_binding") or node_id in ARTIFACT_EVIDENCE:
         artifact = _artifact_for_node(node_id)
         evidence.append(artifact)
         binding["artifact_sha256"] = artifact["sha256"]
@@ -257,6 +262,16 @@ def build_registry(require_run_id: bool = True) -> dict[str, Any]:
     topology = _load(TOPOLOGY)
     old = _load(REGISTRY)
     run_id = _run_id(required=require_run_id)
+    bridge = build_bridge_report(require_devtool_context=False)
+    material_blockers = list(bridge.get("material_finalizer_blockers") or [])
+    if material_blockers:
+        raise SystemExit(json.dumps({
+            "schema": "dustui.aud-fix-15.finalizer-blockers.v1",
+            "status": "blocked",
+            "reason": "Gate-D finalizer refuses to qualify until material evidence blockers are cleared",
+            "blocker_ids": [b.get("id") for b in material_blockers],
+            "blockers": material_blockers,
+        }, indent=2, sort_keys=True))
     devtool_version = _devtool_version()
     source_sha = source_projection_sha256()
     git_commit = _git_output("rev-parse", "HEAD")
@@ -296,6 +311,8 @@ def build_registry(require_run_id: bool = True) -> dict[str, Any]:
         "topology_sha256": _sha_file(TOPOLOGY),
         "historical_discovery_sha256": _sha_file(HIST_DISCOVERY),
         "node_evidence": [entry for node in nodes for entry in node.get("evidence", [])],
+        "evidence_bridge_schema": bridge.get("schema"),
+        "evidence_requirement_count": bridge.get("node_count"),
     }
     _dump(BUNDLE, bundle_payload)
     registry = {
@@ -309,7 +326,13 @@ def build_registry(require_run_id: bool = True) -> dict[str, Any]:
         "devtool_version": devtool_version,
         "git_commit": git_commit,
         "git_tree": git_tree,
-        "qualification_rule": "Gate D is qualified only by this Devtool-finalized evidence registry: all required topology nodes must have passed in one Devtool run, all current-tree nodes must bind to one deterministic source projection, artifact-required nodes must carry artifact hashes, and historical nodes must bind exact historical replay evidence.",
+        "qualification_rule": "Gate D is qualified only by this Devtool-finalized evidence registry: all required topology nodes must have passed in one Devtool run, all current-tree nodes must bind to one deterministic source projection, artifact-required nodes must carry artifact hashes, historical nodes must bind exact historical replay evidence, and the AUD-FIX-15 evidence bridge must report no material finalizer blockers.",
+        "evidence_bridge": {
+            "schema": bridge.get("schema"),
+            "blocker_ids": bridge.get("blocker_ids", []),
+            "material_finalizer_blocker_ids": bridge.get("material_finalizer_blocker_ids", []),
+            "requirements": bridge.get("requirements", []),
+        },
         "nodes": nodes,
     }
     return registry
@@ -360,6 +383,10 @@ def diagnose(_: argparse.Namespace) -> int:
         "registry_schema": _load(REGISTRY).get("schema"),
         "historical_discovery_present": HIST_DISCOVERY.is_file(),
         "artifact_evidence_present": {k: v.is_file() for k, v in ARTIFACT_EVIDENCE.items()},
+        "evidence_bridge": {
+            "schema": build_bridge_report(require_devtool_context=False).get("schema"),
+            "material_finalizer_blocker_ids": build_bridge_report(require_devtool_context=False).get("material_finalizer_blocker_ids", []),
+        },
     }
     print(json.dumps(obj, indent=2, sort_keys=True))
     return 0

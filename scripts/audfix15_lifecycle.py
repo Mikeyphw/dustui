@@ -7,7 +7,7 @@ import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACT_NAME = "dustui_aud_fix_15_gate_d_doctor_v11.zip"
+ARTIFACT_NAME = "dustui_aud_fix_15_gate_d_evidence_bridge_v12.zip"
 
 
 def _load_config() -> dict:
@@ -41,19 +41,19 @@ def plan() -> dict:
         "embedded_validation": {
             "mode": "artifact-manifest-validation-tests",
             "target": "dustui_android",
-            "required_tests": ["af15_lifecycle_plan", "af15_doctor", "af15_contract", "qualification_state"],
+            "required_tests": ["af15_lifecycle_plan", "af15_bridge", "af15_doctor", "af15_contract", "af14_topology", "qualification_state"],
             "normal_validate_workflow_is_not_required": True,
             "present": True,
         },
         "contract_workflow": {
             "workflow": "aud_fix_15_contract",
-            "required_nodes": ["lifecycle", "doctor", "contract", "truth"],
-            "present": all(node in contract_ids for node in ["lifecycle", "doctor", "contract", "truth"]),
+            "required_nodes": ["lifecycle", "bridge", "doctor", "contract", "truth"],
+            "present": all(node in contract_ids for node in ["lifecycle", "bridge", "doctor", "contract", "truth"]),
         },
         "diagnostics_workflow": {
             "workflow": "aud_fix_15_diagnostics",
-            "required_nodes": ["doctor"],
-            "present": "doctor" in diagnostics_ids,
+            "required_nodes": ["bridge", "doctor"],
+            "present": all(node in diagnostics_ids for node in ["bridge", "doctor"]),
         },
         "gate_d_workflow": {
             "workflow": "gate_d",
