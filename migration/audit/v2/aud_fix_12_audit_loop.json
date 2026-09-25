@@ -1,0 +1,16 @@
+{
+  "schema": "dustui.audit-loop.v2",
+  "stage": "AUD-FIX-12",
+  "status": "implemented",
+  "checks": [
+    "adaptive layout contract",
+    "route identity continuity",
+    "focus traversal semantics",
+    "visual data textual equivalence",
+    "successor UI acceptance",
+    "Android unit tests",
+    "connected-device continuity definition",
+    "qualification freshness"
+  ],
+  "gate_d_status": "open"
+}

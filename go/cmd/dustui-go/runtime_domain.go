@@ -10,6 +10,7 @@ import (
 	"github.com/mikeyphw/dustui/go/internal/diagnostics"
 	"github.com/mikeyphw/dustui/go/internal/intelligence"
 	"github.com/mikeyphw/dustui/go/internal/packageevidence"
+	"github.com/mikeyphw/dustui/go/internal/shell"
 	"github.com/mikeyphw/dustui/go/internal/state"
 )
 
@@ -201,6 +202,22 @@ func decodePayload[T any](raw json.RawMessage) (T, error) {
 
 func domainPayload(ctx context.Context, store *state.SQLiteStore, frame runtimeFrame) (any, error) {
 	switch frame.Type {
+	case "domain.ui.action-gate":
+		p, err := decodePayload[shell.GateContext](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "gate": shell.EvaluateActionGate(p)}, nil
+	case "domain.ui.screen-state":
+		p, err := decodePayload[shell.ScreenStateRequest](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		stateValue, err := shell.BuildScreenState(p)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "state": stateValue}, nil
 	case "domain.schema.verify":
 		if err := store.VerifyAndroidDomainSchema(ctx); err != nil {
 			return nil, err
@@ -635,6 +652,16 @@ func domainPayload(ctx context.Context, store *state.SQLiteStore, frame runtimeF
 			return nil, err
 		}
 		return map[string]any{"ok": true, "run": v}, nil
+	case "domain.automation.activity.evidence":
+		p, err := decodePayload[automationObservePayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		v, err := store.ActivityEvidenceByID(ctx, p.OperationID)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "evidence": v}, nil
 	case "domain.automation.cancel":
 		p, err := decodePayload[automationCancelPayload](frame.Payload)
 		if err != nil {

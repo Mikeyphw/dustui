@@ -1,0 +1,137 @@
+{
+  "format": 1,
+  "entries": [
+    {
+      "action": "modify",
+      "path": ".devtool.toml",
+      "sha256": "ddbbd01553cb4bfae83aeb1ecf7726ceea2ab0c0377ee91733423a3bb4b2ae60",
+      "size": 32453,
+      "source_sha256": "9624941950c181b6771680b823ac842869789583aac1ccd234d2787c89bd33a4"
+    },
+    {
+      "action": "modify",
+      "path": "CHANGELOG.md",
+      "sha256": "43008c1724440ffd3480e9707f9c2ba8c6ba30416056572f35904edae1115c2d",
+      "size": 26156,
+      "source_sha256": "2fda75b97e57312e2dc9d9cb191c2e2295992e51c6c4b5c5f7d72f70bb353517"
+    },
+    {
+      "action": "modify",
+      "path": "KNOWN_ISSUES.md",
+      "sha256": "ef95d94c229a2db95ff62e30c2c607db1eef96837194664f7c58eeff55c24ff9",
+      "size": 1552,
+      "source_sha256": "6143730f2e22ffe5d119cc0a50c7dc005c92052d54dac5179f58c41e462f9b97"
+    },
+    {
+      "action": "modify",
+      "path": "README.md",
+      "sha256": "10d0c9b6f30f48ab6f118604165c5a68de4d12e022f219610b220d74e1f7c14c",
+      "size": 7311,
+      "source_sha256": "eeb816127d24b113015c4b6e215a3b510f72531be4a4bbafa568fe67a389bb10"
+    },
+    {
+      "action": "modify",
+      "path": "RELEASE_CHECKLIST.md",
+      "sha256": "b7c61486cc2e0faab927c063a233c9b6ba43afff54dec8cdac1839367073850c",
+      "size": 20191,
+      "source_sha256": "c8c65841da8cbcf4ab4d8276b066d25ccc15d54a8b3d30966e3ae5d7b295ddc0"
+    },
+    {
+      "action": "modify",
+      "path": "UI_UX_CONTRACT.md",
+      "sha256": "4b798d99f71ad32df64b76bcdd2fc60a898fc133f0b87dec4e240c123933046f",
+      "size": 30945,
+      "source_sha256": "bdd2a8453effc72956b2001b83e416736b99e3dc3acfa1746ec02a04e6316fda"
+    },
+    {
+      "action": "modify",
+      "path": "VALIDATION.md",
+      "sha256": "52af041cc32347128af55484810c83e89c2edb5e5fdb4fa2679c63034138cce0",
+      "size": 5992,
+      "source_sha256": "b9446181c4207a3a40d61f22c7768101a836b33a6b87b3b9280b9b722b7b9a0b"
+    },
+    {
+      "action": "add",
+      "path": "android/app/src/androidTest/kotlin/com/mikeyphw/dustui/ui/AdaptiveRouteContinuityInstrumentedTest.kt",
+      "sha256": "a03bb3130a77d293ef6e1ce0926b580905233bf7c707d8463abde12d1ba5f41f",
+      "size": 1446
+    },
+    {
+      "action": "add",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustAdaptiveLayout.kt",
+      "sha256": "b5fb6536b4c2e3f0187841528d4cab1e9927f5e4abf4b3ec4ad622240eef7226",
+      "size": 8520
+    },
+    {
+      "action": "add",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustAdaptivePane.kt",
+      "sha256": "5771469c137d09578be4d16fdc2f8d7dc17f1ce4d64a95dd672d07702f8d9888",
+      "size": 5483
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+      "sha256": "63bcb1ce8122e0d588a5d7e35cc0526024854d235d00a9bea4c5a94ce1715fa4",
+      "size": 204523,
+      "source_sha256": "6800b2f947d360b1fb1eab51b9deefdd11d7358326336fc82333b24024419857"
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/StorageCharts.kt",
+      "sha256": "41b7221d8135638fa4979c9027cb0797d1d146e662471000f455355a684f2f20",
+      "size": 13173,
+      "source_sha256": "37503b5e38fbae74ce6919daf24db811ba8f9ba852f4fbd35bf1a58c30ac6970"
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Treemap.kt",
+      "sha256": "7702c6be20975fc838335377a9ba54fc10be51925700f06c287b9ea085a99067",
+      "size": 5608,
+      "source_sha256": "f1f1e3b53b2f05cbaab99b04cec8be3672bdec8e0ecc497db3176bc5928277be"
+    },
+    {
+      "action": "add",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustAdaptiveLayoutTest.kt",
+      "sha256": "9db9c0bfa6dfafea95bbb57dfaf15535595860df193795cd7847df2d330d0df1",
+      "size": 3892
+    },
+    {
+      "action": "modify",
+      "path": "android/scripts/validate-modern-dark-portrait-ui.py",
+      "sha256": "65405265d28cf434c50ea495eb71effeafd088b10a7aae03e64c36343bc4cef2",
+      "size": 3540,
+      "source_sha256": "08d11da130ebe34c786d32c9c3d2763e9898a87c8655e3baf540866b4eb056cc"
+    },
+    {
+      "action": "modify",
+      "path": "docs/UI_UX_CONTRACT.md",
+      "sha256": "91a510b878c729067976408d37cca52b254eb6a3bd75f2e47bce8cc7e588edff",
+      "size": 6415,
+      "source_sha256": "3123ef4c5acf2188853c18b7feed0cb70b08ab118f6c672705b9ad4372caede5"
+    },
+    {
+      "action": "add",
+      "path": "migration/audit/v2/aud_fix_12_audit_loop.json",
+      "sha256": "c7621b3a094f9485e0847d4545d59f01e5b39e7f003c4cef8fd43e2947d36189",
+      "size": 407
+    },
+    {
+      "action": "add",
+      "path": "migration/contracts/v2/aud_fix_12_adaptive_route_continuity.md",
+      "sha256": "a009b62f5650d63339f6c3e13a2c29411575f72b17fdd7cbd941d79d8911cf94",
+      "size": 947
+    },
+    {
+      "action": "add",
+      "path": "migration/ledger/aud_fix_12_status.json",
+      "sha256": "36035263f2451d0c779867b43f9278f7214ff1ef499e32e7c74a3dbcb37137b4",
+      "size": 392
+    },
+    {
+      "action": "add",
+      "path": "scripts/validate_audfix12_contract.py",
+      "sha256": "9b5f9af30f4776b3573a6e43b3cf995b80e1b1421e6b585b371ba5374ecc2948",
+      "size": 7557
+    }
+  ]
+}

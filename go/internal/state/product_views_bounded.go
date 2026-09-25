@@ -53,16 +53,19 @@ type boundedModuleAccum struct {
 }
 
 type boundedProductAccumulator struct {
-	Apps      map[string]*boundedPackageAccum
-	TypeBytes map[string]int64
-	TypeCount map[string]int
-	AgeBytes  map[string]int64
-	AgeCount  map[string]int
-	OldFiles  []map[string]any
-	Modules   map[string]*boundedModuleAccum
-	Residue   map[string][]map[string]any
-	ResidueEv []intelligence.ResidueEvidence
-	ResidueN  int
+	Apps           map[string]*boundedPackageAccum
+	LogicalBytes   int64
+	AllocatedBytes int64
+	FileCount      int64
+	TypeBytes      map[string]int64
+	TypeCount      map[string]int
+	AgeBytes       map[string]int64
+	AgeCount       map[string]int
+	OldFiles       []map[string]any
+	Modules        map[string]*boundedModuleAccum
+	Residue        map[string][]map[string]any
+	ResidueEv      []intelligence.ResidueEvidence
+	ResidueN       int
 }
 
 func (s *SQLiteStore) productInsightsBounded(ctx context.Context, scanID string, options ProductInsightsOptions) (map[string]any, error) {
@@ -147,8 +150,13 @@ func (s *SQLiteStore) productInsightsBounded(ctx context.Context, scanID string,
 	}
 
 	return map[string]any{
-		"scanId":          scanID,
-		"generation":      session.Generation,
+		"scanId":     scanID,
+		"generation": session.Generation,
+		"overview": map[string]any{
+			"scanId": scanID, "generation": session.Generation, "rootPath": session.RootPath,
+			"integrityStatus": session.IntegrityStatus, "logicalBytes": acc.LogicalBytes,
+			"allocatedBytes": acc.AllocatedBytes, "fileCount": acc.FileCount,
+		},
 		"snapshotDelta":   snapshotDelta,
 		"appSummaries":    appSummaries,
 		"advanced":        advanced,
@@ -213,6 +221,11 @@ func annotateProductEntry(e AndroidScanEntry, snapshot *packageevidence.Normaliz
 }
 
 func (a *boundedProductAccumulator) add(e productEntry, snapshot *packageevidence.NormalizedSnapshot, inventoryComplete bool, protected map[string]bool, generation int64, scanID string, labels map[string]string) {
+	if !e.IsDirectory {
+		a.LogicalBytes += e.SizeBytes
+		a.AllocatedBytes += e.AllocatedBytes
+		a.FileCount++
+	}
 	if e.Package != "" {
 		p := a.Apps[e.Package]
 		if p == nil {

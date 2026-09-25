@@ -63,6 +63,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.mikeyphw.dustui.data.ActivityRun
+import com.mikeyphw.dustui.data.ActivityEvidence
+import com.mikeyphw.dustui.data.ActivityFilter
+import com.mikeyphw.dustui.data.ActivityStateFilter
 import com.mikeyphw.dustui.data.AdvancedStorageAnalyzer
 import com.mikeyphw.dustui.data.AdvancedStorageReport
 import com.mikeyphw.dustui.data.AppResidueAnalysis
@@ -77,6 +81,9 @@ import com.mikeyphw.dustui.data.CleanupOperationEntity
 import com.mikeyphw.dustui.data.CleanupRecommendationAnalysis
 import com.mikeyphw.dustui.data.CleanupReview
 import com.mikeyphw.dustui.data.DeviceCertificationReport
+import com.mikeyphw.dustui.data.DiagnosticsAuthoritySnapshot
+import com.mikeyphw.dustui.data.DiagnosticProblem
+import com.mikeyphw.dustui.data.DiagnosticRemediationAction
 import com.mikeyphw.dustui.data.DebugCategory
 import com.mikeyphw.dustui.data.DebugExportMode
 import com.mikeyphw.dustui.data.DebugExportResult
@@ -99,6 +106,7 @@ import com.mikeyphw.dustui.data.LargeFilePreset
 import com.mikeyphw.dustui.data.RootFileSearchResult
 import com.mikeyphw.dustui.data.ModuleAnalysisDiagnostic
 import com.mikeyphw.dustui.data.ModuleDiagnosticStatus
+import com.mikeyphw.dustui.data.OverviewStorageSemantics
 import com.mikeyphw.dustui.data.RootModuleReport
 import com.mikeyphw.dustui.data.RootPathInspection
 import com.mikeyphw.dustui.data.ScanDiagnosticSeverity
@@ -113,10 +121,20 @@ import com.mikeyphw.dustui.scan.ScanStatus
 import com.mikeyphw.dustui.root.RootServiceClient
 import com.mikeyphw.dustui.scan.ScanDepthPolicy
 import com.mikeyphw.dustui.scan.ScanDepthProfile
+import com.mikeyphw.dustui.scan.ScanLaunchState
+import com.mikeyphw.dustui.scan.ScanLaunchStage
+import com.mikeyphw.dustui.ui.shell.DustRemediationAction
+import com.mikeyphw.dustui.ui.shell.DustScreenState
+import org.json.JSONObject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Unit = {}) {
+fun DustUiApp(
+    viewModel: MainViewModel,
+    requestNotificationPermission: () -> Unit = {},
+    incomingDeepLink: String? = null,
+    onDeepLinkConsumed: () -> Unit = {},
+) {
     DustTheme {
         val rootState by viewModel.rootState.collectAsStateWithLifecycle()
         val rootServiceInfo by viewModel.rootServiceInfo.collectAsStateWithLifecycle()
@@ -156,8 +174,6 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         val storageGrowthAnalysis by viewModel.storageGrowthAnalysis.collectAsStateWithLifecycle()
         val storageGrowthPage by viewModel.storageGrowthPage.collectAsStateWithLifecycle()
         val storageGrowthLoading by viewModel.storageGrowthLoading.collectAsStateWithLifecycle()
-        val cleanupReports by viewModel.cleanupReports.collectAsStateWithLifecycle()
-        val selectedCleanupReport by viewModel.selectedCleanupReport.collectAsStateWithLifecycle()
         val certification by viewModel.certification.collectAsStateWithLifecycle()
         val appStorageInspector by viewModel.appStorageInspector.collectAsStateWithLifecycle()
         val appStoragePage by viewModel.appStoragePage.collectAsStateWithLifecycle()
@@ -166,82 +182,182 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         val rootSearchPage by viewModel.rootSearchPage.collectAsStateWithLifecycle()
         val moduleReport by viewModel.moduleReport.collectAsStateWithLifecycle()
         val debugEvents by viewModel.debugEvents.collectAsStateWithLifecycle()
+        val durableDiagnosticEvents by viewModel.durableDiagnosticEvents.collectAsStateWithLifecycle()
         val debugProbeResults by viewModel.debugProbeResults.collectAsStateWithLifecycle()
         val debugExportResult by viewModel.debugExportResult.collectAsStateWithLifecycle()
         val debugOverlayVisible by viewModel.debugOverlayVisible.collectAsStateWithLifecycle()
         val scanDepthProfile by viewModel.scanDepthProfile.collectAsStateWithLifecycle()
+        val scanLaunchState by viewModel.scanLaunchState.collectAsStateWithLifecycle()
         val scanDataStale by viewModel.scanDataStale.collectAsStateWithLifecycle()
+        val overviewStorage by viewModel.overviewStorage.collectAsStateWithLifecycle()
+        val activityRuns by viewModel.activityRuns.collectAsStateWithLifecycle()
+        val selectedActivityRun by viewModel.selectedActivityRun.collectAsStateWithLifecycle()
+        val selectedActivityEvidence by viewModel.selectedActivityEvidence.collectAsStateWithLifecycle()
+        val diagnosticsAuthority by viewModel.diagnosticsAuthority.collectAsStateWithLifecycle()
+        val routeScreenState by viewModel.routeScreenState.collectAsStateWithLifecycle()
+
         val snackbar = remember { SnackbarHostState() }
-        var destination by rememberSaveable { mutableStateOf(DustDestination.INSIGHTS) }
+        var routeName by rememberSaveable { mutableStateOf(DustSemanticRoute.OverviewHome.name) }
+        var routeEntity by rememberSaveable { mutableStateOf<String?>(null) }
+        var routeGeneration by rememberSaveable { mutableStateOf(1L) }
+        var routeProblem by remember { mutableStateOf<DustRouteProblem?>(null) }
         var menuOpen by remember { mutableStateOf(false) }
         var showScanSheet by rememberSaveable { mutableStateOf(false) }
         var selectedApp by rememberSaveable { mutableStateOf<String?>(null) }
         var selectedAppSessionId by rememberSaveable { mutableStateOf<String?>(null) }
+        var diagnosticsFocusOperationId by rememberSaveable { mutableStateOf<String?>(null) }
 
-        fun selectDestination(target: DustDestination) {
-            destination = target
-            when (target) {
-                DustDestination.RULES -> viewModel.refreshCleanupRules()
-                DustDestination.GROWTH -> viewModel.reloadStorageGrowth()
-                DustDestination.CLEANUP -> viewModel.refreshCleanupReports()
-                else -> if (DustShellNavigation.refreshesInsights(target)) viewModel.refreshInsights()
+        val route = runCatching { DustSemanticRoute.valueOf(routeName) }.getOrDefault(DustSemanticRoute.OverviewHome)
+        val selection = runCatching { DustRouteSelection(route, routeEntity, routeGeneration) }
+            .getOrElse { DustRouteSelection(DustSemanticRoute.OverviewHome, generation = routeGeneration.coerceAtLeast(1L)) }
+
+        fun navigate(target: DustSemanticRoute, entityId: String? = null) {
+            if (target.entityKind != null && entityId.isNullOrBlank()) {
+                routeProblem = DustRouteProblem(DustRouteProblemCode.EntityRequired, "${target.entityKind} identity is required", target)
+                return
             }
+            routeGeneration += 1L
+            routeName = target.name
+            routeEntity = entityId
+            routeProblem = null
+            val nextSelection = DustRouteSelection(target, entityId, routeGeneration)
+            viewModel.activateRoute(nextSelection)
+            when (target) {
+                DustSemanticRoute.CleanRules -> viewModel.refreshCleanupRules()
+                DustSemanticRoute.OverviewTrends -> viewModel.reloadStorageGrowth()
+                DustSemanticRoute.ActivityList,
+                DustSemanticRoute.ActivityRun,
+                DustSemanticRoute.ActivityEvidence -> viewModel.refreshActivityRuns()
+                DustSemanticRoute.SystemDiagnostics -> viewModel.refreshDiagnosticsAuthority()
+                else -> viewModel.refreshInsights()
+            }
+        }
+
+        fun navigate(selection: DustRouteSelection) {
+            routeGeneration = selection.generation.coerceAtLeast(routeGeneration + 1L)
+            routeName = selection.route.name
+            routeEntity = selection.entityId
+            routeProblem = null
+            viewModel.activateRoute(DustRouteSelection(selection.route, selection.entityId, routeGeneration))
+        }
+
+        LaunchedEffect(incomingDeepLink) {
+            val raw = incomingDeepLink ?: return@LaunchedEffect
+            when (val resolved = DustSemanticNavigation.resolveDeepLink(raw, routeGeneration + 1L)) {
+                is DustRouteResolution.Resolved -> navigate(resolved.selection)
+                is DustRouteResolution.Rejected -> routeProblem = resolved.problem
+            }
+            onDeepLinkConsumed()
+        }
+
+        LaunchedEffect(scanLaunchState.stage) {
+            if (scanLaunchState.stage != ScanLaunchStage.ChooseScope) showScanSheet = true
         }
 
         LaunchedEffect(session?.id) {
             val currentSessionId = session?.id
             if (selectedAppSessionId != null && selectedAppSessionId != currentSessionId) selectedApp = null
             selectedAppSessionId = currentSessionId
-            if (session != null && destination == DustDestination.SCAN) destination = DustDestination.INSIGHTS
         }
         LaunchedEffect(message) { message?.let { snackbar.showSnackbar(it); viewModel.clearMessage() } }
+        LaunchedEffect(cleanupReview?.operationId) {
+            val review = cleanupReview ?: return@LaunchedEffect
+            if (selection.domain == DustRouteDomain.Clean && selection.route != DustSemanticRoute.CleanReview) {
+                navigate(DustSemanticRoute.CleanReview, review.semanticManifestId())
+            }
+        }
+        LaunchedEffect(selection.route, selection.entityId, session?.id) {
+            when (selection.route) {
+                DustSemanticRoute.FilesItem -> {
+                    val entity = selection.entityId ?: return@LaunchedEffect
+                    if (session == null) {
+                        routeProblem = DustRouteProblem(DustRouteProblemCode.EntityStale, "No active scan can resolve this file identity", selection.route, entity)
+                    } else if (!viewModel.resolveFileRoute(entity)) {
+                        routeProblem = DustRouteProblem(DustRouteProblemCode.EntityNotFound, "The file no longer exists in the active scan", selection.route, entity)
+                    }
+                }
+                DustSemanticRoute.ActivityRun,
+                DustSemanticRoute.ActivityEvidence -> selection.entityId?.let(viewModel::selectActivityRun)
+                else -> Unit
+            }
+        }
+        LaunchedEffect(selection.route, selection.entityId, appStorageInspector, activityRuns, cleanupReview, recommendationAnalysis) {
+            val entity = selection.entityId
+            if (entity != null) {
+                when (selection.route) {
+                    DustSemanticRoute.AppsPackage,
+                    DustSemanticRoute.AppsPaths -> if (appStorageInspector != null) {
+                        val present = appStorageInspector?.packages?.any { it.packageName == entity } == true
+                        if (!present) routeProblem = DustRouteProblem(DustRouteProblemCode.EntityNotFound, "Package is not present in the current evidence set", selection.route, entity)
+                        else selectedApp = entity
+                    }
+                    DustSemanticRoute.ActivityRun,
+                    DustSemanticRoute.ActivityEvidence -> if (activityRuns.isNotEmpty() && activityRuns.none { it.operationId == entity }) {
+                        routeProblem = DustRouteProblem(DustRouteProblemCode.EntityNotFound, "Operation is no longer present in durable activity", selection.route, entity)
+                    }
+                    DustSemanticRoute.CleanCandidate -> if (recommendationAnalysis != null && recommendationAnalysis?.items?.none { it.id == entity } == true) {
+                        routeProblem = DustRouteProblem(DustRouteProblemCode.EntityNotFound, "Cleanup candidate is not present in the current recommendation evidence", selection.route, entity)
+                    }
+                    DustSemanticRoute.CleanReview -> if (cleanupReview == null || cleanupReview?.semanticManifestId() != entity) {
+                        routeProblem = DustRouteProblem(DustRouteProblemCode.EntityStale, "Cleanup review identity no longer matches the active manifest", selection.route, entity)
+                    }
+                    else -> Unit
+                }
+            }
+        }
+
+        LaunchedEffect(selection.route, selection.entityId, selection.generation, session?.id, session?.generation, scanDataStale) {
+            viewModel.refreshRoutePresentation(selection)
+        }
 
         BoxWithConstraints {
-            val wide = maxWidth >= 840.dp && maxHeight >= 520.dp
+            val adaptiveLayout = DustAdaptiveLayoutPolicy.resolve(maxWidth.value, maxHeight.value, selection)
+            val wide = adaptiveLayout.windowClass == DustWindowClass.Expanded
             val currentPath = path ?: session?.rootPath
-            LaunchedEffect(destination, wide, session?.id) {
-                val normalizedDestination = DustShellNavigation.layoutDestination(destination, wide)
-                if (normalizedDestination != destination) {
-                    destination = normalizedDestination
-                    return@LaunchedEffect
-                }
-                when (destination) {
-                    DustDestination.RULES -> viewModel.refreshCleanupRules()
-                    DustDestination.GROWTH -> viewModel.reloadStorageGrowth()
-                    DustDestination.CLEANUP -> viewModel.refreshCleanupReports()
-                    else -> if (DustShellNavigation.refreshesInsights(destination)) viewModel.refreshInsights()
-                }
-                viewModel.recordNavigation(destination, wide)
-                if (destination == DustDestination.DEBUG) viewModel.recordDebugWorkbenchOpened(destination, wide)
+            val adaptiveMasterItems = DustAdaptiveMasterModel.forSelection(
+                selection = selection,
+                files = entries,
+                cleanup = recommendationAnalysis,
+                apps = appStorageInspector,
+                activity = activityRuns,
+            )
+            LaunchedEffect(selection.route, selection.entityId, selection.generation, adaptiveLayout.windowClass) {
+                viewModel.recordNavigation(selection, wide)
             }
-            fun openScanLauncher() {
-                if (wide) selectDestination(DustDestination.SCAN) else showScanSheet = true
-            }
+
+            fun openScanLauncher() { showScanSheet = true }
+
             BackHandler(
                 enabled = cleanupReview != null || categoryFiles != null || selected != null || selectedPaths.isNotEmpty() ||
-                    (destination == DustDestination.EXPLORER && session != null && currentPath != session?.rootPath) ||
-                    DustShellNavigation.backTarget(destination, wide) != null,
+                    (selection.route == DustSemanticRoute.FilesExplorer && session != null && currentPath != session?.rootPath) ||
+                    DustSemanticNavigation.backTarget(selection) != null,
             ) {
                 when {
-                    cleanupReview != null -> viewModel.dismissCleanupReview()
+                    cleanupReview != null -> {
+                        viewModel.dismissCleanupReview()
+                        navigate(DustSemanticRoute.CleanRecommended)
+                    }
                     categoryFiles != null -> viewModel.dismissCategoryFiles()
-                    selected != null -> viewModel.closeDetails()
+                    selected != null -> {
+                        viewModel.closeDetails()
+                        navigate(DustSemanticRoute.FilesExplorer)
+                    }
                     selectedPaths.isNotEmpty() -> viewModel.clearSelection()
-                    destination == DustDestination.EXPLORER && session != null && currentPath != session?.rootPath -> viewModel.up()
-                    else -> DustShellNavigation.backTarget(destination, wide)?.let { destination = it }
+                    selection.route == DustSemanticRoute.FilesExplorer && session != null && currentPath != session?.rootPath -> viewModel.up()
+                    else -> DustSemanticNavigation.backTarget(selection)?.let(::navigate)
                 }
             }
+
             Scaffold(
                 topBar = {
                     TopAppBar(
-                        title = { Text(destination.label) },
+                        title = { Text(selection.route.title) },
                         actions = {
                             TextButton(onClick = { openScanLauncher() }) { Text("Scan") }
-                            TextButton(onClick = { menuOpen = true }) { Text(destination.actionLabel) }
+                            TextButton(onClick = { menuOpen = true }) { Text(selection.route.actionLabel) }
                             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                                 DropdownMenuItem(
-                                    text = { DisabledMenuText("Export CSV", exportCsvDisabledReason(session)) },
-                                    enabled = session != null,
+                                    text = { Text("Export CSV") },
                                     onClick = { menuOpen = false; viewModel.exportCsv() },
                                 )
                                 DropdownMenuItem(
@@ -249,23 +365,22 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     onClick = { menuOpen = false; openScanLauncher() },
                                 )
                                 DropdownMenuItem(
-                                    text = { DisabledMenuText("Run certification", certificationDisabledReason(session)) },
-                                    enabled = session != null,
-                                    onClick = { menuOpen = false; selectDestination(DustDestination.CERTIFICATION); viewModel.runDeviceCertification() },
+                                    text = { Text("Run certification") },
+                                    onClick = { menuOpen = false; navigate(DustSemanticRoute.SystemCertification); viewModel.runDeviceCertification() },
                                 )
                             }
                         },
                     )
                 },
                 bottomBar = {
-                    if (!wide) {
-                        NavigationBar {
-                            DustShellNavigation.compactDestinations.forEach { item ->
+                    if (!adaptiveLayout.usesNavigationRail) {
+                        NavigationBar(Modifier.dustPrimaryNavigationTraversal()) {
+                            DustSemanticNavigation.primaryRoutes.forEach { item ->
                                 NavigationBarItem(
-                                    selected = DustShellNavigation.compactSelection(destination) == item,
-                                    onClick = { selectDestination(DustShellNavigation.compactNavigationTarget(item, session != null)) },
-                                    icon = { Text(item.symbol, style = MaterialTheme.typography.titleMedium) },
-                                    label = { Text(item.shortLabel) },
+                                    selected = selection.domain == item.domain,
+                                    onClick = { navigate(item) },
+                                    icon = { Text(item.domain.symbol, style = MaterialTheme.typography.titleMedium) },
+                                    label = { Text(item.domain.shortLabel) },
                                 )
                             }
                         }
@@ -274,21 +389,36 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                 snackbarHost = { SnackbarHost(snackbar) },
             ) { padding ->
                 Row(Modifier.padding(padding).fillMaxSize()) {
-                    if (wide) {
-                        NavigationRail(Modifier.fillMaxHeight()) {
+                    if (adaptiveLayout.usesNavigationRail) {
+                        NavigationRail(Modifier.fillMaxHeight().dustPrimaryNavigationTraversal()) {
                             Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
-                                DustShellNavigation.wideDestinations.forEach { item ->
+                                DustSemanticNavigation.primaryRoutes.forEach { item ->
                                     NavigationRailItem(
-                                        selected = destination == item,
-                                        onClick = { selectDestination(item) },
-                                        icon = { Text(item.symbol, style = MaterialTheme.typography.titleMedium) },
-                                        label = { Text(item.shortLabel) },
+                                        selected = selection.domain == item.domain,
+                                        onClick = { navigate(item) },
+                                        icon = { Text(item.domain.symbol, style = MaterialTheme.typography.titleMedium) },
+                                        label = { Text(item.domain.shortLabel) },
                                     )
                                 }
                             }
                         }
                     }
-                    Column(Modifier.weight(1f).fillMaxSize()) {
+                    if (adaptiveLayout.showsMasterPane) {
+                        DustAdaptiveMasterPane(
+                            layout = adaptiveLayout,
+                            selection = selection,
+                            items = adaptiveMasterItems,
+                            onNavigate = { target, entity -> navigate(target, entity) },
+                        )
+                    }
+                    Column(Modifier.weight(1f).fillMaxSize().dustDetailTraversal()) {
+                        activityRuns.firstOrNull { it.active }?.let { active ->
+                            GlobalActiveOperationSurface(
+                                run = active,
+                                open = { navigate(DustSemanticRoute.ActivityRun, active.operationId) },
+                                cancel = if (active.canCancel) ({ viewModel.cancelActivityRun(active.operationId) }) else null,
+                            )
+                        }
                         if (scanDataStale) {
                             Surface(tonalElevation = 3.dp) {
                                 Row(
@@ -303,31 +433,44 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                         }
                         Box(Modifier.weight(1f).fillMaxSize()) {
                             val currentSession = session
+                            val presentation = routeScreenState
                             when {
-                                currentSession == null && DustShellNavigation.needsScanData(destination) -> ScanRequiredEmptyState(
-                                    Modifier.fillMaxSize(),
-                                    detail = "This specialized workbench needs an indexed scan first. Files, Clean, Tools, Debug workbench, and deletion reports remain reachable before scanning.",
-                                    onStartScan = { openScanLauncher() },
-                                )
-                                destination == DustDestination.SCAN -> ScanLauncher(
-                                    Modifier.fillMaxSize(),
-                                    rootState,
-                                    rootServiceInfo,
-                                    rootFailureMessage,
-                                    currentSession,
-                                    scanDiagnostics,
-                                    pathPreflight,
-                                    viewModel,
-                                    scanDepthProfile,
-                                    requestNotificationPermission,
-                                ) { selectDestination(DustDestination.INSIGHTS) }
-                                destination == DustDestination.EXPLORER && currentSession == null -> FilesNoScanScreen(
+                                presentation is DustScreenState.Loading -> SharedRouteLoadingScreen(Modifier.fillMaxSize())
+                                presentation is DustScreenState.Empty -> SharedRouteEmptyScreen(
+                                    state = presentation,
+                                    onRecovery = { action ->
+                                        when (action.code) {
+                                            "start_scan" -> openScanLauncher()
+                                            else -> action.routeKey?.let { key -> DustSemanticRoute.entries.firstOrNull { it.routeKey == key }?.let { navigate(it) } }
+                                        }
+                                    },
                                     modifier = Modifier.fillMaxSize(),
-                                    onStartScan = { openScanLauncher() },
-                                    openTools = { selectDestination(DustDestination.MORE) },
-                                    openDebug = { selectDestination(DustDestination.DEBUG) },
                                 )
-                                destination == DustDestination.EXPLORER && currentSession != null -> Explorer(
+                                presentation is DustScreenState.Blocked -> SharedRouteBlockedScreen(
+                                    state = presentation,
+                                    onRemediation = { action ->
+                                        when (action.code) {
+                                            "start_scan" -> openScanLauncher()
+                                            "open_diagnostics" -> navigate(DustSemanticRoute.SystemDiagnostics)
+                                            "open_activity" -> navigate(DustSemanticRoute.ActivityList)
+                                            else -> action.routeKey?.let { key -> DustSemanticRoute.entries.firstOrNull { it.routeKey == key }?.let { navigate(it) } }
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                                presentation is DustScreenState.Error -> SharedRouteErrorScreen(
+                                    state = presentation,
+                                    retry = { viewModel.refreshRoutePresentation(selection) },
+                                    openDiagnostics = { navigate(DustSemanticRoute.SystemDiagnostics) },
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                                routeProblem != null -> SemanticRouteProblemScreen(
+                                    problem = requireNotNull(routeProblem),
+                                    retry = { routeProblem = null; navigate(selection.route, selection.entityId) },
+                                    goHome = { navigate(DustSemanticRoute.OverviewHome) },
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                                selection.route in setOf(DustSemanticRoute.FilesExplorer, DustSemanticRoute.FilesTreemap, DustSemanticRoute.FilesItem) && currentSession != null -> Explorer(
                                     Modifier.fillMaxSize(),
                                     currentSession,
                                     scanDiagnostics,
@@ -337,12 +480,17 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     filter,
                                     selectedPaths,
                                     viewModel,
-                                    openRootSearch = { selectDestination(DustDestination.SEARCH) },
+                                    openRootSearch = { navigate(DustSemanticRoute.FilesSearch) },
+                                    initialTreemap = selection.route == DustSemanticRoute.FilesTreemap,
+                                    onTreemapModeChanged = { treemap -> navigate(if (treemap) DustSemanticRoute.FilesTreemap else DustSemanticRoute.FilesExplorer) },
+                                    openEntryDetails = { entry -> viewModel.select(entry); navigate(DustSemanticRoute.FilesItem, entry.path) },
                                 )
-                                destination == DustDestination.INSIGHTS -> HomeDashboardScreen(
+                                selection.route in setOf(DustSemanticRoute.OverviewHome, DustSemanticRoute.OverviewComposition) -> HomeDashboardScreen(
                                     modifier = Modifier.fillMaxSize(),
                                     session = currentSession,
                                     diagnostics = scanDiagnostics,
+                                    overviewStorage = overviewStorage,
+                                    activityRuns = activityRuns,
                                     delta = delta,
                                     history = snapshotHistory,
                                     advanced = advancedReport,
@@ -353,172 +501,97 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     vm = viewModel,
                                     requestNotificationPermission = requestNotificationPermission,
                                     onStartScan = { openScanLauncher() },
-                                    revealPath = { filePath ->
-                                        viewModel.revealPath(filePath)
-                                        selectDestination(DustDestination.EXPLORER)
-                                    },
-                                    openClean = { selectDestination(DustDestination.RECOMMENDATIONS) },
-                                    openDuplicates = { selectDestination(DustDestination.DUPLICATES) },
-                                    openLargeFiles = { selectDestination(DustDestination.LARGE_FILES) },
-                                    openResidue = { selectDestination(DustDestination.APP_RESIDUE) },
-                                    openDiagnostics = { openScanLauncher() },
+                                    revealPath = { filePath -> viewModel.revealPath(filePath); navigate(DustSemanticRoute.FilesExplorer) },
+                                    openClean = { navigate(DustSemanticRoute.CleanRecommended) },
+                                    openDuplicates = { navigate(DustSemanticRoute.CleanDuplicates) },
+                                    openLargeFiles = { navigate(DustSemanticRoute.FilesLarge) },
+                                    openResidue = { navigate(DustSemanticRoute.CleanResidue) },
+                                    openDiagnostics = { diagnosticsFocusOperationId = null; navigate(DustSemanticRoute.SystemDiagnostics) },
+                                    openActivityRun = { operationId -> navigate(DustSemanticRoute.ActivityRun, operationId) },
                                 )
-                                destination == DustDestination.RECOMMENDATIONS && currentSession == null -> CleanNoScanScreen(
-                                    modifier = Modifier.fillMaxSize(),
-                                    onStartScan = { openScanLauncher() },
-                                    openTools = { selectDestination(DustDestination.MORE) },
-                                    openDebug = { selectDestination(DustDestination.DEBUG) },
-                                )
-                                destination == DustDestination.RECOMMENDATIONS && currentSession != null -> CleanupRecommendationsScreen(
-                                    Modifier.fillMaxSize(),
-                                    recommendationAnalysis,
-                                    recommendationPage,
-                                    recommendationLoading,
-                                    selectedPaths,
-                                    scanDataStale,
-                                    viewModel,
-                                    openWorkbench = { selectDestination(it) },
-                                ) { filePath ->
-                                    viewModel.revealPath(filePath)
-                                    selectDestination(DustDestination.EXPLORER)
-                                }
-                                destination == DustDestination.RULES && currentSession != null -> CleanupRulesScreen(
-                                    Modifier.fillMaxSize(),
-                                    cleanupRules,
-                                    cleanupRulePreview,
-                                    cleanupRuleLoading,
-                                    selectedPaths,
-                                    scanDataStale,
-                                    viewModel,
-                                ) { filePath ->
-                                    viewModel.revealPath(filePath)
-                                    selectDestination(DustDestination.EXPLORER)
-                                }
-                                destination == DustDestination.GROWTH && currentSession != null -> StorageGrowthScreen(
-                                    Modifier.fillMaxSize(),
-                                    storageGrowthAnalysis,
-                                    storageGrowthPage,
-                                    storageGrowthLoading,
-                                    selectedPaths,
-                                    scanDataStale,
-                                    viewModel,
-                                ) { filePath ->
-                                    viewModel.revealPath(filePath)
-                                    selectDestination(DustDestination.EXPLORER)
-                                }
-                                destination == DustDestination.LARGE_FILES && currentSession != null -> LargeFileWorkbenchScreen(
-                                    Modifier.fillMaxSize(),
-                                    largeFiles,
-                                    largeFileLoading,
-                                    selectedPaths,
-                                    scanDataStale,
-                                    viewModel,
-                                ) { filePath ->
-                                    viewModel.revealPath(filePath)
-                                    selectDestination(DustDestination.EXPLORER)
-                                }
-                                destination == DustDestination.DUPLICATES && currentSession != null -> DuplicateWorkbenchScreen(
-                                    Modifier.fillMaxSize(),
-                                    duplicateAnalysis,
-                                    duplicatePage,
-                                    selectedPaths,
-                                    scanDataStale,
-                                    viewModel,
-                                ) { filePath ->
-                                    viewModel.revealPath(filePath)
-                                    selectDestination(DustDestination.EXPLORER)
-                                }
-                                destination == DustDestination.APP_RESIDUE && currentSession != null -> AppResidueWorkbenchScreen(
-                                    Modifier.fillMaxSize(),
-                                    residueAnalysis,
-                                    residuePage,
-                                    residueLoading,
-                                    selectedPaths,
-                                    scanDataStale,
-                                    viewModel,
-                                ) { filePath ->
-                                    viewModel.revealPath(filePath)
-                                    selectDestination(DustDestination.EXPLORER)
-                                }
-                                destination == DustDestination.SEARCH && currentSession != null -> RootSearchScreen(
-                                    Modifier.fillMaxSize(),
-                                    currentSession.id,
-                                    rootSearchResults,
-                                    rootSearchPage,
-                                    selectedPaths,
-                                    viewModel,
-                                ) { result ->
-                                    viewModel.revealPath(result.path)
-                                    selectDestination(DustDestination.EXPLORER)
-                                }
-                                destination == DustDestination.PACKAGES && currentSession != null -> AppStorageInspectorScreen(
+                                selection.route == DustSemanticRoute.OverviewTrends && currentSession != null -> StorageGrowthScreen(
+                                    Modifier.fillMaxSize(), storageGrowthAnalysis, storageGrowthPage, storageGrowthLoading, selectedPaths, scanDataStale, viewModel,
+                                ) { filePath -> viewModel.revealPath(filePath); navigate(DustSemanticRoute.FilesExplorer) }
+                                selection.route == DustSemanticRoute.OverviewScanHistory -> ScanHistoryRouteScreen(snapshotHistory, openScan = { openScanLauncher() }, modifier = Modifier.fillMaxSize())
+                                selection.route == DustSemanticRoute.FilesSearch && currentSession != null -> RootSearchScreen(
+                                    Modifier.fillMaxSize(), currentSession.id, rootSearchResults, rootSearchPage, selectedPaths, viewModel,
+                                ) { result -> viewModel.revealPath(result.path); navigate(DustSemanticRoute.FilesExplorer) }
+                                selection.route == DustSemanticRoute.FilesLarge && currentSession != null -> LargeFileWorkbenchScreen(
+                                    Modifier.fillMaxSize(), largeFiles, largeFileLoading, selectedPaths, scanDataStale, viewModel,
+                                ) { filePath -> viewModel.revealPath(filePath); navigate(DustSemanticRoute.FilesExplorer) }
+                                selection.route in setOf(DustSemanticRoute.CleanRecommended, DustSemanticRoute.CleanCandidate, DustSemanticRoute.CleanReview) && currentSession != null -> CleanupRecommendationsScreen(
+                                    Modifier.fillMaxSize(), recommendationAnalysis, recommendationPage, recommendationLoading, selectedPaths, scanDataStale, viewModel,
+                                    selectedRecommendationId = selection.entityId.takeIf { selection.route == DustSemanticRoute.CleanCandidate },
+                                    openCandidate = { candidateId -> navigate(DustSemanticRoute.CleanCandidate, candidateId) },
+                                    closeCandidate = { navigate(DustSemanticRoute.CleanRecommended) },
+                                    openWorkbench = { navigate(it) },
+                                ) { filePath -> viewModel.revealPath(filePath); navigate(DustSemanticRoute.FilesExplorer) }
+                                selection.route == DustSemanticRoute.CleanRules && currentSession != null -> CleanupRulesScreen(
+                                    Modifier.fillMaxSize(), cleanupRules, cleanupRulePreview, cleanupRuleLoading, selectedPaths, scanDataStale, viewModel,
+                                ) { filePath -> viewModel.revealPath(filePath); navigate(DustSemanticRoute.FilesExplorer) }
+                                selection.route == DustSemanticRoute.CleanDuplicates && currentSession != null -> DuplicateWorkbenchScreen(
+                                    Modifier.fillMaxSize(), duplicateAnalysis, duplicatePage, selectedPaths, scanDataStale, viewModel,
+                                ) { filePath -> viewModel.revealPath(filePath); navigate(DustSemanticRoute.FilesExplorer) }
+                                selection.route == DustSemanticRoute.CleanResidue && currentSession != null -> AppResidueWorkbenchScreen(
+                                    Modifier.fillMaxSize(), residueAnalysis, residuePage, residueLoading, selectedPaths, scanDataStale, viewModel,
+                                ) { filePath -> viewModel.revealPath(filePath); navigate(DustSemanticRoute.FilesExplorer) }
+                                selection.route in setOf(DustSemanticRoute.AppsList, DustSemanticRoute.AppsPackage, DustSemanticRoute.AppsPaths) && currentSession != null -> AppStorageInspectorScreen(
                                     modifier = Modifier.fillMaxSize(),
                                     analysis = appStorageInspector,
                                     page = appStoragePage,
                                     loading = appStorageLoading,
-                                    selectedPackage = selectedApp,
+                                    selectedPackage = selection.entityId ?: selectedApp,
                                     selectedPaths = selectedPaths,
                                     scanDataStale = scanDataStale,
                                     vm = viewModel,
-                                    revealPath = { filePath ->
-                                        viewModel.revealPath(filePath)
-                                        selectDestination(DustDestination.EXPLORER)
-                                    },
-                                    onSelectPackage = { selectedApp = it; selectedAppSessionId = currentSession?.id },
+                                    revealPath = { filePath -> viewModel.revealPath(filePath); navigate(DustSemanticRoute.FilesExplorer) },
+                                    onSelectPackage = { packageName -> selectedApp = packageName; selectedAppSessionId = currentSession.id; navigate(DustSemanticRoute.AppsPackage, packageName) },
                                 )
-                                destination == DustDestination.MODULES -> ModuleAnalyzerScreen(
-                                    Modifier.fillMaxSize(),
-                                    moduleReport,
-                                    selectedPaths,
-                                    viewModel,
-                                ) { filePath ->
-                                    viewModel.revealPath(filePath)
-                                    selectDestination(DustDestination.EXPLORER)
-                                }
-                                destination == DustDestination.CERTIFICATION -> CertificationScreen(Modifier.fillMaxSize(), certification, viewModel)
-                                destination == DustDestination.CLEANUP -> CleanupReportsScreen(
-                                    Modifier.fillMaxSize(),
-                                    cleanupReports,
-                                    cleanupOperations,
-                                    selectedCleanupReport,
-                                    viewModel,
-                                )
-                                destination == DustDestination.DEBUG -> DebugWorkbenchScreen(
+                                selection.domain == DustRouteDomain.Activity -> ActivitySemanticScreen(
+                                    route = selection,
+                                    runs = activityRuns,
+                                    selectedRun = selectedActivityRun,
+                                    evidence = selectedActivityEvidence,
+                                    vm = viewModel,
+                                    openRoute = { target, entity -> navigate(target, entity) },
+                                    openDiagnostics = { operationId -> diagnosticsFocusOperationId = operationId; navigate(DustSemanticRoute.SystemDiagnostics) },
                                     modifier = Modifier.fillMaxSize(),
-                                    destination = destination,
-                                    wide = wide,
-                                    rootState = rootState,
-                                    rootServiceInfo = rootServiceInfo,
-                                    rootFailureMessage = rootFailureMessage,
-                                    session = currentSession,
-                                    diagnostics = scanDiagnostics,
-                                    pathPreflight = pathPreflight,
-                                    entriesCount = entries.size,
-                                    currentPath = currentPath,
-                                    selectedCount = selectedPaths.size,
-                                    cleanupReview = cleanupReview,
-                                    scanDataStale = scanDataStale,
-                                    moduleReport = moduleReport,
-                                    events = debugEvents,
+                                )
+                                selection.route == DustSemanticRoute.SystemRuntime -> SystemRuntimeScreen(rootState, rootServiceInfo, rootFailureMessage, currentSession, openDiagnostics = { navigate(DustSemanticRoute.SystemDiagnostics) }, modifier = Modifier.fillMaxSize())
+                                selection.route == DustSemanticRoute.SystemModules -> ModuleAnalyzerScreen(
+                                    Modifier.fillMaxSize(), moduleReport, selectedPaths, viewModel,
+                                ) { filePath -> viewModel.revealPath(filePath); navigate(DustSemanticRoute.FilesExplorer) }
+                                selection.route == DustSemanticRoute.SystemAutomation -> SystemAutomationScreen(activityRuns, openActivity = { navigate(DustSemanticRoute.ActivityList) }, modifier = Modifier.fillMaxSize())
+                                selection.route == DustSemanticRoute.SystemDiagnostics -> DiagnosticsAuthorityScreen(
+                                    snapshot = diagnosticsAuthority,
+                                    events = durableDiagnosticEvents,
                                     probeResults = debugProbeResults,
                                     exportResult = debugExportResult,
-                                    debugOverlayVisible = debugOverlayVisible,
-                                    toggleDebugOverlay = viewModel::toggleDebugOverlay,
-                                    runProbe = viewModel::runDebugProbe,
-                                    runAllProbes = viewModel::runAllDebugProbes,
-                                    clearEvents = viewModel::clearDebugEvents,
-                                    exportBundle = { mode -> viewModel.exportDebugBundle(mode, destination, wide) },
-                                )
-                                destination == DustDestination.MORE -> ToolsHubScreen(
+                                    focusedOperationId = diagnosticsFocusOperationId,
+                                    refresh = viewModel::refreshDiagnosticsAuthority,
+                                    exportBundle = { mode -> viewModel.exportDebugBundle(mode, selection, wide) },
+                                    openRoute = { target, entity -> navigate(target, entity) },
+                                    clearFocus = { diagnosticsFocusOperationId = null },
                                     modifier = Modifier.fillMaxSize(),
-                                    navigate = ::selectDestination,
-                                    openWholeScanSearch = { selectDestination(DustDestination.SEARCH) },
-                                    openScanDiagnostics = { openScanLauncher() },
+                                )
+                                selection.route == DustSemanticRoute.SystemCertification -> CertificationScreen(Modifier.fillMaxSize(), certification, viewModel)
+                                selection.route == DustSemanticRoute.SystemSettings -> SystemSettingsScreen(
+                                    scanDepthProfile = scanDepthProfile,
+                                    debugOverlayVisible = debugOverlayVisible,
+                                    vm = viewModel,
+                                    openRoute = { target, entity -> navigate(target, entity) },
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                                else -> SemanticRouteProblemScreen(
+                                    problem = DustRouteProblem(DustRouteProblemCode.UnknownRoute, "No renderer is bound to ${selection.route.routeKey}", selection.route, selection.entityId),
+                                    retry = { navigate(selection.route, selection.entityId) },
+                                    goHome = { navigate(DustSemanticRoute.OverviewHome) },
+                                    modifier = Modifier.fillMaxSize(),
                                 )
                             }
                             if (debugOverlayVisible) {
-                                DebugOverlayHud(
-                                    destination = destination,
+                                SemanticDebugOverlayHud(
+                                    selection = selection,
                                     wide = wide,
                                     session = currentSession,
                                     rootState = rootState,
@@ -526,11 +599,11 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     scanDataStale = scanDataStale,
                                     moduleReport = moduleReport,
                                     eventCount = debugEvents.size,
-                                    openDebug = { selectDestination(DustDestination.DEBUG) },
+                                    openDiagnostics = { navigate(DustSemanticRoute.SystemDiagnostics) },
                                     modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
                                 )
                             }
-                            if (destination != DustDestination.EXPLORER && selectedPaths.isNotEmpty()) {
+                            if (selection.domain != DustRouteDomain.Files && selectedPaths.isNotEmpty()) {
                                 SelectionActionBar(
                                     selectedCount = selectedPaths.size,
                                     clear = viewModel::clearSelection,
@@ -543,36 +616,41 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                 }
             }
         }
+
         val categorySelection = categoryFiles
         if (categorySelection != null) CategoryFilesSheet(
             selection = categorySelection,
             selectedPaths = selectedPaths,
             vm = viewModel,
-            deletionEnabled = !scanDataStale,
+            deletionEnabled = true,
             close = viewModel::dismissCategoryFiles,
             reveal = { filePath ->
                 viewModel.dismissCategoryFiles()
                 viewModel.revealPath(filePath)
-                destination = DustDestination.EXPLORER
+                navigate(DustSemanticRoute.FilesExplorer)
             },
         )
         val selectedEntry = selected
-        if (selectedEntry != null) EntryDetails(
+        if (selectedEntry != null && selection.route == DustSemanticRoute.FilesItem) EntryDetails(
             selectedEntry,
             intelligence,
             rootInspection,
-            close = viewModel::closeDetails,
+            close = { viewModel.closeDetails(); navigate(DustSemanticRoute.FilesExplorer) },
             reveal = {
                 viewModel.closeDetails()
                 viewModel.revealPath(selectedEntry.path)
-                destination = DustDestination.EXPLORER
+                navigate(DustSemanticRoute.FilesExplorer)
             },
             delete = {
                 viewModel.closeDetails()
                 viewModel.reviewPaths(listOf(selectedEntry.path))
             },
         )
-        if (cleanupReview != null) CleanupReviewSheet(cleanupReview, viewModel::dismissCleanupReview, viewModel::executeCleanup)
+        if (cleanupReview != null && selection.route == DustSemanticRoute.CleanReview) CleanupReviewSheet(
+            cleanupReview,
+            close = { viewModel.dismissCleanupReview(); navigate(DustSemanticRoute.CleanRecommended) },
+            execute = viewModel::executeCleanup,
+        )
         if (showScanSheet) {
             ScanLauncherSheet(
                 root = rootState,
@@ -583,14 +661,499 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                 pathPreflight = pathPreflight,
                 vm = viewModel,
                 scanDepthProfile = scanDepthProfile,
+                launchState = scanLaunchState,
                 requestNotificationPermission = requestNotificationPermission,
                 close = { showScanSheet = false },
-                openHome = { selectDestination(DustDestination.INSIGHTS) },
+                openHome = { navigate(DustSemanticRoute.OverviewHome) },
             )
         }
     }
 }
 
+
+@Composable
+private fun SemanticRouteProblemScreen(
+    problem: DustRouteProblem,
+    retry: () -> Unit,
+    goHome: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier.verticalScroll(rememberScrollState()).padding(start = 20.dp, top = 24.dp, end = 20.dp, bottom = 128.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        DustHeroCard(
+            title = when (problem.code) {
+                DustRouteProblemCode.EntityNotFound -> "Item not found"
+                DustRouteProblemCode.EntityStale -> "Item is stale"
+                DustRouteProblemCode.EntityRequired -> "Route identity is incomplete"
+                DustRouteProblemCode.UnknownRoute -> "Unknown route"
+                DustRouteProblemCode.InvalidDeepLink -> "Invalid link"
+            },
+            detail = problem.detail,
+            eyebrow = "Semantic navigation",
+        ) {
+            problem.route?.let { MetricRow("Route", it.routeKey) }
+            problem.entityId?.let { MetricRow("Identity", it) }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = goHome, modifier = Modifier.weight(1f)) { Text("Overview") }
+                Button(onClick = retry, modifier = Modifier.weight(1f)) { Text("Retry") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ScanHistoryRouteScreen(
+    history: List<SnapshotPoint>,
+    openScan: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item {
+            DustHeroCard(
+                title = "Scan history",
+                detail = "Persisted storage snapshots keep their own semantic route instead of being folded into a layout-specific dashboard.",
+                eyebrow = "Overview",
+                trailing = { Button(onClick = openScan) { Text("New scan") } },
+            ) {
+                DustMetricTile("Snapshots", history.size.toString(), Modifier.fillMaxWidth(), detail = "Completed evidence points")
+            }
+        }
+        if (history.isEmpty()) {
+            item { EmptyState("No completed snapshots", "Complete a scan to create the first storage history point.") }
+        } else {
+            items(history.asReversed(), key = { it.timestamp }) { point ->
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(formatBytes(point.totalBytes), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Text(formatTimestamp(point.timestamp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GlobalActiveOperationSurface(
+    run: ActivityRun,
+    open: () -> Unit,
+    cancel: (() -> Unit)?,
+) {
+    Surface(tonalElevation = 4.dp) {
+        Row(
+            Modifier.fillMaxWidth().clickable(onClick = open).padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("${run.kind.replace('-', ' ').replaceFirstChar { it.uppercase() }} · ${run.statusLabel}", fontWeight = FontWeight.SemiBold)
+                Text("Tap for durable progress and evidence", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (cancel != null) TextButton(onClick = cancel) { Text("Cancel") }
+        }
+    }
+}
+
+@Composable
+private fun ActivitySemanticScreen(
+    route: DustRouteSelection,
+    runs: List<ActivityRun>,
+    selectedRun: ActivityRun?,
+    evidence: ActivityEvidence?,
+    vm: MainViewModel,
+    openRoute: (DustSemanticRoute, String?) -> Unit,
+    openDiagnostics: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val run = route.entityId?.let { id -> selectedRun?.takeIf { it.operationId == id } ?: runs.firstOrNull { it.operationId == id } }
+    when (route.route) {
+        DustSemanticRoute.ActivityList -> {
+            var stateName by rememberSaveable { mutableStateOf(ActivityStateFilter.All.name) }
+            var kindFilter by rememberSaveable { mutableStateOf<String?>(null) }
+            val stateFilter = runCatching { ActivityStateFilter.valueOf(stateName) }.getOrDefault(ActivityStateFilter.All)
+            val filter = ActivityFilter(stateFilter, kindFilter)
+            val visibleRuns = runs.filter(filter::accepts)
+            val kinds = runs.map { it.kind }.distinct().sorted()
+            LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                item {
+                    DustHeroCard(
+                        title = "Activity",
+                        detail = "Every durable scan, analysis, cleanup, automation, and support operation is shown from Go-owned lifecycle truth.",
+                        eyebrow = "Operations",
+                    ) {
+                        MetricGrid(listOf(
+                            "Runs" to runs.size.toString(),
+                            "Active" to runs.count { it.active }.toString(),
+                            "Recovery" to runs.count { it.recoveryRequired }.toString(),
+                            "Failed" to runs.count { it.terminalTruth in setOf("failure", "interrupted") }.toString(),
+                        ))
+                    }
+                }
+                item {
+                    DustSectionHeader("Filter", subtitle = "Filters never change operation truth; they only narrow the durable list.")
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(ActivityStateFilter.entries, key = { it.name }) { state ->
+                            FilterChip(selected = state == stateFilter, onClick = { stateName = state.name }, label = { Text(state.label) })
+                        }
+                    }
+                    if (kinds.isNotEmpty()) {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            item { FilterChip(selected = kindFilter == null, onClick = { kindFilter = null }, label = { Text("All types") }) }
+                            items(kinds, key = { it }) { kind ->
+                                FilterChip(selected = kindFilter == kind, onClick = { kindFilter = kind }, label = { Text(kind.replace('-', ' ')) })
+                            }
+                        }
+                    }
+                }
+                if (runs.isEmpty()) item { EmptyState("No durable activity", "Scans, cleanup, analysis, exports, and other durable work will appear here.") }
+                else if (visibleRuns.isEmpty()) item { EmptyState("No activity matches", "Change the state or operation-type filter.") }
+                items(visibleRuns, key = { it.operationId }) { item ->
+                    DustTaskCard(
+                        title = item.kind.replace('-', ' ').replaceFirstChar { it.uppercase() },
+                        detail = "${item.statusLabel} · request ${item.requestId}${if (item.recoveryRequired) " · recovery required" else ""}",
+                        value = if (item.active) "Active" else item.terminalTruth,
+                        onClick = { openRoute(DustSemanticRoute.ActivityRun, item.operationId) },
+                    )
+                }
+            }
+        }
+        DustSemanticRoute.ActivityRun -> LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (run == null) {
+                item { EmptyState("Operation unavailable", "The durable operation identity could not be resolved.") }
+            } else {
+                item {
+                    DustHeroCard(
+                        title = run.kind.replace('-', ' ').replaceFirstChar { it.uppercase() },
+                        detail = run.statusLabel,
+                        eyebrow = "Run ${run.operationId}",
+                    ) {
+                        MetricGrid(listOf(
+                            "State" to run.state,
+                            "Terminal truth" to run.terminalTruth,
+                            "Recovery" to if (run.recoveryRequired) "Required" else "Clear",
+                            "Updated" to formatTimestamp(run.updatedAt / 1000),
+                        ))
+                        if (run.recoveryRequired) DustStatusNotice(
+                            "Recovery required",
+                            "The durable operation cannot be treated as failed or restarted automatically. Reconcile its evidence first.",
+                            DustNoticeTone.Warning,
+                        )
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (run.canCancel) OutlinedButton(onClick = { vm.cancelActivityRun(run.operationId) }, modifier = Modifier.weight(1f)) { Text("Cancel") }
+                            if (run.canReconcile) Button(onClick = { vm.reconcileActivityRun(run.operationId) }, modifier = Modifier.weight(1f)) { Text("Reconcile") }
+                            if (run.canRetry) Button(onClick = { vm.retryActivityRun(run.operationId) }, modifier = Modifier.weight(1f)) { Text("Retry") }
+                        }
+                        TextButton(onClick = { openRoute(DustSemanticRoute.ActivityEvidence, run.operationId) }, modifier = Modifier.fillMaxWidth()) { Text("Open evidence") }
+                    }
+                }
+                item { MetricRow("Request", run.requestId) }
+                item { MetricRow("Evidence correlation", run.evidenceCorrelation.ifBlank { "none" }) }
+                item { MetricRow("Sources", run.sources.joinToString().ifBlank { "none" }) }
+                item { EvidenceJsonCard("Latest progress", run.progressJson) }
+            }
+        }
+        DustSemanticRoute.ActivityEvidence -> LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            item { DustSectionHeader("Operation evidence", subtitle = "Progress, result, verification, and correlated problems share the same durable operation identity.") }
+            if (run == null) item { EmptyState("Evidence unavailable", "The operation is missing or stale.") }
+            else {
+                val selectedEvidence = evidence?.takeIf { it.operationId == run.operationId }
+                selectedEvidence?.cleanupVerification?.let { report ->
+                    item {
+                        DustHeroCard(
+                            title = "Deletion verification",
+                            detail = "Cleanup verification is Activity evidence, not a separate product destination.",
+                            eyebrow = "Cleanup run",
+                        ) {
+                            MetricGrid(listOf(
+                                "Confirmed" to formatBytes(report.confirmedDeletedBytes),
+                                "Attempted" to formatBytes(report.attemptedBytes),
+                                "Partial" to formatBytes(report.partialBytes),
+                                "Failed" to formatBytes(report.failedBytes),
+                            ))
+                            Text("Verification attempts ${report.verificationAttempts} · generation ${selectedEvidence.verificationGeneration ?: 0}", style = MaterialTheme.typography.bodySmall)
+                            PathText(report.rootPath, Modifier.fillMaxWidth(), maxLines = 2)
+                        }
+                    }
+                }
+                item { EvidenceJsonCard("Progress", run.progressJson) }
+                item { EvidenceJsonCard("Result", run.resultJson) }
+                item { EvidenceJsonCard("Verification", run.verificationJson) }
+                selectedEvidence?.problems?.forEach { problem ->
+                    item(key = "activity-problem:${problem.id}") {
+                        DustStatusNotice(problem.reason, problem.guidance, if (problem.recoveryRequired) DustNoticeTone.Warning else DustNoticeTone.Success)
+                    }
+                }
+                item {
+                    OutlinedButton(onClick = { openDiagnostics(run.operationId) }, modifier = Modifier.fillMaxWidth()) {
+                        Text("Open correlated diagnostics")
+                    }
+                }
+            }
+        }
+        else -> Unit
+    }
+}
+
+@Composable
+private fun EvidenceJsonCard(title: String, json: String) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(title, fontWeight = FontWeight.SemiBold)
+            PathText(json.ifBlank { "{}" }, Modifier.fillMaxWidth(), maxLines = 14)
+        }
+    }
+}
+
+@Composable
+private fun SystemRuntimeScreen(
+    rootState: RootUiState,
+    rootServiceInfo: RootServiceClient.RootServiceInfo?,
+    rootFailure: String?,
+    session: ScanSessionEntity?,
+    openDiagnostics: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item {
+            DustHeroCard(
+                title = "Runtime",
+                detail = "Privileged runtime identity and current scan authority live here; they are no longer hidden in a generic Tools destination.",
+                eyebrow = "System",
+            ) {
+                MetricGrid(listOf("Root" to rootUiStateLabel(rootState), "Backend" to (rootServiceInfo?.backend ?: "unavailable"), "UID" to (rootServiceInfo?.uid?.toString() ?: "unknown"), "Scan" to (session?.status ?: "none")))
+                rootFailure?.let { DustStatusNotice("Runtime problem", it, DustNoticeTone.Warning) }
+                Button(onClick = openDiagnostics, modifier = Modifier.fillMaxWidth()) { Text("Open diagnostics") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SystemAutomationScreen(
+    runs: List<ActivityRun>,
+    openActivity: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item {
+            DustHeroCard(
+                title = "Automation",
+                detail = "Automation surfaces expose durable operation truth while Activity owns individual run identities.",
+                eyebrow = "System",
+            ) {
+                MetricGrid(listOf("Active" to runs.count { it.active }.toString(), "Recovery" to runs.count { it.recoveryRequired }.toString(), "History" to runs.count { it.history }.toString()))
+                Button(onClick = openActivity, modifier = Modifier.fillMaxWidth()) { Text("Open activity") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DiagnosticsAuthorityScreen(
+    snapshot: DiagnosticsAuthoritySnapshot?,
+    events: List<DebugEvent>,
+    probeResults: List<DebugProbeResult>,
+    exportResult: DebugExportResult?,
+    focusedOperationId: String?,
+    refresh: () -> Unit,
+    exportBundle: (DebugExportMode) -> Unit,
+    openRoute: (DustSemanticRoute, String?) -> Unit,
+    clearFocus: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var advanced by rememberSaveable { mutableStateOf(false) }
+    val problems = snapshot?.problems.orEmpty().sortedWith(
+        compareByDescending<DiagnosticProblem> { it.operationId == focusedOperationId }
+            .thenByDescending { it.recoveryRequired }
+            .thenBy { it.id },
+    )
+    fun openRemediation(problem: DiagnosticProblem, action: DiagnosticRemediationAction) {
+        val target = action.route?.let { DustSemanticRoute.byKey[it] } ?: return
+        val entity = if (target.entityKind != null) action.entityId ?: problem.operationId else null
+        if (target.entityKind == null || !entity.isNullOrBlank()) openRoute(target, entity)
+    }
+    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item {
+            DustHeroCard(
+                title = "Diagnostics",
+                detail = "Root causes and remediation come from the durable Go ProblemGraph. Developer probes and traces stay behind Advanced details.",
+                eyebrow = "System health",
+            ) {
+                MetricGrid(listOf(
+                    "Root causes" to problems.size.toString(),
+                    "Recovery" to problems.count { it.recoveryRequired }.toString(),
+                    "Evidence issues" to (snapshot?.unhealthyEvidence?.size ?: 0).toString(),
+                    "Support export" to (snapshot?.supportExportState ?: "unknown"),
+                ))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = refresh, modifier = Modifier.weight(1f)) { Text("Refresh") }
+                    Button(onClick = { exportBundle(DebugExportMode.Safe) }, modifier = Modifier.weight(1f)) { Text("Export support bundle") }
+                }
+            }
+        }
+        if (focusedOperationId != null) item {
+            DustStatusNotice(
+                "Correlated operation",
+                "Showing problems for $focusedOperationId first. Diagnostics and Activity share the same durable operation identity.",
+                DustNoticeTone.Warning,
+            )
+            TextButton(onClick = clearFocus) { Text("Clear operation focus") }
+        }
+        if (problems.isEmpty()) {
+            item { DustStatusNotice("No active root cause", "Current evidence does not expose a durable problem. Evidence health remains visible below.", DustNoticeTone.Success) }
+        } else {
+            item { DustSectionHeader("Root causes", subtitle = "Plain-language explanation first; raw implementation traces are intentionally secondary.") }
+            problems.forEach { problem ->
+                item(key = "problem:${problem.id}") {
+                    Card(Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(problem.reason, fontWeight = FontWeight.SemiBold)
+                            Text(problem.guidance.ifBlank { "Review the affected evidence before continuing." }, style = MaterialTheme.typography.bodyMedium)
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("Risk ${problem.risk}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                if (problem.recoveryRequired) Text("Recovery required", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                            }
+                            problem.operationId?.let { operationId ->
+                                OutlinedButton(onClick = { openRoute(DustSemanticRoute.ActivityRun, operationId) }, modifier = Modifier.fillMaxWidth()) {
+                                    Text("Open related Activity run")
+                                }
+                            }
+                            problem.remediationActions.forEachIndexed { index, action ->
+                                val target = action.route?.let { DustSemanticRoute.byKey[it] }
+                                if (target != null && (target.entityKind == null || action.entityId != null || problem.operationId != null)) {
+                                    if (index == 0) Button(onClick = { openRemediation(problem, action) }, modifier = Modifier.fillMaxWidth()) { Text(action.label) }
+                                    else OutlinedButton(onClick = { openRemediation(problem, action) }, modifier = Modifier.fillMaxWidth()) { Text(action.label) }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        item { DustSectionHeader("Evidence health", subtitle = "Missing, stale, or degraded evidence remains explicit instead of being rendered as a healthy zero.") }
+        snapshot?.evidence.orEmpty().forEach { evidence ->
+            item(key = "evidence:${evidence.subject}") {
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(evidence.subject.replace('-', ' ').replaceFirstChar { it.uppercase() }, fontWeight = FontWeight.SemiBold)
+                            Text(evidence.health.uppercase(), style = MaterialTheme.typography.labelMedium)
+                        }
+                        Text("Generation ${evidence.generation}", style = MaterialTheme.typography.bodySmall)
+                        evidence.reason?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    }
+                }
+            }
+        }
+        item {
+            OutlinedButton(onClick = { advanced = !advanced }, modifier = Modifier.fillMaxWidth()) {
+                Text(if (advanced) "Hide advanced diagnostics" else "Show advanced diagnostics")
+            }
+        }
+        if (advanced) {
+            item {
+                DustSectionHeader(
+                    "Advanced diagnostics",
+                    subtitle = "Structured durable events and local evidence-only probes. These details support troubleshooting but are not the primary product explanation.",
+                )
+            }
+            item {
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        MetricRow("Protocol", snapshot?.protocol ?: "not loaded")
+                        MetricRow("Durable events", events.size.toString())
+                        MetricRow("Local probes", probeResults.size.toString())
+                        MetricRow("Latest export", exportResult?.fileName ?: "none")
+                    }
+                }
+            }
+            events.takeLast(25).asReversed().forEach { event ->
+                item(key = "event:${event.id}") {
+                    Card(Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Text("${event.category} · ${event.name}", fontWeight = FontWeight.SemiBold)
+                            Text(event.message, style = MaterialTheme.typography.bodySmall)
+                            Text(formatTimestamp(event.timestampMillis / 1000), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+            probeResults.forEach { probe ->
+                item(key = "probe:${probe.target.name}") {
+                    DustStatusNotice(probe.target.title, probe.message, if (probe.status == DebugProbeStatus.Failed) DustNoticeTone.Error else if (probe.status == DebugProbeStatus.Warning) DustNoticeTone.Warning else DustNoticeTone.Success)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SystemSettingsScreen(
+    scanDepthProfile: ScanDepthProfile,
+    debugOverlayVisible: Boolean,
+    vm: MainViewModel,
+    openRoute: (DustSemanticRoute, String?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item {
+            DustHeroCard(
+                title = "Settings",
+                detail = "Behavioral preferences live here; runtime, certification, and diagnostics retain their own stable System routes.",
+                eyebrow = "System",
+            ) {
+                DustSectionHeader("Scan depth", subtitle = scanDepthProfile.description)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(ScanDepthProfile.entries, key = { it.name }) { profile ->
+                        FilterChip(selected = profile == scanDepthProfile, onClick = { vm.selectScanDepthProfile(profile) }, label = { Text(profile.shortTitle) })
+                    }
+                }
+                FilterChip(selected = debugOverlayVisible, onClick = vm::toggleDebugOverlay, label = { Text(if (debugOverlayVisible) "Debug overlay on" else "Debug overlay off") })
+            }
+        }
+        item { DustTaskCard("Runtime", "Privileged backend identity and scan authority.", value = "System", onClick = { openRoute(DustSemanticRoute.SystemRuntime, null) }) }
+        item { DustTaskCard("Diagnostics", "Problem graph, evidence generations, probes, and support export.", value = "Evidence", onClick = { openRoute(DustSemanticRoute.SystemDiagnostics, null) }) }
+        item { DustTaskCard("Certification", "Release-readiness checks for the current device.", value = "Gate", onClick = { openRoute(DustSemanticRoute.SystemCertification, null) }) }
+    }
+}
+
+@Composable
+private fun SemanticDebugOverlayHud(
+    selection: DustRouteSelection,
+    wide: Boolean,
+    session: ScanSessionEntity?,
+    rootState: RootUiState,
+    selectedCount: Int,
+    scanDataStale: Boolean,
+    moduleReport: RootModuleReport?,
+    eventCount: Int,
+    openDiagnostics: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.clickable(onClick = openDiagnostics),
+        shape = MaterialTheme.shapes.large,
+        color = DustModernColors.SurfaceHighest,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        tonalElevation = 6.dp,
+        shadowElevation = 6.dp,
+    ) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text("Diagnostics overlay", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+            Text("${selection.route.routeKey} · ${if (wide) "wide" else "compact"} · scan=${session?.status?.lowercase() ?: "none"}", style = MaterialTheme.typography.labelSmall)
+            Text("root=${rootUiStateLabel(rootState)} · stale=$scanDataStale · selected=$selectedCount", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("modules=${moduleReport?.diagnostic?.status?.name?.lowercase() ?: "unknown"} · events=$eventCount", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+private fun CleanupReview.semanticManifestId(): String =
+    runCatching { JSONObject(goManifestJson.orEmpty()).optString("id") }
+        .getOrNull()
+        ?.takeIf { it.isNotBlank() }
+        ?: operationId
 
 private fun dustScreenPadding(horizontal: Int = 16, bottom: Int = 128): PaddingValues = PaddingValues(
     start = horizontal.dp,
@@ -607,20 +1170,6 @@ private fun dustSheetPadding(): PaddingValues = PaddingValues(
 )
 
 
-@Composable
-private fun DisabledMenuText(label: String, disabledReason: DisabledActionReason?) {
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(label)
-        disabledReason?.let { reason ->
-            Text(
-                "Disabled: ${reason.detail}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
 private data class DisabledActionReason(val title: String, val detail: String)
 
 @Composable
@@ -632,34 +1181,13 @@ private fun DisabledReasonNotice(reason: DisabledActionReason) {
     )
 }
 
-private fun exportCsvDisabledReason(session: ScanSessionEntity?): DisabledActionReason? =
-    if (session == null) DisabledActionReason(
-        title = "Export CSV unavailable",
-        detail = "Start a scan before exporting indexed entries.",
-    ) else null
-
-private fun certificationDisabledReason(session: ScanSessionEntity?): DisabledActionReason? =
-    if (session == null) DisabledActionReason(
-        title = "Certification unavailable",
-        detail = "Start a scan before running device certification against scan evidence.",
-    ) else null
-
 private fun scanActionDisabledReason(rootReady: Boolean, rootFailure: String?): DisabledActionReason? =
     if (!rootReady) DisabledActionReason(
         title = "Scan action disabled",
         detail = rootFailure ?: "Root identity is not available yet. Retry root diagnostics before scanning.",
     ) else null
 
-private fun staleDeletionDisabledReason(): DisabledActionReason = DisabledActionReason(
-    title = "Deletion action disabled",
-    detail = "Scan results are stale after cleanup. Run a new scan before selecting paths or creating a deletion plan.",
-)
-
-private fun cleanupExecutionDisabledReason(review: CleanupReview, confirmed: Boolean): DisabledActionReason? = when {
-    !review.executable -> DisabledActionReason(
-        title = "Permanent deletion disabled",
-        detail = review.message ?: "No accepted fingerprint-verified paths are ready to delete.",
-    )
+private fun cleanupExecutionDisabledReason(confirmed: Boolean): DisabledActionReason? = when {
     !confirmed -> DisabledActionReason(
         title = "Confirmation required",
         detail = "Check the irreversible-deletion confirmation before executing the reviewed plan.",
@@ -669,98 +1197,60 @@ private fun cleanupExecutionDisabledReason(review: CleanupReview, confirmed: Boo
 
 
 @Composable
-private fun FilesNoScanScreen(
+private fun SharedRouteLoadingScreen(modifier: Modifier = Modifier) {
+    Column(
+        modifier.padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text("Loading route state", style = MaterialTheme.typography.titleLarge)
+        LinearProgressIndicator(Modifier.fillMaxWidth())
+        Text("Waiting for the bound Go response. Older route/entity responses cannot populate this screen.", style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+private fun SharedRouteEmptyScreen(
+    state: DustScreenState.Empty,
+    onRecovery: (DustRemediationAction) -> Unit,
     modifier: Modifier = Modifier,
-    onStartScan: () -> Unit,
-    openTools: () -> Unit,
-    openDebug: () -> Unit,
 ) {
-    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item {
-            DustHeroCard(
-                title = "Files are waiting for a scan",
-                detail = "This page stays open before the first scan so navigation never dead-ends. Start a scan to populate folders, breadcrumbs, search filters, charts, and details.",
-                eyebrow = "Files",
-                trailing = { DustPathPill("no scan yet") },
-            ) {
-                DustStatusNotice(
-                    title = "No indexed file tree yet",
-                    detail = "DustUI has not loaded a scan session. Tools and Debug workbench remain available for root checks and diagnostics.",
-                    tone = DustNoticeTone.Warning,
-                )
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = onStartScan, modifier = Modifier.weight(1f)) { Text("Start scan") }
-                    OutlinedButton(onClick = openDebug, modifier = Modifier.weight(1f)) { Text("Debug") }
-                }
-            }
-        }
-        item {
-            DustTaskCard(
-                title = "Open Tools",
-                detail = "Use scan diagnostics, Debug workbench, export bundle, and module-source checks before indexing files.",
-                value = "Tools",
-                onClick = openTools,
-                leading = { Text("•••", fontWeight = FontWeight.Bold) },
-            )
+    Column(modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        DustStatusNotice(title = state.reasonCode, detail = state.message, tone = DustNoticeTone.Warning)
+        Button(onClick = { onRecovery(state.primaryRecovery) }) { Text(state.primaryRecovery.label) }
+    }
+}
+
+@Composable
+private fun SharedRouteBlockedScreen(
+    state: DustScreenState.Blocked,
+    onRemediation: (DustRemediationAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val remediation = state.actionGates
+        .filterNot { it.allowed }
+        .flatMap { it.remediationActions }
+        .distinctBy { "${it.code}:${it.routeKey}" }
+    Column(modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        DustStatusNotice(title = "Blocked · ${state.reasonCode}", detail = state.message, tone = DustNoticeTone.Warning)
+        remediation.forEachIndexed { index, action ->
+            if (index == 0) Button(onClick = { onRemediation(action) }) { Text(action.label) }
+            else OutlinedButton(onClick = { onRemediation(action) }) { Text(action.label) }
         }
     }
 }
 
 @Composable
-private fun CleanNoScanScreen(
+private fun SharedRouteErrorScreen(
+    state: DustScreenState.Error,
+    retry: () -> Unit,
+    openDiagnostics: () -> Unit,
     modifier: Modifier = Modifier,
-    onStartScan: () -> Unit,
-    openTools: () -> Unit,
-    openDebug: () -> Unit,
 ) {
-    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item {
-            DustHeroCard(
-                title = "Clean is locked until scan evidence exists",
-                detail = "Cleanup actions require fingerprinted paths from the active scan, but the Clean page remains reachable so the app can explain the lock instead of hiding the tab.",
-                eyebrow = "Clean",
-                trailing = { DustPathPill("review-first") },
-            ) {
-                DustStatusNotice(
-                    title = "Permanent deletion remains unavailable",
-                    detail = "Start a scan before selecting paths, creating deletion plans, or running recommendation engines. No safety gate is bypassed here.",
-                    tone = DustNoticeTone.Warning,
-                )
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = onStartScan, modifier = Modifier.weight(1f)) { Text("Start scan") }
-                    OutlinedButton(onClick = openDebug, modifier = Modifier.weight(1f)) { Text("Why locked?") }
-                }
-            }
-        }
-        item {
-            DustTaskCard(
-                title = "Open Tools",
-                detail = "Review diagnostics, probes, and export bundle state before running a scan.",
-                value = "Tools",
-                onClick = openTools,
-                leading = { Text("⌁", fontWeight = FontWeight.Bold) },
-            )
-        }
-    }
-}
-
-@Composable
-private fun ScanRequiredEmptyState(modifier: Modifier = Modifier, detail: String, onStartScan: () -> Unit) {
-    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item {
-            DustHeroCard(
-                title = "Start a scan",
-                detail = detail,
-                eyebrow = "No scan yet",
-                trailing = { DustPathPill("root-aware") },
-            ) {
-                DustStatusNotice(
-                    title = "Root diagnostics run before indexing",
-                    detail = "DustUI checks root identity, path access, scanner backend, and fatal preflight failures before it treats a scan as usable.",
-                    tone = DustNoticeTone.Warning,
-                )
-                Button(onClick = onStartScan, modifier = Modifier.fillMaxWidth()) { Text("Start scan") }
-            }
+    Column(modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        DustStatusNotice(title = "Unable to load route", detail = "${state.message} (${state.problemRef})", tone = DustNoticeTone.Error)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = retry) { Text("Retry") }
+            OutlinedButton(onClick = openDiagnostics) { Text("Diagnostics") }
         }
     }
 }
@@ -805,13 +1295,15 @@ private fun ScanLauncherSheet(
     pathPreflight: RootServiceClient.ScanRootPreflight?,
     vm: MainViewModel,
     scanDepthProfile: ScanDepthProfile,
+    launchState: ScanLaunchState,
     requestNotificationPermission: () -> Unit,
     close: () -> Unit,
     openHome: () -> Unit,
 ) {
     var custom by rememberSaveable(session?.rootPath) { mutableStateOf(session?.rootPath ?: "/data/data/com.termux") }
     val rootReady = root == RootUiState.Available
-    ModalBottomSheet(onDismissRequest = close) {
+    fun dismiss() { vm.resetScanLaunch(); close() }
+    ModalBottomSheet(onDismissRequest = ::dismiss) {
         LazyColumn(
             Modifier.fillMaxWidth().heightIn(max = 720.dp),
             contentPadding = dustSheetPadding(),
@@ -819,88 +1311,104 @@ private fun ScanLauncherSheet(
         ) {
             item {
                 DustBottomSheetHeader(
-                    title = "Start a scan",
-                    detail = "Choose a root-aware scope. Fatal preflight failures, zero-file warnings, truncation, and informational depth-cap evidence stay visible.",
-                    onClose = close,
+                    title = when (launchState.stage) {
+                        ScanLaunchStage.ChooseScope -> "Prepare a scan"
+                        ScanLaunchStage.Preflight -> "Checking scan scope"
+                        ScanLaunchStage.Review -> "Review scan request"
+                        ScanLaunchStage.Starting -> "Starting scan"
+                    },
+                    detail = "Every user-started scan follows scope → privileged preflight → review → explicit Start. Choosing a preset never starts work immediately.",
+                    onClose = ::dismiss,
                 )
             }
             item { ScanRootStatusCard(root, rootInfo, rootFailure, vm::refreshRoot) }
-            item { ScanDepthSelector(scanDepthProfile, vm::selectScanDepthProfile) }
-            item {
-                DustSectionHeader("Scan presets", subtitle = "Common Android scopes with explicit root/access diagnostics. Depth policy: ${scanDepthProfile.title} · ${ScanDepthPolicy.label(scanDepthProfile.maxDepth)} · ${scanDepthProfile.maxEntries} entry cap.")
-            }
-            items(vm.presets) { preset ->
-                DustTaskCard(
-                    title = preset.title,
-                    detail = preset.description,
-                    value = preset.path,
-                    onClick = if (rootReady) {
-                        {
-                            requestNotificationPermission()
-                            vm.startPreset(preset)
-                            close()
-                            openHome()
-                        }
-                    } else null,
-                    selected = custom == preset.path,
-                    leading = { Text(preset.title.take(1).ifBlank { "•" }, fontWeight = FontWeight.Bold) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            item {
-                Card {
-                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Custom root", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                        OutlinedTextField(
-                            custom,
-                            { custom = it },
-                            Modifier.fillMaxWidth(),
-                            label = { Text("Absolute path") },
-                            singleLine = true,
-                        )
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(
-                                onClick = { vm.diagnoseScanPath(custom) },
-                                enabled = rootReady,
-                                modifier = Modifier.weight(1f),
-                            ) { Text("Check access") }
+
+            if (launchState.stage == ScanLaunchStage.ChooseScope) {
+                item { ScanDepthSelector(scanDepthProfile, vm::selectScanDepthProfile) }
+                item { DustSectionHeader("Choose scope", subtitle = "Preset and custom paths only prepare a request. Preflight must complete before Start becomes available.") }
+                items(vm.presets) { preset ->
+                    DustTaskCard(
+                        title = preset.title,
+                        detail = preset.description,
+                        value = preset.path,
+                        onClick = if (rootReady) { { vm.preparePresetScan(preset) } } else null,
+                        selected = custom == preset.path,
+                        leading = { Text(preset.title.take(1).ifBlank { "•" }, fontWeight = FontWeight.Bold) },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                item {
+                    Card {
+                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Custom root", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                            OutlinedTextField(custom, { custom = it }, Modifier.fillMaxWidth(), label = { Text("Absolute path") }, singleLine = true)
                             Button(
-                                onClick = {
-                                    requestNotificationPermission()
-                                    vm.startCustom(custom)
-                                    close()
-                                    openHome()
-                                },
-                                enabled = rootReady,
-                                modifier = Modifier.weight(1f),
-                            ) { Text("Start scan") }
-                        }
-                        scanActionDisabledReason(rootReady, rootFailure)?.let { reason ->
-                            DisabledReasonNotice(reason)
+                                onClick = { vm.prepareCustomScan(custom) },
+                                enabled = rootReady && custom.isNotBlank(),
+                                modifier = Modifier.fillMaxWidth(),
+                            ) { Text("Review this scope") }
+                            scanActionDisabledReason(rootReady, rootFailure)?.let(::DisabledReasonNotice)
                         }
                     }
                 }
-            }
-            pathPreflight?.let { preflight ->
-                item { ScanPreflightEvidence(preflight) }
-            }
-            diagnostics?.let { details ->
-                item { ScanLatestDiagnosticsNotice(details) }
-            }
-            session?.let { latest ->
-                item {
-                    SessionCard(latest, diagnostics, vm::cancelActive)
-                    OutlinedButton(onClick = { close(); openHome() }, modifier = Modifier.fillMaxWidth()) { Text("Open latest scan") }
+            } else {
+                launchState.request?.let { request ->
+                    item {
+                        Card {
+                            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                DustSectionHeader("Requested scan", subtitle = launchState.scopeLabel ?: "Selected scope")
+                                Detail("Path", request.rootPath)
+                                Detail("Depth", ScanDepthPolicy.label(request.maxDepth))
+                                Detail("Entry cap", request.maxEntries.toString())
+                                Detail("Hidden files", if (request.includeHidden) "Included" else "Excluded")
+                            }
+                        }
+                    }
+                }
+                when (launchState.stage) {
+                    ScanLaunchStage.Preflight -> item {
+                        DustStatusNotice("Running privileged preflight", "DustUI is verifying root identity, canonical path access, mount information, and the Go scan.start action gate before review.", DustNoticeTone.Warning)
+                        LinearProgressIndicator(Modifier.fillMaxWidth())
+                    }
+                    ScanLaunchStage.Review -> {
+                        pathPreflight?.let { preflight -> item { ScanPreflightEvidence(preflight) } }
+                        launchState.decision?.let { decision ->
+                            item {
+                                DustStatusNotice(
+                                    title = if (decision.allowed) "Ready for explicit Start" else "Scan cannot start · ${decision.reasonCode}",
+                                    detail = decision.message,
+                                    tone = if (decision.allowed) DustNoticeTone.Success else DustNoticeTone.Error,
+                                )
+                            }
+                        }
+                        item {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedButton(onClick = vm::resetScanLaunch, modifier = Modifier.weight(1f)) { Text("Change scope") }
+                                Button(
+                                    onClick = {
+                                        requestNotificationPermission()
+                                        vm.confirmReviewedScan()
+                                        close()
+                                        openHome()
+                                    },
+                                    enabled = launchState.canStart,
+                                    modifier = Modifier.weight(1f),
+                                ) { Text("Start") }
+                            }
+                        }
+                    }
+                    ScanLaunchStage.Starting -> item {
+                        DustStatusNotice("Starting reviewed scan", "The reviewed request has been handed to the durable scan operation. Progress continues in Activity.", DustNoticeTone.Success)
+                    }
+                    ScanLaunchStage.ChooseScope -> Unit
                 }
             }
-            item {
-                DustStatusNotice(
-                    title = "Module-source diagnostics",
-                    detail = "To populate Root modules, scan /data/adb/modules. Wrong-scope module values must be shown as unavailable, never silent zeroes.",
-                    tone = DustNoticeTone.Warning,
-                    actionLabel = "Use modules path",
-                    onAction = { custom = "/data/adb/modules" },
-                )
+            diagnostics?.let { details -> item { ScanLatestDiagnosticsNotice(details) } }
+            session?.takeIf { launchState.stage == ScanLaunchStage.ChooseScope }?.let { latest ->
+                item {
+                    SessionCard(latest, diagnostics, vm::cancelActive)
+                    OutlinedButton(onClick = { dismiss(); openHome() }, modifier = Modifier.fillMaxWidth()) { Text("Open latest scan") }
+                }
             }
         }
     }
@@ -985,105 +1493,6 @@ private fun ScanLatestDiagnosticsNotice(diagnostics: ScanDiagnostics) {
 }
 
 @Composable
-private fun ScanLauncher(
-    modifier: Modifier,
-    root: RootUiState,
-    rootInfo: RootServiceClient.RootServiceInfo?,
-    rootFailure: String?,
-    session: ScanSessionEntity?,
-    diagnostics: ScanDiagnostics?,
-    pathPreflight: RootServiceClient.ScanRootPreflight?,
-    vm: MainViewModel,
-    scanDepthProfile: ScanDepthProfile,
-    requestNotificationPermission: () -> Unit,
-    openExplorer: () -> Unit,
-) {
-    var custom by rememberSaveable { mutableStateOf("/storage/emulated/0") }
-    LazyColumn(modifier, contentPadding = dustScreenPadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item {
-            Card {
-                Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Text("Root service", fontWeight = FontWeight.SemiBold)
-                        Text(when (root) { RootUiState.Checking -> "Checking privileged service…"; RootUiState.Available -> "Ready · UID 0 via ${rootInfo?.backend ?: "root"}"; RootUiState.Unavailable -> rootFailure ?: "Unavailable" })
-                        rootInfo?.let { info ->
-                            Text(
-                                "Scanner ${info.scanner.ifBlank { "unavailable" }} · SELinux ${when (info.selinuxEnforcing) { true -> "enforcing"; false -> "permissive"; null -> "unknown" }}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                    if (root != RootUiState.Available) OutlinedButton(onClick = vm::refreshRoot) { Text("Retry") }
-                }
-            }
-        }
-        item { ScanDepthSelector(scanDepthProfile, vm::selectScanDepthProfile) }
-        item { DustSectionHeader("Scan presets", subtitle = "Common storage scopes. Depth policy: ${scanDepthProfile.title} · ${ScanDepthPolicy.label(scanDepthProfile.maxDepth)} · ${scanDepthProfile.maxEntries} entry cap.") }
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                vm.presets.forEach { preset ->
-                    Card(
-                        onClick = { requestNotificationPermission(); vm.startPreset(preset); openExplorer() },
-                        enabled = root == RootUiState.Available,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(preset.title, fontWeight = FontWeight.SemiBold)
-                            Text(preset.description, style = MaterialTheme.typography.bodySmall, maxLines = 3, overflow = TextOverflow.Ellipsis)
-                            PathText(preset.path)
-                        }
-                    }
-                }
-            }
-        }
-        item {
-            Card {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        custom,
-                        { custom = it },
-                        Modifier.fillMaxWidth(),
-                        label = { Text("Absolute path") },
-                        singleLine = true,
-                    )
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(
-                            onClick = { vm.diagnoseScanPath(custom) },
-                            enabled = root == RootUiState.Available,
-                            modifier = Modifier.weight(1f),
-                        ) { Text("Check access") }
-                        Button(
-                            onClick = { requestNotificationPermission(); vm.startCustom(custom); openExplorer() },
-                            enabled = root == RootUiState.Available,
-                            modifier = Modifier.weight(1f),
-                        ) { Text("Scan") }
-                    }
-                    pathPreflight?.let { preflight ->
-                        HorizontalDivider()
-                        Text(
-                            if (preflight.ok) "Path is ready" else "Path access failed",
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (preflight.ok) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
-                        )
-                        Text(preflight.message, style = MaterialTheme.typography.bodySmall)
-                        Detail("Diagnostic code", preflight.code + (preflight.errno?.let { " · errno $it" }.orEmpty()))
-                        preflight.canonicalPath?.let { Detail("Canonical path", it) }
-                        preflight.mountPoint?.let { Detail("Mount", "$it · ${preflight.filesystem ?: "unknown"} · ${preflight.mountOptions ?: "options unavailable"}") }
-                    }
-                }
-            }
-        }
-        session?.let {
-            item {
-                SessionCard(it, diagnostics, vm::cancelActive)
-                OutlinedButton(onClick = openExplorer, Modifier.fillMaxWidth()) { Text("Open latest scan") }
-            }
-        }
-    }
-}
-
-@Composable
 private fun Explorer(
     modifier: Modifier,
     session: ScanSessionEntity,
@@ -1095,8 +1504,11 @@ private fun Explorer(
     selectedPaths: Set<String>,
     vm: MainViewModel,
     openRootSearch: () -> Unit,
+    initialTreemap: Boolean = false,
+    onTreemapModeChanged: (Boolean) -> Unit = {},
+    openEntryDetails: (ScanEntryEntity) -> Unit = vm::select,
 ) {
-    var treemapMode by rememberSaveable(path) { mutableStateOf(false) }
+    var treemapMode by rememberSaveable(path, initialTreemap) { mutableStateOf(initialTreemap) }
     var showLargestChart by rememberSaveable(path) { mutableStateOf(false) }
     var wholeScanHint by rememberSaveable(session.id, path) { mutableStateOf(false) }
     val selectionMode = selectedPaths.isNotEmpty()
@@ -1163,7 +1575,7 @@ private fun Explorer(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             item { AssistChip(onClick = vm::cycleSort, label = { Text("Sort: ${entrySortLabel(filter.sort)}") }) }
-                            item { SegmentedChoice("List", "Treemap", treemapMode, onFirst = { treemapMode = false }, onSecond = { treemapMode = true }) }
+                            item { SegmentedChoice("List", "Treemap", treemapMode, onFirst = { treemapMode = false; onTreemapModeChanged(false) }, onSecond = { treemapMode = true; onTreemapModeChanged(true) }) }
                             item { FilterChip(selected = showLargestChart, onClick = { showLargestChart = !showLargestChart }, label = { Text("Chart") }) }
                             item { AssistChip(onClick = openRootSearch, label = { Text("Whole-scan search") }) }
                             filter.category?.let { category -> item { AssistChip(onClick = { vm.filterCategory(null) }, label = { Text(category) }, trailingIcon = { Text("×") }) } }
@@ -1189,7 +1601,9 @@ private fun Explorer(
                     Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)) {
                         Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("Treemap · tap a block to open", style = MaterialTheme.typography.titleSmall)
-                            StorageTreemap(entries, vm::open)
+                            StorageTreemap(entries) { entry ->
+                                if (entry.isDirectory) vm.open(entry) else openEntryDetails(entry)
+                            }
                             Text("Every visual block keeps a matching accessible row. Exact sizes remain available in the list and details sheet.", style = MaterialTheme.typography.labelSmall)
                         }
                     }
@@ -1204,8 +1618,8 @@ private fun Explorer(
                             total = session.totalBytes,
                             selectionMode = selectionMode,
                             selected = entry.path in selectedPaths,
-                            open = { vm.open(entry) },
-                            details = { vm.select(entry) },
+                            open = { if (entry.isDirectory) vm.open(entry) else openEntryDetails(entry) },
+                            details = { openEntryDetails(entry) },
                             toggle = { vm.toggleSelection(entry) },
                         )
                     }
@@ -1560,9 +1974,6 @@ private fun ActionablePathCard(
                 OutlinedButton(onClick = reveal, Modifier.weight(1f)) { Text("Explorer") }
             }
             Button(onClick = delete, enabled = deletionEnabled, modifier = Modifier.fillMaxWidth()) { Text("Delete permanently…") }
-            if (!deletionEnabled) {
-                DisabledReasonNotice(staleDeletionDisabledReason())
-            }
         }
     }
 }
@@ -1589,9 +2000,6 @@ private fun StorageCompositionActions(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = selectAll, enabled = enabled, modifier = Modifier.weight(1f)) { Text("Select all") }
                 Button(onClick = planDeletion, enabled = enabled, modifier = Modifier.weight(1f)) { Text("Plan deletion") }
-            }
-            if (!enabled) {
-                DisabledReasonNotice(staleDeletionDisabledReason())
             }
             if (slice.sourceLabels.size > 1) {
                 HorizontalDivider()
@@ -1810,12 +2218,12 @@ private fun LargeFileWorkbenchScreen(
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedButton(
                                 onClick = vm::selectLargeFilePage,
-                                enabled = !scanDataStale,
+                                enabled = true,
                                 modifier = Modifier.weight(1f),
                             ) { Text("Select page") }
                             Button(
                                 onClick = vm::reviewLargeFilePage,
-                                enabled = !scanDataStale,
+                                enabled = true,
                                 modifier = Modifier.weight(1f),
                             ) { Text("Plan page") }
                         }
@@ -1849,7 +2257,7 @@ private fun LargeFileWorkbenchScreen(
                         showDetails = { vm.showPathDetails(item.entry.path) },
                         reveal = { revealPath(item.entry.path) },
                         delete = { vm.reviewPaths(listOf(item.entry.path)) },
-                        deletionEnabled = !scanDataStale,
+                        deletionEnabled = true,
                     )
                 }
             }
@@ -1958,12 +2366,12 @@ private fun DuplicateWorkbenchScreen(
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Button(
                                 onClick = { vm.startDuplicateAnalysis(reset = false) },
-                                enabled = !scanDataStale,
+                                enabled = true,
                                 modifier = Modifier.weight(1f),
                             ) { Text(if (analysis?.resumable == true) "Resume" else "Run") }
                             OutlinedButton(
                                 onClick = { vm.startDuplicateAnalysis(reset = true) },
-                                enabled = !scanDataStale,
+                                enabled = true,
                                 modifier = Modifier.weight(1f),
                             ) { Text("Restart") }
                         }
@@ -2028,12 +2436,12 @@ private fun DuplicateWorkbenchScreen(
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedButton(
                                 onClick = vm::selectDuplicatePage,
-                                enabled = !scanDataStale && page.deletionPaths.isNotEmpty(),
+                                enabled = page.deletionPaths.isNotEmpty(),
                                 modifier = Modifier.weight(1f),
                             ) { Text("Select page") }
                             Button(
                                 onClick = vm::reviewDuplicatePage,
-                                enabled = !scanDataStale && page.deletionPaths.isNotEmpty(),
+                                enabled = page.deletionPaths.isNotEmpty(),
                                 modifier = Modifier.weight(1f),
                             ) { Text("Plan page") }
                         }
@@ -2053,7 +2461,7 @@ private fun DuplicateWorkbenchScreen(
             DuplicateGroupCard(
                 item = item,
                 selectedPaths = selectedPaths,
-                deletionEnabled = !scanDataStale,
+                deletionEnabled = true,
                 vm = vm,
                 revealPath = revealPath,
             )
@@ -2316,12 +2724,12 @@ private fun AppResidueWorkbenchScreen(
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedButton(
                                 onClick = vm::selectResiduePage,
-                                enabled = !scanDataStale && page.recommendedPaths.isNotEmpty(),
+                                enabled = page.recommendedPaths.isNotEmpty(),
                                 modifier = Modifier.weight(1f),
                             ) { Text("Select safe") }
                             Button(
                                 onClick = vm::reviewResiduePage,
-                                enabled = !scanDataStale && page.recommendedPaths.isNotEmpty(),
+                                enabled = page.recommendedPaths.isNotEmpty(),
                                 modifier = Modifier.weight(1f),
                             ) { Text("Plan safe") }
                         }
@@ -2341,7 +2749,7 @@ private fun AppResidueWorkbenchScreen(
             AppResidueGroupCard(
                 group = group,
                 selectedPaths = selectedPaths,
-                deletionEnabled = !scanDataStale,
+                deletionEnabled = true,
                 vm = vm,
                 revealPath = revealPath,
             )
@@ -2480,6 +2888,8 @@ private fun HomeDashboardScreen(
     modifier: Modifier,
     session: ScanSessionEntity?,
     diagnostics: ScanDiagnostics?,
+    overviewStorage: OverviewStorageSemantics?,
+    activityRuns: List<ActivityRun>,
     delta: SnapshotDelta?,
     history: List<SnapshotPoint>,
     advanced: AdvancedStorageReport?,
@@ -2496,6 +2906,7 @@ private fun HomeDashboardScreen(
     openLargeFiles: () -> Unit,
     openResidue: () -> Unit,
     openDiagnostics: () -> Unit,
+    openActivityRun: (String) -> Unit,
 ) {
     var selectedType by rememberSaveable(advanced?.typeBuckets?.hashCode()) { mutableStateOf<String?>(null) }
     val potentialCleanupBytes = homePotentialCleanupBytes(recommendationAnalysis, advanced)
@@ -2504,7 +2915,7 @@ private fun HomeDashboardScreen(
             item {
                 DustHeroCard(
                     title = "Start your first scan",
-                    detail = "Pick a root-aware scope to populate results. Files, Clean, Tools, deletion reports, and Debug workbench stay open so you can inspect why data is unavailable.",
+                    detail = "Pick a root-aware scope to populate results. Files, Clean, Activity, and System stay reachable so you can inspect why data is unavailable.",
                     eyebrow = "Storage health",
                     trailing = { DustPathPill("root-aware") },
                 ) {
@@ -2513,7 +2924,7 @@ private fun HomeDashboardScreen(
                         detail = "DustUI checks root identity, path access, scanner backend, zero-file warnings, and fatal preflight failures before it treats a scan as usable.",
                         tone = DustNoticeTone.Warning,
                     )
-                    Button(onClick = onStartScan, modifier = Modifier.fillMaxWidth()) { Text("Start scan") }
+                    Button(onClick = onStartScan, modifier = Modifier.fillMaxWidth()) { Text("Prepare first scan") }
                 }
             }
             item {
@@ -2537,23 +2948,32 @@ private fun HomeDashboardScreen(
         } else {
 
         item {
+            val logicalBytes = overviewStorage?.logicalBytes ?: session.scannedBytes
+            val allocatedBytes = overviewStorage?.allocatedBytes
             DustHeroCard(
-                title = "${formatBytes(session.scannedBytes.coerceAtLeast(session.totalBytes))} analyzed",
+                title = "${formatBytes(logicalBytes)} logical data indexed",
                 detail = homeScanSummary(session, diagnostics, scanDataStale),
-                eyebrow = if (scanDataStale) "Rescan needed" else "Latest scan",
+                eyebrow = if (scanDataStale) "Stale scan evidence" else "Current scan evidence",
                 trailing = { DustPathPill(session.rootPath) },
             ) {
                 MetricGrid(
                     listOf(
-                        "Files indexed" to session.scannedItems.toString(),
+                        "Logical bytes" to formatBytes(logicalBytes),
+                        "Allocated bytes" to (allocatedBytes?.let(::formatBytes) ?: "Unavailable"),
+                        "Files indexed" to (overviewStorage?.fileCount ?: session.scannedItems).toString(),
                         "Potential cleanup" to formatBytes(potentialCleanupBytes),
                         "Warnings" to ((diagnostics?.warningCount ?: session.warningCount).toString()),
                         "Errors" to ((diagnostics?.errorCount ?: 0).toString()),
                     ),
                 )
+                Text(
+                    "Scan ${session.id} · generation ${session.generation} · integrity ${overviewStorage?.integrityStatus ?: session.integrityStatus} · ${if (scanDataStale) "stale after mutation" else "fresh"}. Logical bytes are file sizes; allocated bytes are filesystem blocks and are never substituted for logical size.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = onStartScan, modifier = Modifier.weight(1f)) { Text(if (scanDataStale) "Rescan now" else "Scan again") }
-                    OutlinedButton(onClick = openClean, enabled = !scanDataStale, modifier = Modifier.weight(1f)) { Text("Open cleanup") }
+                    Button(onClick = onStartScan, modifier = Modifier.weight(1f)) { Text(if (scanDataStale) "Prepare rescan" else "Prepare scan") }
+                    OutlinedButton(onClick = openClean, enabled = true, modifier = Modifier.weight(1f)) { Text("Open cleanup") }
                 }
             }
         }
@@ -2564,7 +2984,30 @@ private fun HomeDashboardScreen(
                 diagnostics = diagnostics,
                 scanDataStale = scanDataStale,
                 onReview = openDiagnostics,
+                onRescan = onStartScan,
             )
+        }
+
+        activityRuns.firstOrNull { it.active }?.let { active ->
+            item {
+                DustTaskCard(
+                    title = "Active operation · ${active.kind.replace('-', ' ')}",
+                    detail = "${active.statusLabel}. Tap to inspect durable progress, evidence, and available recovery actions.",
+                    value = active.state,
+                    onClick = { openActivityRun(active.operationId) },
+                )
+            }
+        }
+        if (activityRuns.isNotEmpty()) {
+            item { DustSectionHeader("Recent activity", subtitle = "Durable Go operation truth. Tap any run to open its stable Activity identity.") }
+            items(activityRuns.take(3), key = { "overview-activity:${it.operationId}" }) { run ->
+                DustTaskCard(
+                    title = run.kind.replace('-', ' ').replaceFirstChar { it.uppercase() },
+                    detail = "${run.statusLabel}${if (run.recoveryRequired) " · reconcile before continuing" else ""}",
+                    value = run.terminalTruth,
+                    onClick = { openActivityRun(run.operationId) },
+                )
+            }
         }
 
         item {
@@ -2648,7 +3091,7 @@ private fun HomeDashboardScreen(
                             StorageCompositionActions(
                                 slice = slice,
                                 sourceBuckets = advanced.typeBuckets.filter { it.label in slice.sourceLabels },
-                                enabled = !scanDataStale,
+                                enabled = true,
                                 viewFiles = { vm.openCategoryFiles(slice.label, slice.sourceLabels) },
                                 selectAll = { vm.selectCategoryPaths(slice.sourceLabels) },
                                 planDeletion = { vm.reviewCategoryPaths(slice.sourceLabels) },
@@ -2746,6 +3189,7 @@ private fun HomeDiagnosticsNotice(
     diagnostics: ScanDiagnostics?,
     scanDataStale: Boolean,
     onReview: () -> Unit,
+    onRescan: () -> Unit,
 ) {
     val zeroFiles = diagnostics?.let { it.completedAt != null && it.emittedFiles == 0L } ?: (session.scannedItems == 0L && session.completedAt != null)
     when {
@@ -2753,8 +3197,8 @@ private fun HomeDiagnosticsNotice(
             title = "Cleanup changed this scope",
             detail = "Run a new scan before trusting counts, recommendations, or module-source diagnostics.",
             tone = DustNoticeTone.Warning,
-            actionLabel = "Rescan",
-            onAction = onReview,
+            actionLabel = "Prepare rescan",
+            onAction = onRescan,
         )
         diagnostics?.hasFailure == true -> DustStatusNotice(
             title = "Latest scan has failure evidence",
@@ -3030,238 +3474,10 @@ private fun CleanupHistoryScreen(modifier: Modifier, operations: List<CleanupOpe
 }
 
 
-@Composable
-private fun DebugOverlayHud(
-    destination: DustDestination,
-    wide: Boolean,
-    session: ScanSessionEntity?,
-    rootState: RootUiState,
-    selectedCount: Int,
-    scanDataStale: Boolean,
-    moduleReport: RootModuleReport?,
-    eventCount: Int,
-    openDebug: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        modifier = modifier.clickable(onClick = openDebug),
-        shape = MaterialTheme.shapes.large,
-        color = DustModernColors.SurfaceHighest,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        tonalElevation = 6.dp,
-        shadowElevation = 6.dp,
-    ) {
-        Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text("Debug overlay", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-            Text(
-                "${destination.shortLabel} · ${if (wide) "wide" else "compact"} · scan=${session?.status?.lowercase() ?: "none"}",
-                style = MaterialTheme.typography.labelSmall,
-            )
-            Text(
-                "root=${rootUiStateLabel(rootState)} · stale=$scanDataStale · selected=$selectedCount",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                "modules=${moduleReport?.diagnostic?.status?.name?.lowercase() ?: "unknown"} · events=$eventCount",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
 
 
-@Composable
-private fun DebugWorkbenchScreen(
-    modifier: Modifier,
-    destination: DustDestination,
-    wide: Boolean,
-    rootState: RootUiState,
-    rootServiceInfo: RootServiceClient.RootServiceInfo?,
-    rootFailureMessage: String?,
-    session: ScanSessionEntity?,
-    diagnostics: ScanDiagnostics?,
-    pathPreflight: RootServiceClient.ScanRootPreflight?,
-    entriesCount: Int,
-    currentPath: String?,
-    selectedCount: Int,
-    cleanupReview: CleanupReview?,
-    scanDataStale: Boolean,
-    moduleReport: RootModuleReport?,
-    events: List<DebugEvent>,
-    probeResults: List<DebugProbeResult>,
-    exportResult: DebugExportResult?,
-    debugOverlayVisible: Boolean,
-    toggleDebugOverlay: () -> Unit,
-    runProbe: (DebugProbeTarget) -> Unit,
-    runAllProbes: () -> Unit,
-    clearEvents: () -> Unit,
-    exportBundle: (DebugExportMode) -> Unit,
-) {
-    var categoryFilter by rememberSaveable { mutableStateOf<String?>(null) }
-    var problemsOnly by rememberSaveable { mutableStateOf(false) }
-    var exportModeName by rememberSaveable { mutableStateOf(DebugExportMode.Safe.name) }
-    val exportMode = DebugExportMode.valueOf(exportModeName)
-    val filteredEvents = events
-        .asSequence()
-        .filter { categoryFilter == null || it.category.name == categoryFilter }
-        .filter { !problemsOnly || it.severity == DebugSeverity.Warning || it.severity == DebugSeverity.Error }
-        .toList()
-    val warningCount = events.count { it.severity == DebugSeverity.Warning }
-    val errorCount = events.count { it.severity == DebugSeverity.Error }
 
-    LazyColumn(modifier, contentPadding = dustScreenPadding(bottom = 128), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item {
-            DustHeroCard(
-                title = "Debug workbench",
-                detail = "Live app state and the bounded in-memory trace timeline. This is diagnostic evidence only; it never changes cleanup safety decisions.",
-                eyebrow = "Phase 9–10 debug cockpit",
-            ) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DustMetricTile("Events", events.size.toString(), Modifier.weight(1f), detail = "Bounded ring buffer")
-                    DustMetricTile("Warnings", warningCount.toString(), Modifier.weight(1f), detail = "Needs attention")
-                    DustMetricTile("Errors", errorCount.toString(), Modifier.weight(1f), detail = "Failure traces")
-                }
-            }
-        }
-        item {
-            DustSectionHeader("Live state", subtitle = "Current truth sources used by Home, Files, Clean, Tools, root diagnostics, and deletion review.")
-        }
-        item {
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    MetricGrid(
-                        listOf(
-                            "Destination" to destination.label,
-                            "Layout" to if (wide) "wide" else "compact",
-                            "Scan state" to (session?.status ?: "none"),
-                            "Indexed entries" to entriesCount.toString(),
-                            "Root state" to rootUiStateLabel(rootState),
-                            "Deletion lock" to if (scanDataStale) "stale scan" else "inactive",
-                            "Selection" to selectedCount.toString(),
-                            "Review sheet" to if (cleanupReview != null) "open" else "closed",
-                        ),
-                    )
-                    MetricRow("Scan root", session?.rootPath ?: "No scan session")
-                    MetricRow("Current path", currentPath ?: "No active path")
-                    MetricRow("Root backend", rootServiceInfo?.backend ?: "unavailable")
-                    MetricRow("Root failure", rootFailureMessage ?: "none")
-                    MetricRow("SELinux", rootServiceInfo?.selinuxEnforcing?.let { if (it) "enforcing" else "permissive" } ?: "unknown")
-                    MetricRow("Path preflight", pathPreflight?.let { if (it.ok) "pass: ${it.requestedPath}" else "blocked: ${it.message}" } ?: "not run")
-                    MetricRow("Scan diagnostics", diagnostics?.let { "${it.warningCount} warning(s) · ${it.errorCount} error(s)" } ?: "none")
-                    MetricRow("Module diagnostic", moduleReport?.diagnostic?.message ?: "not loaded")
-                }
-            }
-        }
-        item {
-            DustSectionHeader("UI debug overlay", subtitle = "A tiny floating HUD that explains route, layout, scan, root, stale-lock, module-scope, and selection state while you move through the app.")
-        }
-        item {
-            DustStatusNotice(
-                title = if (debugOverlayVisible) "UI debug overlay is visible" else "UI debug overlay is hidden",
-                detail = if (debugOverlayVisible) {
-                    "Tap the floating HUD from any screen to return here. It is diagnostic-only and does not change scan or cleanup state."
-                } else {
-                    "Show a compact overlay for debugging disabled buttons, stale locks, route mapping, module scope, and current scan state."
-                },
-                tone = if (debugOverlayVisible) DustNoticeTone.Success else DustNoticeTone.Warning,
-                actionLabel = if (debugOverlayVisible) "Hide overlay" else "Show overlay",
-                onAction = toggleDebugOverlay,
-            )
-        }
-        item {
-            DustSectionHeader("Export debug bundle", subtitle = "Share a ZIP with debug state, timeline, probes, scan summaries, root diagnostics, cleanup state, and recommendation summaries.")
-        }
-        item {
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Export mode", fontWeight = FontWeight.SemiBold)
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(DebugExportMode.entries, key = { it.name }) { mode ->
-                            FilterChip(
-                                selected = exportMode == mode,
-                                onClick = { exportModeName = mode.name },
-                                label = { Text(mode.title) },
-                            )
-                        }
-                    }
-                    Text(exportMode.detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    DustStatusNotice(
-                        title = "${exportMode.title} bundle",
-                        detail = when (exportMode) {
-                            DebugExportMode.Safe -> "Default support bundle: counts, states, warnings, probes, and redacted roots. Raw paths are omitted."
-                            DebugExportMode.PathAware -> "Adds path evidence for debugging scan scope and cleanup readiness. File contents are never exported."
-                            DebugExportMode.FullDiagnostic -> "Adds bounded path samples and detailed metadata for deep debugging. File contents are never exported."
-                        },
-                        tone = if (exportMode == DebugExportMode.Safe) DustNoticeTone.Success else DustNoticeTone.Warning,
-                        actionLabel = "Export ${exportMode.title}",
-                        onAction = { exportBundle(exportMode) },
-                    )
-                    exportResult?.let { result ->
-                        MetricGrid(
-                            listOf(
-                                "Last export" to result.fileName,
-                                "Mode" to result.mode.title,
-                                "Events" to result.eventCount.toString(),
-                                "Probes" to result.probeCount.toString(),
-                                "Entries" to result.entryCount.toString(),
-                                "Path policy" to result.pathPolicy,
-                            ),
-                        )
-                    }
-                }
-            }
-        }
-        item {
-            DustSectionHeader("Diagnostic probes", subtitle = "Manual evidence checks for root, scan, module, cleanup, and whole-scan search state. Probes do not delete, mutate scans, or weaken safety gates.")
-        }
-        item {
-            DustStatusNotice(
-                title = "Evidence-only probes",
-                detail = "Run targeted checks when a value looks empty, a button is disabled, or a root path is suspicious. Each result records to the trace timeline.",
-                tone = DustNoticeTone.Success,
-                actionLabel = "Run all probes",
-                onAction = runAllProbes,
-            )
-        }
-        items(DebugProbeTarget.entries, key = { it.name }) { target ->
-            DebugProbeCard(
-                target = target,
-                result = probeResults.firstOrNull { it.target == target },
-                runProbe = { runProbe(target) },
-            )
-        }
-        item {
-            DustSectionHeader("Trace timeline", subtitle = "Structured events from app, navigation, scan, root, search, recommendations, deletion flows, and diagnostic probes.")
-        }
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    item { FilterChip(selected = categoryFilter == null, onClick = { categoryFilter = null }, label = { Text("All") }) }
-                    items(DebugCategory.entries, key = { it.name }) { category ->
-                        FilterChip(
-                            selected = categoryFilter == category.name,
-                            onClick = { categoryFilter = if (categoryFilter == category.name) null else category.name },
-                            label = { Text(debugCategoryLabel(category)) },
-                        )
-                    }
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    FilterChip(selected = problemsOnly, onClick = { problemsOnly = !problemsOnly }, label = { Text("Warnings/errors") })
-                    OutlinedButton(onClick = clearEvents, Modifier.weight(1f)) { Text("Clear timeline") }
-                }
-            }
-        }
-        if (filteredEvents.isEmpty()) {
-            item { EmptyState("No debug events match", "Change filters or use the app to record navigation, scan, root, search, and cleanup events.") }
-        } else {
-            items(filteredEvents.reversed(), key = { it.id }) { event ->
-                DebugEventCard(event)
-            }
-        }
-    }
-}
+
 
 @Composable
 private fun DebugProbeCard(target: DebugProbeTarget, result: DebugProbeResult?, runProbe: () -> Unit) {
@@ -3376,121 +3592,7 @@ private fun debugSeverityLabel(severity: DebugSeverity): String = when (severity
 private fun debugTimestamp(timestampMillis: Long): String =
     java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US).format(java.util.Date(timestampMillis))
 
-@Composable
-private fun ToolsHubScreen(
-    modifier: Modifier,
-    navigate: (DustDestination) -> Unit,
-    openWholeScanSearch: () -> Unit,
-    openScanDiagnostics: () -> Unit,
-) {
-    Column(
-        modifier.verticalScroll(rememberScrollState()).padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 128.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        DustHeroCard(
-            title = "Tools",
-            detail = "Advanced analysis, module diagnostics, reports, and operational utilities grouped by task.",
-            eyebrow = "Advanced",
-        ) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                DustMetricTile("Groups", "3", Modifier.weight(1f), detail = "Analyze + Clean + Ops")
-                DustMetricTile("Safety", "On", Modifier.weight(1f), detail = "Source files only")
-            }
-        }
-        ToolsGroupHeader("Storage intelligence", "Inspect what is growing, duplicated, or owned by apps and modules.")
-        DustTaskCard(
-            title = "App storage",
-            detail = "Code, private state, cache, media, residue, duplicates, and growth.",
-            value = "Apps",
-            leading = { Text("▣", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
-            onClick = { navigate(DustDestination.PACKAGES) },
-        )
-        DustTaskCard(
-            title = "Root modules",
-            detail = "Module footprints, WebUI/script badges, disabled state, and overlay conflict diagnostics.",
-            value = "/data/adb/modules",
-            leading = { Text("▥", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
-            onClick = { navigate(DustDestination.MODULES) },
-        )
-        DustTaskCard(
-            title = "Storage growth",
-            detail = "Compare completed scans and open the exact paths responsible for changes.",
-            value = "Growth",
-            leading = { Text("↗", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
-            onClick = { navigate(DustDestination.GROWTH) },
-        )
-        DustTaskCard(
-            title = "Whole-scan search",
-            detail = "Search outside the current folder while preserving the Files navigation model.",
-            value = "Search",
-            leading = { Text("⌕", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
-            onClick = openWholeScanSearch,
-        )
-        ToolsGroupHeader("Cleanup workbenches", "Specialized review surfaces stay reachable without crowding the bottom bar.")
-        DustTaskCard(
-            title = "Cleanup rules",
-            detail = "Preview reusable current-scan searches before opening exact deletion review.",
-            value = "Rules",
-            leading = { Text("≡", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
-            onClick = { navigate(DustDestination.RULES) },
-        )
-        DustTaskCard(
-            title = "Large files",
-            detail = "Filter, group, inspect, and batch-plan deletion for large files.",
-            value = "Large",
-            leading = { Text("▤", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
-            onClick = { navigate(DustDestination.LARGE_FILES) },
-        )
-        DustTaskCard(
-            title = "Duplicates",
-            detail = "Verify exact duplicate content and choose which physical copies to keep.",
-            value = "Dupes",
-            leading = { Text("⧉", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
-            onClick = { navigate(DustDestination.DUPLICATES) },
-        )
-        DustTaskCard(
-            title = "App residue",
-            detail = "Review evidence-ranked folders left by packages that are no longer installed.",
-            value = "Residue",
-            leading = { Text("⌫", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
-            onClick = { navigate(DustDestination.APP_RESIDUE) },
-        )
-        ToolsGroupHeader("Operations", "Review outcomes, device readiness, and persisted scan evidence.")
-        DustTaskCard(
-            title = "Deletion reports",
-            detail = "Permanent deletion reports, per-path outcomes, exports, and targeted rescans.",
-            value = "Reports",
-            leading = { Text("↺", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
-            onClick = { navigate(DustDestination.CLEANUP) },
-        )
-        DustTaskCard(
-            title = "Device certification",
-            detail = "Root backend, notification, lock-state, and release-gate checks.",
-            value = "Ready",
-            leading = { Text("✓", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
-            onClick = { navigate(DustDestination.CERTIFICATION) },
-        )
-        DustTaskCard(
-            title = "Debug workbench",
-            detail = "Live state, structured trace timeline, warning filters, and clearable in-memory diagnostics.",
-            value = "Trace",
-            leading = { Text("⌁", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
-            onClick = { navigate(DustDestination.DEBUG) },
-        )
-        DustTaskCard(
-            title = "Scan diagnostics",
-            detail = "Root identity, preflight evidence, zero-file warnings, truncation, and quiet depth-boundary evidence.",
-            value = "Evidence",
-            leading = { Text("!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
-            onClick = openScanDiagnostics,
-        )
-        DustStatusNotice(
-            title = "Advanced tools stay source-safe",
-            detail = "Module and overlay-conflict actions apply to module-owned source files, never protected mounted system targets.",
-            tone = DustNoticeTone.Success,
-        )
-    }
-}
+
 
 @Composable
 private fun ToolsGroupHeader(title: String, detail: String) {
@@ -3655,12 +3757,12 @@ private fun CleanupReviewSheet(review: CleanupReview?, close: () -> Unit, execut
                         Checkbox(checked = confirmed, onCheckedChange = { confirmed = it })
                         Text("I understand this deletion is irreversible.", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
                     }
-                    cleanupExecutionDisabledReason(review, confirmed)?.let { reason ->
+                    cleanupExecutionDisabledReason(confirmed)?.let { reason ->
                         DisabledReasonNotice(reason)
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = close, Modifier.weight(1f)) { Text("Cancel") }
-                        Button(onClick = execute, enabled = review.executable && confirmed, modifier = Modifier.weight(1f)) { Text("Delete permanently") }
+                        Button(onClick = execute, enabled = confirmed, modifier = Modifier.weight(1f)) { Text("Delete permanently") }
                     }
                 }
             }

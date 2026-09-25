@@ -1,0 +1,27 @@
+{
+  "schema_version": 2,
+  "artifact": "dustui_aud_fix_10_scan_overview_apps_truth_v1.zip",
+  "target": "dustui_android",
+  "phases": [
+    "AUD-FIX-10"
+  ],
+  "gap_families": [
+    "UIX-005",
+    "UIX-006",
+    "UIX-007"
+  ],
+  "purpose": "Converge scan launch review, Overview storage/operation truth, and Apps evidence-completeness UX.",
+  "source_state": {
+    "requires": [
+      "AUD-FIX-01 through AUD-FIX-09 applied",
+      "AUD-FIX-06 Authority Convergence Gate R1 passed"
+    ],
+    "baseline": "post-AUD-FIX-09 clean replay"
+  },
+  "validation": {
+    "apply": "--no-validate",
+    "gate": false,
+    "workflow": "dustui_android#aud_fix_10",
+    "gate_d_must_remain": "open"
+  }
+}

@@ -1,0 +1,268 @@
+{
+  "authority": "acceptance-governance-only",
+  "historical_script_validators": {
+    "archive_mode": "path-preserving under migration/archive/validators/aud_fix_13_pre_gate_d",
+    "archive_root": "migration/archive/validators/aud_fix_13_pre_gate_d/scripts",
+    "archived": [
+      "android/scripts/validate-root-scan-diagnostics.py",
+      "scripts/validate_ov01_contract.py",
+      "scripts/validate_ov02_contract.py",
+      "scripts/validate_ov03_contract.py",
+      "scripts/validate_ov04_contract.py",
+      "scripts/validate_ov05_contract.py",
+      "scripts/validate_ov06_contract.py",
+      "scripts/validate_ov07_contract.py",
+      "scripts/validate_ov08_contract.py",
+      "scripts/validate_ov09_contract.py",
+      "scripts/validate_ov10_contract.py",
+      "scripts/validate_ov11_contract.py",
+      "scripts/validate_ov12_contract.py",
+      "scripts/validate_ov13_ov01_readiness_transition_hotfix.py",
+      "scripts/validate_ov13_ov01_repo_root_hotfix.py"
+    ],
+    "live_successors": [
+      "scripts/validate_ov13_contract.py",
+      "scripts/validate_ov14_contract.py",
+      "scripts/validate_full_roadmap_conformance.py",
+      "scripts/validate_audfix13_contract.py",
+      "android/scripts/validate-debug-workbench-contract.py",
+      "android/scripts/validate-modern-dark-portrait-ui.py"
+    ]
+  },
+  "phase": "AUD-FIX-13",
+  "policy": "Every live source-reading Android test is explicitly mapped. Historical source-token guards are non-authoritative and archived; live static guards have exact executed Gate-D successors.",
+  "schema": "dustui.validator-lifecycle.v1",
+  "validators": [
+    {
+      "acceptance_authority": "none",
+      "archive_path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleaningRecoverySourceContractTest.kt",
+      "note": "behavioral successor exists; source-token guard removed from live Android tests",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleaningRecoverySourceContractTest.kt",
+      "retirement_owner": "AUD-FIX-13",
+      "status": "archived-historical",
+      "successor_evidence": [
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/data/OperationRecoveryTest.kt",
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleanupVerificationTest.kt",
+        "workflow:aud_fix_11"
+      ]
+    },
+    {
+      "acceptance_authority": "none",
+      "archive_path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/data/DatabaseSchemaContractTest.kt",
+      "note": "behavioral successor exists; source-token guard removed from live Android tests",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/DatabaseSchemaContractTest.kt",
+      "retirement_owner": "AUD-FIX-13",
+      "status": "archived-historical",
+      "successor_evidence": [
+        "file:android/app/src/androidTest/kotlin/com/mikeyphw/dustui/validation/DustDatabaseMigrationInstrumentedTest.kt",
+        "file:scripts/validate_audfix03_contract.py",
+        "future:AUD-FIX-16:room-ndjson-absence"
+      ]
+    },
+    {
+      "acceptance_authority": "none",
+      "archive_path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/data/FinalRcScriptContractTest.kt",
+      "note": "behavioral successor exists; source-token guard removed from live Android tests",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/FinalRcScriptContractTest.kt",
+      "retirement_owner": "AUD-FIX-13",
+      "status": "archived-historical",
+      "successor_evidence": [
+        "gate:android_release_assemble",
+        "gate:devtool_artifact_identity",
+        "future:AUD-FIX-14:gate-d-topology"
+      ]
+    },
+    {
+      "acceptance_authority": "none",
+      "archive_path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleaseScriptContractTest.kt",
+      "note": "behavioral successor exists; source-token guard removed from live Android tests",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleaseScriptContractTest.kt",
+      "retirement_owner": "AUD-FIX-13",
+      "status": "archived-historical",
+      "successor_evidence": [
+        "gate:android_release_assemble",
+        "gate:install_launch_smoke",
+        "gate:devtool_artifact_identity"
+      ]
+    },
+    {
+      "acceptance_authority": "none",
+      "archive_path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootDiagnosticsSourceContractTest.kt",
+      "note": "behavioral successor exists; source-token guard removed from live Android tests",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootDiagnosticsSourceContractTest.kt",
+      "retirement_owner": "AUD-FIX-13",
+      "status": "archived-historical",
+      "successor_evidence": [
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/scan/ScanDiagnosticsTest.kt",
+        "workflow:aud_fix_11",
+        "gate:rooted_arm64_runtime"
+      ]
+    },
+    {
+      "acceptance_authority": "none",
+      "archive_path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/data/ValidationRoadmapContractTest.kt",
+      "note": "behavioral successor exists; source-token guard removed from live Android tests",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ValidationRoadmapContractTest.kt",
+      "retirement_owner": "AUD-FIX-13",
+      "status": "archived-historical",
+      "successor_evidence": [
+        "future:AUD-FIX-14:gate-d-topology",
+        "gate:route_deeplink_recreation_rotation",
+        "gate:rooted_arm64_runtime"
+      ]
+    },
+    {
+      "acceptance_authority": "none",
+      "archive_path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/migration/Ov01MigrationContractTest.kt",
+      "note": "behavioral successor exists; source-token guard removed from live Android tests",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/migration/Ov01MigrationContractTest.kt",
+      "retirement_owner": "AUD-FIX-13",
+      "status": "archived-historical",
+      "successor_evidence": [
+        "workflow:aud_fix_07",
+        "file:migration/qualification/v1/current_state.json",
+        "file:go/internal/product/product_test.go"
+      ]
+    },
+    {
+      "acceptance_authority": "none",
+      "archive_path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/migration/Ov14LegacyRetirementContractTest.kt",
+      "note": "behavioral successor exists; source-token guard removed from live Android tests",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/migration/Ov14LegacyRetirementContractTest.kt",
+      "retirement_owner": "AUD-FIX-13",
+      "status": "archived-historical",
+      "successor_evidence": [
+        "file:migration/qualification/v1/current_state.json",
+        "file:migration/ledger/ov14_legacy_retirement_status.json",
+        "future:AUD-FIX-16:physical-retirement"
+      ]
+    },
+    {
+      "acceptance_authority": "none",
+      "archive_path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/ui/CleaningAccessibilityContractTest.kt",
+      "note": "behavioral successor exists; source-token guard removed from live Android tests",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/CleaningAccessibilityContractTest.kt",
+      "retirement_owner": "AUD-FIX-13",
+      "status": "archived-historical",
+      "successor_evidence": [
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustAdaptiveLayoutTest.kt",
+        "gate:accessibility"
+      ]
+    },
+    {
+      "acceptance_authority": "none",
+      "archive_path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchFinalContractTest.kt",
+      "note": "behavioral successor exists; source-token guard removed from live Android tests",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchFinalContractTest.kt",
+      "retirement_owner": "AUD-FIX-13",
+      "status": "archived-historical",
+      "successor_evidence": [
+        "workflow:aud_fix_11",
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/data/ActivityDiagnosticsProductUxTest.kt"
+      ]
+    },
+    {
+      "acceptance_authority": "none",
+      "archive_path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchSourceContractTest.kt",
+      "note": "behavioral successor exists; source-token guard removed from live Android tests",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchSourceContractTest.kt",
+      "retirement_owner": "AUD-FIX-13",
+      "status": "archived-historical",
+      "successor_evidence": [
+        "workflow:aud_fix_11",
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/data/ActivityDiagnosticsProductUxTest.kt"
+      ]
+    },
+    {
+      "acceptance_authority": "none",
+      "archive_path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+      "note": "behavioral successor exists; source-token guard removed from live Android tests",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+      "retirement_owner": "AUD-FIX-13",
+      "status": "archived-historical",
+      "successor_evidence": [
+        "workflow:aud_fix_08",
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustSemanticNavigationTest.kt"
+      ]
+    },
+    {
+      "acceptance_authority": "none",
+      "archive_path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/ui/ModernDarkPortraitFinalContractTest.kt",
+      "note": "behavioral successor exists; source-token guard removed from live Android tests",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/ModernDarkPortraitFinalContractTest.kt",
+      "retirement_owner": "AUD-FIX-13",
+      "status": "archived-historical",
+      "successor_evidence": [
+        "workflow:aud_fix_12",
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustAdaptiveLayoutTest.kt"
+      ]
+    },
+    {
+      "acceptance_authority": "none",
+      "archive_path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+      "note": "behavioral successor exists; source-token guard removed from live Android tests",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+      "retirement_owner": "AUD-FIX-13",
+      "status": "archived-historical",
+      "successor_evidence": [
+        "workflow:aud_fix_12",
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustAdaptiveLayoutTest.kt"
+      ]
+    },
+    {
+      "acceptance_authority": "pre-gate-static-evidence",
+      "note": "retained only for static integration/fixture evidence until executed Gate-D proof",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/automation/AudFix04AutomationContractTest.kt",
+      "retirement_owner": "AUD-FIX-16",
+      "status": "live-pre-gate-static",
+      "successor_evidence": [
+        "workflow:aud_fix_11",
+        "gate:durable_operation_terminal_truth"
+      ]
+    },
+    {
+      "acceptance_authority": "pre-gate-static-evidence",
+      "note": "retained only for static integration/fixture evidence until executed Gate-D proof",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/diagnostics/AudFix05DiagnosticsContractTest.kt",
+      "retirement_owner": "AUD-FIX-16",
+      "status": "live-pre-gate-static",
+      "successor_evidence": [
+        "workflow:aud_fix_11",
+        "gate:diagnostics_support_seal"
+      ]
+    },
+    {
+      "acceptance_authority": "fixture-contract",
+      "note": "retained only for static integration/fixture evidence until executed Gate-D proof",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/go/DomainAuthorityGoldenContractTest.kt",
+      "retirement_owner": "none",
+      "status": "live-fixture-contract",
+      "successor_evidence": [
+        "file:migration/contracts/v2/fixtures/domain_authority_golden_v1.json",
+        "file:scripts/validate_audfix03_contract.py"
+      ]
+    },
+    {
+      "acceptance_authority": "pre-gate-static-evidence",
+      "note": "retained only for static integration/fixture evidence until executed Gate-D proof",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/go/DomainAuthorityProductionReachabilityContractTest.kt",
+      "retirement_owner": "AUD-FIX-16",
+      "status": "live-pre-gate-static",
+      "successor_evidence": [
+        "gate:production_reachability",
+        "file:scripts/validate_audfix03_contract.py"
+      ]
+    },
+    {
+      "acceptance_authority": "pre-gate-static-evidence",
+      "note": "retained only for static integration/fixture evidence until executed Gate-D proof",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/go/GoRuntimeProductionBindingContractTest.kt",
+      "retirement_owner": "AUD-FIX-16",
+      "status": "live-pre-gate-static",
+      "successor_evidence": [
+        "gate:runtime_apk_binding",
+        "gate:android_debug_assemble"
+      ]
+    }
+  ]
+}

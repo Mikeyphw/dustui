@@ -1,0 +1,18 @@
+{
+  "schema": "dustui.audit-loop.v2",
+  "overlay": "AUD-FIX-10",
+  "scope": "scan launch protocol, Overview truth, and Apps evidence completeness",
+  "passes": 2,
+  "result": "converged",
+  "checks": {
+    "scan_no_direct_start_bypass": "pass",
+    "overview_logical_allocated_semantics": "pass",
+    "apps_unknown_evidence_not_zero": "pass",
+    "typed_go_remediation_gates": "pass",
+    "qualification_freshness": "pass",
+    "native_android_unit": "delegated-to-aud-fix-10-workflow"
+  },
+  "gate_d": "open",
+  "apply_policy": "--no-validate",
+  "native_follow_up": "./devtoolw aud-fix-10"
+}

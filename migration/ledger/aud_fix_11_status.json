@@ -1,0 +1,15 @@
+{
+  "schema": "dustui.aud-fix-status.v1",
+  "overlay": "AUD-FIX-11",
+  "status": "implementation-complete-non-gate",
+  "closes_or_advances": ["AUD-011", "AUD-013", "UIX-001"],
+  "activity_authority": "go-durable-operations",
+  "cleanup_verification_surface": "activity-evidence",
+  "diagnostics_authority": "go-problem-graph",
+  "diagnostics_primary_copy": "root-cause-remediation",
+  "raw_debug_detail": "advanced-only",
+  "operation_correlation": "bidirectional-semantic-route",
+  "gate_d": "open",
+  "workflow": "dustui_android#aud_fix_11",
+  "apply_policy": "--no-validate"
+}

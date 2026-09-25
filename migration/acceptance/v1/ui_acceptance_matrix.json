@@ -1,0 +1,468 @@
+{
+  "authority": "requirement-index-derived",
+  "note": "candidate-covered means successor behavior has mapped acceptance evidence; it never means Gate D is qualified.",
+  "phase": "AUD-FIX-13",
+  "requirements": [
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix08_contract.py",
+        "file:scripts/validate_audfix09_contract.py"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:5.1",
+      "title": "5.1 Borrow from BKX"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix10_contract.py",
+        "file:scripts/validate_audfix12_contract.py",
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/data/OverviewAndAppsTruthTest.kt",
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustAdaptiveLayoutTest.kt"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:5.2",
+      "title": "5.2 Preserve DustUI identity"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix08_contract.py",
+        "file:scripts/validate_audfix10_contract.py",
+        "file:scripts/validate_audfix11_contract.py",
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustSemanticNavigationTest.kt",
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/data/ActivityDiagnosticsProductUxTest.kt"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:6.1",
+      "title": "6.1 Recommended product areas"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix10_contract.py"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:6.2",
+      "title": "6.2 Scan is a workflow, not a navigation destination"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix08_contract.py",
+        "file:scripts/validate_audfix13_contract.py",
+        "future:AUD-FIX-16:predecessor-sweep"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:6.3",
+      "title": "6.3 Historical destinations absorbed by the new hierarchy"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix12_contract.py",
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustAdaptiveLayoutTest.kt"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:7.1",
+      "title": "7.1 Compact phones"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix12_contract.py",
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustAdaptiveLayoutTest.kt"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:7.2",
+      "title": "7.2 Large phones / tablets"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix12_contract.py",
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustAdaptiveLayoutTest.kt"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:7.3",
+      "title": "7.3 Landscape / large tablet"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix09_contract.py",
+        "file:scripts/validate_audfix12_contract.py"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:10.1",
+      "title": "10.1 Shared primitives"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix09_contract.py",
+        "file:scripts/validate_audfix12_contract.py"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:10.2",
+      "title": "10.2 State color semantics"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix12_contract.py"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:10.3",
+      "title": "10.3 Information density"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix10_contract.py"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:11.1",
+      "title": "11.1 First launch / no trusted scan"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix10_contract.py"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:11.2",
+      "title": "11.2 Scan flow"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix08_contract.py",
+        "file:scripts/validate_audfix09_contract.py"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:11.3",
+      "title": "11.3 Files flow"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix09_contract.py",
+        "file:scripts/validate_audfix10_contract.py"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:11.4",
+      "title": "11.4 Cleanup flow"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix02_contract.py",
+        "file:scripts/validate_audfix10_contract.py"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:11.5",
+      "title": "11.5 Duplicates"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix03_contract.py",
+        "file:scripts/validate_audfix10_contract.py"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:11.6",
+      "title": "11.6 App residue"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix03_contract.py",
+        "file:scripts/validate_audfix10_contract.py"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:11.7",
+      "title": "11.7 App storage"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix04_contract.py",
+        "file:scripts/validate_audfix11_contract.py",
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/data/ActivityDiagnosticsProductUxTest.kt"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:11.8",
+      "title": "11.8 Activity"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix05_contract.py",
+        "file:scripts/validate_audfix11_contract.py",
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/data/ActivityDiagnosticsProductUxTest.kt"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:11.9",
+      "title": "11.9 System / Diagnostics"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix13_contract.py",
+        "future:AUD-FIX-16:predecessor-sweep"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:14.1",
+      "title": "14.1 Structurally absorbed"
+    },
+    {
+      "candidate_status": "candidate-covered",
+      "evidence": [
+        "file:scripts/validate_audfix08_contract.py",
+        "file:scripts/validate_audfix09_contract.py",
+        "file:scripts/validate_audfix10_contract.py",
+        "file:scripts/validate_audfix11_contract.py",
+        "file:scripts/validate_audfix12_contract.py",
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustAdaptiveLayoutTest.kt"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:14.2",
+      "title": "14.2 Still mandatory in the new UI"
+    },
+    {
+      "candidate_status": "gate-d-required",
+      "evidence": [
+        "file:scripts/validate_audfix08_contract.py",
+        "file:scripts/validate_audfix09_contract.py",
+        "file:scripts/validate_audfix10_contract.py",
+        "file:scripts/validate_audfix11_contract.py",
+        "file:scripts/validate_audfix12_contract.py",
+        "gate:route_deeplink_recreation_rotation",
+        "gate:accessibility",
+        "gate:production_reachability"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:GO16",
+      "title": "GO16 \u2014 Android semantic/UI cutover"
+    },
+    {
+      "candidate_status": "gate-e-required",
+      "evidence": [
+        "future:AUD-FIX-16:physical-retirement"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:GO17",
+      "title": "GO17 \u2014 Retirement purge"
+    },
+    {
+      "candidate_status": "gate-e-required",
+      "evidence": [
+        "future:AUD-FIX-17:go18"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:GO18",
+      "title": "GO18 \u2014 Adversarial qualification"
+    },
+    {
+      "candidate_status": "gate-e-required",
+      "evidence": [
+        "future:AUD-FIX-17:go19"
+      ],
+      "qualification_note": "Candidate coverage is not Gate-D qualification.",
+      "requirement_id": "UIUX:GO19",
+      "title": "GO19 \u2014 Final migration + UX release seal"
+    }
+  ],
+  "schema": "dustui.ui-acceptance-matrix.v1",
+  "user_tasks": [
+    {
+      "evidence": [
+        "file:scripts/validate_audfix10_contract.py",
+        "file:android/app/src/test/kotlin/com/mikeyphw/dustui/data/OverviewAndAppsTruthTest.kt"
+      ],
+      "id": "storage-state",
+      "task": "Understand current storage state"
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix08_contract.py",
+        "gate:route_deeplink_recreation_rotation"
+      ],
+      "id": "find-file",
+      "task": "Find a file/folder"
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix08_contract.py",
+        "file:scripts/validate_audfix09_contract.py"
+      ],
+      "id": "search-scan",
+      "task": "Search entire scan"
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix10_contract.py",
+        "gate:route_deeplink_recreation_rotation"
+      ],
+      "id": "largest-consumers",
+      "task": "Find largest consumers"
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix10_contract.py"
+      ],
+      "id": "cleanup-opportunities",
+      "task": "Find cleanup opportunities"
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix09_contract.py",
+        "gate:production_reachability"
+      ],
+      "id": "safe-removal",
+      "task": "Remove files safely"
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix02_contract.py",
+        "file:scripts/validate_audfix10_contract.py"
+      ],
+      "id": "duplicates",
+      "task": "Handle duplicate files"
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix03_contract.py",
+        "file:scripts/validate_audfix10_contract.py"
+      ],
+      "id": "residue",
+      "task": "Inspect residue"
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix10_contract.py"
+      ],
+      "id": "app-storage",
+      "task": "Inspect an app"
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix11_contract.py",
+        "gate:durable_operation_terminal_truth"
+      ],
+      "id": "operation-monitoring",
+      "task": "Monitor a long operation"
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix11_contract.py",
+        "gate:durable_operation_terminal_truth"
+      ],
+      "id": "interrupted-recovery",
+      "task": "Recover interrupted work"
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix11_contract.py",
+        "gate:rooted_arm64_runtime"
+      ],
+      "id": "runtime-diagnostics",
+      "task": "Diagnose root/runtime"
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix05_contract.py",
+        "gate:diagnostics_support_seal"
+      ],
+      "id": "support-export",
+      "task": "Export support evidence"
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix12_contract.py",
+        "gate:accessibility"
+      ],
+      "id": "tablet-layout",
+      "task": "Use tablet layout"
+    }
+  ],
+  "visual_product_rules": [
+    {
+      "evidence": [
+        "file:scripts/validate_audfix08_contract.py",
+        "file:scripts/validate_audfix12_contract.py"
+      ],
+      "id": "VR-01",
+      "rule": "Storage information may be dense; navigation may not be."
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix12_contract.py"
+      ],
+      "id": "VR-02",
+      "rule": "One dominant question and at most one dominant primary action."
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix09_contract.py",
+        "file:scripts/validate_audfix10_contract.py"
+      ],
+      "id": "VR-03",
+      "rule": "Destructive primary actions only in review/confirmation contexts."
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix10_contract.py",
+        "file:scripts/validate_audfix11_contract.py"
+      ],
+      "id": "VR-04",
+      "rule": "Invalidating problems appear near affected data."
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix11_contract.py"
+      ],
+      "id": "VR-05",
+      "rule": "Technical IDs/paths are secondary but copyable/selectable."
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix09_contract.py",
+        "file:scripts/validate_audfix10_contract.py"
+      ],
+      "id": "VR-06",
+      "rule": "Empty unsupported blocked stale and failed are distinct."
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix12_contract.py"
+      ],
+      "id": "VR-07",
+      "rule": "Phone and tablet retain one conceptual product."
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix12_contract.py",
+        "gate:accessibility"
+      ],
+      "id": "VR-08",
+      "rule": "Charts have textual accessible equivalents with exact values."
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix12_contract.py"
+      ],
+      "id": "VR-09",
+      "rule": "File/path lists optimize scanning/comparison."
+    },
+    {
+      "evidence": [
+        "file:scripts/validate_audfix11_contract.py"
+      ],
+      "id": "VR-10",
+      "rule": "Advanced/root/debug details remain progressively disclosed."
+    }
+  ]
+}

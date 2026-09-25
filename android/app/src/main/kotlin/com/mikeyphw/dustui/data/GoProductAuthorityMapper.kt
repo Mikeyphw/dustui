@@ -8,6 +8,16 @@ import org.json.JSONObject
  * No classification, confidence, recommendation, cleanup, or growth policy belongs here.
  */
 internal object GoProductAuthorityMapper {
+    fun overviewStorage(o: JSONObject): OverviewStorageSemantics = OverviewStorageSemantics(
+        scanId = o.getString("scanId"),
+        generation = o.optLong("generation", 1L),
+        rootPath = o.optString("rootPath"),
+        integrityStatus = o.optString("integrityStatus", "UNKNOWN"),
+        logicalBytes = o.optLong("logicalBytes"),
+        allocatedBytes = o.optLong("allocatedBytes"),
+        fileCount = o.optLong("fileCount"),
+    )
+
     fun snapshotDelta(o: JSONObject): SnapshotDelta = SnapshotDelta(
         currentScanId = o.getString("currentScanId"),
         previousScanId = o.nullableString("previousScanId"),

@@ -1,0 +1,20 @@
+{
+  "schema": "dustui.audit-loop.v2",
+  "overlay": "AUD-FIX-11",
+  "scope": "durable Activity product UX, ProblemGraph Diagnostics, and operation/evidence correlation",
+  "passes": 2,
+  "result": "converged",
+  "checks": {
+    "activity_durable_state_and_recovery": "pass",
+    "cleanup_verification_as_activity_evidence": "pass",
+    "diagnostics_root_cause_remediation_first": "pass",
+    "raw_debug_advanced_only": "pass",
+    "operation_evidence_bidirectional_navigation": "pass",
+    "predecessor_debug_workbench_acceptance_retired": "pass",
+    "qualification_freshness": "pass",
+    "native_android_unit": "delegated-to-aud-fix-11-workflow"
+  },
+  "gate_d": "open",
+  "apply_policy": "--no-validate",
+  "native_follow_up": "./devtoolw aud-fix-11"
+}

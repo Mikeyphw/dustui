@@ -23,10 +23,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -48,11 +44,13 @@ fun CleanupRecommendationsScreen(
     selectedPaths: Set<String>,
     scanDataStale: Boolean,
     vm: MainViewModel,
-    openWorkbench: (DustDestination) -> Unit,
+    selectedRecommendationId: String?,
+    openCandidate: (String) -> Unit,
+    closeCandidate: () -> Unit,
+    openWorkbench: (DustSemanticRoute) -> Unit,
     revealPath: (String) -> Unit,
 ) {
-    var openRecommendationId by rememberSaveable { mutableStateOf<String?>(null) }
-    val openRecommendation = analysis?.items?.firstOrNull { it.id == openRecommendationId }
+    val openRecommendation = analysis?.items?.firstOrNull { it.id == selectedRecommendationId }
     val totalBytes = analysis?.totalBytes ?: page.totalBytes
     val batchSafeBytes = analysis?.highConfidenceBytes ?: 0L
     val selectedVisiblePaths = page.items.sumOf { recommendation -> recommendation.paths.count { it in selectedPaths } }
@@ -163,7 +161,7 @@ fun CleanupRecommendationsScreen(
                 selectedCount = item.paths.count { it in selectedPaths },
                 deletionEnabled = !scanDataStale,
                 vm = vm,
-                openPaths = { openRecommendationId = item.id },
+                openPaths = { openCandidate(item.id) },
             )
         }
         if (page.pageCount > 1) {
@@ -182,9 +180,9 @@ fun CleanupRecommendationsScreen(
             selectedPaths = selectedPaths,
             deletionEnabled = !scanDataStale,
             vm = vm,
-            close = { openRecommendationId = null },
+            close = closeCandidate,
             revealPath = { path ->
-                openRecommendationId = null
+                closeCandidate()
                 revealPath(path)
             },
         )
@@ -194,7 +192,7 @@ fun CleanupRecommendationsScreen(
 @Composable
 private fun CleanupCockpitChips(
     page: CleanupRecommendationPage,
-    openWorkbench: (DustDestination) -> Unit,
+    openWorkbench: (DustSemanticRoute) -> Unit,
     filterKind: (CleanupRecommendationKind?) -> Unit,
 ) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -210,28 +208,28 @@ private fun CleanupCockpitChips(
             item {
                 FilterChip(
                     selected = page.filter.kind == CleanupRecommendationKind.EXACT_DUPLICATES,
-                    onClick = { openWorkbench(DustDestination.DUPLICATES) },
+                    onClick = { openWorkbench(DustSemanticRoute.CleanDuplicates) },
                     label = { Text("Duplicates") },
                 )
             }
             item {
                 FilterChip(
                     selected = page.filter.kind == CleanupRecommendationKind.LARGE_OLD_FILE,
-                    onClick = { openWorkbench(DustDestination.LARGE_FILES) },
+                    onClick = { openWorkbench(DustSemanticRoute.FilesLarge) },
                     label = { Text("Large files") },
                 )
             }
             item {
                 FilterChip(
                     selected = page.filter.kind == CleanupRecommendationKind.APP_RESIDUE,
-                    onClick = { openWorkbench(DustDestination.APP_RESIDUE) },
+                    onClick = { openWorkbench(DustSemanticRoute.CleanResidue) },
                     label = { Text("App residue") },
                 )
             }
             item {
                 FilterChip(
                     selected = false,
-                    onClick = { openWorkbench(DustDestination.RULES) },
+                    onClick = { openWorkbench(DustSemanticRoute.CleanRules) },
                     label = { Text("Rules") },
                 )
             }

@@ -233,7 +233,7 @@ Required compact behavior:
 - `MORE` is presented as Tools.
 - `SCAN` is not a compact bottom navigation item; compact scan entry is a persistent top action and modal bottom sheet.
 - `SEARCH` is not a compact bottom navigation item; it highlights Files when active.
-- Specialized workbenches such as rules, growth, large files, duplicates, app residue, package storage, modules, certification, and deletion reports remain reachable through Tools.
+- Historical specialized workbenches were previously grouped under Tools; current successor routes are governed by the semantic route contract below, and deletion verification is Activity evidence rather than a top-level report destination.
 - Wide navigation may continue to expose the full workbench list directly.
 
 The compact shell must not weaken cleanup safety, root diagnostics, module-source diagnostics, or stale-scan blocking.
@@ -318,56 +318,42 @@ Required final behavior:
 
 Final validation gates should include Android debug assembly, debug unit tests, and debug lint with zero warnings and zero errors.
 
-## Debug workbench contract
+## Activity and Diagnostics successor contract (AUD-FIX-11)
 
-The Tools task zone includes a scan-independent Debug workbench for source-backed diagnostics. It must expose live state and a structured trace timeline without changing cleanup safety behavior. The debug timeline is bounded, in-memory, filterable by category, and can be cleared without touching scan data, deletion reports, root state, or persisted cleanup settings.
+Activity is the product history and recovery surface for durable Go operations. Its list, run detail, and evidence routes must render operation state, terminal truth, progress, result, verification, correlation, and typed cancel/retry/reconcile gates. Cleanup verification is attached to the owning Activity operation and is not a separate top-level destination.
 
-Debug evidence must make root, scan, module-scope, search, recommendation, and deletion-review state visible. It must not silently replace disabled-action explanations, bypass stale-scan locks, or turn protected mounted targets into deletion targets.
+A compact global active-operation surface may appear outside Activity, including Overview, but its operation identity and state come from the same durable Activity authority; tapping it opens the exact Activity run. `Cancelling`, `Interrupted`, and `Recovery required` must remain distinct from success/failure shorthand.
 
-### Debug diagnostic probe rules
+System → Diagnostics is the user-facing explanation surface backed by the Go ProblemGraph. Primary content is root cause, evidence health/freshness, recovery requirement, guidance, remediation, and safe support export. Raw event timelines, probes, protocol/runtime details, and the debug overlay remain available only through progressive Advanced disclosure.
 
-The Debug Workbench exposes manual diagnostic probes for root service state, `/data` access, `/data/adb/modules` access, active scan health, zero-file scans, module scope, deletion readiness, and whole-scan search readiness. These probes are evidence-only: they may run root preflight checks and read current ViewModel state, but they must not execute deletion, mutate scan data, weaken stale-scan locks, or bypass review-first cleanup.
+Diagnostics and Activity are bidirectionally correlated by durable operation ID. A problem with an operation remediation must resolve to the exact `activity/run/{operationId}` entity; Activity evidence can open Diagnostics focused on that same operation.
 
-Probe results must be visible as cards inside Debug Workbench and must also record a structured timeline event with category, severity, message, and redacted evidence.
+The former Tools → Debug Workbench and top-level Deletion Reports acceptance contracts are retired and are not successor product requirements.
 
+## Semantic route identity (AUD-FIX-08)
+The production shell uses 27 stable semantic routes across six domains. Compact and wide layouts must preserve the same route and entity identity. Entity detail is encoded in routes/deep links, System is decomposed into dedicated runtime/modules/automation/diagnostics/certification/settings routes, and Scan remains a global workflow action.
 
-### Debug export bundle rules
+## AUD-FIX-09 — bound async presentation authority
 
-- Debug export is reachable from Tools → Debug workbench and is scan-independent.
-- The default export mode is Safe and omits raw paths.
-- Path-aware and Full diagnostic export modes may include paths for debugging, but must never include file contents.
-- Export bundles must include timeline events, probe results, scan summary, root diagnostics, navigation state, cleanup state, recommendation summary, module diagnostics, and app info.
-- Exporting a bundle must not execute deletion, mutate scans, weaken stale-scan locks, or bypass protected-path/fingerprint checks.
+All content-route requests carry the tuple `routeKey + routeGeneration + entityKind + entityId + requestId + optional fingerprint`. A late result cannot update presentation unless the entire binding still matches the active route and the latest request for its semantic purpose.
 
-### Debug Workbench Phase 13 · UI overlay and disabled actions
-- The UI debug overlay is opt-in from Debug workbench and diagnostic-only.
-- The overlay must show route/layout/scan/root/stale/selection/module/event state and tapping it must return to Debug workbench.
-- Disabled scan, export, certification, stale-deletion, and final deletion actions must expose plain-language reasons instead of silent disabled controls.
-- Disabled explanations must not loosen cleanup safeguards, protected-path blocking, fingerprint checks, or stale-scan locks.
+Production route presentation uses one shared state family: Loading, Empty with recovery, Blocked with typed remediation, Error with retry/support context, and Content with freshness/action gates. Risky and evidence-dependent actions consume structured Go gates (`allowed`, `reasonCode`, `message`, `remediationActions`); Android must not recreate those policy decisions from local booleans.
 
-## Debug Workbench final contract
-
-Debug Workbench is a Tools-scoped diagnostic surface, not an alternate cleanup path.
-
-Required behavior:
-
-- `DEBUG` must remain reachable through Tools and wide navigation while staying scan-independent.
-- The Debug Workbench must show Live state, Trace timeline, Diagnostic probes, Export debug bundle, and UI debug overlay controls.
-- Debug events must stay bounded and redacted before storage.
-- Probes must remain evidence-only and must not execute cleanup, create deletion plans, bypass stale locks, or bypass protected-path checks.
-- Export bundles must default to Safe mode, must never include file contents, and must keep raw paths out of Safe mode.
-- The floating UI debug overlay must be opt-in, diagnostic-only, and must route back to Debug Workbench when tapped.
-- Disabled-action reason copy may explain blocked actions, but must not convert a blocked action into an executable one.
+## AUD-FIX-10 — Scan / Overview / Apps truth
+- Scan launch is a mandatory `ChooseScope → Preflight → Review → explicit Start` protocol; presets and targeted rescans cannot bypass it.
+- Overview exposes scan identity, generation, integrity/freshness, durable operation/activity state, warnings/problems, and separate logical versus allocated bytes. Evidence review routes to Diagnostics.
+- Apps labels filesystem totals as measured scan evidence and separately renders package evidence as supported, partial, unavailable, or blocked. Unknown platform evidence is not zero.
+- Root, preflight, wrong-scope, integrity, freshness, and unsupported-evidence remediation comes from typed Go action gates.
 
 
-### Phase 15 scan freeze and pre-scan access contract
+## AUD-FIX-12 — adaptive master/detail and route continuity
 
-- Home, Files, Clean, Tools, Debug workbench, and deletion reports must remain reachable before the first scan.
-- Files and Clean may explain that scan-backed content is unavailable, but they must not render a blank route or force the user back to Home.
-- Post-scan summary work must not run on the input/render thread. Expensive storage intelligence and derived paging/filtering should run on IO/default dispatchers.
-- Depth-cap evidence is informational by default. It becomes user-blocking only when paired with failure, zero-file, truncation, or persisted warning/error evidence.
-- No pre-scan page may bypass deletion review, stale-scan locks, protected-path blocking, or fingerprint verification.
+Adaptive layout is derived from the active semantic route; it never owns or substitutes destination identity. Compact, medium, and expanded windows therefore preserve the exact `routeKey + entityId + generation` tuple across resize, rotation, and recreation.
 
-### Phase 16 scan depth and responsiveness contract
+High-density Files, Clean, Apps, Activity, and System domains gain a supporting pane on medium windows and master/detail density on expanded windows. Master selection is computed from the semantic route/entity and navigates through the same route model used by compact UI and deep links. Overview remains a single semantic surface because extra panes would add density without a real master/detail task.
 
-Scan depth must be user-adjustable from the scan launcher. The default policy is forgiving: no depth cap, but still bounded by an entry limit to protect responsiveness. Depth-cap evidence must read as informational boundary evidence unless paired with zero-file, truncation, warning, or error signals. Post-scan summaries must use cooperative off-main refresh checkpoints rather than one large UI-thread burst.
+Traversal order is primary navigation → master pane → detail → context actions whenever a master pane exists. Charts and treemap keep exact textual equivalents for every visual datum; the text authority is shared with their accessibility descriptions. Empty, stale/blocked, failed, loading, and content states remain distinct, and destructive cleanup execution remains reachable only from the explicit cleanup review surface.
+
+## AUD-FIX-13 acceptance authority
+
+The current UI/UX acceptance authority is `migration/acceptance/v1/ui_acceptance_matrix.json`, derived from the canonical requirement index. It covers every UIUX requirement plus the 14 user-task outcomes and ten visual/product rules. Historical portrait/Debug Workbench/source-token contracts are archived and cannot override the semantic-route/adaptive successor. Candidate coverage is distinct from executed Gate-D/Gate-E qualification.

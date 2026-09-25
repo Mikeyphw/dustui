@@ -1,0 +1,15 @@
+{
+  "schema": "dustui.aud-fix-status.v1",
+  "overlay": "AUD-FIX-09",
+  "status": "implementation-complete-non-gate",
+  "closes_or_advances": ["UIX-002", "UIX-003", "UIX-004"],
+  "binding_tuple": ["routeKey", "routeGeneration", "entityKind", "entityId", "requestId", "fingerprint"],
+  "presentation_states": ["loading", "empty", "blocked", "error", "content"],
+  "action_gate_authority": "go",
+  "action_gate_fields": ["allowed", "reasonCode", "message", "remediationActions"],
+  "adversarial_stale_surfaces": ["directory-query", "package-switch", "cleanup-review", "activity-selection", "diagnostics-generation"],
+  "predecessor_state_guards_retired": ["FilesNoScanScreen", "CleanNoScanScreen", "ScanRequiredEmptyState", "MainViewModel AtomicLong request guards"],
+  "gate_d": "open",
+  "workflow": "dustui_android#aud_fix_09",
+  "apply_policy": "--no-validate"
+}

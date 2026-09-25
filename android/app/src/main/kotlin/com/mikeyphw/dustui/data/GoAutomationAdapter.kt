@@ -84,6 +84,29 @@ class GoAutomationAdapter(
         JSONObject().put("operationId", operationId),
     ).getJSONObject("run").toActivityRun()
 
+    suspend fun activityEvidence(operationId: String): ActivityEvidence {
+        val value = store.authorityRequest(
+            "domain.automation.activity.evidence",
+            1,
+            JSONObject().put("operationId", operationId),
+        ).getJSONObject("evidence")
+        val cleanup = value.optJSONObject("cleanupVerification")?.let(GoProductAuthorityMapper::verificationReport)
+        val problemsJson = value.optJSONArray("problems")
+        val problems = buildList {
+            if (problemsJson != null) for (index in 0 until problemsJson.length()) {
+                problemsJson.optJSONObject(index)?.let { add(it.toDiagnosticProblem()) }
+            }
+        }
+        return ActivityEvidence(
+            operationId = value.getString("operationId"),
+            evidenceCorrelation = value.optString("evidenceCorrelation"),
+            run = value.getJSONObject("run").toActivityRun(),
+            cleanupVerification = cleanup,
+            verificationGeneration = value.optLong("verificationGeneration").takeIf { it > 0 },
+            problems = problems,
+        )
+    }
+
     suspend fun requestCancel(operationId: String, source: String): Boolean = store.authorityRequest(
         "domain.automation.cancel",
         1,

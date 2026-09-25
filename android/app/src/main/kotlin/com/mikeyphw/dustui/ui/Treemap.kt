@@ -54,7 +54,7 @@ fun StorageTreemap(entries: List<ScanEntryEntity>, onOpen: (ScanEntryEntity) -> 
         MaterialTheme.colorScheme.secondaryContainer,
         MaterialTheme.colorScheme.tertiaryContainer,
     )
-    val description = shown.joinToString(prefix = "Storage treemap. ", separator = ". ") { "${it.name}, ${formatBytes(it.sizeBytes)}" }
+    val description = "Storage treemap. ${DustVisualAccessibility.treemap(shown)}"
     Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         BoxWithConstraints(Modifier.fillMaxWidth().height(300.dp).semantics { contentDescription = description }) {
             val density = LocalDensity.current

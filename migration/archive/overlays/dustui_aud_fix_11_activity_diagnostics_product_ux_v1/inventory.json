@@ -1,0 +1,222 @@
+{
+  "format": 1,
+  "entries": [
+    {
+      "action": "modify",
+      "path": ".devtool.toml",
+      "sha256": "9624941950c181b6771680b823ac842869789583aac1ccd234d2787c89bd33a4",
+      "size": 28698,
+      "source_sha256": "aea1709d4e361cbed5361fff506b39996e5a2cd0a4127a6d9ec63dcb0a2a26d2"
+    },
+    {
+      "action": "modify",
+      "path": "CHANGELOG.md",
+      "sha256": "2fda75b97e57312e2dc9d9cb191c2e2295992e51c6c4b5c5f7d72f70bb353517",
+      "size": 25547,
+      "source_sha256": "bcbf6a61280f79c0c18f51f8be3f230f9a4227a345b49c61e66ce5864b878c71"
+    },
+    {
+      "action": "modify",
+      "path": "KNOWN_ISSUES.md",
+      "sha256": "6143730f2e22ffe5d119cc0a50c7dc005c92052d54dac5179f58c41e462f9b97",
+      "size": 1284,
+      "source_sha256": "6761e7a5c002bf284d2502de600323b9f16c013884bc7994770679f531614380"
+    },
+    {
+      "action": "modify",
+      "path": "README.md",
+      "sha256": "eeb816127d24b113015c4b6e215a3b510f72531be4a4bbafa568fe67a389bb10",
+      "size": 6803,
+      "source_sha256": "4d3a7855b463e564320a639cb8dd86a9e52faa057d6fd365bacd54d87fcd9417"
+    },
+    {
+      "action": "modify",
+      "path": "RELEASE_CHECKLIST.md",
+      "sha256": "c8c65841da8cbcf4ab4d8276b066d25ccc15d54a8b3d30966e3ae5d7b295ddc0",
+      "size": 19092,
+      "source_sha256": "53457286c7451b8ca66b1b8663da050850f414d973ff8a8c4116dbed44254561"
+    },
+    {
+      "action": "modify",
+      "path": "UI_UX_CONTRACT.md",
+      "sha256": "bdd2a8453effc72956b2001b83e416736b99e3dc3acfa1746ec02a04e6316fda",
+      "size": 29784,
+      "source_sha256": "e4e0d70cba3d3e6137ad37cba863112b0f4057bfa5051de7a517b644849ef0ad"
+    },
+    {
+      "action": "modify",
+      "path": "VALIDATION.md",
+      "sha256": "b9446181c4207a3a40d61f22c7768101a836b33a6b87b3b9280b9b722b7b9a0b",
+      "size": 5208,
+      "source_sha256": "3f640694df9d52ff69c263562d5376a672aef2f5e7801c900870ad439d9dff70"
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ActivityModels.kt",
+      "sha256": "467a0a0f64132230b40da22e5b8b32792cd91c3f84824feb278a7686f6430bd2",
+      "size": 5005,
+      "source_sha256": "d20e11929700fc7d59ab5be5a0ef49e7bb325b2d17b08f63258e16280ad22327"
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DiagnosticsAuthorityModels.kt",
+      "sha256": "d8d38c9138ac983833dcb77b9ba197923400694fd8541ccb80fc5af2c107a47c",
+      "size": 2410,
+      "source_sha256": "65a078569916b17d93c89c3ba42890f02b89bc5f0cd0265da0fbf5958c5e5e3f"
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/GoAutomationAdapter.kt",
+      "sha256": "b325cb9e58ddb67e14c6ac38c105d8f7776c8db0c285d4b03d79e3874b7c91ef",
+      "size": 10188,
+      "source_sha256": "bf67d4cced8fa24ed21f93731203cd8a24c6e1df359fa260df4a1d424baabd03"
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+      "sha256": "d5d3f82d9b3a6525308dd972c5c1a4670ad06d50a244a8e6d45e90ab13169422",
+      "size": 67289,
+      "source_sha256": "870a413c5b1e4f14c82ee7cc921490bc9d40feb2c1719bdf19848c5725fe545e"
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/go/DiagnosticsEvidenceContract.kt",
+      "sha256": "1afa888a152ef8579b60c7fe1edb6532b759e2dcec9382f51f091f76ce38e2aa",
+      "size": 843,
+      "source_sha256": "5047bfb647aab8340802ddcedfe4dccf6fa60f2e4dce24a89acd4f7e5138db71"
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/CleaningIntelligenceScreens.kt",
+      "sha256": "925634b49bf99d40241c414a2f80169f0174cd0bce7976376e755ec8c60aaef3",
+      "size": 39421,
+      "source_sha256": "bdeea3d5996c3e7ec1a63e66c14a761c3fd9ecde7415dd00ef39f67c6297481e"
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+      "sha256": "6800b2f947d360b1fb1eab51b9deefdd11d7358326336fc82333b24024419857",
+      "size": 203521,
+      "source_sha256": "f0ed497b8f875522d63e713edd13765f9b63a077391e85f4833812e21c92b0ac"
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+      "sha256": "5c62fc0c212331dbb86c080dc379c13c4a84139b357449b2d3fb0d67ce86406a",
+      "size": 139506,
+      "source_sha256": "bcc000e8a51b56820bf769c8cc7cf2a8398bfd69356203dac447e9bc1659bccd"
+    },
+    {
+      "action": "add",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ActivityDiagnosticsProductUxTest.kt",
+      "sha256": "a30cdb672cd8399a8c49cf6fa818ba3b08465c91cc1dc71d612188fd8705bf2c",
+      "size": 3816
+    },
+    {
+      "action": "modify",
+      "path": "android/scripts/validate-debug-workbench-contract.py",
+      "sha256": "59aa58cdf90bfc641833fe40d6094bf9dc26e85c63e366a3121a3208131789d7",
+      "size": 1918,
+      "source_sha256": "25be76b03c1f33c6aa9e4c7e8c27d5d953bf75632a3d3d90108ac1a1d31c5321"
+    },
+    {
+      "action": "modify",
+      "path": "android/scripts/validate-modern-dark-portrait-ui.py",
+      "sha256": "08d11da130ebe34c786d32c9c3d2763e9898a87c8655e3baf540866b4eb056cc",
+      "size": 2765,
+      "source_sha256": "388e7de805b8d4bd8ca979fb9534375b16e2be81e757b692a724dabe4783a0ed"
+    },
+    {
+      "action": "modify",
+      "path": "docs/ANDROID_DEBUG_WORKBENCH.md",
+      "sha256": "7e82fa7f8b778b520ca9a4b78c5db453b9fa86afb7ac09639c4dfe1b31aa2006",
+      "size": 897,
+      "source_sha256": "80bfd0ab0d73c2f85ac7dffdf37806fe2c9dcda1621c0c90deef7cb242490374"
+    },
+    {
+      "action": "modify",
+      "path": "docs/ANDROID_DEBUG_WORKBENCH_FINAL_SEAL.md",
+      "sha256": "5e5640051de3efefa02558efd222d99ad1fd70290f92def4a2e97d7c5ca1832b",
+      "size": 583,
+      "source_sha256": "7f8b0a7a73da6e0f80acc97273607b878653bfd9eb637b7388aaccb58db0e775"
+    },
+    {
+      "action": "modify",
+      "path": "docs/UI_UX_CONTRACT.md",
+      "sha256": "3123ef4c5acf2188853c18b7feed0cb70b08ab118f6c672705b9ad4372caede5",
+      "size": 5933,
+      "source_sha256": "e870dd53cb359451d61d51128360d0661da2abb43e5049f89ac557d2b5b0e048"
+    },
+    {
+      "action": "modify",
+      "path": "go/cmd/dustui-go/runtime_domain.go",
+      "sha256": "2600b6f70f73cdbc16425917fb8b15fcb074d1949a7ccf040592278a4191150d",
+      "size": 28197,
+      "source_sha256": "7495d18477a692f1eb2d0717911cd5c152ef76a9b61f6e4ad4101c613cc359bf"
+    },
+    {
+      "action": "modify",
+      "path": "go/internal/diagnostics/diagnostics.go",
+      "sha256": "10e1286f89ac07e8194adadb82b7aab8255e03c475b8a6d02dde19c88a789309",
+      "size": 14433,
+      "source_sha256": "07530d4109e01bf4f854b11a1696e93913dd8975cf05814136f2b722c604c56e"
+    },
+    {
+      "action": "add",
+      "path": "go/internal/state/activity_product.go",
+      "sha256": "830e45d94b41ca255283018b4d63df20f2ac4f0ea9c3f1b509135e7a453435d5",
+      "size": 1718
+    },
+    {
+      "action": "add",
+      "path": "go/internal/state/audfix11_activity_diagnostics_test.go",
+      "sha256": "8d316cbd46d66fbb6092aa938eca0690cc6d5e49d8b65d163a875b66f36c0d06",
+      "size": 2856
+    },
+    {
+      "action": "modify",
+      "path": "go/internal/state/diagnostics_authority.go",
+      "sha256": "ad42bdcac182b95fa0f873900d5d0964001c6d563e12401a3c6ea2b221baf155",
+      "size": 14171,
+      "source_sha256": "fdf7b0c016ba7ac12cdd15d5bf3baa5da1fa782f9f4ba29a7772a38babc7f305"
+    },
+    {
+      "action": "modify",
+      "path": "go/internal/state/domain_authority.go",
+      "sha256": "d376ea2cda36a98c75a0367d1f8a3f28c28dee33d2db2affc8c69d39cc1ca04f",
+      "size": 6211,
+      "source_sha256": "9bcdf1daf2fce685111050f49808d6f3296340e9be52e9ca6b0ea365b1603997"
+    },
+    {
+      "action": "add",
+      "path": "migration/audit/v2/aud_fix_11_audit_loop.json",
+      "sha256": "dc44177de58d253cb06a995ced1875fabf1004b6b772847939a765f0c6852762",
+      "size": 756
+    },
+    {
+      "action": "add",
+      "path": "migration/contracts/v2/aud_fix_11_activity_diagnostics_product_ux.md",
+      "sha256": "a00d03cf50ac628915aee57b044a9c040ccd56457611932bf973c01f6bbbc836",
+      "size": 1209
+    },
+    {
+      "action": "add",
+      "path": "migration/ledger/aud_fix_11_status.json",
+      "sha256": "e5684bf0939cfd6ac653bbe95b3328e7e0fb8fa051741e1acfdfd252670da049",
+      "size": 580
+    },
+    {
+      "action": "modify",
+      "path": "migration/qualification/v1/current_state.json",
+      "sha256": "af8718f23eb194eec3912a53e1eb5f5b340c88cdfbf99660021ca63090032664",
+      "size": 3218,
+      "source_sha256": "92b2e9f562fce34044539687d03342cfb1e4ea17e1de5370281b5d3ddb6d5796"
+    },
+    {
+      "action": "add",
+      "path": "scripts/validate_audfix11_contract.py",
+      "sha256": "6aeec7a6fe8ca2662c36ae23abe46c5752f08a019075fa022eda2ab552da5a33",
+      "size": 5782
+    }
+  ]
+}

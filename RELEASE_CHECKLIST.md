@@ -228,58 +228,55 @@ Ship only when `SHIP_STATUS.md` says `SHIP` or when every warning listed under `
 - [ ] Confirm RC packaging includes `cleaning-intelligence-qualification.json`.
 - [ ] Confirm `final-rc-gate.sh` returns `DO_NOT_SHIP` when cleaning evidence is missing or failed.
 
-## Debug Workbench release checks
+## AUD-FIX-11 Activity / Diagnostics checkpoint
 
-- [ ] Tools exposes Debug workbench before a scan exists.
-- [ ] Live state shows destination, layout, scan/root state, stale lock, selected paths, review sheet, root backend, preflight, scan diagnostics, and module diagnostics.
-- [ ] Trace timeline is bounded and filterable.
-- [ ] Debug events never bypass stale-scan locks, protected-path blocking, fingerprint checks, or review-first deletion.
-- [ ] Safe evidence redaction remains covered by unit tests.
+- [x] Activity list/run/evidence renders durable Go operation truth rather than cleanup reports.
+- [x] Active, completed, failed, interrupted, and recovery-required states remain distinct.
+- [x] Cancel/retry/reconcile controls appear only when the Go-owned run gate allows them.
+- [x] Global active-operation entry opens the exact `activity/run/{operationId}` identity.
+- [x] Cleanup deletion verification is correlated Activity evidence, not a top-level report destination.
+- [x] System → Diagnostics leads with durable root cause, evidence health, guidance, remediation, and support export.
+- [x] Diagnostics remediation can open the exact correlated Activity operation.
+- [x] Raw events/probes/protocol details remain behind Advanced diagnostics disclosure.
+- [ ] `./devtoolw aud-fix-11` passes in the native build environment.
+- [ ] Gate D — intentionally still open pending later roadmap gates/evidence.
 
-## Debug Workbench Phase 11 checklist
+## AUD-FIX-09 async-state checkpoint
+- [ ] `./devtoolw aud-fix-09` passes on the native Termux/Android build environment.
+- [ ] Late route/entity/query responses are rejected by full binding identity.
+- [ ] Blocked presentation remains distinct from Empty and exposes Go-provided remediation.
+- [ ] No MainViewModel `AtomicLong` request ownership or local enum action-gate predecessor remains.
 
-- [ ] Tools → Debug workbench shows Diagnostic probes before the trace timeline.
-- [ ] Run all probes records probe-start/probe-finish events in the timeline.
-- [ ] `/data` and `/data/adb/modules` probes run dry preflight only.
-- [ ] Deletion readiness probe explains stale scan and empty selection without executing deletion.
-- [ ] Zero-file scan probe makes suspicious empty completed scans explicit.
-- [ ] Module scope probe points users back to `/data/adb/modules` when current scan scope is wrong.
-
-
-## Debug Workbench Phase 12 release checks
-
-- [ ] Tools → Debug workbench shows Export debug bundle.
-- [ ] Safe mode is the default and says raw paths are omitted.
-- [ ] Path-aware and Full diagnostic modes warn that paths may be included.
-- [ ] Exported bundle opens Android share sheet as a ZIP.
-- [ ] Export timeline records success/failure without leaking secrets.
-- [ ] No export mode reads or includes file contents.
-
-### Debug Workbench Phase 13 release checks
-- [ ] Toggle the UI debug overlay from Tools → Debug workbench.
-- [ ] Confirm the overlay reports route, layout, scan, root, stale lock, selection, module status, and event count.
-- [ ] Confirm tapping the overlay returns to Debug workbench.
-- [ ] Confirm disabled actions explain missing scan, root, stale-lock, or confirmation preconditions.
-
-### Debug Workbench Phase 14 final seal checks
-- [ ] Run `python3 android/scripts/validate-debug-workbench-contract.py "$REPO"`.
-- [ ] Confirm Tools exposes Debug workbench before first scan.
-- [ ] Confirm Live state, Trace timeline, Diagnostic probes, Export debug bundle, and UI debug overlay sections are visible.
-- [ ] Confirm Safe export omits raw paths and every export mode excludes file contents.
-- [ ] Confirm probes do not execute cleanup, create deletion plans, or mutate scan state.
-- [ ] Confirm stale-scan, protected-path, fingerprint, and irreversible-confirmation gates still block destructive paths.
-- [ ] Confirm disabled actions explain missing scan, root, stale-lock, or confirmation preconditions.
-- [ ] Confirm `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, and `:app:lintDebug` pass with zero diagnostics warnings and zero errors.
+## AUD-FIX-10 UX-truth checkpoint
+- [x] No scan execution before scope selection, preflight, review, and explicit Start.
+- [x] Targeted/module rescans use the same reviewed launch protocol.
+- [x] Overview distinguishes logical from allocated bytes and shows scan/integrity/activity truth.
+- [x] Overview evidence review opens Diagnostics rather than Scan.
+- [x] Apps renders partial/unavailable/blocked package evidence as unknown, never as zero.
+- [x] Go owns typed remediation gates for root/scope/integrity/freshness/evidence blockers.
+- [ ] Gate D — intentionally still open pending later roadmap gates/evidence.
 
 
-### Debug Workbench Phase 15 release checklist
+## AUD-FIX-12 adaptive-layout checkpoint
 
-- [ ] Files, Clean, Tools, Debug workbench, and deletion reports are reachable before first scan.
-- [ ] Broad shared-storage scan does not trigger a post-completion ANR.
-- [ ] Debug event timeline records post-scan refresh without unbounded event spam.
-- [ ] Depth-cap evidence is presented as informational unless paired with truncation, zero-file, warning, or failure evidence.
-- [ ] Permanent deletion gates remain unchanged.
+- [x] Compact, medium, and expanded layouts preserve the exact semantic route/entity/generation.
+- [x] Files, Clean, Apps, Activity, and System gain supporting/master-detail density without layout-local destination identity.
+- [x] Master selections navigate through the same semantic/deep-link route model as compact UI.
+- [x] Focus traversal is ordered primary navigation → master → detail → context actions on multi-pane layouts.
+- [x] Storage charts and treemap expose exact textual equivalents for their visual data.
+- [x] Loading, Empty, Blocked/stale, Error, and Content remain distinct successor states.
+- [x] Cleanup execution remains bound only to the explicit review surface.
+- [x] Phone and tablet Compose previews exist for the successor adaptive model.
+- [x] Unit and connected-device route-continuity tests are defined.
+- [ ] `./devtoolw aud-fix-12` passes in the native build environment.
+- [ ] `./devtoolw aud-fix-12-device` passes with a connected qualifying device.
+- [ ] Gate D — intentionally still open pending AUD-FIX-13..15.
 
-- [ ] Verify Phase 16 scans can switch between Fast, Forgiving, and Deep depth policies before scanning.
-- [ ] Verify internal storage scans no longer raise scary depth-cap copy under normal traversal boundaries.
-- [ ] Verify post-scan UI remains responsive after large internal-storage scans.
+## AUD-FIX-13 acceptance authority
+
+- [ ] `migration/acceptance/v1/current_state.json` reports `pre-gate-d-ready`.
+- [ ] Every live source-reading validator is mapped to exact successor evidence; historical token guards are archived/non-authoritative.
+- [ ] All 26 UI/UX requirement entries, 14 user-task outcomes, and VR-01..VR-10 visual/product rules have mapped evidence.
+- [ ] `.devtool.toml` and Go product metadata consume generated acceptance + qualification state.
+- [ ] Quarantined app-local adb/APK/release helpers are not referenced by `aud_fix_13` or Gate-D orchestration.
+- [ ] Gate D remains OPEN until AUD-FIX-15 executes the complete qualified evidence graph.

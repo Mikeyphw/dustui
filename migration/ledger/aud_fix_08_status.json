@@ -1,0 +1,20 @@
+{
+  "schema": "dustui.aud-fix-status.v1",
+  "overlay": "AUD-FIX-08",
+  "status": "implementation-complete-non-gate",
+  "route_contract": {
+    "semantic_routes": 27,
+    "primary_domains": 6,
+    "layout_route_substitution": false,
+    "android_deep_link_scheme": "dustui",
+    "go_deep_link_translation": true,
+    "typed_entity_failures": true,
+    "saveable_route_identity": true
+  },
+  "retired_production_shell": ["DustDestination", "DustShellNavigation", "ToolsHubScreen"],
+  "system_routes": ["runtime", "modules", "automation", "diagnostics", "certification", "settings"],
+  "gate_d": "open",
+  "validation_authority": "devtool-target-local-jobs",
+  "workflow": "dustui_android#aud_fix_08",
+  "apply_policy": "--no-validate"
+}

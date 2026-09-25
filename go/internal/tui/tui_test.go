@@ -17,11 +17,11 @@ func TestGoTUISmokePreservesRoutesAndResponsiveLayout(t *testing.T) {
 	if len(smoke.Routes) != 6 || len(smoke.InteractiveWorkflows) < 7 || len(smoke.ForwardedCommands) < 9 {
 		t.Fatalf("incomplete smoke: %+v", smoke)
 	}
-	compact, err := Render(shell.RouteClean, 80, shell.StateBlocked)
+	compact, err := Render(shell.RouteCleanRecommended, 80, shell.StateBlocked)
 	if err != nil {
 		t.Fatal(err)
 	}
-	wide, err := Render(shell.RouteClean, 120, shell.StateBlocked)
+	wide, err := Render(shell.RouteCleanRecommended, 120, shell.StateBlocked)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,14 +42,14 @@ func TestAUD_FIX07InteractiveRunLoopRoutesAndDelegatesHostActions(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !result.Quit || result.FinalRoute != shell.RouteSystem || result.ForwardedCount != 2 {
+	if !result.Quit || result.FinalRoute != shell.RouteSystemRuntime || result.ForwardedCount != 2 {
 		t.Fatalf("unexpected result: %+v", result)
 	}
 	if len(calls) != 2 || calls[0][0] != "search" || calls[1][0] != "diagnostics" {
 		t.Fatalf("host delegation mismatch: %#v", calls)
 	}
 	text := output.String()
-	for _, want := range []string{"DustUI Go TUI", "[files · wide]", "[system · wide]", `"command":"search"`, `"command":"diagnostics"`} {
+	for _, want := range []string{"DustUI Go TUI", "[files/explorer · wide]", "[system/runtime · wide]", `"command":"search"`, `"command":"diagnostics"`} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("output missing %q:\n%s", want, text)
 		}

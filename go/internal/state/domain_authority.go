@@ -66,7 +66,7 @@ func (s *SQLiteStore) DomainAuthority(ctx context.Context, req authority.Request
 	case "residue":
 		data = insights["residue"]
 	case "cleanup-intelligence":
-		data = map[string]any{"advanced": insights["advanced"], "snapshotDelta": insights["snapshotDelta"]}
+		data = map[string]any{"advanced": insights["advanced"], "snapshotDelta": insights["snapshotDelta"], "overview": insights["overview"]}
 	case "recommendations":
 		data = insights["recommendations"]
 	case "growth":
@@ -113,8 +113,21 @@ func (s *SQLiteStore) PersistVerificationReport(ctx context.Context, report Veri
 	if err != nil {
 		return err
 	}
-	_, err = s.db.ExecContext(ctx, `INSERT OR REPLACE INTO android_cleanup_verification_reports(operation_id,scan_id,generation,report_json,verification_attempts,updated_at_ms) VALUES(?,?,?,?,?,?)`, report.OperationID, report.ScanID, generation, string(raw), report.VerificationAttempts, time.Now().UnixMilli())
-	return err
+	now := time.Now().UnixMilli()
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if _, err = tx.ExecContext(ctx, `INSERT OR REPLACE INTO android_cleanup_verification_reports(operation_id,scan_id,generation,report_json,verification_attempts,updated_at_ms) VALUES(?,?,?,?,?,?)`, report.OperationID, report.ScanID, generation, string(raw), report.VerificationAttempts, now); err != nil {
+		return err
+	}
+	// Activity owns deletion evidence in the product IA. Keep the durable run envelope
+	// synchronized with the complete verification report rather than a summary-only stub.
+	if _, err = tx.ExecContext(ctx, `UPDATE activity_runs SET verification_json=?,updated_at_ms=? WHERE operation_id=?`, string(raw), now, report.OperationID); err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 func (s *SQLiteStore) VerificationReport(ctx context.Context, operationID string) (*VerificationReport, int64, error) {
 	var raw string

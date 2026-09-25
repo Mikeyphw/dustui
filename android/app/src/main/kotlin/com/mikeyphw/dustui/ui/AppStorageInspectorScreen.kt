@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mikeyphw.dustui.data.AppStorageBucket
 import com.mikeyphw.dustui.data.AppStorageBucketKind
+import com.mikeyphw.dustui.data.AppStorageEvidenceState
 import com.mikeyphw.dustui.data.AppStorageInspectorAnalysis
 import com.mikeyphw.dustui.data.AppStorageInspectorPage
 import com.mikeyphw.dustui.data.AppStoragePackageReport
@@ -67,6 +68,17 @@ fun AppStorageInspectorScreen(
                 subtitle = "Package-centered APK, internal data, cache, OBB, media, logs, exports, duplicates, residue, and recent growth.",
             )
         }
+        analysis?.let { snapshot ->
+            val partial = snapshot.packages.count { it.evidenceState == AppStorageEvidenceState.PARTIAL }
+            val unavailable = snapshot.packages.count { it.evidenceState in setOf(AppStorageEvidenceState.UNAVAILABLE, AppStorageEvidenceState.BLOCKED) }
+            if (partial > 0 || unavailable > 0) item {
+                DustStatusNotice(
+                    title = "Package evidence is not uniformly complete",
+                    detail = "$partial partial · $unavailable unavailable/blocked package record(s). Filesystem bytes below are measured scan evidence; missing Android package/storage evidence stays unknown and is never rendered as a zero-valued bucket.",
+                    tone = DustNoticeTone.Warning,
+                )
+            }
+        }
         if (scanDataStale) item {
             Card(Modifier.fillMaxWidth()) {
                 Text(
@@ -102,7 +114,7 @@ fun AppStorageInspectorScreen(
                             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text(candidate.appLabel, fontWeight = if (candidate.packageName == report?.packageName) FontWeight.Bold else FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 PathText(candidate.packageName, Modifier.fillMaxWidth(), maxLines = 2)
-                                Text("${formatBytes(candidate.totalBytes)} · ${if (candidate.installed) "installed" else "not installed"}", style = MaterialTheme.typography.labelMedium)
+                                Text("${formatBytes(candidate.totalBytes)} measured · ${if (candidate.installed) "installed" else "not installed"} · evidence ${candidate.evidenceState.name.lowercase()}", style = MaterialTheme.typography.labelMedium)
                                 if (candidate.recentGrowthBytes != 0L) Text("Change ${signedBytes(candidate.recentGrowthBytes)}", style = MaterialTheme.typography.labelSmall)
                             }
                         }
@@ -175,25 +187,27 @@ private fun AppPackageSummary(report: AppStoragePackageReport, vm: MainViewModel
                 StatusPill("evidence ${report.evidenceState.name.lowercase()}", danger = report.evidenceState.name in setOf("UNAVAILABLE", "BLOCKED"))
                 if (report.recommendationsIgnored) StatusPill("recommendations ignored")
             }
-            if (report.evidenceState != com.mikeyphw.dustui.data.AppStorageEvidenceState.SUPPORTED) {
-                Text(
-                    report.evidenceReasons.joinToString(" · ").ifBlank { "Some package/storage evidence is unavailable; measured scan bytes remain distinct from unknown platform evidence." },
-                    style = MaterialTheme.typography.bodySmall,
+            if (report.evidenceState != AppStorageEvidenceState.SUPPORTED) {
+                DustStatusNotice(
+                    title = "${report.evidenceState.name.lowercase().replaceFirstChar { it.uppercase() }} package evidence",
+                    detail = report.evidenceReasons.joinToString(" · ").ifBlank { "Some Android package/storage fields are unknown. Measured filesystem bytes remain usable, but unknown evidence is not equivalent to zero." },
+                    tone = if (report.evidenceState == AppStorageEvidenceState.PARTIAL) DustNoticeTone.Warning else DustNoticeTone.Error,
                 )
             }
             MetricGrid(listOf(
-                "Measured total" to formatBytes(report.totalBytes),
+                "Measured scan total" to formatBytes(report.totalBytes),
+                "Platform byte evidence" to if (report.evidenceState == AppStorageEvidenceState.SUPPORTED) "Supported" else "Unknown / ${report.evidenceState.name.lowercase()}",
                 "Recent change" to signedBytes(report.recentGrowthBytes),
-                "Base APK" to formatBytes(report.baseApkBytes),
-                "Split APKs" to formatBytes(report.splitApkBytes),
-                "Native / other code" to formatBytes(report.nativeAndOtherCodeBytes),
-                "Private state" to formatBytes(report.privateStateBytes),
-                "Cache" to formatBytes(report.cacheBytes),
-                "Code cache" to formatBytes(report.codeCacheBytes),
-                "OBB" to formatBytes(report.obbBytes),
-                "Shared media" to formatBytes(report.sharedMediaBytes),
-                "Logs" to formatBytes(report.logBytes),
-                "Exports / backups" to formatBytes(report.exportBackupBytes),
+                "Measured base APK" to formatBytes(report.baseApkBytes),
+                "Measured split APKs" to formatBytes(report.splitApkBytes),
+                "Measured native / other code" to formatBytes(report.nativeAndOtherCodeBytes),
+                "Measured private state" to formatBytes(report.privateStateBytes),
+                "Measured cache" to formatBytes(report.cacheBytes),
+                "Measured code cache" to formatBytes(report.codeCacheBytes),
+                "Measured OBB" to formatBytes(report.obbBytes),
+                "Measured shared media" to formatBytes(report.sharedMediaBytes),
+                "Measured logs" to formatBytes(report.logBytes),
+                "Measured exports / backups" to formatBytes(report.exportBackupBytes),
                 "Verified duplicates" to formatBytes(report.duplicateBytes),
                 "Residue" to formatBytes(report.residueBytes),
             ))

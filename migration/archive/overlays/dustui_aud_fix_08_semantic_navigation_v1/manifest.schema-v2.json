@@ -1,0 +1,35 @@
+{
+  "artifact": "dustui_aud_fix_08_semantic_navigation_v1.zip",
+  "gap_families": [
+    "AUD-005",
+    "AUD-006",
+    "AUD-018"
+  ],
+  "phases": [
+    "AUD-FIX-08"
+  ],
+  "purpose": "Stable semantic route tree, deep links, route/entity restoration, layout-independent meaning, and System decomposition; Gate D remains open.",
+  "schema": "devtool.overlay.schema-v2",
+  "source_state": {
+    "baseline_overlay": "dustui_aud_fix_07_go_host_cutover_v1.zip",
+    "gate_r1": "passed-by-user",
+    "live_snapshot": "dustui-20260925-004927-165045.tar.gz",
+    "requires_overlays": [
+      "AUD-FIX-01",
+      "AUD-FIX-02",
+      "AUD-FIX-03",
+      "AUD-FIX-04",
+      "AUD-FIX-05",
+      "AUD-FIX-06",
+      "AUD-FIX-07"
+    ]
+  },
+  "target": "dustui_android",
+  "validation": {
+    "apply": "--no-validate",
+    "full_validate_on_apply": false,
+    "gate": false,
+    "gate_d_must_remain": "open",
+    "workflow": "aud_fix_08"
+  }
+}

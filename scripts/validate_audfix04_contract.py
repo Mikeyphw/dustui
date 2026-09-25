@@ -35,9 +35,9 @@ def check_source() -> list[dict[str, str]]:
     worker = text("android/app/src/main/kotlin/com/mikeyphw/dustui/scan/ScheduledScanWorker.kt")
     tasker = text("android/app/src/main/kotlin/com/mikeyphw/dustui/tasker/DustTaskerReceiver.kt")
     android_test = text("android/app/src/test/kotlin/com/mikeyphw/dustui/automation/AudFix04AutomationContractTest.kt")
-    root_diag_test = text("android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootDiagnosticsSourceContractTest.kt")
-    ov01_test = text("android/app/src/test/kotlin/com/mikeyphw/dustui/migration/Ov01MigrationContractTest.kt")
-    root_diag_validator = text("android/scripts/validate-root-scan-diagnostics.py")
+    lifecycle_path = ROOT / "migration/acceptance/v1/validator_lifecycle.json"
+    lifecycle = json.loads(lifecycle_path.read_text()) if lifecycle_path.is_file() else {}
+    lifecycle_by_path = {e.get("path"): e for e in lifecycle.get("validators", []) if isinstance(e, dict)}
 
     # Durable authority and same-operation identity.
     for token in [
@@ -141,13 +141,19 @@ def check_source() -> list[dict[str, str]]:
     require(f, "AudFix04AutomationContractTest" in android_test and "activityRuns" in android_test,
             "AUD011_ANDROID_CONTRACT_TEST", "Android WorkManager/Tasker/Activity contract fixture missing")
 
-    # Same-overlay source/token guard retirement.
-    require(f, "STATUS_LAUNCHED_NOT_TERMINAL" in ov01_test and "assertFalse" in ov01_test,
-            "AUD016_OV01_SUCCESSOR_GUARD", "OV01 predecessor test was not rewritten to reject launch-success semantics")
-    require(f, 'RESULT_STATUS to \\"accepted\\"' in root_diag_test or 'RESULT_STATUS to "accepted"' in root_diag_test,
-            "AUD016_TASKER_SUCCESSOR_GUARD", "root diagnostics test no longer checks predecessor Tasker admission semantics")
-    require(f, 'reject(tasker, \'RESULT_STATUS to "accepted"\'' in root_diag_validator,
-            "AUD016_VALIDATOR_SUCCESSOR_GUARD", "root diagnostics validator still lacks successor rejection of Tasker accepted-as-success")
+    # AUD-FIX-13 lifecycle successorization: predecessor source-token guards are archived,
+    # and this leaf consumes their exact behavioral successor map instead of requiring them live.
+    ov01_entry = lifecycle_by_path.get("android/app/src/test/kotlin/com/mikeyphw/dustui/migration/Ov01MigrationContractTest.kt", {})
+    root_diag_entry = lifecycle_by_path.get("android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootDiagnosticsSourceContractTest.kt", {})
+    require(f, ov01_entry.get("status") == "archived-historical" and
+            {"workflow:aud_fix_07", "file:migration/qualification/v1/current_state.json", "file:go/internal/product/product_test.go"}.issubset(set(ov01_entry.get("successor_evidence", []))),
+            "AUD016_OV01_SUCCESSOR_GUARD", "OV01 predecessor guard is not archived with exact host-cutover/qualification successors")
+    require(f, root_diag_entry.get("status") == "archived-historical" and
+            {"file:android/app/src/test/kotlin/com/mikeyphw/dustui/scan/ScanDiagnosticsTest.kt", "workflow:aud_fix_11", "gate:rooted_arm64_runtime"}.issubset(set(root_diag_entry.get("successor_evidence", []))),
+            "AUD016_TASKER_SUCCESSOR_GUARD", "root diagnostics predecessor guard is not archived with exact diagnostics/runtime successors")
+    require(f, not (ROOT / "android/scripts/validate-root-scan-diagnostics.py").exists() and
+            (ROOT / "migration/archive/validators/aud_fix_13_pre_gate_d/android/scripts/validate-root-scan-diagnostics.py").is_file(),
+            "AUD016_VALIDATOR_SUCCESSOR_GUARD", "retired root diagnostics source-token validator is still live or lacks an archive copy")
 
     # Gate D must remain open.
     q = ROOT / "migration/qualification/v1/current_state.json"

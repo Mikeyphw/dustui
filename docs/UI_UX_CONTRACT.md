@@ -55,3 +55,34 @@ The following tests are part of this contract:
 - ASCII usage bar coverage.
 
 If a new feature changes these expectations, update this document first, then update the tests to encode the new contract.
+
+## AUD-FIX-08 semantic navigation
+
+Navigation identity is semantic and layout-independent. DustUI exposes 27 stable routes grouped under Overview, Files, Clean, Apps, Activity, and System. Compact layouts use a bottom bar and wide layouts use a rail, but both navigate the same route objects; there is no phone/tablet destination substitution.
+
+Entity detail is part of route identity (`files/item/{path}`, `apps/package/{packageName}`, `activity/run/{operationId}`, `activity/evidence/{operationId}`, cleanup candidate/review identities). Missing or stale entity evidence must render a typed problem state instead of silently changing destination. `dustui://` links use the same route keys and are restored through saveable route/entity/generation state.
+
+System is not a generic Tools catch-all: runtime, modules, automation, diagnostics, certification, and settings are separate semantic routes. Scan is a global workflow action rather than a peer route.
+
+## AUD-FIX-09 bound async/state contract
+
+Content routes use a full semantic request binding (`routeKey`, generation, entity kind/id, request ID, optional fingerprint) and the common Loading / Empty / Blocked / Error / Content presentation model. `Blocked` is not an alias for Empty. Risky actions display Go-owned reason codes/messages/remediation actions rather than maintaining a second Android gate policy.
+
+## AUD-FIX-10 — Scan / Overview / Apps truth
+- Scan launch is a mandatory `ChooseScope → Preflight → Review → explicit Start` protocol; presets and targeted rescans cannot bypass it.
+- Overview exposes scan identity, generation, integrity/freshness, durable operation/activity state, warnings/problems, and separate logical versus allocated bytes. Evidence review routes to Diagnostics.
+- Apps labels filesystem totals as measured scan evidence and separately renders package evidence as supported, partial, unavailable, or blocked. Unknown platform evidence is not zero.
+- Root, preflight, wrong-scope, integrity, freshness, and unsupported-evidence remediation comes from typed Go action gates.
+
+
+
+## AUD-FIX-11 Activity and Diagnostics
+Activity is the durable operation history/recovery surface, including cleanup verification evidence and typed Go action gates. System → Diagnostics is the ProblemGraph-backed explanatory surface. Operation correlation is addressable in both directions by semantic Activity route identity. Raw event/probe/debug data is Advanced-only.
+
+## AUD-FIX-12 adaptive layout successor
+
+Phone/tablet differences are chrome and density only. The current semantic route/entity remains authoritative through compact, medium, expanded, rotation, and recreation transitions. Files, Clean, Apps, Activity, and System may expose route-driven supporting/master panes; those panes cannot introduce layout-local destination identity. Accessibility traversal and chart/treemap textual equivalents are part of the same successor contract.
+
+## AUD-FIX-13 acceptance authority
+
+Live UI acceptance is requirement-index-driven through `migration/acceptance/v1/ui_acceptance_matrix.json` and generated `migration/acceptance/v1/current_state.json`. The semantic route tree, route-bound state/action gates, scan/Overview/Apps truth, Activity/Diagnostics, and adaptive/accessibility contracts are the successor evidence. Historical source-token UI validators are archived and non-authoritative. Gate D remains open.

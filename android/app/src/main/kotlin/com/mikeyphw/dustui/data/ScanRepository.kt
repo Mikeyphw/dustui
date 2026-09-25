@@ -98,6 +98,9 @@ class ScanRepository(
     suspend fun activityRun(operationId: String): ActivityRun =
         GoAutomationAdapter(context, domainStore).use { it.activityDetail(operationId) }
 
+    suspend fun activityEvidence(operationId: String): ActivityEvidence =
+        GoAutomationAdapter(context, domainStore).use { it.activityEvidence(operationId) }
+
     suspend fun cancelActivityRun(operationId: String): Boolean {
         val run = activityRun(operationId)
         return when (run.kind) {
@@ -177,6 +180,9 @@ class ScanRepository(
 
     fun inspect(path: String): EntryIntelligence = intelligence.resolve(path)
     suspend fun inspectRootPath(path: String): RootPathInspection = rootClient.inspectPath(path)
+
+    suspend fun overviewStorageSemantics(scanId: String): OverviewStorageSemantics =
+        GoProductAuthorityMapper.overviewStorage(authorityData(scanId, "cleanup-intelligence", true).getJSONObject("overview"))
 
     suspend fun snapshotDelta(): SnapshotDelta? {
         val current = domainStore.completedSessions(1).firstOrNull() ?: return null
@@ -446,6 +452,10 @@ class ScanRepository(
 
     @Suppress("DEPRECATION")
     private fun packageVersionCode(info: PackageInfo): Long = if (Build.VERSION.SDK_INT >= 28) info.longVersionCode else info.versionCode.toLong()
+
+    suspend fun uiActionGate(payload: JSONObject): JSONObject = domainStore.uiActionGate(payload)
+
+    suspend fun uiScreenState(generation: Long, payload: JSONObject): JSONObject = domainStore.uiScreenState(generation, payload)
 
     suspend fun rootSearch(scanId: String, request: RootFileSearchRequest): RootFileSearchPage =
         domainStore.rootSearch(scanId, request)
@@ -1130,14 +1140,7 @@ class ScanRepository(
         val problems = buildList {
             for (i in 0 until problemsJson.length()) {
                 val value = problemsJson.optJSONObject(i) ?: continue
-                val actionsJson = value.optJSONArray("remediationActions") ?: JSONArray()
-                val actions = buildList {
-                    for (j in 0 until actionsJson.length()) {
-                        val action = actionsJson.optJSONObject(j) ?: continue
-                        add(DiagnosticRemediationAction(action.optString("code"), action.optString("label"), action.optString("route").ifBlank { null }, action.optBoolean("destructive")))
-                    }
-                }
-                add(DiagnosticProblem(value.optString("id"), value.optString("reason"), value.optBoolean("recoveryRequired"), value.optString("operationId").ifBlank { null }, value.optString("rootCauseId").ifBlank { null }, value.optString("guidance"), value.optString("risk"), actions))
+                add(value.toDiagnosticProblem())
             }
         }
         return DiagnosticsAuthoritySnapshot(

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import argparse, json, re, subprocess, sys
+import argparse, json, re, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -10,10 +10,11 @@ from audfix01_core import (  # noqa:E402
     REQUIRED_GATE_D_NODES, independent_gate_claims, load_json,
     predecessor_ui_authority_paths, repository_observations,
 )
+from audfix13_acceptance import lifecycle_failures, ui_matrix_failures, metadata_failures, docs_failures, evaluate_counterexample  # noqa:E402
 
 
-def finding(fid: str, detail: str, family: str, blocking_fix01: bool=False):
-    return {'id': fid, 'family': family, 'detail': detail, 'blocks_aud_fix_01': blocking_fix01}
+def finding(fid: str, detail: str, family: str, blocking_fix01: bool=False, blocking_fix13: bool=False):
+    return {'id': fid, 'family': family, 'detail': detail, 'blocks_aud_fix_01': blocking_fix01, 'blocks_aud_fix_13': blocking_fix13}
 
 
 def route_names() -> set[str]:
@@ -68,7 +69,7 @@ def evaluate() -> list[dict]:
     if obs['legacy_python_textual_present']:
         out.append(finding('LATER-PYTHON-TEXTUAL','legacy Python/Textual remains','AUD-003'))
     if obs['room_artifacts_present'] or obs['ndjson_lifecycle_present']:
-        out.append(finding('LATER-ROOM-NDJSON','legacy Room/NDJSON remains','AUD-004'))
+        out.append(finding('LATER-ROOM-NDJSON','legacy Room/NDJSON remains','AUD-014'))
     names=route_names()
     required_top={'Overview','Files','Clean','Apps','Activity','System'}
     if not required_top.issubset(names):
@@ -80,18 +81,38 @@ def evaluate() -> list[dict]:
     hist=['historical_gate_a_exo','historical_gate_b_exo_arm64','historical_gate_c_exo']
     if any(nodes.get(x,{}).get('status')!='pass' for x in hist):
         out.append(finding('LATER-HISTORICAL-EXO','Gate A/B/C EXO evidence not qualified','AUD-020'))
+    for detail in lifecycle_failures(ROOT):
+        out.append(finding('AF13-VALIDATOR-LIFECYCLE',detail,'AUD-016',blocking_fix13=True))
+    for detail in ui_matrix_failures(ROOT):
+        out.append(finding('AF13-UI-ACCEPTANCE',detail,'UIX-009',blocking_fix13=True))
+    for detail in metadata_failures(ROOT):
+        out.append(finding('AF13-METADATA',detail,'AUD-017',blocking_fix13=True))
+    for detail in docs_failures(ROOT):
+        out.append(finding('AF13-DOC-AUTHORITY',detail,'AUD-023',blocking_fix13=True))
+    fixture_path=ROOT/'migration/acceptance/v1/fixtures/counterexamples.json'
+    if not fixture_path.is_file():
+        out.append(finding('AF13-COUNTEREXAMPLES','counterexample fixture missing','AUD-021',blocking_fix13=True))
+    else:
+        fixture=load_json(fixture_path)
+        for case in fixture.get('cases',[]):
+            detected=set(evaluate_counterexample(case)); expected=set(case.get('expected_failures',[]))
+            if detected != expected:
+                out.append(finding('AF13-COUNTEREXAMPLES',f"{case.get('id')}: detected={sorted(detected)} expected={sorted(expected)}",'AUD-021',blocking_fix13=True))
     return out
 
 
 def main():
-    ap=argparse.ArgumentParser(); ap.add_argument('--scope',default='all',choices=['all','AUD-FIX-01']); ap.add_argument('--json',action='store_true')
+    ap=argparse.ArgumentParser(); ap.add_argument('--scope',default='all',choices=['all','AUD-FIX-01','AUD-FIX-13']); ap.add_argument('--json',action='store_true')
     args=ap.parse_args(); findings=evaluate()
     blocking=[x for x in findings if x['blocks_aud_fix_01']]
-    payload={'schema':'dustui.full-roadmap-conformance.v2','scope':args.scope,'aud_fix_01_blockers':blocking,'findings':findings}
+    blocking13=[x for x in findings if x.get('blocks_aud_fix_13')]
+    payload={'schema':'dustui.full-roadmap-conformance.v3','scope':args.scope,'aud_fix_01_blockers':blocking,'aud_fix_13_blockers':blocking13,'findings':findings}
     if args.json: print(json.dumps(payload,indent=2))
     else:
         print(f"FULL ROADMAP CONFORMANCE [{args.scope}]")
         for x in findings: print(f"- {x['id']} [{x['family']}]: {x['detail']}")
         print(f"AUD-FIX-01 blockers: {len(blocking)}")
-    return 1 if (blocking if args.scope=='AUD-FIX-01' else findings) else 0
+        print(f"AUD-FIX-13 blockers: {len(blocking13)}")
+    selected = blocking if args.scope=='AUD-FIX-01' else (blocking13 if args.scope=='AUD-FIX-13' else findings)
+    return 1 if selected else 0
 if __name__=='__main__': raise SystemExit(main())

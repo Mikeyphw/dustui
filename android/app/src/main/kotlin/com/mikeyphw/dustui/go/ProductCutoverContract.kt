@@ -19,7 +19,7 @@ object ProductCutoverContract {
     const val TargetLegacyKotlinDomainRetired: Boolean = true
     val Routes: List<String> = listOf("overview", "files", "clean", "apps", "activity", "system")
     val RequiredStates: Set<String> = setOf("loading", "empty", "blocked", "error", "content")
-    val RequiredActionGates: Set<String> = setOf("allowed", "blocked", "needs_fresh_scan", "needs_capability")
+    val RequiredActionGateFields: Set<String> = setOf("allowed", "reasonCode", "message", "remediationActions")
 }
 
 data class ProductRouteContract(
@@ -27,13 +27,13 @@ data class ProductRouteContract(
     val layoutClass: String,
     val semanticIdentity: String = route,
     val state: String,
-    val actionGate: String,
+    val actionGateReasonCode: String,
     val targetSourceOfTruth: String = ProductCutoverContract.TargetGoRuntimeAuthority,
 ) {
     init {
         require(route in ProductCutoverContract.Routes) { "unknown route: $route" }
         require(state in ProductCutoverContract.RequiredStates) { "unknown state: $state" }
-        require(actionGate in ProductCutoverContract.RequiredActionGates) { "unknown action gate: $actionGate" }
+        require(actionGateReasonCode.isNotBlank()) { "action gate reason code is required" }
         require(semanticIdentity == route) { "layout must not change semantic route identity" }
     }
 }
@@ -41,8 +41,8 @@ data class ProductRouteContract(
 object ProductRouteFixtures {
     fun phoneAndTabletFixtures(): List<ProductRouteContract> = ProductCutoverContract.Routes.flatMap { route ->
         listOf(
-            ProductRouteContract(route = route, layoutClass = "phone", state = "content", actionGate = "allowed"),
-            ProductRouteContract(route = route, layoutClass = "tablet", state = "content", actionGate = "allowed"),
+            ProductRouteContract(route = route, layoutClass = "phone", state = "content", actionGateReasonCode = "allowed"),
+            ProductRouteContract(route = route, layoutClass = "tablet", state = "content", actionGateReasonCode = "allowed"),
         )
     }
 }

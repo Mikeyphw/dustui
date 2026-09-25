@@ -1,0 +1,27 @@
+{
+  "schema_version": 2,
+  "artifact": "dustui_aud_fix_12_adaptive_route_continuity_v1.zip",
+  "target": "dustui_android",
+  "phases": [
+    "AUD-FIX-12"
+  ],
+  "gap_families": [
+    "UIX-008",
+    "AUD-016"
+  ],
+  "purpose": "Converge adaptive tablet/master-detail UX, semantic route continuity, focus traversal, and visual-data accessibility equivalents.",
+  "source_state": {
+    "requires": [
+      "AUD-FIX-01 through AUD-FIX-11 applied",
+      "AUD-FIX-06 Authority Convergence Gate R1 passed"
+    ],
+    "baseline": "post-AUD-FIX-11 clean replay"
+  },
+  "validation": {
+    "apply": "--no-validate",
+    "gate": false,
+    "workflow": "dustui_android#aud_fix_12",
+    "connected_device_workflow": "dustui_android#aud_fix_12_device",
+    "gate_d_must_remain": "open"
+  }
+}

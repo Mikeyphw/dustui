@@ -1,4 +1,6 @@
 {
+  "acceptance_note": "AUD-FIX-13 candidate acceptance convergence is evidence-derived and is not Gate D qualification.",
+  "acceptance_state_source": "migration/acceptance/v1/current_state.json",
   "android_buildability": "mandatory",
   "artifact": "dustui_go_ov13_cli_android_cutover_gateD_v1.zip",
   "gate": "Gate D",

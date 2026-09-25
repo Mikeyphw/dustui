@@ -86,6 +86,7 @@ abi_policy = "arm64-v8a production first; x86_64 is test-only until a matching G
 release_authority = "devtool"
 qualification_state_source = "migration/qualification/v1/current_state.json"
 qualification_evidence_source = "migration/qualification/v1/gate_d_evidence.json"
+acceptance_state_source = "migration/acceptance/v1/current_state.json"
 android_domain_authority = "go-process+go-sqlite"
 legacy_room_authority = false
 go_sqlite_implementation = true
@@ -102,6 +103,7 @@ target_production_authority = true
 migration_phase = "OV13"
 readiness_only = false
 target_product_default = true
+target_product_default_scope = "host-cli-tui-only"
 target_go_cli_default = true
 target_go_tui_default = true
 host_authority_default = true
@@ -136,6 +138,7 @@ android_runtime_packaging = "arm64-v8a-only"
 shell_scaffold = true
 qualification_state_source = "migration/qualification/v1/current_state.json"
 qualification_evidence_source = "migration/qualification/v1/gate_d_evidence.json"
+acceptance_state_source = "migration/acceptance/v1/current_state.json"
 android_domain_authority = "go-process+go-sqlite"
 legacy_room_authority = false
 go_sqlite_implementation = true
@@ -293,6 +296,117 @@ inputs = ["scripts/validate_audfix07_contract.py", "go/internal/product", "go/in
 [targets.dustui_android.jobs.audfix07_product_identity.metadata]
 read_only = true
 
+
+[targets.dustui_android.jobs.audfix08_android_contract]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix08_contract.py"]
+inputs = ["scripts/validate_audfix08_contract.py", "android/app/src/main", "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustSemanticNavigationTest.kt", "go/internal/shell", ".devtool.toml", "migration/contracts/v2/aud_fix_08_semantic_navigation.md"]
+[targets.dustui_android.jobs.audfix08_android_contract.metadata]
+read_only = true
+
+
+[targets.dustui_android.jobs.audfix09_async_state_contract]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix09_contract.py"]
+inputs = ["scripts/validate_audfix09_contract.py", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui", "android/app/src/main/kotlin/com/mikeyphw/dustui/go/ProductCutoverContract.kt", "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/shell/DustRouteAsyncProtocolTest.kt", "go/internal/shell", "go/cmd/dustui-go/runtime_domain.go", ".devtool.toml", "migration/contracts/v2/aud_fix_09_async_state_and_action_gates.md"]
+[targets.dustui_android.jobs.audfix09_async_state_contract.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.audfix10_ux_truth_contract]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix10_contract.py"]
+inputs = ["scripts/validate_audfix10_contract.py", "android/app/src/main", "android/app/src/test/kotlin/com/mikeyphw/dustui/scan", "android/app/src/test/kotlin/com/mikeyphw/dustui/data/OverviewAndAppsTruthTest.kt", "go/internal/shell", "go/internal/state", ".devtool.toml", "migration/contracts/v2/aud_fix_10_scan_overview_apps_truth.md"]
+[targets.dustui_android.jobs.audfix10_ux_truth_contract.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.activity_ui_contract]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix11_contract.py", "--section", "activity"]
+inputs = ["scripts/validate_audfix11_contract.py", "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ActivityModels.kt", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt", "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ActivityDiagnosticsProductUxTest.kt"]
+[targets.dustui_android.jobs.activity_ui_contract.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.diagnostics_ui_contract]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix11_contract.py", "--section", "diagnostics"]
+inputs = ["scripts/validate_audfix11_contract.py", "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DiagnosticsAuthorityModels.kt", "android/app/src/main/kotlin/com/mikeyphw/dustui/go/DiagnosticsEvidenceContract.kt", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt", "android/scripts/validate-debug-workbench-contract.py"]
+[targets.dustui_android.jobs.diagnostics_ui_contract.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.operation_evidence_navigation]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix11_contract.py", "--section", "navigation"]
+inputs = ["scripts/validate_audfix11_contract.py", "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ActivityDiagnosticsProductUxTest.kt", "go/internal/state/activity_product.go", "go/internal/state/diagnostics_authority.go", "go/internal/state/domain_authority.go", "go/internal/state/audfix11_activity_diagnostics_test.go", "go/cmd/dustui-go/runtime_domain.go"]
+[targets.dustui_android.jobs.operation_evidence_navigation.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.audfix12_adaptive_layout]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix12_contract.py", "--section", "adaptive"]
+inputs = ["scripts/validate_audfix12_contract.py", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustAdaptiveLayout.kt", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustAdaptivePane.kt", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt", "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustAdaptiveLayoutTest.kt"]
+[targets.dustui_android.jobs.audfix12_adaptive_layout.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.audfix12_route_continuity]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix12_contract.py", "--section", "continuity"]
+inputs = ["scripts/validate_audfix12_contract.py", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustAdaptiveLayout.kt", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustSemanticNavigation.kt", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt", "android/app/src/androidTest/kotlin/com/mikeyphw/dustui/ui/AdaptiveRouteContinuityInstrumentedTest.kt", ".devtool.toml"]
+[targets.dustui_android.jobs.audfix12_route_continuity.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.audfix12_accessibility]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix12_contract.py", "--section", "accessibility"]
+inputs = ["scripts/validate_audfix12_contract.py", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustAdaptiveLayout.kt", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustAdaptivePane.kt", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/StorageCharts.kt", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/Treemap.kt", "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt", "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustAdaptiveLayoutTest.kt"]
+[targets.dustui_android.jobs.audfix12_accessibility.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.android_adaptive_device]
+gradle_tasks = [":app:connectedDebugAndroidTest"]
+inputs = ["app/src/main", "app/src/androidTest/kotlin/com/mikeyphw/dustui/ui/AdaptiveRouteContinuityInstrumentedTest.kt", "build.gradle.kts", "settings.gradle.kts", "../migration"]
+outputs = ["app/build/outputs/androidTest-results", "app/build/reports/androidTests"]
+
+[targets.dustui_android.jobs.acceptance_inventory]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix13_contract.py", "--section", "inventory"]
+inputs = ["scripts/audfix13_acceptance.py", "scripts/validate_audfix13_contract.py", "migration/acceptance/v1/validator_lifecycle.json", "android/app/src/test/kotlin", "migration/archive/validators/aud_fix_13_pre_gate_d"]
+[targets.dustui_android.jobs.acceptance_inventory.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.successor_validator_contract]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix13_contract.py", "--section", "validators"]
+inputs = ["scripts/validate_audfix13_contract.py", "scripts/validate_ov13_contract.py", "scripts/validate_ov14_contract.py", "android/scripts/validate-debug-workbench-contract.py", "android/scripts/validate-modern-dark-portrait-ui.py", "migration/acceptance/v1"]
+[targets.dustui_android.jobs.successor_validator_contract.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.evidence_metadata_truth]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix13_contract.py", "--section", "metadata"]
+inputs = ["scripts/validate_audfix13_contract.py", "scripts/refresh_acceptance_state.py", "migration/acceptance/v1/current_state.json", "migration/qualification/v1/current_state.json", ".devtool.toml", "go/internal/qualification", "go/internal/product"]
+[targets.dustui_android.jobs.evidence_metadata_truth.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.pre_gate_d_conformance]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_full_roadmap_conformance.py", "--scope", "AUD-FIX-13"]
+inputs = ["scripts/validate_audfix13_contract.py", "scripts/validate_full_roadmap_conformance.py", "migration/acceptance/v1", "migration/requirements/v2", "migration/qualification/v1", "README.md", "RELEASE_CHECKLIST.md", "UI_UX_CONTRACT.md", "VALIDATION.md"]
+[targets.dustui_android.jobs.pre_gate_d_conformance.metadata]
+read_only = true
+
 [targets.dustui_android.jobs.qualification_state]
 runner = "command"
 root = ".."
@@ -346,6 +460,53 @@ aud_fix_07 = [
   { id = "regression", ref = "target:dustui_go#aud_fix_regression", depends_on = ["go07"] },
   { id = "truth", ref = "job:qualification_state", depends_on = ["host", "identity", "regression"] },
 ]
+
+aud_fix_08 = [
+  { id = "contract", ref = "job:audfix08_android_contract", depends_on = [] },
+  { id = "go08", ref = "target:dustui_go#aud_fix_08", depends_on = [] },
+  { id = "unit", ref = "job:android_unit", depends_on = ["contract", "go08"] },
+  { id = "truth", ref = "job:qualification_state", depends_on = ["unit"] },
+]
+
+aud_fix_09 = [
+  { id = "contract", ref = "job:audfix09_async_state_contract", depends_on = [] },
+  { id = "go09", ref = "target:dustui_go#aud_fix_09", depends_on = [] },
+  { id = "unit", ref = "job:android_unit", depends_on = ["contract", "go09"] },
+  { id = "truth", ref = "job:qualification_state", depends_on = ["unit"] },
+]
+aud_fix_10 = [
+  { id = "contract", ref = "job:audfix10_ux_truth_contract", depends_on = [] },
+  { id = "go10", ref = "target:dustui_go#aud_fix_10", depends_on = [] },
+  { id = "unit", ref = "job:android_unit", depends_on = ["contract", "go10"] },
+  { id = "truth", ref = "job:qualification_state", depends_on = ["unit"] },
+]
+aud_fix_11 = [
+  { id = "activity", ref = "job:activity_ui_contract", depends_on = [] },
+  { id = "diagnostics", ref = "job:diagnostics_ui_contract", depends_on = [] },
+  { id = "navigation", ref = "job:operation_evidence_navigation", depends_on = [] },
+  { id = "go11", ref = "target:dustui_go#aud_fix_11", depends_on = [] },
+  { id = "unit", ref = "job:android_unit", depends_on = ["activity", "diagnostics", "navigation", "go11"] },
+  { id = "truth", ref = "job:qualification_state", depends_on = ["unit"] },
+]
+aud_fix_12 = [
+  { id = "adaptive", ref = "job:audfix12_adaptive_layout", depends_on = [] },
+  { id = "continuity", ref = "job:audfix12_route_continuity", depends_on = [] },
+  { id = "accessibility", ref = "job:audfix12_accessibility", depends_on = [] },
+  { id = "unit", ref = "job:android_unit", depends_on = ["adaptive", "continuity", "accessibility"] },
+  { id = "truth", ref = "job:qualification_state", depends_on = ["unit"] },
+]
+aud_fix_12_device = [
+  { id = "contract", ref = "job:audfix12_route_continuity", depends_on = [] },
+  { id = "device", ref = "job:android_adaptive_device", depends_on = ["contract"] },
+]
+aud_fix_13 = [
+  { id = "inventory", ref = "job:acceptance_inventory", depends_on = [] },
+  { id = "validators", ref = "job:successor_validator_contract", depends_on = [] },
+  { id = "metadata", ref = "job:evidence_metadata_truth", depends_on = [] },
+  { id = "go13", ref = "target:dustui_go#aud_fix_13", depends_on = [] },
+  { id = "conformance", ref = "job:pre_gate_d_conformance", depends_on = ["inventory", "validators", "metadata", "go13"] },
+  { id = "truth", ref = "job:qualification_state", depends_on = ["conformance"] },
+]
 authority_gate_r1 = [
   { id = "a01", ref = "job:audfix01_truth", depends_on = [] },
   { id = "a02", ref = "job:audfix02_bounded", depends_on = [] },
@@ -367,8 +528,17 @@ validate = [
   { id = "a05", ref = "job:audfix05_android_contract", depends_on = [] },
   { id = "a07host", ref = "job:audfix07_host_reachability", depends_on = [] },
   { id = "a07identity", ref = "job:audfix07_product_identity", depends_on = [] },
+  { id = "a08", ref = "job:audfix08_android_contract", depends_on = [] },
+  { id = "a09", ref = "job:audfix09_async_state_contract", depends_on = [] },
+  { id = "a10", ref = "job:audfix10_ux_truth_contract", depends_on = [] },
+  { id = "a11activity", ref = "job:activity_ui_contract", depends_on = [] },
+  { id = "a11diagnostics", ref = "job:diagnostics_ui_contract", depends_on = [] },
+  { id = "a11navigation", ref = "job:operation_evidence_navigation", depends_on = [] },
+  { id = "a12adaptive", ref = "job:audfix12_adaptive_layout", depends_on = [] },
+  { id = "a12continuity", ref = "job:audfix12_route_continuity", depends_on = [] },
+  { id = "a12accessibility", ref = "job:audfix12_accessibility", depends_on = [] },
   { id = "go", ref = "target:dustui_go#validate", depends_on = [] },
-  { id = "gradle_contract", ref = "job:gradle_contract", depends_on = ["a01", "a02", "a03", "a04", "a05", "a07host", "a07identity", "go"] },
+  { id = "gradle_contract", ref = "job:gradle_contract", depends_on = ["a01", "a02", "a03", "a04", "a05", "a07host", "a07identity", "a08", "a09", "a10", "a11activity", "a11diagnostics", "a11navigation", "a12adaptive", "a12continuity", "a12accessibility", "go"] },
   { id = "unit", ref = "job:android_unit", depends_on = ["gradle_contract"] },
   { id = "lint", ref = "job:android_lint", depends_on = ["unit"] },
   { id = "assemble", ref = "job:android_assemble", depends_on = ["lint"] },
@@ -433,6 +603,43 @@ command = ["go", "build", "-o", "build/aud-fix-07/dustui-go", "./cmd/dustui-go"]
 inputs = ["."]
 outputs = ["build/aud-fix-07/dustui-go"]
 
+
+[targets.dustui_go.jobs.audfix08_go_routes]
+runner = "command"
+command = ["go", "test", "./internal/shell", "./internal/product", "./internal/tui", "-count=1"]
+inputs = ["internal/shell", "internal/product", "internal/tui", "go.mod", "go.sum"]
+[targets.dustui_go.jobs.audfix08_go_routes.metadata]
+read_only = true
+
+
+[targets.dustui_go.jobs.audfix09_async_protocol]
+runner = "command"
+command = ["go", "test", "./internal/shell", "./internal/product", "./internal/tui", "-count=1"]
+inputs = ["internal/shell", "internal/product", "internal/tui", "cmd/dustui-go/runtime_domain.go", "go.mod", "go.sum"]
+[targets.dustui_go.jobs.audfix09_async_protocol.metadata]
+read_only = true
+
+[targets.dustui_go.jobs.audfix10_ux_truth]
+runner = "command"
+command = ["go", "test", "./internal/shell", "./internal/packageevidence", "./internal/state", "-run", "AUD_FIX10", "-count=1"]
+inputs = ["internal/shell", "internal/packageevidence", "internal/state", "go.mod", "go.sum"]
+[targets.dustui_go.jobs.audfix10_ux_truth.metadata]
+read_only = true
+
+[targets.dustui_go.jobs.audfix11_activity_diagnostics]
+runner = "command"
+command = ["go", "test", "./internal/state", "-run", "AUD_FIX11", "-count=1"]
+inputs = ["internal/state", "internal/diagnostics", "cmd/dustui-go/runtime_domain.go", "go.mod", "go.sum"]
+[targets.dustui_go.jobs.audfix11_activity_diagnostics.metadata]
+read_only = true
+
+[targets.dustui_go.jobs.audfix13_product_metadata]
+runner = "command"
+command = ["go", "test", "./internal/product", "./internal/qualification", "-count=1"]
+inputs = ["internal/product", "internal/qualification", "../migration/acceptance/v1/current_state.json", "../migration/qualification/v1/current_state.json", "go.mod", "go.sum"]
+[targets.dustui_go.jobs.audfix13_product_metadata.metadata]
+read_only = true
+
 [targets.dustui_go.workflows]
 aud_fix_regression = [
   { id = "tests", ref = "job:go_test_all", depends_on = [] },
@@ -450,6 +657,26 @@ aud_fix_07 = [
   { id = "product", ref = "job:product_contract", depends_on = [] },
   { id = "build", ref = "job:audfix07_build", depends_on = ["cli", "tui", "product"] },
 ]
+aud_fix_08 = [
+  { id = "routes", ref = "job:audfix08_go_routes", depends_on = [] },
+  { id = "product", ref = "job:product_contract", depends_on = ["routes"] },
+]
+aud_fix_09 = [
+  { id = "protocol", ref = "job:audfix09_async_protocol", depends_on = [] },
+  { id = "product", ref = "job:product_contract", depends_on = ["protocol"] },
+]
+aud_fix_10 = [
+  { id = "truth", ref = "job:audfix10_ux_truth", depends_on = [] },
+  { id = "product", ref = "job:product_contract", depends_on = ["truth"] },
+]
+aud_fix_11 = [
+  { id = "authority", ref = "job:audfix11_activity_diagnostics", depends_on = [] },
+  { id = "product", ref = "job:product_contract", depends_on = ["authority"] },
+]
+aud_fix_13 = [
+  { id = "metadata", ref = "job:audfix13_product_metadata", depends_on = [] },
+  { id = "product", ref = "job:product_contract", depends_on = ["metadata"] },
+]
 authority_gate_r1 = [
   { id = "tests", ref = "job:go_test_all", depends_on = [] },
   { id = "diagnostics", ref = "job:audfix05_diagnostics_go", depends_on = [] },
@@ -463,12 +690,60 @@ validate = [
   { id = "diagnostics", ref = "job:audfix05_diagnostics_go", depends_on = [] },
   { id = "product", ref = "job:product_contract", depends_on = [] },
   { id = "schema", ref = "job:schema_contract", depends_on = [] },
-  { id = "build", ref = "job:go_build", depends_on = ["tests", "diagnostics", "product", "schema"] },
+  { id = "a08routes", ref = "job:audfix08_go_routes", depends_on = [] },
+  { id = "a09async", ref = "job:audfix09_async_protocol", depends_on = [] },
+  { id = "a10truth", ref = "job:audfix10_ux_truth", depends_on = [] },
+  { id = "a11activity", ref = "job:audfix11_activity_diagnostics", depends_on = [] },
+  { id = "build", ref = "job:go_build", depends_on = ["tests", "diagnostics", "product", "schema", "a08routes", "a09async", "a10truth", "a11activity"] },
 ]
 
 [wrapper]
 schema = 1
-default_command = "aud-fix-07"
+default_command = "aud-fix-13"
+
+
+
+[wrapper.commands.aud-fix-13]
+description = "Run DustUI AUD-FIX-13 pre-Gate-D acceptance convergence and evidence-derived metadata workflow"
+workflow = "aud_fix_13"
+target = "dustui_android"
+aliases = ["acceptance-convergence", "pre-gate-d"]
+
+[wrapper.commands.aud-fix-12]
+description = "Run DustUI AUD-FIX-12 adaptive master/detail, route continuity, and accessibility workflow"
+workflow = "aud_fix_12"
+target = "dustui_android"
+aliases = ["adaptive-layout", "tablet-continuity"]
+
+[wrapper.commands.aud-fix-12-device]
+description = "Run DustUI AUD-FIX-12 connected-device rotation and route-continuity evidence"
+workflow = "aud_fix_12_device"
+target = "dustui_android"
+aliases = ["adaptive-device"]
+
+[wrapper.commands.aud-fix-11]
+description = "Run DustUI AUD-FIX-11 Activity and Diagnostics product UX convergence workflow"
+workflow = "aud_fix_11"
+target = "dustui_android"
+aliases = ["activity-diagnostics", "problem-graph"]
+
+[wrapper.commands.aud-fix-10]
+description = "Run DustUI AUD-FIX-10 scan, Overview, and Apps UX truth convergence workflow"
+workflow = "aud_fix_10"
+target = "dustui_android"
+aliases = ["ux-truth", "scan-review"]
+
+[wrapper.commands.aud-fix-09]
+description = "Run DustUI AUD-FIX-09 bound async state and Go action-gate workflow"
+workflow = "aud_fix_09"
+target = "dustui_android"
+aliases = ["async-state", "route-state"]
+
+[wrapper.commands.aud-fix-08]
+description = "Run DustUI AUD-FIX-08 semantic navigation and deep-link cutover workflow"
+workflow = "aud_fix_08"
+target = "dustui_android"
+aliases = ["semantic-nav", "routes"]
 
 [wrapper.commands.aud-fix-07]
 description = "Run DustUI AUD-FIX-07 Go host cutover and parity workflow"

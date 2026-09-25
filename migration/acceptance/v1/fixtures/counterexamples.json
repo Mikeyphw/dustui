@@ -1,0 +1,14 @@
+{
+  "schema": "dustui.acceptance-counterexamples.v1",
+  "cases": [
+    {"id":"unmapped-source-guard","unmapped_live_source_guard":true,"expected_failures":["unmapped-live-source-guard"]},
+    {"id":"missing-successor","missing_successor_evidence":true,"expected_failures":["missing-exact-successor-evidence"]},
+    {"id":"false-qualified","gate_d_qualified_without_evidence":true,"expected_failures":["false-gate-d-qualified-metadata"]},
+    {"id":"raw-helper-gate","quarantined_helper_in_gate_d":true,"expected_failures":["quarantined-generic-helper-in-gate-d"]},
+    {"id":"ui-matrix-hole","missing_uiux_requirement":true,"expected_failures":["uiux-acceptance-matrix-incomplete"]},
+    {"id":"predecessor-doc","predecessor_doc_authoritative":true,"expected_failures":["predecessor-doc-current-authority"]},
+    {"id":"visual-accessibility","visual_without_text_equivalent":true,"expected_failures":["visual-data-without-text-equivalent"]},
+    {"id":"destructive-context","destructive_action_outside_review":true,"expected_failures":["destructive-action-outside-review-context"]},
+    {"id":"state-collapse","state_collapse":true,"expected_failures":["empty-stale-failed-blocked-collapsed"]}
+  ]
+}

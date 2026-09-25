@@ -1,0 +1,15 @@
+{
+  "schema": "dustui.aud-fix-status.v1",
+  "stage": "AUD-FIX-12",
+  "status": "implemented_pending_native_workflow",
+  "gate_d": "open",
+  "scope": [
+    "adaptive-master-detail",
+    "semantic-route-continuity",
+    "focus-traversal",
+    "visual-text-equivalence"
+  ],
+  "native_workflow": "aud_fix_12",
+  "connected_device_workflow": "aud_fix_12_device",
+  "qualification_claim": false
+}

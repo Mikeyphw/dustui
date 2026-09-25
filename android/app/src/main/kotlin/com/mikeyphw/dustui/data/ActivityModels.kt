@@ -43,7 +43,51 @@ data class ActivityRun(
     val canRetry: Boolean get() = retryGate == "allowed"
     val canCancel: Boolean get() = cancelGate == "allowed"
     val canReconcile: Boolean get() = reconcileGate == "allowed"
+    val needsAttention: Boolean get() = recoveryRequired || terminalTruth in setOf("failure", "interrupted", "recovery_required")
+    val statusLabel: String get() = when {
+        recoveryRequired -> "Recovery required"
+        active && state.equals("cancelling", true) -> "Cancelling"
+        active -> "In progress"
+        terminalTruth == "success" -> "Completed"
+        terminalTruth == "cancelled" -> "Cancelled"
+        terminalTruth == "failure" -> "Failed"
+        terminalTruth == "interrupted" -> "Interrupted"
+        else -> state.replace('_', ' ').replaceFirstChar { it.uppercase() }
+    }
 }
+
+enum class ActivityStateFilter(val label: String) {
+    All("All"),
+    Active("Active"),
+    NeedsAttention("Needs attention"),
+    Failed("Failed"),
+    Completed("Completed"),
+}
+
+data class ActivityFilter(
+    val state: ActivityStateFilter = ActivityStateFilter.All,
+    val kind: String? = null,
+) {
+    fun accepts(run: ActivityRun): Boolean {
+        val stateMatches = when (state) {
+            ActivityStateFilter.All -> true
+            ActivityStateFilter.Active -> run.active
+            ActivityStateFilter.NeedsAttention -> run.needsAttention
+            ActivityStateFilter.Failed -> run.terminalTruth in setOf("failure", "interrupted", "recovery_required")
+            ActivityStateFilter.Completed -> run.terminal && !run.needsAttention
+        }
+        return stateMatches && (kind == null || run.kind == kind)
+    }
+}
+
+data class ActivityEvidence(
+    val operationId: String,
+    val evidenceCorrelation: String,
+    val run: ActivityRun,
+    val cleanupVerification: CleanupVerificationReport?,
+    val verificationGeneration: Long?,
+    val problems: List<DiagnosticProblem>,
+)
 
 data class NotificationCapability(
     val nonce: String,

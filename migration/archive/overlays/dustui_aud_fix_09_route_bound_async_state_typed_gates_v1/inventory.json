@@ -1,0 +1,186 @@
+{
+  "entries": [
+    {
+      "action": "modify",
+      "path": ".devtool.toml",
+      "sha256": "2077a269eaa1f19f081f3db32a9b0ca66d54e27bd8e6a63649e1dbbe82bfd50a",
+      "size": 23383,
+      "source_sha256": "ba0259bb5300d91e5cba05d6a016af20a573c9e87c20c8bf55e607ae67fa1d4c"
+    },
+    {
+      "action": "modify",
+      "path": "CHANGELOG.md",
+      "sha256": "f7a2bfd0f401d582b5095e6e21c27592d7aa306dd991b1c435cb2f5dfa4954f4",
+      "size": 24024,
+      "source_sha256": "b74b906322cb37269c54818cfc74f2c019567e29e0dde763d33774cd4eaa6e00"
+    },
+    {
+      "action": "modify",
+      "path": "KNOWN_ISSUES.md",
+      "sha256": "d657906f78e6dc83b505ebc8836cf18aea290798e9b03e71fdbcfdadfc535d93",
+      "size": 811,
+      "source_sha256": "2e9f831931cf9e4a419f6406bc46d11c82b2233b4bb5731303d2bac7cd55ee63"
+    },
+    {
+      "action": "modify",
+      "path": "README.md",
+      "sha256": "ea1a3b8ad8c36886f1c584348054bc94dfdf0318adc912c7bbdf0c9aa389af32",
+      "size": 5802,
+      "source_sha256": "781e8bc7af964573e04db2889f738455768377b79785bd7ea5ead06a505e321d"
+    },
+    {
+      "action": "modify",
+      "path": "RELEASE_CHECKLIST.md",
+      "sha256": "aee6f987d70dcdf64e048675a0dcda587bc446c365a93d0a26dab4b818186135",
+      "size": 21000,
+      "source_sha256": "eedbb5081d64c81542d6a54b61b2445888e65dc361bc5f4042530715676987ef"
+    },
+    {
+      "action": "modify",
+      "path": "UI_UX_CONTRACT.md",
+      "sha256": "83df883bc9a4bdd7f111ebb0c8bb64c906f6f61f23ac7b11c39a1a9b696c956f",
+      "size": 32110,
+      "source_sha256": "d3d2748d96eb84e789f01951a6d4980dc0b794a1cb0a22b1711a9cf41da83227"
+    },
+    {
+      "action": "modify",
+      "path": "VALIDATION.md",
+      "sha256": "1cce00cf18935d710e39ba8f1759bf393508f4256183b6fa226a326e30f65965",
+      "size": 6738,
+      "source_sha256": "cf09395f0f7cf22a339a5a174be1ede624065af8a0fa12187455b8ccfdb052c8"
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/GoDomainStore.kt",
+      "sha256": "0bbe825bed952d5d5e5946b6d5d3c5a2c2be9e6277c6a8889910b6e991260e1c",
+      "size": 22811,
+      "source_sha256": "89e4893bfff70973bb55d3d30e69a0e5047708ffddad79cb9895bcc900d651b2"
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanRepository.kt",
+      "sha256": "dafe939bfaf60e41ff1db189a0b91a0a68beb98a596b7755f6ce758095ea8045",
+      "size": 67648,
+      "source_sha256": "1c74daac9423500d51e5798280d7a0b628cd2ff672935dec909e6f9e0e2565b7"
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/go/ProductCutoverContract.kt",
+      "sha256": "4d6e689d13586e290c9324aa4942b313a7835785a796665c98dd918b213bb438",
+      "size": 2284,
+      "source_sha256": "a0b6f40a286f8475bb7bb5632165aa349a6919d27221ee9eb7ec7e2278b859a4"
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/DustUiApp.kt",
+      "sha256": "3e212443e67de04ce35bab6c13fc3e5196013f09b30ace26ab955cc778c6a53c",
+      "size": 190872,
+      "source_sha256": "0fb335d75fef290da4540ab679ab9e0355390d8656ce2082978faa2349352374"
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt",
+      "sha256": "ce85a07108d96c2c454b8ec5c8a8164549f30fe2685adbaacd67626dc8000aa0",
+      "size": 135659,
+      "source_sha256": "02b8ea8e4ace667fbe376cdbf1cd36222a5375de5c6cc4b2c31eba7885b001c0"
+    },
+    {
+      "action": "add",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/shell/DustRouteRequestRegistry.kt",
+      "sha256": "5732a4c0627e591f42a2d99e5aac67c7972627b4e42e058ba894c181429ce4be",
+      "size": 1945
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/main/kotlin/com/mikeyphw/dustui/ui/shell/DustShellRouteContract.kt",
+      "sha256": "9a8411fd766fb32d3e6a4260517288ccd4e7528760c2bff42ce40c75275a42af",
+      "size": 6659,
+      "source_sha256": "2789bbd4b0329bd06ba6f9605a43e62040da72e2b1b7fb7ebb4c0cb3a4b1bbb5"
+    },
+    {
+      "action": "modify",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/DatabaseSchemaContractTest.kt",
+      "sha256": "85871a8392b6887f174163a74583cb59d409c7ae7f4b4758a583e3f26199b6d7",
+      "size": 14224,
+      "source_sha256": "777568354cd3cabba195c650c19ae64ef699857e5a521f5e6f998d2a0f6dbfbb"
+    },
+    {
+      "action": "add",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/shell/DustRouteAsyncProtocolTest.kt",
+      "sha256": "cd5a42bcfe91d625a07a91432b63e9b0f359370cd11eaca1d2768edd83f5b56b",
+      "size": 2671
+    },
+    {
+      "action": "modify",
+      "path": "docs/UI_UX_CONTRACT.md",
+      "sha256": "b7f6fd388a55a8b9a1916a74cfbb39fb6164e376c6c5107a2694a9ed6afab97d",
+      "size": 4849,
+      "source_sha256": "ca20e3e3a81ef2709b3d57e2e1eb9eb86de4251b41f11560b273ccb7fe683929"
+    },
+    {
+      "action": "modify",
+      "path": "go/cmd/dustui-go/runtime_domain.go",
+      "sha256": "7495d18477a692f1eb2d0717911cd5c152ef76a9b61f6e4ad4101c613cc359bf",
+      "size": 27888,
+      "source_sha256": "e10809ac93dd16434f1b6d9a0298712719c4d726c3039d12b5fc771571d76e13"
+    },
+    {
+      "action": "add",
+      "path": "go/internal/shell/async.go",
+      "sha256": "00dbae2aa584d6b48b28bea463ff7f7fe6f6b0272faf6aa00224665658bd4f9f",
+      "size": 10196
+    },
+    {
+      "action": "add",
+      "path": "go/internal/shell/async_test.go",
+      "sha256": "4a97fce6290302c04e57d16ffe2a9451c01121c8610317997093285768905fd7",
+      "size": 4111
+    },
+    {
+      "action": "modify",
+      "path": "go/internal/shell/routes.go",
+      "sha256": "11f2225bc8b11a48fb457d09b90515d41f364f6a9258372b511c782f56b8a7cb",
+      "size": 9876,
+      "source_sha256": "15fb5a5047abac4112a7f2c2878f8e9033f6cc678048c2b82e2abc7b9fc123f2"
+    },
+    {
+      "action": "add",
+      "path": "migration/audit/v2/aud_fix_09_audit_loop.json",
+      "sha256": "5c017f0a763e42f3c4e3b232e4d4064f7fcc7a65d8e9d72cb31ff87e35a90138",
+      "size": 816
+    },
+    {
+      "action": "add",
+      "path": "migration/contracts/v2/aud_fix_09_async_state_and_action_gates.md",
+      "sha256": "038d6e789a2f3b60dffdd7f60a7367cab1f622634221829f3242bee8179366c1",
+      "size": 1530
+    },
+    {
+      "action": "add",
+      "path": "migration/ledger/aud_fix_09_status.json",
+      "sha256": "da1539d1addef11c49eaabd222aa82995b72541637fa35c28aef273de9ae72c5",
+      "size": 864
+    },
+    {
+      "action": "modify",
+      "path": "migration/qualification/v1/current_state.json",
+      "sha256": "92b2e9f562fce34044539687d03342cfb1e4ea17e1de5370281b5d3ddb6d5796",
+      "size": 3218,
+      "source_sha256": "225942e8060c0fc9faf957125f815d53dc04c05fedfecb40735ee0300d6addd0"
+    },
+    {
+      "action": "add",
+      "path": "scripts/validate_audfix09_contract.py",
+      "sha256": "1f8b0d960e6ef3689ffea3165a61f1ec970dbd49e8f44f0b70a1adbbd492da65",
+      "size": 5051
+    },
+    {
+      "action": "modify",
+      "path": "scripts/validate_ov13_contract.py",
+      "sha256": "17c89750a41935dfd439dc12d9cedc3585685b34d25242cc48c1b561e48ca418",
+      "size": 6277,
+      "source_sha256": "b4fe0af8da5335e0c84a0b8ceee8a6ade5f4f1b66a731d23a6105a8171a829ec"
+    }
+  ],
+  "format": 1
+}

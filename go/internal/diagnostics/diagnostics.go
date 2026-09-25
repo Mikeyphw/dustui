@@ -87,6 +87,7 @@ type RemediationAction struct {
 	Code        string `json:"code"`
 	Label       string `json:"label"`
 	Route       string `json:"route,omitempty"`
+	EntityID    string `json:"entityId,omitempty"`
 	Destructive bool   `json:"destructive"`
 }
 

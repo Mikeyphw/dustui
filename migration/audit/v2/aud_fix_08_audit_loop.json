@@ -1,0 +1,16 @@
+{
+  "schema": "dustui.aud-fix-audit-loop.v1",
+  "overlay": "AUD-FIX-08",
+  "status": "converged-source-level",
+  "gate_d": "open",
+  "passes": [
+    {"name":"inventory-pass","result":"pass","detail":"Android and Go expose the same 27 stable semantic route keys across six primary domains."},
+    {"name":"identity-pass","result":"pass","detail":"File/package/manifest/operation identities travel with entity routes; missing/stale identities have typed failures."},
+    {"name":"layout-pass","result":"pass","detail":"Compact and wide shells select the same semantic route; layout only changes bottom-bar versus rail chrome."},
+    {"name":"deep-link-pass","result":"pass","detail":"Android ACTION_VIEW and Go translation accept nested dustui:// routes; encoded file paths round-trip without slash loss."},
+    {"name":"retirement-pass","result":"pass","detail":"Production source no longer contains DustDestination, DustShellNavigation, ToolsHubScreen, or a peer Debug workbench destination."},
+    {"name":"system-pass","result":"pass","detail":"System is decomposed into runtime/modules/automation/diagnostics/certification/settings; Activity owns durable run/evidence identities."},
+    {"name":"fresh-pass","result":"pass","new_independent_gap_families":[]}
+  ],
+  "full_devtool_validate": "not-run-by-design-non-gate-overlay"
+}

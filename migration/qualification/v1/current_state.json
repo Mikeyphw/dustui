@@ -80,10 +80,10 @@
       "android/scripts/run-multi-user-residue-validation.sh",
       "android/scripts/run-rooted-destructive-safety-tests.sh"
     ],
-    "go_runtime_operation_count": 52,
+    "go_runtime_operation_count": 55,
     "go_sqlite_implementation_present": true,
     "legacy_destructive_executor_present": false,
-    "legacy_navigation_present": true,
+    "legacy_navigation_present": false,
     "legacy_python_textual_present": false,
     "ndjson_lifecycle_present": true,
     "python_textual_oracle_present": true,

@@ -214,18 +214,18 @@ func problemForEvidence(e diagnostics.EvidenceGeneration) (diagnostics.Problem, 
 	}
 	id := "evidence_" + e.Subject + "_" + string(h)
 	guidance := "Refresh the affected evidence before relying on dependent actions"
-	route := "System/Diagnostics"
+	route := "system/diagnostics"
 	if e.Subject == "scan" {
 		guidance = "Run and complete a fresh scan, then review its integrity"
-		route = "Overview/scan-history"
+		route = "overview/scan-history"
 	}
 	if e.Subject == "package-storage" {
 		guidance = "Refresh app/package evidence; unavailable fields must remain explicit"
-		route = "Apps/list"
+		route = "apps/list"
 	}
 	if e.Subject == "operations" {
 		guidance = "Open Activity and reconcile operations that lack terminal truth"
-		route = "Activity/list"
+		route = "activity/list"
 	}
 	return diagnostics.Problem{ID: id, Reason: firstNonBlank(e.Reason, "Evidence is "+string(h)), RecoveryRequired: h != diagnostics.EvidenceMissing, Risk: diagnostics.RiskLow, Guidance: guidance, RemediationActions: []diagnostics.RemediationAction{{Code: "OPEN_REMEDIATION", Label: "Review", Route: route}}}, true
 }
@@ -263,6 +263,9 @@ func (s *SQLiteStore) DiagnosticsSnapshot(ctx context.Context) (diagnostics.Diag
 		if p, ok := problemForEvidence(e); ok {
 			if e.Subject == "operations" {
 				p.OperationID = recoveryOperationID
+				if recoveryOperationID != "" {
+					p.RemediationActions = []diagnostics.RemediationAction{{Code: "OPEN_ACTIVITY_RUN", Label: "Review operation", Route: "activity/run", EntityID: recoveryOperationID}}
+				}
 			}
 			_ = graph.Add(p)
 		}

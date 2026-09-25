@@ -1,0 +1,14 @@
+{
+  "schema": "dustui.aud-fix-status.v1",
+  "overlay": "AUD-FIX-10",
+  "status": "implementation-complete-non-gate",
+  "closes_or_advances": ["UIX-005", "UIX-006", "UIX-007"],
+  "scan_launch_stages": ["choose-scope", "preflight", "review", "explicit-start"],
+  "overview_truth": ["scan-identity", "generation", "freshness-integrity", "logical-bytes", "allocated-bytes", "active-operation", "recent-activity", "warnings-problems"],
+  "apps_evidence_states": ["supported", "partial", "unavailable", "blocked"],
+  "unknown_evidence_is_zero": false,
+  "gate_authority": "go",
+  "gate_d": "open",
+  "workflow": "dustui_android#aud_fix_10",
+  "apply_policy": "--no-validate"
+}

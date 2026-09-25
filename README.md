@@ -125,3 +125,24 @@ The Android app remains under `android/` and continues to use the Go process/SQL
 ## License
 
 MIT. See `LICENSE`.
+
+### Semantic navigation (AUD-FIX-08)
+Android and Go now share 27 stable semantic routes across Overview, Files, Clean, Apps, Activity, and System. `dustui://` deep links, saved route/entity restoration, and typed missing/stale identities use those same route keys. Compact and wide layouts change chrome only; they no longer substitute destinations.
+
+### Bound async presentation and action gates (AUD-FIX-09)
+Every content request is now tied to semantic route + generation + entity + request ID + optional query/draft fingerprint. Late work cannot populate a newer route or entity. Android renders one shared Loading / Empty / Blocked / Error / Content protocol and consumes structured Go action gates (`allowed`, `reasonCode`, `message`, `remediationActions`) for risky/evidence-dependent actions instead of rebuilding those decisions from local booleans.
+
+### Scan, Overview, and Apps truth (AUD-FIX-10)
+AUD-FIX-10 removes direct scan-start shortcuts: every scan request now passes through scope selection, preflight, review, and an explicit Start action. Overview separates logical bytes from allocated filesystem bytes and surfaces scan identity/integrity plus durable operation/activity state. Apps keeps measured scan bytes distinct from typed package-evidence completeness (`SUPPORTED`, `PARTIAL`, `UNAVAILABLE`, `BLOCKED`), so missing evidence is never presented as zero. Gate D remains open.
+
+
+
+### Activity and Diagnostics convergence (AUD-FIX-11)
+Activity now renders durable Go operation truth for active/history/recovery states and owns cleanup verification as correlated evidence. System → Diagnostics is backed by the Go ProblemGraph and leads with root causes, evidence health, remediation, and support export; raw events/probes stay under Advanced diagnostics. Both surfaces navigate by the same durable operation ID. Gate D remains open.
+
+### Adaptive tablet and route continuity (AUD-FIX-12)
+AUD-FIX-12 derives compact/medium/expanded layout from the active semantic route without changing route identity. Files, Clean, Apps, Activity, and System gain route-driven supporting/master panes on larger windows; compact and expanded layouts share the same deep links, entity IDs, generations, action gates, and durable Go authorities. Accessibility traversal is explicit and charts/treemap use exact shared textual equivalents. Gate D remains open.
+
+## AUD-FIX-13 acceptance authority
+
+Current pre-Gate-D acceptance metadata is generated at `migration/acceptance/v1/current_state.json`. It inventories live/static validators, maps archived source-token guards to exact successor evidence, and maps the complete UI/UX requirement/task/rule matrix. `candidate.acceptance_converged=true` means the candidate acceptance system is internally coherent; it **does not** qualify Gate D. Gate-D qualification remains exclusively evidence-derived from `migration/qualification/v1/current_state.json`. App-local adb/APK/release helpers are quarantined compatibility artifacts and are not acceptance or Gate-D orchestration authority.

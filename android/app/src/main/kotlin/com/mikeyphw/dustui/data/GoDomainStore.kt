@@ -187,6 +187,14 @@ class GoDomainStore(context: Context) : Closeable {
         payload.getJSONArray("entries").objects().map(JSONObject::toScanEntry)
     }
 
+    suspend fun uiActionGate(payload: JSONObject): JSONObject = io {
+        call("domain.ui.action-gate", 1, payload).getJSONObject("gate")
+    }
+
+    suspend fun uiScreenState(generation: Long, payload: JSONObject): JSONObject = io {
+        call("domain.ui.screen-state", generation.coerceAtLeast(1L), payload).getJSONObject("state")
+    }
+
     suspend fun rootSearch(scanId: String, request: RootFileSearchRequest): RootFileSearchPage = io {
         val generation = session(scanId)?.generation ?: 1L
         val payload = call(

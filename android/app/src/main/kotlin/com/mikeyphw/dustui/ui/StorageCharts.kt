@@ -63,9 +63,7 @@ fun StorageDonut(
     val total = slices.sumOf { it.bytes }
     val colors = chartColors()
     val selectedSlice = slices.firstOrNull { it.label == selected }
-    val description = slices.joinToString { slice ->
-        "${slice.label} ${formatBytes(slice.bytes)}, ${percentageOf(slice.bytes, total)} percent, ${slice.count} files"
-    }
+    val description = DustVisualAccessibility.storageComposition(slices)
     BoxWithConstraints(modifier) {
         val compact = maxWidth < 480.dp
         if (compact) {

@@ -1,0 +1,543 @@
+{
+  "format": 1,
+  "entries": [
+    {
+      "action": "modify",
+      "path": ".devtool.toml",
+      "sha256": "0574984c7a0c289bce9e70982d3fd06ef392a10f8531981cf946e05fadcb2120",
+      "size": 36036,
+      "source_sha256": "ddbbd01553cb4bfae83aeb1ecf7726ceea2ab0c0377ee91733423a3bb4b2ae60"
+    },
+    {
+      "action": "modify",
+      "path": "CHANGELOG.md",
+      "sha256": "1fa59fcf8078e4b1d899fa40c3ad2b19e8c99e0ee68ba0456a52fff832bd6cc8",
+      "size": 26926,
+      "source_sha256": "43008c1724440ffd3480e9707f9c2ba8c6ba30416056572f35904edae1115c2d"
+    },
+    {
+      "action": "modify",
+      "path": "KNOWN_ISSUES.md",
+      "sha256": "d2d810e5288c03993167ded416f88cdb97a0c6a36f9fe21b5f627300975e371f",
+      "size": 1790,
+      "source_sha256": "ef95d94c229a2db95ff62e30c2c607db1eef96837194664f7c58eeff55c24ff9"
+    },
+    {
+      "action": "modify",
+      "path": "README.md",
+      "sha256": "24a6d43991c15761281ec797b1703b908a436ef4649cbdaa95a72b51d1dad57e",
+      "size": 7985,
+      "source_sha256": "10d0c9b6f30f48ab6f118604165c5a68de4d12e022f219610b220d74e1f7c14c"
+    },
+    {
+      "action": "modify",
+      "path": "RELEASE_CHECKLIST.md",
+      "sha256": "98e3a825b3122cecfa3929b08e9b38a9f88f1ed7d6e2070c9bdaf291070a9163",
+      "size": 20868,
+      "source_sha256": "b7c61486cc2e0faab927c063a233c9b6ba43afff54dec8cdac1839367073850c"
+    },
+    {
+      "action": "modify",
+      "path": "UI_UX_CONTRACT.md",
+      "sha256": "534d3af0939c7822d9cfd561d9961f2efcfbab8ece061125ee8c729947676d3c",
+      "size": 31422,
+      "source_sha256": "4b798d99f71ad32df64b76bcdd2fc60a898fc133f0b87dec4e240c123933046f"
+    },
+    {
+      "action": "modify",
+      "path": "VALIDATION.md",
+      "sha256": "04898c142e9c84c89cc9fbb03a51950a6b738f63b1e8c475ab05724eccbbf63c",
+      "size": 6485,
+      "source_sha256": "52af041cc32347128af55484810c83e89c2edb5e5fdb4fa2679c63034138cce0"
+    },
+    {
+      "action": "delete",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleaningRecoverySourceContractTest.kt",
+      "source_sha256": "dadf6b3b70c6b6298de77ee9a19e314db5d32a35af95e52167d606ba999b67f7"
+    },
+    {
+      "action": "delete",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/DatabaseSchemaContractTest.kt",
+      "source_sha256": "85871a8392b6887f174163a74583cb59d409c7ae7f4b4758a583e3f26199b6d7"
+    },
+    {
+      "action": "delete",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/FinalRcScriptContractTest.kt",
+      "source_sha256": "764af0e73c53e4a5f0c20c514a123183ddced4c54f582879412d30c51e867137"
+    },
+    {
+      "action": "delete",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleaseScriptContractTest.kt",
+      "source_sha256": "839ed14027c7129888210c060ce9d5e499ce986f1585494a6dc8b81e7ed08e52"
+    },
+    {
+      "action": "delete",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootDiagnosticsSourceContractTest.kt",
+      "source_sha256": "47e073a14d259ce4494428d7afa977d108153e84f60e40d49dfab02246b66f36"
+    },
+    {
+      "action": "delete",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/ValidationRoadmapContractTest.kt",
+      "source_sha256": "81912125b2502e8f0c2f6a82eb04073551f93d859cc088b6a8711fc60469ee61"
+    },
+    {
+      "action": "delete",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/migration/Ov01MigrationContractTest.kt",
+      "source_sha256": "4e02a8cf8238724c8ae26d2b5a3ca2c1a73c693a6add9feb029e1ae671b1e4f3"
+    },
+    {
+      "action": "delete",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/migration/Ov14LegacyRetirementContractTest.kt",
+      "source_sha256": "cdb0041f03b3b0d66fa8143fb0ee78532f0b2b0f07fb26e0957a8489dcebc984"
+    },
+    {
+      "action": "delete",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/CleaningAccessibilityContractTest.kt",
+      "source_sha256": "a34b27798468cedd82a60c89e22d6403145024563ba8795a150e663e6c006f91"
+    },
+    {
+      "action": "delete",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchFinalContractTest.kt",
+      "source_sha256": "8e527a742c0e0cef9dda7d5ba752aa9fd789cb89d27af044a017e961bc49e3e2"
+    },
+    {
+      "action": "delete",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchSourceContractTest.kt",
+      "source_sha256": "61293e77414b87e48ddba8a8766acce9543e7f8d5695a999b987deab11c0504b"
+    },
+    {
+      "action": "delete",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+      "source_sha256": "d7165b7951d672e6ef51dc695220c23abaaf1e14b31238aea7263f79e8b1b0ea"
+    },
+    {
+      "action": "delete",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/ModernDarkPortraitFinalContractTest.kt",
+      "source_sha256": "8b4e4038886fc5dd31d533a597a332e9a96dc5128200ba80474b4bcff6fe26ef"
+    },
+    {
+      "action": "delete",
+      "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+      "source_sha256": "596772d6bea41e9b7268f3b4f33ff384cd740ba790f9fa7a08562bf4560e76a4"
+    },
+    {
+      "action": "modify",
+      "path": "android/scripts/validate-debug-workbench-contract.py",
+      "sha256": "8e0c24f1d340aeea390880f232d898f541e9f3cd4ed70c35c17c33e490801f3b",
+      "size": 1389,
+      "source_sha256": "59aa58cdf90bfc641833fe40d6094bf9dc26e85c63e366a3121a3208131789d7"
+    },
+    {
+      "action": "modify",
+      "path": "android/scripts/validate-modern-dark-portrait-ui.py",
+      "sha256": "3929bf8413e65218a1f473b82e6e4456e69719fa6dea6c7a09c7e2d56e36440b",
+      "size": 1329,
+      "source_sha256": "65405265d28cf434c50ea495eb71effeafd088b10a7aae03e64c36343bc4cef2"
+    },
+    {
+      "action": "delete",
+      "path": "android/scripts/validate-root-scan-diagnostics.py",
+      "source_sha256": "c196efea9debe244b73e87e1301d9b3a13aa844a9b35be256cf1b7cb43a50734"
+    },
+    {
+      "action": "delete",
+      "path": "docs/ANDROID_DEBUG_WORKBENCH.md",
+      "source_sha256": "7e82fa7f8b778b520ca9a4b78c5db453b9fa86afb7ac09639c4dfe1b31aa2006"
+    },
+    {
+      "action": "delete",
+      "path": "docs/ANDROID_DEBUG_WORKBENCH_FINAL_SEAL.md",
+      "source_sha256": "5e5640051de3efefa02558efd222d99ad1fd70290f92def4a2e97d7c5ca1832b"
+    },
+    {
+      "action": "modify",
+      "path": "docs/UI_UX_CONTRACT.md",
+      "sha256": "77d75624912db1057732e2b973d6ba7b689dd6839ce04b94ae5bae953f3fc5db",
+      "size": 6884,
+      "source_sha256": "91a510b878c729067976408d37cca52b254eb6a3bd75f2e47bce8cc7e588edff"
+    },
+    {
+      "action": "modify",
+      "path": "go/internal/product/product.go",
+      "sha256": "3d5874f620419576bdd513e69ef8a34d47bb54dd79ba27aa0205b3f0588cc9e2",
+      "size": 12801,
+      "source_sha256": "f7505b4d2e2b48b97a36cc46a5231698aabdbb44058bc74ad5149fec9d82b881"
+    },
+    {
+      "action": "add",
+      "path": "go/internal/qualification/acceptance_generated.go",
+      "sha256": "5b2951a74545894dfdae9740f7e9b0bd08547fa9e7420f3d2bb5fd7bb822b37c",
+      "size": 303
+    },
+    {
+      "action": "add",
+      "path": "migration/acceptance/v1/README.md",
+      "sha256": "963886c6deefaf717de6a66b09c9e8dea1ac21b7fb8673a2d1b530e3f4fa3caf",
+      "size": 907
+    },
+    {
+      "action": "add",
+      "path": "migration/acceptance/v1/current_state.json",
+      "sha256": "a1e27d74d432312d8f22d89d49a35fd60b56c4abd51977bf167b2941c690c16a",
+      "size": 1866
+    },
+    {
+      "action": "add",
+      "path": "migration/acceptance/v1/fixtures/counterexamples.json",
+      "sha256": "2927608a64227798cbf1cef700ce6a4b18ecd9a98b27e12ebe27f2e0254e164e",
+      "size": 1200
+    },
+    {
+      "action": "add",
+      "path": "migration/acceptance/v1/ui_acceptance_matrix.json",
+      "sha256": "368e0fa69a6ef78bb5023657c921ce194d467f2d94eba458682bb31dddd3e3b2",
+      "size": 15540
+    },
+    {
+      "action": "add",
+      "path": "migration/acceptance/v1/validator_lifecycle.json",
+      "sha256": "2d647077a2733c1a5b16185719ab8dcdba4e3ffd186f892739b6914acebcd928",
+      "size": 13536
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/docs/aud_fix_13_pre_gate_d/ANDROID_DEBUG_WORKBENCH.md",
+      "sha256": "7e82fa7f8b778b520ca9a4b78c5db453b9fa86afb7ac09639c4dfe1b31aa2006",
+      "size": 897
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/docs/aud_fix_13_pre_gate_d/ANDROID_DEBUG_WORKBENCH_FINAL_SEAL.md",
+      "sha256": "5e5640051de3efefa02558efd222d99ad1fd70290f92def4a2e97d7c5ca1832b",
+      "size": 583
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/README.md",
+      "sha256": "66b2bc00e7b59d3fd96b5e59b6b64b759c33e9383685c0bbb9a27d7ccd1e4521",
+      "size": 677
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/data/CleaningRecoverySourceContractTest.kt",
+      "sha256": "dadf6b3b70c6b6298de77ee9a19e314db5d32a35af95e52167d606ba999b67f7",
+      "size": 2542
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/data/DatabaseSchemaContractTest.kt",
+      "sha256": "85871a8392b6887f174163a74583cb59d409c7ae7f4b4758a583e3f26199b6d7",
+      "size": 14224
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/data/FinalRcScriptContractTest.kt",
+      "sha256": "764af0e73c53e4a5f0c20c514a123183ddced4c54f582879412d30c51e867137",
+      "size": 1637
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/data/ReleaseScriptContractTest.kt",
+      "sha256": "839ed14027c7129888210c060ce9d5e499ce986f1585494a6dc8b81e7ed08e52",
+      "size": 2560
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/data/RootDiagnosticsSourceContractTest.kt",
+      "sha256": "47e073a14d259ce4494428d7afa977d108153e84f60e40d49dfab02246b66f36",
+      "size": 5313
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/data/ValidationRoadmapContractTest.kt",
+      "sha256": "81912125b2502e8f0c2f6a82eb04073551f93d859cc088b6a8711fc60469ee61",
+      "size": 2671
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/migration/Ov01MigrationContractTest.kt",
+      "sha256": "4e02a8cf8238724c8ae26d2b5a3ca2c1a73c693a6add9feb029e1ae671b1e4f3",
+      "size": 5510
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/migration/Ov14LegacyRetirementContractTest.kt",
+      "sha256": "cdb0041f03b3b0d66fa8143fb0ee78532f0b2b0f07fb26e0957a8489dcebc984",
+      "size": 2151
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/ui/CleaningAccessibilityContractTest.kt",
+      "sha256": "a34b27798468cedd82a60c89e22d6403145024563ba8795a150e663e6c006f91",
+      "size": 2435
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchFinalContractTest.kt",
+      "sha256": "8e527a742c0e0cef9dda7d5ba752aa9fd789cb89d27af044a017e961bc49e3e2",
+      "size": 2163
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DebugWorkbenchSourceContractTest.kt",
+      "sha256": "61293e77414b87e48ddba8a8766acce9543e7f8d5695a999b987deab11c0504b",
+      "size": 2164
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/ui/DustNavigationModelTest.kt",
+      "sha256": "d7165b7951d672e6ef51dc695220c23abaaf1e14b31238aea7263f79e8b1b0ea",
+      "size": 2155
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/ui/ModernDarkPortraitFinalContractTest.kt",
+      "sha256": "8b4e4038886fc5dd31d533a597a332e9a96dc5128200ba80474b4bcff6fe26ef",
+      "size": 2167
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/ui/UiSourceContractTest.kt",
+      "sha256": "596772d6bea41e9b7268f3b4f33ff384cd740ba790f9fa7a08562bf4560e76a4",
+      "size": 2152
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/scripts/validate-root-scan-diagnostics.py",
+      "sha256": "c196efea9debe244b73e87e1301d9b3a13aa844a9b35be256cf1b7cb43a50734",
+      "size": 12516
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/scripts/validate_ov01_contract.py",
+      "sha256": "901893378ca3433343cb5fd7292536f7288887c84382346fb6af5effac4ec447",
+      "size": 4842
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/scripts/validate_ov02_contract.py",
+      "sha256": "eb5869689f8cda81072a4689b054d22ce828f6be483a0da1d502cf4d5f175d69",
+      "size": 6374
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/scripts/validate_ov03_contract.py",
+      "sha256": "89fd0b8a174c910357c9fcdd84adbec4f18d512909651c77969257fe02d278c4",
+      "size": 6384
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/scripts/validate_ov04_contract.py",
+      "sha256": "4867be7a6110a41670f468a374d80eac5e02033fbe6c68ffa974ea0705888b91",
+      "size": 6834
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/scripts/validate_ov05_contract.py",
+      "sha256": "c410a2685a88b048237644863435878cbcf1a6679733d9affe76dbb493083b30",
+      "size": 8608
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/scripts/validate_ov06_contract.py",
+      "sha256": "fe27448a577d216651f2e14623bac0c964a2fd9474dbbb92291b6b62da1c36bc",
+      "size": 8501
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/scripts/validate_ov07_contract.py",
+      "sha256": "ee97eb120bb7d0a7130346e5f9098065caa505c81faa3d202a5c32f86761028a",
+      "size": 7013
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/scripts/validate_ov08_contract.py",
+      "sha256": "fc99a2de808e2fcc17bd1011c07b10423931d4681070e4d7c963dca94c2eb32c",
+      "size": 7508
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/scripts/validate_ov09_contract.py",
+      "sha256": "ec33c0f327db1a578174ce76275d6f8364cdeddf68dc638e796dacb34fd1147c",
+      "size": 6818
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/scripts/validate_ov10_contract.py",
+      "sha256": "daf67f703d28196d11d5a6f06352fb3a5bfda01b0b60ea1af27f7529ebff7b8b",
+      "size": 6980
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/scripts/validate_ov11_contract.py",
+      "sha256": "26ff7b3672b2a9c9b71b8697452285d6c38c1f23e9aa8536a34e399edf9b387d",
+      "size": 7718
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/scripts/validate_ov12_contract.py",
+      "sha256": "42361fee1177e5150b18e49c9342441b6f9192b1d8c07d4b668d7aff8fd589c6",
+      "size": 8009
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/scripts/validate_ov13_ov01_readiness_transition_hotfix.py",
+      "sha256": "96e5b4852af9b6a96d301193a4e16c15a391cbb02427b3ab8d8426f2e09a192e",
+      "size": 1443
+    },
+    {
+      "action": "add",
+      "path": "migration/archive/validators/aud_fix_13_pre_gate_d/scripts/validate_ov13_ov01_repo_root_hotfix.py",
+      "sha256": "4deeed9d647fdd091e39a4ec353d291abeddafe3bc4803865ce6649ee57e812b",
+      "size": 785
+    },
+    {
+      "action": "add",
+      "path": "migration/audit/v2/aud_fix_13_audit_loop.json",
+      "sha256": "911fddfdb3652ab37cffc7c3818babea969a7bb9fdee41ce2cfccb107eda7054",
+      "size": 750
+    },
+    {
+      "action": "add",
+      "path": "migration/contracts/v2/aud_fix_13_acceptance_convergence.md",
+      "sha256": "9d0d81b4ed3c2c794be19cbcf606d5eca64c5ad10ae7cd4cadeb22d985427f70",
+      "size": 2175
+    },
+    {
+      "action": "add",
+      "path": "migration/ledger/aud_fix_13_status.json",
+      "sha256": "869463f1ca29a6277bd4211403ec8bb2132e8f6a1b4d7515914ee8d3d7793c35",
+      "size": 698
+    },
+    {
+      "action": "modify",
+      "path": "migration/ledger/ov13_status.json",
+      "sha256": "771d6373ba938e38b5fa13f476164fd276b9a7e513649317da9d54c2e5eeb61d",
+      "size": 1050,
+      "source_sha256": "84e1a7867d6e2e94d8a464ca9a65d15261c9bd06e9b75df278de8a390ecf3ffe"
+    },
+    {
+      "action": "modify",
+      "path": "migration/ledger/source_token_contract_tests.json",
+      "sha256": "2d647077a2733c1a5b16185719ab8dcdba4e3ffd186f892739b6914acebcd928",
+      "size": 13536,
+      "source_sha256": "cfbed7f6da27be9356a54d2dd4068f9e90f08cc289bbdefa8da6c34a656df6d9"
+    },
+    {
+      "action": "add",
+      "path": "scripts/audfix13_acceptance.py",
+      "sha256": "8c03bd219d6fff00164054a88d929d5aa3d33098ac8846091602e63fc7b27e6e",
+      "size": 12643
+    },
+    {
+      "action": "add",
+      "path": "scripts/refresh_acceptance_state.py",
+      "sha256": "a24c8bda94ef82427e162be1977c9a400861a14d17b70f3a888a07e298f44bdb",
+      "size": 1895
+    },
+    {
+      "action": "modify",
+      "path": "scripts/validate_audfix04_contract.py",
+      "sha256": "040729c22513b57211e117e7fff6afcc77e38765a2d321191d406b41cca631a1",
+      "size": 13655,
+      "source_sha256": "13c5e6ee03c2405041664573622540ba825ae8532c491caec0fdbe037b1781b2"
+    },
+    {
+      "action": "add",
+      "path": "scripts/validate_audfix13_contract.py",
+      "sha256": "6005f2efaa0025e6854b01706ff3ba4b6fd33c1083a9b72216f1a7ea7fb308d5",
+      "size": 3660
+    },
+    {
+      "action": "modify",
+      "path": "scripts/validate_full_roadmap_conformance.py",
+      "sha256": "f7a4e0115bf9c037b9904e743d991c89b99ab8726ebe392ff174f7ffd789fac8",
+      "size": 6782,
+      "source_sha256": "e2f8427ce9751f01aa167e0d923aae3f760a87a63025f74355e027141e512c2f"
+    },
+    {
+      "action": "delete",
+      "path": "scripts/validate_ov01_contract.py",
+      "source_sha256": "901893378ca3433343cb5fd7292536f7288887c84382346fb6af5effac4ec447"
+    },
+    {
+      "action": "delete",
+      "path": "scripts/validate_ov02_contract.py",
+      "source_sha256": "eb5869689f8cda81072a4689b054d22ce828f6be483a0da1d502cf4d5f175d69"
+    },
+    {
+      "action": "delete",
+      "path": "scripts/validate_ov03_contract.py",
+      "source_sha256": "89fd0b8a174c910357c9fcdd84adbec4f18d512909651c77969257fe02d278c4"
+    },
+    {
+      "action": "delete",
+      "path": "scripts/validate_ov04_contract.py",
+      "source_sha256": "4867be7a6110a41670f468a374d80eac5e02033fbe6c68ffa974ea0705888b91"
+    },
+    {
+      "action": "delete",
+      "path": "scripts/validate_ov05_contract.py",
+      "source_sha256": "c410a2685a88b048237644863435878cbcf1a6679733d9affe76dbb493083b30"
+    },
+    {
+      "action": "delete",
+      "path": "scripts/validate_ov06_contract.py",
+      "source_sha256": "fe27448a577d216651f2e14623bac0c964a2fd9474dbbb92291b6b62da1c36bc"
+    },
+    {
+      "action": "delete",
+      "path": "scripts/validate_ov07_contract.py",
+      "source_sha256": "ee97eb120bb7d0a7130346e5f9098065caa505c81faa3d202a5c32f86761028a"
+    },
+    {
+      "action": "delete",
+      "path": "scripts/validate_ov08_contract.py",
+      "source_sha256": "fc99a2de808e2fcc17bd1011c07b10423931d4681070e4d7c963dca94c2eb32c"
+    },
+    {
+      "action": "delete",
+      "path": "scripts/validate_ov09_contract.py",
+      "source_sha256": "ec33c0f327db1a578174ce76275d6f8364cdeddf68dc638e796dacb34fd1147c"
+    },
+    {
+      "action": "delete",
+      "path": "scripts/validate_ov10_contract.py",
+      "source_sha256": "daf67f703d28196d11d5a6f06352fb3a5bfda01b0b60ea1af27f7529ebff7b8b"
+    },
+    {
+      "action": "delete",
+      "path": "scripts/validate_ov11_contract.py",
+      "source_sha256": "26ff7b3672b2a9c9b71b8697452285d6c38c1f23e9aa8536a34e399edf9b387d"
+    },
+    {
+      "action": "delete",
+      "path": "scripts/validate_ov12_contract.py",
+      "source_sha256": "42361fee1177e5150b18e49c9342441b6f9192b1d8c07d4b668d7aff8fd589c6"
+    },
+    {
+      "action": "modify",
+      "path": "scripts/validate_ov13_contract.py",
+      "sha256": "8345b5c7ab12b040b175c617ea8817f724d8c4475bac9a37ac225c7d9a4693e6",
+      "size": 3957,
+      "source_sha256": "17c89750a41935dfd439dc12d9cedc3585685b34d25242cc48c1b561e48ca418"
+    },
+    {
+      "action": "delete",
+      "path": "scripts/validate_ov13_ov01_readiness_transition_hotfix.py",
+      "source_sha256": "96e5b4852af9b6a96d301193a4e16c15a391cbb02427b3ab8d8426f2e09a192e"
+    },
+    {
+      "action": "delete",
+      "path": "scripts/validate_ov13_ov01_repo_root_hotfix.py",
+      "source_sha256": "4deeed9d647fdd091e39a4ec353d291abeddafe3bc4803865ce6649ee57e812b"
+    },
+    {
+      "action": "modify",
+      "path": "scripts/validate_ov14_contract.py",
+      "sha256": "790bb1880db7e7e4eb774303e04d355cee2da2bf2d9e8aa535d34212dbb96f16",
+      "size": 2018,
+      "source_sha256": "812a1be796d42b822362bcda484807f46c3715eeda435eef8beb86d5bc33c53f"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": 2,
+  "artifact": "dustui_aud_fix_13_acceptance_convergence_v1.zip",
+  "target": "dustui_android",
+  "phases": [
+    "AUD-FIX-13"
+  ],
+  "gap_families": [
+    "AUD-016",
+    "AUD-017",
+    "AUD-021",
+    "AUD-023",
+    "UIX-009"
+  ],
+  "purpose": "Converge successor-aware pre-Gate-D acceptance, evidence-derived metadata, validator lifecycle closure, and blind UI/UX counterexample coverage without qualifying Gate D.",
+  "source_state": {
+    "requires": [
+      "AUD-FIX-01 through AUD-FIX-12 applied",
+      "AUD-FIX-06 Authority Convergence Gate R1 passed"
+    ],
+    "baseline": "post-AUD-FIX-12 clean replay"
+  },
+  "validation": {
+    "apply": "--no-validate",
+    "gate": false,
+    "workflow": "dustui_android#aud_fix_13",
+    "gate_d_must_remain": "open"
+  },
+  "next": "AUD-FIX-14 historical Gate A/B/C evidence recovery + complete Gate-D topology"
+}

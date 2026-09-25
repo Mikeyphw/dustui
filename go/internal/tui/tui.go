@@ -79,7 +79,7 @@ func Render(route shell.RouteID, width int, state shell.ContentState) (Screen, e
 
 func Smoke() SmokeResult {
 	contract := product.CurrentContract()
-	routes := append([]shell.RouteID{}, contract.Routes...)
+	routes := append([]shell.RouteID{}, shell.PrimaryRoutes()...)
 	workflows := []product.Workflow{}
 	for _, surface := range contract.Surfaces {
 		if surface.Name == product.SurfaceTUI {
@@ -96,8 +96,12 @@ func Smoke() SmokeResult {
 }
 
 func validRoute(raw string) (shell.RouteID, bool) {
-	id := shell.RouteID(strings.ToLower(strings.TrimSpace(raw)))
-	for _, route := range shell.CurrentContract().Routes {
+	normalized := strings.ToLower(strings.TrimSpace(raw))
+	if route, ok := routeForShortcut(normalized); ok {
+		return route, true
+	}
+	id := shell.RouteID(normalized)
+	for _, route := range shell.PrimaryRoutes() {
 		if route == id {
 			return id, true
 		}

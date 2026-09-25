@@ -113,15 +113,17 @@ class DatabaseSchemaContractTest {
         assertTrue(models.contains("dustui.cleanup.mutation.v1"))
     }
 
-    @Test fun `ui async requests are generation and request owned`() {
+    @Test fun `ui async requests are semantic route and request owned`() {
         val viewModel = File(androidRoot, "app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt").readText()
-        assertTrue(viewModel.contains("AtomicLong"))
-        assertTrue(viewModel.contains("rootInspectionRequestId"))
-        assertTrue(viewModel.contains("rootSearchRequestId"))
-        assertTrue(viewModel.contains("insightsRequestId"))
-        assertTrue(viewModel.contains("it.id == scanId && it.generation == requestedGeneration"))
-        assertTrue(viewModel.contains("Stale insights request"))
-        assertTrue(viewModel.contains("it.id == scanId && it.generation == generation"))
+        val registry = File(androidRoot, "app/src/main/kotlin/com/mikeyphw/dustui/ui/shell/DustRouteRequestRegistry.kt").readText()
+        assertFalse(viewModel.contains("AtomicLong"))
+        assertTrue(viewModel.contains("issueRouteRequest"))
+        assertTrue(viewModel.contains("acceptsRouteResponse"))
+        assertTrue(viewModel.contains("refreshRoutePresentation"))
+        assertTrue(registry.contains("binding.routeKey == current.route.routeKey"))
+        assertTrue(registry.contains("binding.routeGeneration == current.generation"))
+        assertTrue(registry.contains("binding.entityId == current.entityId"))
+        assertTrue(registry.contains("latest.accepts(binding)"))
     }
 
 

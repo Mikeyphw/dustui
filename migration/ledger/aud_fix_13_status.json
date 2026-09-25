@@ -1,0 +1,20 @@
+{
+  "schema": "dustui.aud-fix-status.v1",
+  "stage": "AUD-FIX-13",
+  "status": "implemented_pending_native_workflow",
+  "candidate_acceptance_state_source": "migration/acceptance/v1/current_state.json",
+  "qualification_state_source": "migration/qualification/v1/current_state.json",
+  "candidate_acceptance_converged": true,
+  "candidate_status": "pre-gate-d-ready",
+  "gate_d": "open",
+  "scope": [
+    "validator-lifecycle-closure",
+    "successor-aware-acceptance",
+    "uiux-requirement-and-task-matrix",
+    "evidence-derived-product-metadata",
+    "pre-gate-d-counterexample-conformance"
+  ],
+  "native_workflow": "aud_fix_13",
+  "next_stage": "AUD-FIX-14",
+  "qualification_claim": false
+}

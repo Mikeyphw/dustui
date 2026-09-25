@@ -84,6 +84,9 @@ type Contract struct {
 	DustTuiAliasImplementation    string               `json:"dustTuiAliasImplementation"`
 	DeclarationScope              string               `json:"declarationScope"`
 	GateDQualified                bool                 `json:"gateDQualified"`
+	AcceptanceStateSource         string               `json:"acceptanceStateSource"`
+	CandidateAcceptanceConverged  bool                 `json:"candidateAcceptanceConverged"`
+	CandidateAcceptanceStatus     string               `json:"candidateAcceptanceStatus"`
 	AndroidRuntimeBound           bool                 `json:"androidRuntimeBound"`
 	GoSQLiteImplemented           bool                 `json:"goSQLiteImplemented"`
 	ObservedAndroidAuthority      string               `json:"observedAndroidAuthority"`
@@ -125,32 +128,39 @@ func CurrentContract() Contract {
 			{Name: SurfaceTUI, ProductDefault: true, MachineReadable: false, Interactive: true, PreservesDustTuiAlias: true, SupportedWorkflows: workflows, UsesSameEngineSemantics: true},
 			{Name: SurfaceAndroid, ProductDefault: qualification.GateDQualified, MachineReadable: false, Interactive: true, PreservesDustTuiAlias: false, SupportedWorkflows: workflows, UsesSameEngineSemantics: true},
 		},
-		AndroidTaskFlows:           flows,
-		RequiredEvidence:           append([]string{}, qualification.RequiredEvidenceNodes...),
-		BoundProtocols:             boundProtocols(),
-		FrozenPythonParityOracle:   true,
-		DustTuiAliasImplementation: "go-host-wrapper",
-		DeclarationScope:           "canonical-evidence-derived:" + qualification.StateSource,
-		GateDQualified:             qualification.GateDQualified,
-		AndroidRuntimeBound:        qualification.AndroidGoProcessBindingPresent && qualification.AndroidGoPackagingPresent,
-		GoSQLiteImplemented:        qualification.GoSQLiteImplementationPresent,
-		ObservedAndroidAuthority:   observedAndroidAuthority(),
+		AndroidTaskFlows:             flows,
+		RequiredEvidence:             append([]string{}, qualification.RequiredEvidenceNodes...),
+		BoundProtocols:               boundProtocols(),
+		FrozenPythonParityOracle:     true,
+		DustTuiAliasImplementation:   "go-host-wrapper",
+		DeclarationScope:             "canonical-evidence-derived:" + qualification.StateSource,
+		GateDQualified:               qualification.GateDQualified,
+		AcceptanceStateSource:        qualification.AcceptanceStateSource,
+		CandidateAcceptanceConverged: qualification.CandidateAcceptanceConverged,
+		CandidateAcceptanceStatus:    qualification.CandidateAcceptanceStatus,
+		AndroidRuntimeBound:          qualification.AndroidGoProcessBindingPresent && qualification.AndroidGoPackagingPresent,
+		GoSQLiteImplemented:          qualification.GoSQLiteImplementationPresent,
+		ObservedAndroidAuthority:     observedAndroidAuthority(),
 	}
 }
 
 func authoritiesFor(route shell.RouteID) (string, string) {
-	switch route {
-	case shell.RouteOverview:
+	domain, ok := shell.DomainFor(route)
+	if !ok {
+		return "unknown", "blocked"
+	}
+	switch domain {
+	case shell.DomainOverview:
 		return "go-evidence-health + go-query-summary", "go-scan-operation"
-	case shell.RouteFiles:
+	case shell.DomainFiles:
 		return "go-query + go-scan", "go-scan-operation"
-	case shell.RouteClean:
+	case shell.DomainClean:
 		return "go-cleanup-intelligence + go-cleanup-manifest", "go-cleanup-capability-mutation"
-	case shell.RouteApps:
+	case shell.DomainApps:
 		return "go-package-storage-evidence", "go-package-action-recheck"
-	case shell.RouteActivity:
+	case shell.DomainActivity:
 		return "go-automation-activity", "go-operation-cancel-reconcile"
-	case shell.RouteSystem:
+	case shell.DomainSystem:
 		return "go-diagnostics-evidence-privacy", "go-support-bundle"
 	default:
 		return "unknown", "blocked"
@@ -193,6 +203,15 @@ func ValidateContract(c Contract) error {
 	if c.GateDQualified != qualification.GateDQualified {
 		return errors.New("Gate D qualification must come from canonical evidence")
 	}
+	if c.AcceptanceStateSource != qualification.AcceptanceStateSource || c.CandidateAcceptanceConverged != qualification.CandidateAcceptanceConverged || c.CandidateAcceptanceStatus != qualification.CandidateAcceptanceStatus {
+		return errors.New("candidate acceptance metadata must come from generated acceptance evidence")
+	}
+	if c.CandidateAcceptanceConverged && c.GateDQualified {
+		// Both may eventually be true at Gate D, but AUD-FIX-13 itself must never infer qualification from candidate acceptance.
+		if qualification.AcceptanceGateDQualified != qualification.GateDQualified {
+			return errors.New("acceptance and qualification generated views disagree")
+		}
+	}
 	if !c.ProductionEngine || !c.GoSQLiteProductDefault || !c.HostAuthorityDefault {
 		return errors.New("AUD-FIX-07 requires the Go host and Go SQLite authority to be production-default")
 	}
@@ -208,8 +227,8 @@ func ValidateContract(c Contract) error {
 	if c.DeclarationScope != "canonical-evidence-derived:"+qualification.StateSource || c.ObservedAndroidAuthority == "" {
 		return errors.New("product contract must identify canonical evidence-derived state")
 	}
-	if len(c.Routes) != 6 {
-		return fmt.Errorf("expected six semantic routes, got %d", len(c.Routes))
+	if len(c.Routes) != 27 {
+		return fmt.Errorf("expected 27 authoritative semantic routes, got %d", len(c.Routes))
 	}
 	requiredSurfaces := map[Surface]bool{SurfaceCLI: false, SurfaceTUI: false, SurfaceAndroid: false}
 	for _, surface := range c.Surfaces {

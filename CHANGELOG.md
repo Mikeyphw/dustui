@@ -1,3 +1,11 @@
+## AUD-FIX-12 — adaptive tablet/master-detail and route continuity
+
+- Added compact/medium/expanded layout policy derived from semantic route identity.
+- Added route-driven supporting/master panes for Files, Clean, Apps, Activity, and System without introducing layout-local destination state.
+- Added explicit traversal ordering and shared textual equivalents for storage charts and treemap.
+- Added phone/tablet previews, unit continuity tests, connected-device rotation/continuity tests, Devtool leaf contracts, and successor acceptance checks.
+- Kept Gate D open; this is a non-gate remediation stage.
+
 ## Debug Workbench · Phase 14 final contract seal
 
 ### Debug Workbench Phase 15 scan freeze guard r3
@@ -43,6 +51,15 @@
 - Added source-contract coverage to keep the opt-in attached to `ScanLauncherSheet`.
 
 # DustUI changelog
+
+## AUD-FIX-10 — Scan, Overview, and Apps UX truth convergence
+
+- Replaced one-tap scan execution with a mandatory scope/preset → preflight → review → explicit Start protocol for presets, custom roots, targeted rescans, and module scans.
+- Made Overview report Go-owned scan identity, generation, integrity/freshness, durable operation/activity truth, and distinct logical-versus-allocated byte semantics.
+- Made Apps label scan-measured filesystem bytes separately from supported/partial/unavailable/blocked Android package evidence so unknown platform evidence can never look like zero.
+- Added typed Go remediation gates for root unavailability, failed preflight, wrong scope, degraded integrity, stale/no-scan evidence, and unsupported evidence.
+- Added the non-gate `aud_fix_10` Devtool workflow and successor audit/ledger/contract evidence; Gate D remains open.
+
 
 ## Android modern dark portrait UI phase 8 final contract seal
 
@@ -285,3 +302,31 @@ Final release-candidate hardening for the rooted Android storage workbench.
 - Moved the Python/Textual host to `migration/oracle/python_textual/` as a non-production parity oracle and cut `dust-tui`/`dust-space` to Go compatibility binaries.
 - Separated Go host-default truth from Android Gate-D qualification; Gate D remains open and Android remains evidence-gated.
 - Restored Gradle jobs to the normal full validation DAG after the temporary Gate-R1 deferral ended.
+
+## AUD-FIX-08 — semantic navigation cutover
+- Replaced the legacy 16-destination/layout-remap shell with a 27-route semantic contract shared by Android and Go.
+- Added nested/entity `dustui://` deep links, saveable route/entity restoration, and typed stale/not-found identity handling.
+- Decomposed System into runtime, modules, automation, diagnostics, certification, and settings; durable runs/evidence now live under Activity.
+- Added Devtool-native AUD-FIX-08 static, Go route, and Android unit validation while keeping Gate D open.
+
+## AUD-FIX-09 — bound async state and typed action gates
+- Replaced scattered MainViewModel request counters with a semantic route request registry bound by route, generation, entity, request ID, and optional fingerprint.
+- Routed production content presentation through shared Loading / Empty / Blocked / Error / Content states backed by the Go screen-state protocol.
+- Retired the Files/Clean/scan-required one-off predecessor presentation screens.
+- Centralized scan cancellation, cleanup review/execution, and Activity cancel/retry/reconcile policy in structured Go action gates with stable reason codes and remediation actions.
+- Added adversarial stale-response coverage for directory queries, package switches, cleanup manifests, Activity selection, diagnostics generations, request IDs, and fingerprints.
+
+
+## AUD-FIX-11 — Activity and Diagnostics product UX convergence
+- Made durable Go Activity runs the canonical operation list/run/evidence UX, including filters and recovery-aware typed action gates.
+- Attached full cleanup deletion verification to Activity evidence and retired the separate cleanup-report screen.
+- Replaced primary Debug Workbench acceptance with ProblemGraph-backed System → Diagnostics; raw events/probes remain Advanced-only.
+- Added exact bidirectional operation correlation between Activity evidence and Diagnostics remediation.
+- Added Devtool `aud_fix_11` Android/Go DAG leaves and successor behavioral acceptance.
+## AUD-FIX-13 — pre-Gate-D acceptance convergence
+- Replaced stale source-token acceptance with an explicit validator lifecycle map and exact behavioral successor evidence.
+- Archived predecessor Android contract tests and Python validators as non-authoritative history while preserving the live static guards Gate D still needs.
+- Added evidence-derived candidate acceptance state, a complete UI/UX requirement/task/visual-rule matrix, and adversarial counterexample validation.
+- Bound Android/Go product metadata and Devtool acceptance workflows to canonical acceptance + qualification state without claiming Gate-D qualification.
+- Kept app-local ADB/APK/release helpers quarantined for AUD-FIX-16 and historical Gate A/B/C evidence/topology work for AUD-FIX-14.
+

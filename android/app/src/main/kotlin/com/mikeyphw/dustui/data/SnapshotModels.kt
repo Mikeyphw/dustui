@@ -10,6 +10,18 @@ data class AppStorageSummary(
     val orphaned: Boolean,
 )
 
+
+
+data class OverviewStorageSemantics(
+    val scanId: String,
+    val generation: Long,
+    val rootPath: String,
+    val integrityStatus: String,
+    val logicalBytes: Long,
+    val allocatedBytes: Long,
+    val fileCount: Long,
+)
+
 data class SnapshotDelta(
     val currentScanId: String,
     val previousScanId: String?,

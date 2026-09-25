@@ -1,0 +1,22 @@
+{
+  "schema": "dustui.audit-loop.v2",
+  "overlay": "AUD-FIX-09",
+  "scope": "bound async presentation state and typed Go action gates",
+  "passes": 2,
+  "result": "converged",
+  "checks": {
+    "aud_fix_01_through_09_contracts": "pass",
+    "go_shell_product_tui": "pass",
+    "qualification_freshness": "pass",
+    "ov13_successor_contract": "pass-after-nested-route-successor-update",
+    "full_roadmap_conformance": "no UIX-002/UIX-003/UIX-004 residual finding",
+    "android_gradle_local_sandbox": "not_executed_dns_services.gradle.org"
+  },
+  "canonical_delta": {
+    "gate_d": "open",
+    "go_runtime_operation_count": {"before": 52, "after": 54},
+    "new_operations": ["domain.ui.action-gate", "domain.ui.screen-state"]
+  },
+  "apply_policy": "--no-validate",
+  "native_follow_up": "./devtoolw aud-fix-09"
+}
