@@ -17,8 +17,8 @@ import (
 
 // ReplacePackageEvidence makes Go SQLite the durable package/storage authority.
 // Android supplies platform observations; normalization and evidence identity are Go-owned.
-func (s *SQLiteStore) ReplacePackageEvidence(ctx context.Context, snapshot packageevidence.NormalizedSnapshot, collector string, degradation []string) error {
-	if snapshot.SnapshotID == "" || snapshot.Generation <= 0 || snapshot.EvidenceHash == "" {
+func (s *SQLiteStore) ReplacePackageEvidence(ctx context.Context, scanID string, snapshot packageevidence.NormalizedSnapshot, collector string, degradation []string) error {
+	if scanID == "" || snapshot.SnapshotID == "" || snapshot.Generation <= 0 || snapshot.EvidenceHash == "" {
 		return errors.New("package_snapshot_identity_required")
 	}
 	if collector == "" {
@@ -30,7 +30,7 @@ func (s *SQLiteStore) ReplacePackageEvidence(ctx context.Context, snapshot packa
 	}
 	defer tx.Rollback()
 	reasons, _ := json.Marshal(degradation)
-	if _, err = tx.ExecContext(ctx, `INSERT OR REPLACE INTO android_package_evidence_snapshots(id,generation,collector,completeness,degradation_reasons_json,evidence_hash,created_at_ms) VALUES(?,?,?,?,?,?,?)`, snapshot.SnapshotID, snapshot.Generation, collector, snapshot.Completeness, string(reasons), snapshot.EvidenceHash, time.Now().UnixMilli()); err != nil {
+	if _, err = tx.ExecContext(ctx, `INSERT OR REPLACE INTO android_package_evidence_snapshots(id,scan_id,generation,collector,completeness,degradation_reasons_json,evidence_hash,created_at_ms) VALUES(?,?,?,?,?,?,?,?)`, snapshot.SnapshotID, scanID, snapshot.Generation, collector, snapshot.Completeness, string(reasons), snapshot.EvidenceHash, time.Now().UnixMilli()); err != nil {
 		return err
 	}
 	if _, err = tx.ExecContext(ctx, `DELETE FROM android_package_records WHERE snapshot_id=?`, snapshot.SnapshotID); err != nil {
@@ -57,6 +57,44 @@ func (s *SQLiteStore) ReplacePackageEvidence(ctx context.Context, snapshot packa
 		}
 	}
 	return tx.Commit()
+}
+
+func (s *SQLiteStore) PackageEvidenceForScan(ctx context.Context, scanID string, generation int64) (*packageevidence.NormalizedSnapshot, error) {
+	var out packageevidence.NormalizedSnapshot
+	err := s.db.QueryRowContext(ctx, `SELECT id,generation,completeness,evidence_hash FROM android_package_evidence_snapshots WHERE scan_id=? AND generation=? ORDER BY created_at_ms DESC LIMIT 1`, scanID, generation).Scan(&out.SnapshotID, &out.Generation, &out.Completeness, &out.EvidenceHash)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	out.Protocol = packageevidence.Protocol
+	rows, err := s.db.QueryContext(ctx, `SELECT package_name,user_id,installed,archived,system_app,enabled_state,completeness,ui_state,degradation_reasons_json,paths_json,code_bytes_known,code_bytes,data_bytes_known,data_bytes,cache_bytes_known,cache_bytes,native_bytes_known,native_bytes FROM android_package_records WHERE snapshot_id=? ORDER BY user_id,package_name`, out.SnapshotID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var r packageevidence.NormalizedRecord
+		var installed, archived, system, ck, dk, cak, nk int
+		var deg, paths string
+		var cb, dbb, cab, nb sql.NullInt64
+		if err := rows.Scan(&r.PackageName, &r.UserID, &installed, &archived, &system, &r.EnabledState, &r.CollectionCompleteness, &r.UIState, &deg, &paths, &ck, &cb, &dk, &dbb, &cak, &cab, &nk, &nb); err != nil {
+			return nil, err
+		}
+		r.Key = packageevidence.PackageKey(r.PackageName, r.UserID)
+		r.Installed = installed != 0
+		r.Archived = archived != 0
+		r.SystemApp = system != 0
+		_ = json.Unmarshal([]byte(deg), &r.DegradationReasons)
+		_ = json.Unmarshal([]byte(paths), &r.Paths)
+		r.CodeBytes = byteEvidence(ck, cb)
+		r.DataBytes = byteEvidence(dk, dbb)
+		r.CacheBytes = byteEvidence(cak, cab)
+		r.NativeBytes = byteEvidence(nk, nb)
+		out.Records = append(out.Records, r)
+	}
+	return &out, rows.Err()
 }
 
 func (s *SQLiteStore) LatestPackageEvidence(ctx context.Context) (*packageevidence.NormalizedSnapshot, error) {

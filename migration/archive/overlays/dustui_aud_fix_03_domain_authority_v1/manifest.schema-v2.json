@@ -1,0 +1,36 @@
+{
+  "schema": "devtool.overlay.schema-v2",
+  "artifact": "dustui_aud_fix_03_domain_authority_v1.zip",
+  "target": "dustui_android",
+  "phase": "AUD-FIX-03",
+  "source_state": {
+    "required_predecessor_artifact": "dustui_aud_fix_02_bounded_authority_v1.zip",
+    "required_predecessor_sha256": "cfdd1536dcb6ad6d3794f756a35e1aba199786e67bdbc421dd68cb06cbd29f1d",
+    "required_predecessor_phase": "AUD-FIX-02"
+  },
+  "purpose": "Typed Go domain runtime authority, explicit partial/unsupported evidence, durable SQLite parity prerequisites, and Android authority cutover.",
+  "gap_families": [
+    "AUD-006",
+    "AUD-008",
+    "AUD-014",
+    "UIX-007"
+  ],
+  "apply_policy": {
+    "android_buildability": "mandatory",
+    "full_validation_gate": false,
+    "devtool_command": "devtool -r \"$HOME/Code/dustui\" --target dustui_android apply /sdcard/Download/dustui_aud_fix_03_domain_authority_v1.zip --no-validate --commit \"DustUI AUD-FIX-03 domain authority\"",
+    "evidence_commands": [
+      "python3 scripts/validate_audfix01_contract.py --audit-loop",
+      "python3 scripts/validate_audfix02_contract.py --audit-loop",
+      "python3 scripts/validate_audfix03_contract.py --audit-loop --write-evidence",
+      "python3 scripts/validate_rem03_android_domain_cutover.py --audit-loop",
+      "cd go && go test ./internal/authority ./internal/packageevidence ./internal/intelligence ./internal/scan ./internal/rootworker"
+    ],
+    "deferred_qualified_host_evidence": [
+      "cd go && go test ./internal/state -run ^TestAUD_FIX03AuthoritySurvivesRestartWithGenerationAndEvidenceTruth$ -count=1",
+      "Android Gradle unit tests including DomainAuthorityGoldenContractTest and DomainAuthorityProductionReachabilityContractTest"
+    ],
+    "sqlite_driver_constraint": "modernc.org/sqlite; CGO substitution forbidden",
+    "gate_d_must_remain": "open"
+  }
+}

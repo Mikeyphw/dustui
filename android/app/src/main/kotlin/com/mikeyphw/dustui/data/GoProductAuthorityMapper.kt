@@ -84,7 +84,8 @@ internal object GoProductAuthorityMapper {
 
     private fun appStoragePackage(o: JSONObject): AppStoragePackageReport = AppStoragePackageReport(
         packageName = o.getString("packageName"), appLabel = o.optString("appLabel", o.getString("packageName")), installed = o.optBoolean("installed"),
-        systemApp = o.optBoolean("systemApp"), versionName = o.nullableString("versionName"), versionCode = o.nullableLong("versionCode"),
+        systemApp = o.optBoolean("systemApp"), evidenceState = enumValue(o.optString("evidenceState"), AppStorageEvidenceState.UNAVAILABLE),
+        evidenceReasons = o.optJSONArray("evidenceReasons").strings(), versionName = o.nullableString("versionName"), versionCode = o.nullableLong("versionCode"),
         totalBytes = o.optLong("totalBytes"), recentGrowthBytes = o.optLong("recentGrowthBytes"),
         buckets = o.optJSONArray("buckets").objects().map(::appStorageBucket), duplicatePaths = o.optJSONArray("duplicatePaths").objects().map(::appStoragePath),
         residuePaths = o.optJSONArray("residuePaths").objects().map(::appStoragePath), recommendationsIgnored = o.optBoolean("recommendationsIgnored"),

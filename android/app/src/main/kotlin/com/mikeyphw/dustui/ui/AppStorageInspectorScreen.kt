@@ -172,7 +172,14 @@ private fun AppPackageSummary(report: AppStoragePackageReport, vm: MainViewModel
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 StatusPill(if (report.installed) "installed" else "not installed", danger = !report.installed)
                 if (report.systemApp) StatusPill("system app")
+                StatusPill("evidence ${report.evidenceState.name.lowercase()}", danger = report.evidenceState.name in setOf("UNAVAILABLE", "BLOCKED"))
                 if (report.recommendationsIgnored) StatusPill("recommendations ignored")
+            }
+            if (report.evidenceState != com.mikeyphw.dustui.data.AppStorageEvidenceState.SUPPORTED) {
+                Text(
+                    report.evidenceReasons.joinToString(" · ").ifBlank { "Some package/storage evidence is unavailable; measured scan bytes remain distinct from unknown platform evidence." },
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
             MetricGrid(listOf(
                 "Measured total" to formatBytes(report.totalBytes),

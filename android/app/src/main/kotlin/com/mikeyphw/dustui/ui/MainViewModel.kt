@@ -632,6 +632,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     private val cleanupRuleDraftRequestId = AtomicLong(0)
     private val storageGrowthRequestId = AtomicLong(0)
     private val cleanupVerificationRequestId = AtomicLong(0)
+    private val cleanupReportRefreshRequestId = AtomicLong(0)
     private val rootSearchRequestId = AtomicLong(0)
     private val insightsRequestId = AtomicLong(0)
     private val certificationRequestId = AtomicLong(0)
@@ -703,10 +704,9 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StorageGrowthPage.empty())
     private val _storageGrowthLoading = MutableStateFlow(false)
     val storageGrowthLoading: StateFlow<Boolean> = _storageGrowthLoading
-    private val initialCleanupReportLoad = repository.cleanupReportLoad()
-    private val _cleanupReports = MutableStateFlow(initialCleanupReportLoad.reports)
+    private val _cleanupReports = MutableStateFlow<List<CleanupVerificationReport>>(emptyList())
     val cleanupReports: StateFlow<List<CleanupVerificationReport>> = _cleanupReports
-    private val _cleanupReportDiagnostics = MutableStateFlow(initialCleanupReportLoad.diagnostics)
+    private val _cleanupReportDiagnostics = MutableStateFlow<List<String>>(emptyList())
     val cleanupReportDiagnostics: StateFlow<List<String>> = _cleanupReportDiagnostics
     private val _selectedCleanupReport = MutableStateFlow<CleanupVerificationReport?>(null)
     private val _cleanupReportVerifying = MutableStateFlow<String?>(null)
@@ -847,10 +847,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         _storageGrowthSessionCount.value = 0
         _storageGrowthLoading.value = false
         _selectedCleanupReport.value = null
-        repository.cleanupReportLoad().also { load ->
-            _cleanupReports.value = load.reports
-            _cleanupReportDiagnostics.value = load.diagnostics
-        }
+        refreshCleanupReports()
         _moduleReport.value = null
         _scanDataStale.value = false
     }
@@ -1704,10 +1701,14 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     }
 
     fun refreshCleanupReports() {
-        val load = repository.cleanupReportLoad()
-        _cleanupReports.value = load.reports
-        _cleanupReportDiagnostics.value = load.diagnostics
-        _selectedCleanupReport.value = _selectedCleanupReport.value?.operationId?.let { id -> load.reports.firstOrNull { it.operationId == id } }
+        val requestId = cleanupReportRefreshRequestId.incrementAndGet()
+        viewModelScope.launch(Dispatchers.IO) {
+            val load = repository.cleanupReportLoad()
+            if (cleanupReportRefreshRequestId.get() != requestId) return@launch
+            _cleanupReports.value = load.reports
+            _cleanupReportDiagnostics.value = load.diagnostics
+            _selectedCleanupReport.value = _selectedCleanupReport.value?.operationId?.let { id -> load.reports.firstOrNull { it.operationId == id } }
+        }
     }
 
     fun openCleanupReport(operationId: String) {

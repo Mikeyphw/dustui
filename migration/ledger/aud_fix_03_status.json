@@ -1,0 +1,18 @@
+{
+  "schema": "dustui.aud-fix-status.v1",
+  "overlay": "AUD-FIX-03",
+  "status": "implementation-complete-evidence-deferred",
+  "closed_or_advanced_gap_families": [
+    "AUD-006",
+    "AUD-008",
+    "AUD-014",
+    "UIX-007"
+  ],
+  "audit_evidence": "migration/audit/v2/aud_fix_03_audit_loop.json",
+  "gate_d": "open",
+  "passes": 2,
+  "blockers": [],
+  "environment_deferred_evidence": [
+    "modernc SQLite restart test"
+  ]
+}

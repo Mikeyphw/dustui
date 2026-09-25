@@ -10,6 +10,7 @@ import android.provider.Settings
 import android.os.Build
 import android.os.PowerManager
 import android.os.StatFs
+import android.os.UserHandle
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
 import com.mikeyphw.dustui.scan.ScheduledScanWorker
@@ -26,6 +27,8 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
+
 
 class ScanRepository(
     private val context: Context,
@@ -43,6 +46,9 @@ class ScanRepository(
     private val cleanupReportStore = CleanupReportStore(context)
     private val appStoragePreferenceStore = AppStoragePreferenceStore(context)
     @Volatile private var packageInventoryCache: Pair<Long, InstalledPackageInventory>? = null
+    private val packageEvidenceAttemptedGeneration = mutableMapOf<String, Long>()
+    private val authorityStatuses = ConcurrentHashMap<String, GoDomainAuthorityStatus>()
+    fun domainAuthorityStatus(scanId: String, domain: String): GoDomainAuthorityStatus? = authorityStatuses["$scanId|$domain"]
     fun observeLatestSession(): Flow<ScanSessionEntity?> = domainStore.observeLatestSession()
     fun observeCleanupOperations(): Flow<List<CleanupOperationEntity>> = domainStore.observeCleanupOperations(50)
     suspend fun browsePage(scanId: String, generation: Long, request: ScanBrowseRequest): ScanBrowsePage =
@@ -83,17 +89,23 @@ class ScanRepository(
         )
     }
 
-    private suspend fun productInsights(scanId: String): JSONObject {
+    private fun authorityOptions(): JSONObject {
         val labels = installedPackageMetadata().mapValues { it.value.appLabel }
-        val options = JSONObject()
+        return JSONObject()
             .put("protectedPaths", JSONArray(residueProtectionStore.paths().sorted()))
             .put("ignoredPackages", JSONArray(appStoragePreferenceStore.ignoredPackages().sorted()))
             .put("appLabels", JSONObject(labels))
-        return domainStore.authorityRequest(
-            "domain.product.insights",
-            domainStore.session(scanId)?.generation ?: 1L,
-            JSONObject().put("scanId", scanId).put("options", options),
-        ).getJSONObject("insights")
+    }
+
+    private suspend fun authorityData(scanId: String, domain: String, packageEvidenceRequired: Boolean): JSONObject {
+        val session = requireNotNull(domainStore.session(scanId)) { "Authority scan no longer exists: $scanId" }
+        if (packageEvidenceRequired && packageEvidenceAttemptedGeneration[scanId] != session.generation) {
+            packageEvidenceAttemptedGeneration[scanId] = session.generation
+            runCatching { refreshPackageEvidence(scanId, session.generation) }
+        }
+        val response = domainStore.typedAuthority(domain, scanId, session.generation, authorityOptions())
+        authorityStatuses["$scanId|$domain"] = response.status()
+        return response.dataObject()
     }
 
     fun inspect(path: String): EntryIntelligence = intelligence.resolve(path)
@@ -101,11 +113,11 @@ class ScanRepository(
 
     suspend fun snapshotDelta(): SnapshotDelta? {
         val current = domainStore.completedSessions(1).firstOrNull() ?: return null
-        return GoProductAuthorityMapper.snapshotDelta(productInsights(current.id).getJSONObject("snapshotDelta"))
+        return GoProductAuthorityMapper.snapshotDelta(authorityData(current.id, "cleanup-intelligence", true).getJSONObject("snapshotDelta"))
     }
 
     suspend fun snapshotDelta(scanId: String, currentEntries: List<ScanEntryEntity>): SnapshotDelta? =
-        GoProductAuthorityMapper.snapshotDelta(productInsights(scanId).getJSONObject("snapshotDelta"))
+        GoProductAuthorityMapper.snapshotDelta(authorityData(scanId, "cleanup-intelligence", true).getJSONObject("snapshotDelta"))
 
 
     suspend fun snapshotHistory(limit: Int = 12): List<SnapshotPoint> = domainStore.completedSessions(limit)
@@ -113,18 +125,125 @@ class ScanRepository(
         .map { SnapshotPoint(it.completedAt ?: it.startedAt, it.totalBytes) }
 
     suspend fun appSummaries(scanId: String): List<AppStorageSummary> =
-        GoProductAuthorityMapper.appSummaries(productInsights(scanId).getJSONArray("appSummaries"))
+        GoProductAuthorityMapper.appSummaries(authorityData(scanId, "package-storage", true).getJSONArray("appSummaries"))
 
     suspend fun appSummaries(scanId: String, entries: List<ScanEntryEntity>): List<AppStorageSummary> = appSummaries(scanId)
 
     suspend fun appResidueAnalysis(scanId: String): AppResidueAnalysis =
-        GoProductAuthorityMapper.residue(productInsights(scanId).getJSONObject("residue"))
+        GoProductAuthorityMapper.residue(authorityData(scanId, "residue", true))
 
     suspend fun appResidueAnalysis(scanId: String, entries: List<ScanEntryEntity>): AppResidueAnalysis = appResidueAnalysis(scanId)
 
 
     fun protectResiduePath(path: String) = residueProtectionStore.protect(path)
     fun unprotectResiduePath(path: String) = residueProtectionStore.unprotect(path)
+
+    suspend fun refreshPackageEvidence(scanId: String, generation: Long): JSONObject {
+        val inventory = installedPackageInventory()
+        val packageManager = context.packageManager
+        val currentUser = UserHandle.myUserId()
+        val currentInfos: Map<String, PackageInfo> = installedPackageInfos().associateBy { it.packageName }
+        val records = JSONArray()
+        val degradation = linkedSetOf<String>()
+        if (!inventory.complete) degradation += (inventory.message ?: "multi_user_inventory_partial")
+
+        inventory.packagesByUser.toSortedMap().forEach { (userId, packages) ->
+            packages.toSortedSet().forEach { packageName ->
+                val info = if (userId == currentUser || (userId == 0 && currentUser == 0)) currentInfos[packageName] else null
+                val app = info?.applicationInfo
+                val reasons = JSONArray()
+                val completeness = if (app != null) {
+                    reasons.put("package_byte_counts_not_available_in_platform_collector")
+                    reasons.put("external_adoptable_secondary_storage_not_fully_observable")
+                    "partial"
+                } else {
+                    reasons.put("package_visible_only_through_root_user_inventory")
+                    "partial"
+                }
+                val record = JSONObject()
+                    .put("packageName", packageName)
+                    .put("userId", userId)
+                    .put("installed", true)
+                    .put("archived", false)
+                    .put("systemApp", app?.let { (it.flags and ApplicationInfo.FLAG_SYSTEM) != 0 } ?: false)
+                    .put("enabledState", when (app?.enabled) { true -> "enabled"; false -> "disabled"; null -> "unknown" })
+                    .put("collectionCompleteness", completeness)
+                    .put("degradationReasons", reasons)
+                    .put("sourceDirs", jsonArrayOfNotBlank(app?.sourceDir, app?.publicSourceDir))
+                    .put("splitDirs", JSONArray(app?.splitSourceDirs?.filter(String::isNotBlank).orEmpty()))
+                    .put("ceDataDirs", jsonArrayOfNotBlank(if (Build.VERSION.SDK_INT >= 24) app?.credentialProtectedDataDir else app?.dataDir))
+                    .put("deDataDirs", jsonArrayOfNotBlank(if (Build.VERSION.SDK_INT >= 24) app?.deviceProtectedDataDir else null))
+                    .put("externalDataDirs", JSONArray())
+                    .put("adoptableDataDirs", JSONArray())
+                    .put("secondaryStorageDirs", JSONArray())
+                    .put("cacheDirs", JSONArray())
+                    .put("nativeLibraryDirs", jsonArrayOfNotBlank(app?.nativeLibraryDir))
+                    .put("codeBytes", JSONObject().put("known", false))
+                    .put("dataBytes", JSONObject().put("known", false))
+                    .put("cacheBytes", JSONObject().put("known", false))
+                    .put("nativeBytes", JSONObject().put("known", false))
+                records.put(record)
+            }
+        }
+        if (records.length() == 0) {
+            // PackageManager visibility for the app's own user is the minimum supported evidence source.
+            currentInfos.keys.sorted().forEach { packageName ->
+                val app = currentInfos.getValue(packageName).applicationInfo
+                records.put(
+                    JSONObject()
+                        .put("packageName", packageName)
+                        .put("userId", currentUser)
+                        .put("installed", true)
+                        .put("archived", false)
+                        .put("systemApp", app?.let { (it.flags and ApplicationInfo.FLAG_SYSTEM) != 0 } ?: false)
+                        .put("enabledState", when (app?.enabled) { true -> "enabled"; false -> "disabled"; null -> "unknown" })
+                        .put("collectionCompleteness", "partial")
+                        .put("degradationReasons", JSONArray().put("root_multi_user_inventory_unavailable"))
+                        .put("sourceDirs", jsonArrayOfNotBlank(app?.sourceDir, app?.publicSourceDir))
+                        .put("splitDirs", JSONArray(app?.splitSourceDirs?.filter(String::isNotBlank).orEmpty()))
+                        .put("ceDataDirs", jsonArrayOfNotBlank(if (Build.VERSION.SDK_INT >= 24) app?.credentialProtectedDataDir else app?.dataDir))
+                        .put("deDataDirs", jsonArrayOfNotBlank(if (Build.VERSION.SDK_INT >= 24) app?.deviceProtectedDataDir else null))
+                        .put("externalDataDirs", JSONArray())
+                        .put("adoptableDataDirs", JSONArray())
+                        .put("secondaryStorageDirs", JSONArray())
+                        .put("cacheDirs", JSONArray())
+                        .put("nativeLibraryDirs", jsonArrayOfNotBlank(app?.nativeLibraryDir))
+                        .put("codeBytes", JSONObject().put("known", false))
+                        .put("dataBytes", JSONObject().put("known", false))
+                        .put("cacheBytes", JSONObject().put("known", false))
+                        .put("nativeBytes", JSONObject().put("known", false)),
+                )
+            }
+            degradation += "root_multi_user_inventory_unavailable"
+        }
+        if (records.length() == 0) {
+            return JSONObject().put("completeness", "unavailable").put("degradationReasons", JSONArray().put("package_inventory_empty"))
+        }
+        val snapshot = JSONObject()
+            .put("snapshotId", "pkg-$scanId-$generation")
+            .put("generation", generation.coerceAtLeast(1L))
+            .put("collector", "android-platform-adapter")
+            .put("androidUserSerialScope", JSONArray(inventory.packagesByUser.keys.sorted()))
+            .put("records", records)
+            .put("completeness", if (degradation.isEmpty()) "partial" else "partial")
+            .put("degradationReasons", JSONArray(degradation.toList()))
+        return domainStore.authorityRequest(
+            "domain.package.snapshot.replace",
+            generation.coerceAtLeast(1L),
+            JSONObject().put("schema", GoDomainStore.DOMAIN_AUTHORITY_REQUEST_SCHEMA).put("scanId", scanId).put("snapshot", snapshot).put("collector", "android-platform-adapter"),
+        ).getJSONObject("snapshot")
+    }
+
+    @Suppress("DEPRECATION")
+    private fun installedPackageInfos(): List<PackageInfo> = if (Build.VERSION.SDK_INT >= 33) {
+        context.packageManager.getInstalledPackages(PackageManager.PackageInfoFlags.of(0))
+    } else {
+        context.packageManager.getInstalledPackages(0)
+    }
+
+    private fun jsonArrayOfNotBlank(vararg values: String?): JSONArray = JSONArray(
+        values.mapNotNull { it?.takeIf(String::isNotBlank) }.distinct(),
+    )
 
     private suspend fun installedPackageInventory(): InstalledPackageInventory {
         val now = System.currentTimeMillis()
@@ -194,17 +313,17 @@ class ScanRepository(
     }
 
     suspend fun advancedAnalysis(scanId: String): AdvancedStorageReport =
-        GoProductAuthorityMapper.advanced(productInsights(scanId).getJSONObject("advanced"))
+        GoProductAuthorityMapper.advanced(authorityData(scanId, "cleanup-intelligence", true).getJSONObject("advanced"))
 
     suspend fun advancedAnalysis(scanId: String, entries: List<ScanEntryEntity>): AdvancedStorageReport = advancedAnalysis(scanId)
 
     suspend fun packageProfiles(scanId: String): List<PackageStorageProfile> =
-        GoProductAuthorityMapper.packageProfiles(productInsights(scanId).getJSONArray("packageProfiles"))
+        GoProductAuthorityMapper.packageProfiles(authorityData(scanId, "package-storage", true).getJSONArray("packageProfiles"))
 
     suspend fun appStorageInspector(
         scanId: String,
         providedResidueAnalysis: AppResidueAnalysis? = null,
-    ): AppStorageInspectorAnalysis = GoProductAuthorityMapper.appStorage(productInsights(scanId).getJSONObject("appStorage"))
+    ): AppStorageInspectorAnalysis = GoProductAuthorityMapper.appStorage(authorityData(scanId, "package-storage", true).getJSONObject("appStorage"))
 
     suspend fun appStorageInspector(
         scanId: String,
@@ -263,26 +382,13 @@ class ScanRepository(
     suspend fun moduleAnalysis(scanId: String): RootModuleReport = moduleAnalysis(scanId, emptyList())
 
     suspend fun moduleAnalysis(scanId: String, entries: List<ScanEntryEntity>): RootModuleReport {
-        val session = domainStore.session(scanId)
-        val report = GoProductAuthorityMapper.modules(productInsights(scanId).getJSONObject("modules"))
-        val moduleRoot = "/data/adb/modules"
-        val preflight = runCatching { rootClient.preflightScan(ScanRequest(rootPath = moduleRoot, maxDepth = 1, maxEntries = 64)) }.getOrNull()
-        val diagnostic = report.diagnostic.copy(
-            modulePathAccessible = preflight?.ok,
-            rootCode = preflight?.code,
-            message = when {
-                report.diagnostic.status == ModuleDiagnosticStatus.READY -> "Indexed ${report.modules.size} module(s) from ${session?.rootPath ?: "the Go scan"}."
-                preflight?.ok == false && report.diagnostic.status == ModuleDiagnosticStatus.WRONG_SCAN_ROOT -> report.diagnostic.message + "; root preflight: ${preflight.message}"
-                else -> report.diagnostic.message
-            },
-        )
-        return report.copy(diagnostic = diagnostic)
+        return GoProductAuthorityMapper.modules(authorityData(scanId, "modules", false))
     }
 
     suspend fun cleanupRecommendations(
         scanId: String,
         providedResidueAnalysis: AppResidueAnalysis? = null,
-    ): CleanupRecommendationAnalysis = GoProductAuthorityMapper.recommendations(productInsights(scanId).getJSONObject("recommendations"))
+    ): CleanupRecommendationAnalysis = GoProductAuthorityMapper.recommendations(authorityData(scanId, "recommendations", true))
 
     suspend fun cleanupRecommendations(
         scanId: String,
@@ -348,11 +454,16 @@ class ScanRepository(
                     .put("residueConfidence", rule.conditions.residueConfidence.name))
         })
         val payload = domainStore.authorityRequest(
-            "domain.product.rules.preview",
+            "domain.authority.rules.preview",
             domainStore.session(scanId)?.generation ?: 1L,
-            JSONObject().put("scanId", scanId).put("rules", encodedRules).put("includeDisabled", includeDisabled),
+            JSONObject()
+                .put("schema", GoDomainStore.DOMAIN_AUTHORITY_REQUEST_SCHEMA)
+                .put("domain", "rules")
+                .put("scanId", scanId)
+                .put("rules", encodedRules)
+                .put("includeDisabled", includeDisabled),
         )
-        return GoProductAuthorityMapper.rulePreview(payload.getJSONObject("preview"))
+        return GoProductAuthorityMapper.rulePreview(payload.getJSONObject("data"))
     }
 
 
@@ -363,7 +474,7 @@ class ScanRepository(
         val sessions = domainStore.completedSessions(storageGrowthPreferenceStore.retentionLimit())
         val current = sessions.getOrNull(currentOffset.coerceAtLeast(0)) ?: return null
         storageGrowthPreferenceStore.prune(sessions.mapTo(linkedSetOf()) { it.id })
-        return GoProductAuthorityMapper.growth(productInsights(current.id).getJSONObject("growth"))
+        return GoProductAuthorityMapper.growth(authorityData(current.id, "growth", false))
     }
 
 
@@ -381,8 +492,23 @@ class ScanRepository(
         return remaining.size
     }
 
-    fun cleanupReportLoad(): CleanupReportLoadResult = cleanupReportStore.load()
-    fun cleanupReports(): List<CleanupVerificationReport> = cleanupReportStore.reports()
+    suspend fun cleanupReportLoad(): CleanupReportLoadResult = runCatching {
+        val payload = domainStore.authorityRequest(
+            "domain.cleanup.verification.list",
+            generation = 1L,
+            payload = JSONObject().put("schema", GoDomainStore.DOMAIN_AUTHORITY_REQUEST_SCHEMA).put("domain", "cleanup-verification").put("limit", 100),
+        )
+        require(payload.getString("schema") == GoDomainStore.DOMAIN_AUTHORITY_RESPONSE_SCHEMA) { "Go verification-list response schema mismatch" }
+        val reports = payload.optJSONArray("records")
+            ?.let { array -> (0 until array.length()).map { index -> GoProductAuthorityMapper.verificationReport(array.getJSONObject(index).getJSONObject("report")) } }
+            .orEmpty()
+        CleanupReportLoadResult(reports = reports, diagnostics = emptyList())
+    }.getOrElse { failure ->
+        CleanupReportLoadResult(
+            reports = emptyList(),
+            diagnostics = listOf("Go deletion-report authority unavailable: ${failure.message ?: failure.javaClass.simpleName}"),
+        )
+    }
 
     fun exportCleanupReport(report: CleanupVerificationReport, asJson: Boolean) {
         val uri = if (asJson) cleanupReportStore.exportJson(report) else cleanupReportStore.exportText(report)
@@ -394,19 +520,32 @@ class ScanRepository(
     }
 
     suspend fun retryCleanupVerification(operationId: String): CleanupVerificationReport {
-        val original = requireNotNull(cleanupReportStore.report(operationId)) { "Deletion report was not found" }
+        val source = domainStore.authorityRequest(
+            "domain.cleanup.verification.get",
+            generation = 1L,
+            payload = JSONObject().put("schema", GoDomainStore.DOMAIN_AUTHORITY_REQUEST_SCHEMA).put("domain", "cleanup-verification").put("operationId", operationId),
+        )
+        val originalObject = source.optJSONObject("report")
+        val original = requireNotNull(originalObject?.let(GoProductAuthorityMapper::verificationReport)) { "Deletion report was not found" }
         val observations = inspectCleanupPaths(original.items.filter { it.status != CleanupVerificationStatus.BLOCKED }.map { it.path })
         val rootInspection = runCatching { rootClient.inspectPath(original.rootPath, previewBytes = 0) }.getOrNull()
-        val updated = CleanupVerificationEngine.reverify(
-            original = original,
-            observationsByPath = observations,
-            verifiedAt = System.currentTimeMillis(),
-            freeBytesAfter = availableBytes(original.rootPath),
-            environment = environmentContext(rootInspection),
+        val generation = domainStore.session(original.scanId)?.generation ?: 1L
+        val payload = domainStore.authorityRequest(
+            "domain.cleanup.verification.reverify",
+            generation,
+            JSONObject()
+                .put("schema", GoDomainStore.DOMAIN_AUTHORITY_REQUEST_SCHEMA)
+                .put("domain", "cleanup-verification")
+                .put("scanId", original.scanId)
+                .put("original", verificationReportJson(original))
+                .put("observations", verificationObservationsJson(observations))
+                .put("verifiedAt", System.currentTimeMillis())
+                .put("freeBytesAfter", availableBytes(original.rootPath) ?: JSONObject.NULL)
+                .put("environment", verificationEnvironmentJson(environmentContext(rootInspection))),
         )
-        withContext(kotlinx.coroutines.Dispatchers.IO) { cleanupReportStore.save(updated) }
-        return updated
+        return GoProductAuthorityMapper.verificationReport(payload.getJSONObject("report"))
     }
+
 
     suspend fun loadDuplicateAnalysis(scanId: String): DuplicateAnalysisSnapshot? = duplicateStore.load(scanId)
 
@@ -463,6 +602,7 @@ class ScanRepository(
                     )
                 } else {
                     val report = rootClient.verifyDuplicates(scanId, candidates.map { it.path }, bucket.sizeBytes, session.rootPath)
+                    persistDuplicateAuthority(scanId, session, candidates, report)
                     val mergedGroups = snapshot.groups.filterNot { it.sizeBytes == bucket.sizeBytes } + report.groups
                     snapshot = snapshot.copy(
                         completedBuckets = snapshot.completedBuckets + 1,
@@ -510,6 +650,44 @@ class ScanRepository(
             onUpdate(snapshot)
             return snapshot
         }
+    }
+
+    private suspend fun persistDuplicateAuthority(
+        scanId: String,
+        session: ScanSessionEntity,
+        candidates: List<ScanEntryEntity>,
+        report: DuplicateVerificationReport,
+    ) {
+        val entryByPath = candidates.associateBy { it.path }
+        val sourceContextHash = "scan:$scanId:${session.generation}:${session.integrityStatus}:${session.rootPath}"
+        val inputs = JSONArray()
+        report.groups.forEach { group ->
+            group.pathRecords.forEach { path ->
+                val entry = entryByPath[path.path]
+                inputs.put(
+                    JSONObject()
+                        .put("path", path.path)
+                        .put("scanId", scanId)
+                        .put("scanGeneration", session.generation)
+                        .put("sourceContextHash", sourceContextHash)
+                        .put("expectedIdentity", path.copyKey)
+                        .put("contentHash", group.sha256)
+                        .put("logicalSizeBytes", group.sizeBytes)
+                        .put("allocatedSizeBytes", entry?.allocatedBytes ?: group.sizeBytes)
+                        .put("protectedState", if (path.autoDeleteEligible) "unprotected" else "protected")
+                        .put("retainedCopyEligible", true),
+                )
+            }
+        }
+        domainStore.authorityRequest(
+            "domain.authority.duplicates.replace",
+            session.generation,
+            JSONObject()
+                .put("schema", GoDomainStore.DOMAIN_AUTHORITY_REQUEST_SCHEMA)
+                .put("scanId", scanId)
+                .put("generation", session.generation)
+                .put("inputs", inputs),
+        )
     }
 
     suspend fun reviewCleanup(
@@ -682,19 +860,67 @@ class ScanRepository(
     ) {
         val observationsByPath = inspectCleanupPaths(review.accepted.map { it.path })
         val rootInspection = runCatching { rootClient.inspectPath(review.rootPath, previewBytes = 0) }.getOrNull()
-        val report = CleanupVerificationEngine.build(
-            review = review,
-            result = result,
-            startedAt = startedAt,
-            completedAt = System.currentTimeMillis(),
-            observationsByPath = observationsByPath,
-            freeBytesBefore = freeBytesBefore,
-            freeBytesAfter = availableBytes(review.rootPath),
-            appVersion = BuildConfig.VERSION_NAME,
-            environment = environmentContext(rootInspection),
+        val payload = domainStore.authorityRequest(
+            "domain.cleanup.verification.build",
+            review.scanGeneration.coerceAtLeast(1L),
+            JSONObject()
+                .put("schema", GoDomainStore.DOMAIN_AUTHORITY_REQUEST_SCHEMA)
+                .put("domain", "cleanup-verification")
+                .put("scanId", review.scanId)
+                .put("review", verificationReviewJson(review))
+                .put("result", verificationResultJson(result))
+                .put("startedAt", startedAt)
+                .put("completedAt", System.currentTimeMillis())
+                .put("observations", verificationObservationsJson(observationsByPath))
+                .put("freeBytesBefore", freeBytesBefore ?: JSONObject.NULL)
+                .put("freeBytesAfter", availableBytes(review.rootPath) ?: JSONObject.NULL)
+                .put("appVersion", BuildConfig.VERSION_NAME)
+                .put("environment", verificationEnvironmentJson(environmentContext(rootInspection))),
         )
-        withContext(Dispatchers.IO) { cleanupReportStore.save(report) }
+        GoProductAuthorityMapper.verificationReport(payload.getJSONObject("report"))
     }
+
+    private fun verificationReviewJson(review: CleanupReview): JSONObject = JSONObject()
+        .put("operationId", review.operationId).put("scanId", review.scanId).put("rootPath", review.rootPath)
+        .put("accepted", JSONArray(review.accepted.map { item ->
+            JSONObject().put("path", item.path).put("plannedBytes", item.plannedBytes).put("fingerprint", verificationFingerprintJson(item.fingerprint))
+        }))
+        .put("blocked", JSONArray(review.blocked.map { JSONObject().put("path", it.path).put("reason", it.reason) }))
+
+    private fun verificationResultJson(result: CleanupExecutionResult): JSONObject = JSONObject()
+        .put("items", JSONArray(result.items.map { item ->
+            JSONObject().put("path", item.path).put("plannedBytes", item.plannedBytes).put("deletedBytes", item.deletedBytes)
+                .put("status", item.status).put("message", item.message ?: JSONObject.NULL)
+        }))
+
+    private fun verificationObservationsJson(observations: Map<String, CleanupPathObservation>): JSONObject = JSONObject().also { out ->
+        observations.forEach { (path, observation) ->
+            out.put(path, JSONObject().put("presence", observation.presence.name).put("message", observation.message ?: JSONObject.NULL))
+        }
+    }
+
+    private fun verificationEnvironmentJson(environment: CleanupEnvironmentContext): JSONObject = JSONObject()
+        .put("manufacturer", environment.manufacturer).put("model", environment.model).put("sdkInt", environment.sdkInt)
+        .put("filesystem", environment.filesystem ?: JSONObject.NULL).put("mountPoint", environment.mountPoint ?: JSONObject.NULL)
+        .put("mountSource", environment.mountSource ?: JSONObject.NULL).put("readOnly", environment.readOnly ?: JSONObject.NULL)
+
+    private fun verificationFingerprintJson(fingerprint: CleanupPathFingerprint): JSONObject = JSONObject()
+        .put("device", fingerprint.device).put("mountId", fingerprint.mountId ?: JSONObject.NULL).put("inode", fingerprint.inode)
+        .put("mode", fingerprint.mode).put("statSizeBytes", fingerprint.statSizeBytes).put("modifiedAt", fingerprint.modifiedAt)
+        .put("treeDigest", fingerprint.treeDigest).put("entryCount", fingerprint.entryCount).put("contentSha256", fingerprint.contentSha256 ?: JSONObject.NULL)
+
+    private fun verificationReportJson(report: CleanupVerificationReport): JSONObject = JSONObject()
+        .put("schemaVersion", report.schemaVersion).put("operationId", report.operationId).put("scanId", report.scanId).put("rootPath", report.rootPath)
+        .put("startedAt", report.startedAt).put("completedAt", report.completedAt).put("plannedBytes", report.plannedBytes)
+        .put("attemptedBytes", report.attemptedBytes).put("reportedDeletedBytes", report.reportedDeletedBytes).put("confirmedDeletedBytes", report.confirmedDeletedBytes)
+        .put("partialBytes", report.partialBytes).put("failedBytes", report.failedBytes).put("freeBytesBefore", report.freeBytesBefore ?: JSONObject.NULL)
+        .put("freeBytesAfter", report.freeBytesAfter ?: JSONObject.NULL).put("appVersion", report.appVersion)
+        .put("environment", verificationEnvironmentJson(report.environment)).put("verificationAttempts", report.verificationAttempts).put("lastVerifiedAt", report.lastVerifiedAt)
+        .put("items", JSONArray(report.items.map { item ->
+            JSONObject().put("path", item.path).put("plannedBytes", item.plannedBytes).put("reportedDeletedBytes", item.reportedDeletedBytes)
+                .put("status", item.status.name).put("pathPresence", item.pathPresence.name).put("message", item.message ?: JSONObject.NULL)
+                .put("fingerprint", item.fingerprint?.let(::verificationFingerprintJson) ?: JSONObject.NULL)
+        }))
 
     private suspend fun inspectCleanupPaths(paths: Collection<String>): Map<String, CleanupPathObservation> = paths.associateWith { path ->
         runCatching { rootClient.inspectPath(path, previewBytes = 0) }

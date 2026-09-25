@@ -68,11 +68,15 @@ data class AppStorageBucket(
     }.toMap()
 }
 
+enum class AppStorageEvidenceState { SUPPORTED, PARTIAL, UNAVAILABLE, BLOCKED }
+
 data class AppStoragePackageReport(
     val packageName: String,
     val appLabel: String,
     val installed: Boolean,
     val systemApp: Boolean,
+    val evidenceState: AppStorageEvidenceState = AppStorageEvidenceState.UNAVAILABLE,
+    val evidenceReasons: List<String> = emptyList(),
     val versionName: String?,
     val versionCode: Long?,
     val totalBytes: Long,

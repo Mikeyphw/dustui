@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
+import re
 import json, sys, tomllib
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
@@ -46,7 +47,7 @@ require('SQLiteDatabase.OPEN_READONLY' in importer and 'room-v3-imported.marker'
 require('Room.databaseBuilder' not in importer,'legacy importer must not instantiate Room')
 require('modernc.org/sqlite' in gomod and '_ "modernc.org/sqlite"' in sqlite and 'sql.Open("sqlite", path)' in sqlite,'REM-02 modernc SQLite authority was regressed')
 require('CGO_ENABLED", "0"' in gradle,'Android Go runtime must remain CGO-free')
-require('const SchemaVersion = 11' in schema,'REM-03 schema must be v11')
+require(re.search(r'const SchemaVersion = (?:1[1-9]|[2-9][0-9]+)', schema) is not None,'REM-03 schema must be v11 or newer')
 require('scan_sessions(root_path, completed_at_ms, generation)' in schema and 'scan_sessions(canonical_root' not in schema,'scan history index targets wrong column')
 for token in ['android_cleanup_operations','android_cleanup_plan_items','preset_id','options_json','scanned_items','error_message']:
     require(token in schema,f'Go domain schema token missing: {token}')

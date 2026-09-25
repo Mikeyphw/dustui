@@ -34,6 +34,8 @@ type boundedPackageAccum struct {
 	Name                                                                           string
 	Installed                                                                      bool
 	System                                                                         bool
+	EvidenceState                                                                  string
+	EvidenceReasons                                                                []string
 	EntryCount                                                                     int
 	Total, Private, Cache, Code, Database, Preferences, External, OBB, Media, Logs int64
 	Largest                                                                        []productEntry
@@ -79,7 +81,7 @@ func (s *SQLiteStore) productInsightsBounded(ctx context.Context, scanID string,
 			break
 		}
 	}
-	snapshot, err := s.LatestPackageEvidence(ctx)
+	snapshot, err := s.PackageEvidenceForScan(ctx, scanID, session.Generation)
 	if err != nil {
 		return nil, err
 	}
@@ -214,8 +216,8 @@ func (a *boundedProductAccumulator) add(e productEntry, snapshot *packageevidenc
 	if e.Package != "" {
 		p := a.Apps[e.Package]
 		if p == nil {
-			installed, system := packageInstallState(snapshot, e.Package)
-			p = &boundedPackageAccum{Name: e.Package, Installed: installed, System: system, Buckets: map[string]*boundedBucketAccum{}}
+			installed, system, evidenceState, evidenceReasons := packageInstallState(snapshot, e.Package)
+			p = &boundedPackageAccum{Name: e.Package, Installed: installed, System: system, EvidenceState: evidenceState, EvidenceReasons: evidenceReasons, Buckets: map[string]*boundedBucketAccum{}}
 			a.Apps[e.Package] = p
 		}
 		p.EntryCount++
@@ -323,13 +325,13 @@ func (a *boundedProductAccumulator) addResidue(e productEntry, snapshot *package
 	_ = labels
 }
 
-func packageInstallState(snapshot *packageevidence.NormalizedSnapshot, pkg string) (bool, bool) {
+func packageInstallState(snapshot *packageevidence.NormalizedSnapshot, pkg string) (bool, bool, string, []string) {
 	for _, r := range snapshot.Records {
 		if r.PackageName == pkg && r.UserID == 0 {
-			return r.Installed, r.SystemApp
+			return r.Installed, r.SystemApp, r.UIState, append([]string{}, r.DegradationReasons...)
 		}
 	}
-	return false, false
+	return false, false, packageevidence.UIStateUnavailable, []string{"package_evidence_missing"}
 }
 
 func boundedTopEntries(in []productEntry, e productEntry, limit int) []productEntry {
@@ -432,7 +434,7 @@ func boundedAppStorageView(scanID string, previous *AndroidScanSession, apps map
 		if label == "" {
 			label = a.Name
 		}
-		pkgs = append(pkgs, map[string]any{"packageName": a.Name, "appLabel": label, "installed": a.Installed, "systemApp": a.System, "versionName": nil, "versionCode": nil, "totalBytes": a.Total, "recentGrowthBytes": a.Total - previousTotals[a.Name], "buckets": buckets, "duplicatePaths": []any{}, "residuePaths": []any{}, "recommendationsIgnored": ignored[a.Name]})
+		pkgs = append(pkgs, map[string]any{"packageName": a.Name, "appLabel": label, "installed": a.Installed, "systemApp": a.System, "evidenceState": a.EvidenceState, "evidenceReasons": a.EvidenceReasons, "versionName": nil, "versionCode": nil, "totalBytes": a.Total, "recentGrowthBytes": a.Total - previousTotals[a.Name], "buckets": buckets, "duplicatePaths": []any{}, "residuePaths": []any{}, "recommendationsIgnored": ignored[a.Name]})
 	}
 	sort.Slice(pkgs, func(i, j int) bool { return pkgs[i]["totalBytes"].(int64) > pkgs[j]["totalBytes"].(int64) })
 	var pid any = nil

@@ -22,16 +22,16 @@ type SQLiteStore struct {
 }
 
 type PersistedScanSession struct {
-	ID                  string
-	Generation          int64
-	RootPath            string
-	OptionsFingerprint  string
-	Backend             string
-	Status              string
-	IntegrityStatus     string
-	StartedAtMS         int64
-	CompletedAtMS       *int64
-	ExpectedGeneration  int64
+	ID                 string
+	Generation         int64
+	RootPath           string
+	OptionsFingerprint string
+	Backend            string
+	Status             string
+	IntegrityStatus    string
+	StartedAtMS        int64
+	CompletedAtMS      *int64
+	ExpectedGeneration int64
 }
 
 type PersistedScanEntry struct {
@@ -121,6 +121,15 @@ func (s *SQLiteStore) initialize(ctx context.Context) error {
 			if _, err := tx.ExecContext(ctx, migration.ddl); err != nil {
 				return fmt.Errorf("migrate scan_sessions.%s: %w", migration.column, err)
 			}
+		}
+	}
+	present, err := sqliteColumnExists(ctx, tx, "android_package_evidence_snapshots", "scan_id")
+	if err != nil {
+		return err
+	}
+	if !present {
+		if _, err := tx.ExecContext(ctx, "ALTER TABLE android_package_evidence_snapshots ADD COLUMN scan_id TEXT NOT NULL DEFAULT ''"); err != nil {
+			return fmt.Errorf("migrate android_package_evidence_snapshots.scan_id: %w", err)
 		}
 	}
 	for _, stmt := range QueryIndexes {

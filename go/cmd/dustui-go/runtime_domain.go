@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/mikeyphw/dustui/go/internal/authority"
+	"github.com/mikeyphw/dustui/go/internal/intelligence"
+	"github.com/mikeyphw/dustui/go/internal/packageevidence"
 	"github.com/mikeyphw/dustui/go/internal/state"
 )
 
@@ -72,6 +75,16 @@ type cleanupPlanPayload struct {
 type operationIDPayload struct {
 	OperationID string `json:"operationId"`
 }
+type verificationGetPayload struct {
+	Schema      string `json:"schema"`
+	Domain      string `json:"domain"`
+	OperationID string `json:"operationId"`
+}
+type verificationListPayload struct {
+	Schema string `json:"schema"`
+	Domain string `json:"domain"`
+	Limit  int    `json:"limit"`
+}
 type cleanupListPayload struct {
 	Limit  int    `json:"limit"`
 	Status string `json:"status"`
@@ -85,6 +98,34 @@ type rulePreviewPayload struct {
 	Rules           []state.CleanupRuleInput `json:"rules"`
 	IncludeDisabled bool                     `json:"includeDisabled"`
 }
+
+type typedAuthorityPayload struct {
+	Schema  string                       `json:"schema"`
+	Domain  string                       `json:"domain"`
+	ScanID  string                       `json:"scanId"`
+	Options state.ProductInsightsOptions `json:"options"`
+}
+type typedRulesPayload struct {
+	Schema          string                   `json:"schema"`
+	Domain          string                   `json:"domain"`
+	ScanID          string                   `json:"scanId"`
+	Rules           []state.CleanupRuleInput `json:"rules"`
+	IncludeDisabled bool                     `json:"includeDisabled"`
+}
+type packageSnapshotPayload struct {
+	Schema    string                   `json:"schema"`
+	ScanID    string                   `json:"scanId"`
+	Snapshot  packageevidence.Snapshot `json:"snapshot"`
+	Collector string                   `json:"collector"`
+}
+type duplicateAuthorityPayload struct {
+	Schema     string                        `json:"schema"`
+	ScanID     string                        `json:"scanId"`
+	Generation int64                         `json:"generation"`
+	Inputs     []intelligence.DuplicateInput `json:"inputs"`
+}
+type verificationBuildPayload = state.VerificationBuildInput
+type verificationReverifyPayload = state.VerificationReverifyInput
 
 func decodePayload[T any](raw json.RawMessage) (T, error) {
 	var v T
@@ -313,6 +354,161 @@ func domainPayload(ctx context.Context, store *state.SQLiteStore, frame runtimeF
 			return nil, err
 		}
 		return map[string]any{"ok": true, "count": count}, nil
+	case "domain.authority.query":
+		p, err := decodePayload[typedAuthorityPayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		req := authority.Request{Schema: p.Schema, Domain: p.Domain, ScanID: p.ScanID, Generation: frame.Generation}
+		v, err := store.DomainAuthority(ctx, req, p.Options)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "authority": v.Authority, "data": v.Data}, nil
+	case "domain.authority.rules.preview":
+		p, err := decodePayload[typedRulesPayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		req := authority.Request{Schema: p.Schema, Domain: p.Domain, ScanID: p.ScanID, Generation: frame.Generation}
+		if err := authority.ValidateRequest(req, "rules"); err != nil {
+			return nil, err
+		}
+		session, err := store.AndroidScanSessionByID(ctx, p.ScanID)
+		if err != nil {
+			return nil, err
+		}
+		if session == nil || session.Generation != frame.Generation {
+			return nil, fmt.Errorf("domain_authority_generation_mismatch")
+		}
+		out, err := store.CleanupRulePreview(ctx, p.ScanID, p.Rules, p.IncludeDisabled)
+		if err != nil {
+			return nil, err
+		}
+		meta := authority.NewMeta("rules", p.ScanID, frame.Generation, authority.FreshnessFresh, authority.EvidenceSupported, nil)
+		return map[string]any{"ok": true, "authority": meta, "data": out}, nil
+	case "domain.package.snapshot.replace":
+		p, err := decodePayload[packageSnapshotPayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		if p.Schema != authority.RequestSchema || p.ScanID == "" {
+			return nil, fmt.Errorf("domain_authority_request_invalid:schema")
+		}
+		normalized, err := packageevidence.NormalizeSnapshot(p.Snapshot)
+		if err != nil {
+			return nil, err
+		}
+		if normalized.Generation != frame.Generation {
+			return nil, fmt.Errorf("package_snapshot_generation_mismatch")
+		}
+		session, err := store.AndroidScanSessionByID(ctx, p.ScanID)
+		if err != nil {
+			return nil, err
+		}
+		if session == nil || session.Generation != frame.Generation {
+			return nil, fmt.Errorf("package_snapshot_scan_generation_mismatch")
+		}
+		if err := store.ReplacePackageEvidence(ctx, p.ScanID, normalized, p.Collector, p.Snapshot.DegradationReasons); err != nil {
+			return nil, err
+		}
+		meta := authority.NewMeta("package-evidence", p.ScanID, frame.Generation, authority.FreshnessFresh, normalized.Completeness, p.Snapshot.DegradationReasons)
+		return map[string]any{"ok": true, "authority": meta, "snapshot": normalized}, nil
+	case "domain.package.snapshot.latest":
+		snapshot, err := store.LatestPackageEvidence(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "snapshot": snapshot}, nil
+	case "domain.authority.duplicates.replace":
+		p, err := decodePayload[duplicateAuthorityPayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		if p.Schema != authority.RequestSchema || p.ScanID == "" || p.Generation != frame.Generation {
+			return nil, fmt.Errorf("domain_authority_request_invalid:duplicates")
+		}
+		groups, err := intelligence.BuildDuplicateGroups(p.Inputs)
+		if err != nil {
+			return nil, err
+		}
+		if err := store.ReplaceDuplicateGroups(ctx, p.ScanID, p.Generation, groups); err != nil {
+			return nil, err
+		}
+		meta := authority.NewMeta("duplicates", p.ScanID, p.Generation, authority.FreshnessFresh, authority.EvidenceSupported, nil)
+		return map[string]any{"ok": true, "authority": meta, "groups": groups}, nil
+	case "domain.cleanup.verification.build":
+		p, err := decodePayload[verificationBuildPayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		if p.Schema != authority.RequestSchema || p.Domain != "cleanup-verification" || p.ScanID == "" || p.ScanID != p.Review.ScanID {
+			return nil, fmt.Errorf("domain_authority_request_invalid:cleanup-verification-build")
+		}
+		session, err := store.AndroidScanSessionByID(ctx, p.ScanID)
+		if err != nil {
+			return nil, err
+		}
+		if session == nil || session.Generation != frame.Generation {
+			return nil, fmt.Errorf("domain_authority_generation_mismatch")
+		}
+		report := state.BuildVerification(p)
+		if err := store.PersistVerificationReport(ctx, report, frame.Generation); err != nil {
+			return nil, err
+		}
+		meta := authority.NewMeta("cleanup-verification", report.ScanID, frame.Generation, authority.FreshnessFresh, authority.EvidenceSupported, nil)
+		return map[string]any{"ok": true, "authority": meta, "report": report}, nil
+	case "domain.cleanup.verification.reverify":
+		p, err := decodePayload[verificationReverifyPayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		if p.Schema != authority.RequestSchema || p.Domain != "cleanup-verification" || p.ScanID == "" || p.ScanID != p.Original.ScanID {
+			return nil, fmt.Errorf("domain_authority_request_invalid:cleanup-verification-reverify")
+		}
+		session, err := store.AndroidScanSessionByID(ctx, p.ScanID)
+		if err != nil {
+			return nil, err
+		}
+		if session == nil || session.Generation != frame.Generation {
+			return nil, fmt.Errorf("domain_authority_generation_mismatch")
+		}
+		report := state.ReverifyVerification(p)
+		if err := store.PersistVerificationReport(ctx, report, frame.Generation); err != nil {
+			return nil, err
+		}
+		meta := authority.NewMeta("cleanup-verification", report.ScanID, frame.Generation, authority.FreshnessFresh, authority.EvidenceSupported, nil)
+		return map[string]any{"ok": true, "authority": meta, "report": report}, nil
+	case "domain.cleanup.verification.get":
+		p, err := decodePayload[verificationGetPayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		if p.Schema != authority.RequestSchema || p.Domain != "cleanup-verification" || p.OperationID == "" {
+			return nil, fmt.Errorf("domain_authority_request_invalid:cleanup-verification-get")
+		}
+		report, generation, err := store.VerificationReport(ctx, p.OperationID)
+		if err != nil {
+			return nil, err
+		}
+		if report == nil {
+			return map[string]any{"ok": true, "schema": authority.ResponseSchema, "generation": int64(0), "report": nil}, nil
+		}
+		meta := authority.NewMeta("cleanup-verification", report.ScanID, generation, authority.FreshnessFresh, authority.EvidenceSupported, nil)
+		return map[string]any{"ok": true, "schema": authority.ResponseSchema, "authority": meta, "generation": generation, "report": report}, nil
+	case "domain.cleanup.verification.list":
+		p, err := decodePayload[verificationListPayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		if p.Schema != authority.RequestSchema || p.Domain != "cleanup-verification" {
+			return nil, fmt.Errorf("domain_authority_request_invalid:cleanup-verification-list")
+		}
+		records, err := store.VerificationReports(ctx, p.Limit)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "schema": authority.ResponseSchema, "records": records}, nil
 	case "domain.product.rules.preview":
 		p, err := decodePayload[rulePreviewPayload](frame.Payload)
 		if err != nil {

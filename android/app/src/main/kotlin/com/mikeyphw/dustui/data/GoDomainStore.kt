@@ -24,6 +24,43 @@ import kotlin.math.max
  * but every authoritative read/write is transported to the app-owned Go process
  * and persisted in Go-owned SQLite. Room is no longer a live domain authority.
  */
+data class GoDomainAuthorityStatus(
+    val domain: String,
+    val scanId: String,
+    val generation: Long,
+    val freshness: String,
+    val evidenceState: String,
+    val degradationReasons: List<String>,
+    val bounded: Boolean,
+    val durable: Boolean,
+    val source: String,
+)
+
+data class GoAuthorityResponse(
+    val authority: JSONObject,
+    val data: Any,
+    val raw: JSONObject,
+) {
+    val evidenceState: String get() = authority.optString("evidenceState", "unavailable")
+    val freshness: String get() = authority.optString("freshness", "unknown")
+    val degradationReasons: List<String> get() = authority.optJSONArray("degradationReasons")?.let { array ->
+        buildList { for (i in 0 until array.length()) add(array.optString(i)) }
+    }.orEmpty()
+
+    fun dataObject(): JSONObject = data as? JSONObject ?: error("Authority data is not an object")
+    fun status(): GoDomainAuthorityStatus = GoDomainAuthorityStatus(
+        domain = authority.getString("domain"),
+        scanId = authority.getString("scanId"),
+        generation = authority.getLong("generation"),
+        freshness = freshness,
+        evidenceState = evidenceState,
+        degradationReasons = degradationReasons,
+        bounded = authority.optBoolean("bounded"),
+        durable = authority.optBoolean("durable"),
+        source = authority.optString("source", "unknown"),
+    )
+}
+
 class GoDomainStore(context: Context) : Closeable {
     private val appContext = context.applicationContext
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -216,6 +253,36 @@ class GoDomainStore(context: Context) : Closeable {
     suspend fun authorityRequest(type: String, generation: Long = 1L, payload: JSONObject = JSONObject()): JSONObject =
         io { call(type, generation, payload) }
 
+    /**
+     * Versioned product-authority query.  Android validates the Go envelope before
+     * presenting data so stale/unbounded/non-durable responses cannot silently
+     * become product truth.
+     */
+    suspend fun typedAuthority(
+        domain: String,
+        scanId: String,
+        generation: Long,
+        options: JSONObject = JSONObject(),
+    ): GoAuthorityResponse = io {
+        val payload = call(
+            "domain.authority.query",
+            generation,
+            JSONObject()
+                .put("schema", DOMAIN_AUTHORITY_REQUEST_SCHEMA)
+                .put("domain", domain)
+                .put("scanId", scanId)
+                .put("options", options),
+        )
+        val authority = payload.getJSONObject("authority")
+        require(authority.getString("schema") == DOMAIN_AUTHORITY_RESPONSE_SCHEMA) { "Go authority response schema mismatch" }
+        require(authority.getString("domain") == domain) { "Go authority domain mismatch" }
+        require(authority.getString("scanId") == scanId) { "Go authority scan mismatch" }
+        require(authority.getLong("generation") == generation) { "Go authority generation mismatch" }
+        require(authority.optBoolean("bounded")) { "Go authority returned an unbounded product result" }
+        require(authority.optBoolean("durable")) { "Go authority returned non-durable product truth" }
+        GoAuthorityResponse(authority = authority, data = payload.get("data"), raw = payload)
+    }
+
     suspend fun importLegacy(
         sessions: List<ScanSessionEntity>,
         entriesByScan: Map<String, List<ScanEntryEntity>>,
@@ -280,6 +347,9 @@ class GoDomainStore(context: Context) : Closeable {
     }
 
     companion object {
+        const val DOMAIN_AUTHORITY_REQUEST_SCHEMA = "dustui.domain.authority.request.v1"
+        const val DOMAIN_AUTHORITY_RESPONSE_SCHEMA = "dustui.domain.authority.response.v1"
+
         private const val ENTRY_WRITE_BATCH = 128
         private val ARCHIVE_EXTENSIONS = setOf("zip", "7z", "rar", "tar", "gz", "zst")
         private val INSTALLER_EXTENSIONS = setOf("apk", "apex")

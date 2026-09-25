@@ -1,0 +1,22 @@
+{
+  "schema": "dustui.domain.authority.golden.v1",
+  "request": {
+    "schema": "dustui.domain.authority.request.v1",
+    "domain": "package-storage",
+    "scanId": "scan-golden-1",
+    "generation": 7
+  },
+  "responseAuthority": {
+    "schema": "dustui.domain.authority.response.v1",
+    "domain": "package-storage",
+    "scanId": "scan-golden-1",
+    "generation": 7,
+    "freshness": "fresh",
+    "evidenceState": "partial",
+    "degradationReasons": ["package_inventory_partial"],
+    "bounded": true,
+    "durable": true,
+    "source": "go-sqlite"
+  },
+  "rejectedRequestSchemas": ["v0", "dustui.domain.authority.request.v0"]
+}

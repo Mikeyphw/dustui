@@ -1,0 +1,67 @@
+{
+  "schema": "dustui.aud-fix-03-audit.v1",
+  "overlay": "AUD-FIX-03",
+  "scope_gap_families": [
+    "AUD-006",
+    "AUD-008",
+    "AUD-014",
+    "UIX-007"
+  ],
+  "passes": [
+    {
+      "pass": 1,
+      "failures": [],
+      "go_tests": {
+        "ok": true,
+        "output": "ok  \tgithub.com/mikeyphw/dustui/go/internal/authority\t(cached)\nok  \tgithub.com/mikeyphw/dustui/go/internal/packageevidence\t(cached)\nok  \tgithub.com/mikeyphw/dustui/go/internal/intelligence\t(cached)\nok  \tgithub.com/mikeyphw/dustui/go/internal/scan\t(cached)\nok  \tgithub.com/mikeyphw/dustui/go/internal/rootworker\t(cached)\n"
+      },
+      "restart_test": {
+        "status": "environment-deferred",
+        "reason": "modernc.org/sqlite v1.36.3 is not present in the local module cache; CGO substitution is forbidden"
+      }
+    },
+    {
+      "pass": 2,
+      "failures": [],
+      "go_tests": {
+        "ok": true,
+        "output": "ok  \tgithub.com/mikeyphw/dustui/go/internal/authority\t(cached)\nok  \tgithub.com/mikeyphw/dustui/go/internal/packageevidence\t(cached)\nok  \tgithub.com/mikeyphw/dustui/go/internal/intelligence\t(cached)\nok  \tgithub.com/mikeyphw/dustui/go/internal/scan\t(cached)\nok  \tgithub.com/mikeyphw/dustui/go/internal/rootworker\t(cached)\n"
+      },
+      "restart_test": {
+        "status": "environment-deferred",
+        "reason": "modernc.org/sqlite v1.36.3 is not present in the local module cache; CGO substitution is forbidden"
+      }
+    }
+  ],
+  "converged": true,
+  "environment_deferred_evidence": [
+    "modernc SQLite restart test"
+  ],
+  "later_roadmap_gaps_intentionally_open": [
+    "AUD-003",
+    "AUD-004",
+    "AUD-005",
+    "AUD-011",
+    "AUD-012",
+    "AUD-013",
+    "AUD-015",
+    "AUD-016",
+    "AUD-017",
+    "AUD-018",
+    "AUD-019",
+    "AUD-020",
+    "AUD-021",
+    "AUD-022",
+    "AUD-023",
+    "AUD-024",
+    "UIX-001",
+    "UIX-002",
+    "UIX-003",
+    "UIX-004",
+    "UIX-005",
+    "UIX-006",
+    "UIX-008",
+    "UIX-009"
+  ],
+  "gate_d": "open"
+}
