@@ -39,8 +39,13 @@ def topology_failures() -> list[str]:
         if wf not in aw: failures.append(f"Devtool workflow missing {wf}")
     gate = aw.get("gate_d", [])
     gate_ids = [x.get("id") for x in gate if isinstance(x, dict)]
-    if gate_ids != required:
-        failures.append("gate_d workflow node IDs must exactly match gate_d_topology.required_nodes in order")
+    # AUD-FIX-14 planned the required Gate-D topology nodes. AUD-FIX-15 is
+    # allowed to append the evidence finalizer and generated-state check after
+    # those nodes, but it must not reorder, drop, or inject nodes inside the
+    # required topology prefix.
+    allowed_gate_ids = required + ["gate_d_evidence_finalize", "qualification_state"]
+    if gate_ids not in (required, allowed_gate_ids):
+        failures.append("gate_d workflow node IDs must preserve gate_d_topology.required_nodes in order, with only the AUD-FIX-15 finalizer/check suffix allowed")
     gate_refs = {x.get("id"): x.get("ref") for x in gate if isinstance(x, dict)}
     for node_id, spec in topo_nodes.items():
         if gate_refs.get(node_id) != spec.get("workflow_ref"):

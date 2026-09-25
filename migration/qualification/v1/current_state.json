@@ -109,5 +109,5 @@
   },
   "requirement_index": "migration/requirements/v2/requirements.json",
   "schema": "dustui.qualification-state.v2",
-  "source_snapshot_sha256": "a0a9372c0065ecacf3c16c4db3a13df18bd043c972180c68d98dd29de149474b"
+  "source_snapshot_sha256": "95f9cc3d0a8944d3cdcef188e12573cfaf73e9838db75b1ab7f1cc64193451d2"
 }

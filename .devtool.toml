@@ -551,6 +551,21 @@ command = ["python3", "scripts/audfix14_gate_d_probe.py", "production-reachabili
 inputs = ["scripts/audfix14_gate_d_probe.py", "scripts/validate_audfix07_contract.py", "scripts/validate_audfix08_contract.py", "scripts/validate_audfix09_contract.py", "migration/oracle/python_textual", "android/app/src/main", "go/internal/product"]
 outputs = ["build/evidence/gate-d/production-reachability.json"]
 
+[targets.dustui_android.jobs.gate_d_evidence_finalize]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/audfix15_gate_d_evidence.py", "finalize"]
+inputs = ["scripts/audfix15_gate_d_evidence.py", "scripts/refresh_qualification_state.py", "scripts/audfix01_core.py", "migration/qualification/v1/gate_d_topology.json", "migration/qualification/v1/gate_d_evidence.json", "migration/qualification/v1/historical_gate_evidence.json", "build/evidence/aud-fix/14/historical_discovery.json", "build/evidence/gate-d"]
+outputs = ["migration/qualification/v1/gate_d_evidence.json", "migration/qualification/v1/gate_d_bundle.json", "migration/qualification/v1/current_state.json", "go/internal/qualification/state_generated.go", "build/evidence/gate-d/nodes"]
+
+[targets.dustui_android.jobs.audfix15_evidence_lifecycle]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix15_contract.py"]
+inputs = ["scripts/validate_audfix15_contract.py", "scripts/audfix15_gate_d_evidence.py", ".devtool.toml", "migration/qualification/v1/gate_d_topology.json", "migration/qualification/v1/gate_d_evidence.json"]
+[targets.dustui_android.jobs.audfix15_evidence_lifecycle.metadata]
+read_only = true
+
 [targets.dustui_android.workflows]
 aud_fix_regression = [
   { id = "a01", ref = "job:audfix01_truth", depends_on = [] },
@@ -693,6 +708,7 @@ validate = [
 fast = ["job:audfix05_android_contract", "target:dustui_go#aud_fix_05"]
 unit = ["job:android_unit"]
 cutover_audit = ["job:audfix01_truth", "job:audfix02_bounded", "job:audfix03_domain", "job:audfix04_operations", "job:audfix05_android_contract", "job:qualification_state"]
+aud_fix_15_contract = ["job:audfix15_evidence_lifecycle", "job:qualification_state"]
 gate_d = [
   { id = "historical_gate_a_exo", ref = "target:dustui_gate_a_history#requalify", depends_on = [] },
   { id = "historical_gate_b_exo_arm64", ref = "target:dustui_gate_b_history#requalify", depends_on = [] },
@@ -720,6 +736,8 @@ gate_d = [
   { id = "durable_operation_terminal_truth", ref = "target:dustui_go#gate_d_durable", depends_on = ["go_test", "migration_validators"] },
   { id = "diagnostics_support_seal", ref = "target:dustui_go#gate_d_diagnostics", depends_on = ["durable_operation_terminal_truth"] },
   { id = "production_reachability", ref = "job:gate_d_production_reachability", depends_on = ["go_cli_smoke", "go_tui_smoke", "route_deeplink_recreation_rotation", "accessibility", "diagnostics_support_seal", "devtool_artifact_identity"] },
+  { id = "gate_d_evidence_finalize", ref = "job:gate_d_evidence_finalize", depends_on = ["production_reachability"] },
+  { id = "qualification_state", ref = "job:qualification_state", depends_on = ["gate_d_evidence_finalize"] },
 ]
 
 [targets.dustui_go.jobs.go_test_all]
@@ -1040,6 +1058,18 @@ description = "Run the AUD-FIX-05 diagnostics/support authority workflow"
 workflow = "aud_fix_05"
 target = "dustui_android"
 aliases = ["diag-authority"]
+
+[wrapper.commands.aud-fix-15]
+description = "Run DustUI AUD-FIX-15 Gate-D evidence finalization and Android/Go semantic cutover qualification"
+workflow = "gate_d"
+target = "dustui_android"
+aliases = ["gate-d-qualification", "semantic-cutover", "gate-d-final"]
+
+[wrapper.commands.aud-fix-15-contract]
+description = "Validate the AUD-FIX-15 Gate-D evidence lifecycle contract without executing Gate-D"
+workflow = "aud_fix_15_contract"
+target = "dustui_android"
+aliases = ["gate-d-contract"]
 
 [wrapper.commands.gate-d]
 description = "Execute the complete Gate-D qualification topology; remains blocked until AUD-FIX-15 evidence prerequisites are satisfied"
