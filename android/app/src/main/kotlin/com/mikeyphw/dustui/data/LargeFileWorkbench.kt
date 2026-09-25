@@ -85,6 +85,38 @@ data class LargeFilePage(
 }
 
 object LargeFileWorkbenchEngine {
+    fun fromAuthorityPage(
+        page: ScanBrowsePage,
+        filter: LargeFileFilter,
+        nowSeconds: Long = System.currentTimeMillis() / 1000L,
+    ): LargeFilePage {
+        val pageItems = page.items.map { owned ->
+            val entry = owned.entry
+            val extension = entry.name.substringAfterLast('.', "").lowercase(Locale.ROOT)
+            val ageDays = entry.modifiedAt.takeIf { it > 0 }
+                ?.let { ((nowSeconds - it).coerceAtLeast(0L) / DAY_SECONDS) }
+            LargeFileItem(
+                entry = entry,
+                category = owned.fileCategory,
+                extension = extension,
+                packageName = owned.packageName,
+                ageDays = ageDays,
+                directory = entry.parentPath.ifBlank { "/" },
+            )
+        }
+        val effectiveFilter = filter.copy(page = page.pageIndex, pageSize = page.limit)
+        return LargeFilePage(
+            filter = effectiveFilter,
+            totalMatches = page.totalCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+            totalBytes = page.totalBytes,
+            pageIndex = page.pageIndex,
+            pageCount = page.pageCount,
+            pageItems = pageItems,
+            sections = sections(pageItems, effectiveFilter.group),
+            categories = pageItems.map { it.category }.distinct().sorted(),
+        )
+    }
+
     fun evaluate(
         entries: List<ScanEntryEntity>,
         filter: LargeFileFilter,

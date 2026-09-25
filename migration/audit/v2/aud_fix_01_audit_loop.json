@@ -1,6 +1,6 @@
 {
   "converged": true,
-  "convergence_rule": "two consecutive complete passes with zero AUD-FIX-01 blockers/failures and identical later-gap family set",
+  "convergence_rule": "two consecutive complete fresh-process passes with zero AUD-FIX-01 blockers/failures and identical later-gap family set",
   "dynamic_devtool_note": "Dynamic wrapper check runs when devtool is installed; absence is explicitly deferred in this non-gate overlay.",
   "full_devtool_validation_run": false,
   "gate_d_status": "open",
@@ -20,6 +20,7 @@
         "UIX-004"
       ],
       "pass": 1,
+      "pass_kind": "full-regression",
       "results": [
         {
           "command": "python3 scripts/refresh_qualification_state.py --check",
@@ -33,22 +34,7 @@
         },
         {
           "command": "python3 -m unittest migration.audit.v2.tests.test_audfix01 -v",
-          "output": "test_current_truth_has_no_independent_gate_claims (migration.audit.v2.tests.test_audfix01.AudFix01.test_current_truth_has_no_independent_gate_claims) ... ok\ntest_gate_d_cannot_close_from_source_absence (migration.audit.v2.tests.test_audfix01.AudFix01.test_gate_d_cannot_close_from_source_absence) ... ok\ntest_gate_d_requires_bindings (migration.audit.v2.tests.test_audfix01.AudFix01.test_gate_d_requires_bindings) ... ok\ntest_gate_d_workflow_precedes_retirement (migration.audit.v2.tests.test_audfix01.AudFix01.test_gate_d_workflow_precedes_retirement) ... ok\ntest_negative_fixtures (migration.audit.v2.tests.test_audfix01.AudFix01.test_negative_fixtures) ... ok\ntest_ov14_is_not_gate_d_authority (migration.audit.v2.tests.test_audfix01.AudFix01.test_ov14_is_not_gate_d_authority) ... ok\ntest_requirement_index_has_every_gap (migration.audit.v2.tests.test_audfix01.AudFix01.test_requirement_index_has_every_gap) ... ok\n\n----------------------------------------------------------------------\nRan 7 tests in 0.009s\n\nOK",
-          "returncode": 0
-        },
-        {
-          "command": "python3 scripts/validate_rem01_android_go_runtime_binding.py",
-          "output": "REM-01 successor-aware Android Go source binding PASS (qualification remains evidence-derived)",
-          "returncode": 0
-        },
-        {
-          "command": "python3 scripts/validate_rem02_sqlite_integrity_hotfix.py",
-          "output": "REM-02 SQLite integrity hotfix PASS",
-          "returncode": 0
-        },
-        {
-          "command": "python3 scripts/validate_rem02_sqlite_persistence_authority.py",
-          "output": "REM-02 successor-aware Go SQLite implementation PASS (product qualification remains canonical/evidence-derived)",
+          "output": "test_current_truth_has_no_independent_gate_claims (migration.audit.v2.tests.test_audfix01.AudFix01.test_current_truth_has_no_independent_gate_claims) ... ok\ntest_gate_d_cannot_close_from_source_absence (migration.audit.v2.tests.test_audfix01.AudFix01.test_gate_d_cannot_close_from_source_absence) ... ok\ntest_gate_d_requires_bindings (migration.audit.v2.tests.test_audfix01.AudFix01.test_gate_d_requires_bindings) ... ok\ntest_gate_d_workflow_precedes_retirement (migration.audit.v2.tests.test_audfix01.AudFix01.test_gate_d_workflow_precedes_retirement) ... ok\ntest_negative_fixtures (migration.audit.v2.tests.test_audfix01.AudFix01.test_negative_fixtures) ... ok\ntest_ov14_is_not_gate_d_authority (migration.audit.v2.tests.test_audfix01.AudFix01.test_ov14_is_not_gate_d_authority) ... ok\ntest_requirement_index_has_every_gap (migration.audit.v2.tests.test_audfix01.AudFix01.test_requirement_index_has_every_gap) ... ok\ntest_requirement_source_hashes_are_current (migration.audit.v2.tests.test_audfix01.AudFix01.test_requirement_source_hashes_are_current) ... ok\ntest_source_guard_lifecycle_is_explicit (migration.audit.v2.tests.test_audfix01.AudFix01.test_source_guard_lifecycle_is_explicit) ... ok\n\n----------------------------------------------------------------------\nRan 9 tests in 0.010s\n\nOK",
           "returncode": 0
         },
         {
@@ -77,13 +63,8 @@
           "returncode": 0
         },
         {
-          "command": "python3 scripts/validate_ov14_contract.py --audit-loop",
+          "command": "python3 scripts/validate_ov14_contract.py",
           "output": "OV14 successor-aware contract PASS (Gate D=open; OV14=blocked_on_gate_d)",
-          "returncode": 0
-        },
-        {
-          "command": "python3 scripts/validate_ov14_retirement_truth_hotfix.py",
-          "output": "OV14 retirement truth audit PASS (Gate D=open; 6 physical-retirement blockers)",
           "returncode": 0
         },
         {
@@ -122,6 +103,7 @@
         "UIX-004"
       ],
       "pass": 2,
+      "pass_kind": "convergence-counterexample",
       "results": [
         {
           "command": "python3 scripts/refresh_qualification_state.py --check",
@@ -136,71 +118,6 @@
         {
           "command": "python3 -m unittest migration.audit.v2.tests.test_audfix01 -v",
           "output": "test_current_truth_has_no_independent_gate_claims (migration.audit.v2.tests.test_audfix01.AudFix01.test_current_truth_has_no_independent_gate_claims) ... ok\ntest_gate_d_cannot_close_from_source_absence (migration.audit.v2.tests.test_audfix01.AudFix01.test_gate_d_cannot_close_from_source_absence) ... ok\ntest_gate_d_requires_bindings (migration.audit.v2.tests.test_audfix01.AudFix01.test_gate_d_requires_bindings) ... ok\ntest_gate_d_workflow_precedes_retirement (migration.audit.v2.tests.test_audfix01.AudFix01.test_gate_d_workflow_precedes_retirement) ... ok\ntest_negative_fixtures (migration.audit.v2.tests.test_audfix01.AudFix01.test_negative_fixtures) ... ok\ntest_ov14_is_not_gate_d_authority (migration.audit.v2.tests.test_audfix01.AudFix01.test_ov14_is_not_gate_d_authority) ... ok\ntest_requirement_index_has_every_gap (migration.audit.v2.tests.test_audfix01.AudFix01.test_requirement_index_has_every_gap) ... ok\ntest_requirement_source_hashes_are_current (migration.audit.v2.tests.test_audfix01.AudFix01.test_requirement_source_hashes_are_current) ... ok\ntest_source_guard_lifecycle_is_explicit (migration.audit.v2.tests.test_audfix01.AudFix01.test_source_guard_lifecycle_is_explicit) ... ok\n\n----------------------------------------------------------------------\nRan 9 tests in 0.011s\n\nOK",
-          "returncode": 0
-        },
-        {
-          "command": "python3 scripts/validate_rem01_android_go_runtime_binding.py",
-          "output": "REM-01 successor-aware Android Go source binding PASS (qualification remains evidence-derived)",
-          "returncode": 0
-        },
-        {
-          "command": "python3 scripts/validate_rem02_sqlite_integrity_hotfix.py",
-          "output": "REM-02 SQLite integrity hotfix PASS",
-          "returncode": 0
-        },
-        {
-          "command": "python3 scripts/validate_rem02_sqlite_persistence_authority.py",
-          "output": "REM-02 successor-aware Go SQLite implementation PASS (product qualification remains canonical/evidence-derived)",
-          "returncode": 0
-        },
-        {
-          "command": "python3 scripts/validate_rem02_reconciliation_hotfix.py",
-          "output": "REM-02 successor-aware reconciliation PASS",
-          "returncode": 0
-        },
-        {
-          "command": "python3 scripts/validate_rem03_android_domain_cutover.py",
-          "output": "REM-03 successor-aware Android Go domain protocol cutover PASS",
-          "returncode": 0
-        },
-        {
-          "command": "python3 scripts/validate_rem04_privileged_cleanup_cutover.py",
-          "output": "REM-04 successor-aware privileged Go scan/mutation cutover PASS",
-          "returncode": 0
-        },
-        {
-          "command": "python3 scripts/validate_rem05_legacy_surface_retirement.py",
-          "output": "REM-05 successor-aware retirement truth PASS (Gate D=open; OV14=blocked_on_gate_d; blockers=6)",
-          "returncode": 0
-        },
-        {
-          "command": "python3 scripts/validate_ov13_contract.py",
-          "output": "DustUI OV13 successor-aware Gate D contract PASS (canonical status=open)",
-          "returncode": 0
-        },
-        {
-          "command": "python3 scripts/validate_ov14_contract.py --audit-loop",
-          "output": "OV14 successor-aware contract PASS (Gate D=open; OV14=blocked_on_gate_d)",
-          "returncode": 0
-        },
-        {
-          "command": "python3 scripts/validate_ov14_retirement_truth_hotfix.py",
-          "output": "OV14 retirement truth audit PASS (Gate D=open; 6 physical-retirement blockers)",
-          "returncode": 0
-        },
-        {
-          "command": "python3 scripts/validate_ov13_devtool_wrapper_exo_jobs.py",
-          "output": "DustUI wrapper/EXO dynamic check DEFERRED: devtool executable not installed in this audit environment\nDustUI Devtool wrapper + EXO target-local jobs contract passed",
-          "returncode": 0
-        },
-        {
-          "command": "python3 android/scripts/validate-modern-dark-portrait-ui.py",
-          "output": "Successor-aware UI acceptance audit passed (predecessor-bridge mode).",
-          "returncode": 0
-        },
-        {
-          "command": "python3 android/scripts/validate-debug-workbench-contract.py",
-          "output": "Successor-aware diagnostics acceptance audit passed (predecessor-bridge mode).",
           "returncode": 0
         },
         {

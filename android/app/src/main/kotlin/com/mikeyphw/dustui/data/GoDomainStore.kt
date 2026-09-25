@@ -14,7 +14,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.Closeable
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.max
 
@@ -33,18 +32,11 @@ class GoDomainStore(context: Context) : Closeable {
     @Volatile private var process: GoRuntimeProcess? = null
 
     private val latest = MutableStateFlow<ScanSessionEntity?>(null)
-    private val entryFlows = ConcurrentHashMap<String, MutableStateFlow<List<ScanEntryEntity>>>()
     private val cleanup = MutableStateFlow<List<CleanupOperationEntity>>(emptyList())
 
     fun observeLatestSession(): Flow<ScanSessionEntity?> {
         scope.launch { runCatching { refreshLatest() } }
         return latest
-    }
-
-    fun observeEntries(scanId: String, limit: Int): Flow<List<ScanEntryEntity>> {
-        val flow = entryFlows.computeIfAbsent(scanId) { MutableStateFlow(emptyList()) }
-        scope.launch { runCatching { flow.value = entriesOnce(scanId).take(limit) } }
-        return flow
     }
 
     fun observeCleanupOperations(limit: Int): Flow<List<CleanupOperationEntity>> {
@@ -60,7 +52,6 @@ class GoDomainStore(context: Context) : Closeable {
 
     suspend fun deleteEntries(scanId: String) = io {
         call("domain.scan.entries.delete", 1, JSONObject().put("scanId", scanId))
-        entryFlows[scanId]?.value = emptyList()
     }
 
     suspend fun upsertEntries(entries: List<ScanEntryEntity>) = io {
@@ -72,13 +63,6 @@ class GoDomainStore(context: Context) : Closeable {
                 generation,
                 JSONObject().put("entries", JSONArray(chunk.map(ScanEntryEntity::toWireJson))),
             )
-        }
-        entries.groupBy { it.scanId }.forEach { (scanId, newEntries) ->
-            entryFlows[scanId]?.let { flow ->
-                val merged = (flow.value + newEntries).associateBy { it.path }.values
-                    .sortedWith(compareByDescending<ScanEntryEntity> { it.sizeBytes }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.path })
-                flow.value = merged.take(10_000)
-            }
         }
     }
 
@@ -92,22 +76,17 @@ class GoDomainStore(context: Context) : Closeable {
         payload.getJSONArray("sessions").objects().map(JSONObject::toScanSession)
     }
 
-    suspend fun entriesOnce(scanId: String): List<ScanEntryEntity> = io {
-        val all = ArrayList<ScanEntryEntity>()
-        val generation = session(scanId)?.generation ?: 1L
-        var offset = 0
-        while (true) {
-            val payload = call(
-                "domain.scan.entries.page",
-                generation,
-                JSONObject().put("scanId", scanId).put("offset", offset).put("limit", ENTRY_READ_PAGE),
-            )
-            val page = payload.getJSONArray("entries").objects().map(JSONObject::toScanEntry)
-            all += page
-            if (page.size < ENTRY_READ_PAGE) break
-            offset += page.size
-        }
-        all
+
+    suspend fun browsePage(scanId: String, generation: Long, request: ScanBrowseRequest): ScanBrowsePage = io {
+        val payload = call(
+            "domain.scan.browse.page",
+            generation,
+            JSONObject()
+                .put("scanId", scanId)
+                .put("generation", generation)
+                .put("request", request.toWireJson()),
+        )
+        payload.getJSONObject("page").toScanBrowsePage()
     }
 
     suspend fun entryOnce(scanId: String, path: String): ScanEntryEntity? = io {
@@ -171,14 +150,24 @@ class GoDomainStore(context: Context) : Closeable {
         payload.getJSONArray("entries").objects().map(JSONObject::toScanEntry)
     }
 
-    suspend fun rootSearch(scanId: String, request: RootFileSearchRequest): List<RootFileSearchResult> = io {
+    suspend fun rootSearch(scanId: String, request: RootFileSearchRequest): RootFileSearchPage = io {
         val generation = session(scanId)?.generation ?: 1L
         val payload = call(
             "domain.scan.search",
             generation,
             JSONObject().put("scanId", scanId).put("request", request.toWireJson()),
         )
-        payload.getJSONArray("results").objects().map(JSONObject::toRootSearchResult)
+        val page = payload.getJSONObject("page")
+        RootFileSearchPage(
+            scanId = page.getString("scanId"),
+            generation = page.getLong("generation"),
+            offset = page.getInt("offset"),
+            limit = page.getInt("limit"),
+            totalCount = page.getLong("totalCount"),
+            totalBytes = page.getLong("totalBytes"),
+            hasMore = page.getBoolean("hasMore"),
+            results = page.getJSONArray("results").objects().map(JSONObject::toRootSearchResult),
+        )
     }
 
     suspend fun pruneCompletedScanRetention(keep: Int) = io {
@@ -222,6 +211,10 @@ class GoDomainStore(context: Context) : Closeable {
     suspend fun cleanupOperation(operationId: String): CleanupOperationEntity? = cleanupOperations(10_000).firstOrNull { it.id == operationId }
 
     suspend fun verifySchema() = io { call("domain.schema.verify", 1, JSONObject()) }
+
+    /** Typed product-authority escape hatch used by thin Android platform adapters. */
+    suspend fun authorityRequest(type: String, generation: Long = 1L, payload: JSONObject = JSONObject()): JSONObject =
+        io { call(type, generation, payload) }
 
     suspend fun importLegacy(
         sessions: List<ScanSessionEntity>,
@@ -287,7 +280,6 @@ class GoDomainStore(context: Context) : Closeable {
     }
 
     companion object {
-        private const val ENTRY_READ_PAGE = 128
         private const val ENTRY_WRITE_BATCH = 128
         private val ARCHIVE_EXTENSIONS = setOf("zip", "7z", "rar", "tar", "gz", "zst")
         private val INSTALLER_EXTENSIONS = setOf("apk", "apex")
@@ -346,13 +338,53 @@ private fun CleanupPlanItemEntity.toWireJson() = JSONObject()
 
 private fun RootFileSearchRequest.toWireJson() = JSONObject()
     .put("query", query).put("type", type.name).put("minBytes", minBytes).putNullable("maxBytes", maxBytes)
-    .putNullable("category", category?.name).putNullable("packageName", packageName).putNullable("extension", extension).put("limit", limit)
+    .putNullable("category", category?.name).putNullable("packageName", packageName).putNullable("extension", extension)
+    .put("offset", offset).put("limit", limit)
 
 private fun JSONObject.toRootSearchResult() = RootFileSearchResult(
     path = getString("path"), parentPath = getString("parentPath"), name = getString("name"), sizeBytes = getLong("sizeBytes"),
     modifiedAt = getLong("modifiedAt"), isDirectory = getBoolean("isDirectory"), category = StorageCategory.valueOf(getString("category")),
     packageName = optNullableString("packageName"),
 )
+
+
+private fun ScanBrowseRequest.toWireJson() = JSONObject()
+    .putNullable("parentPath", parentPath)
+    .put("query", query)
+    .put("type", entryType)
+    .put("minBytes", minBytes)
+    .putNullable("maxBytes", maxBytes)
+    .putNullable("category", category)
+    .put("fileCategories", JSONArray(fileCategories))
+    .putNullable("packageName", packageName)
+    .put("extensions", JSONArray(extensions))
+    .putNullable("modifiedBefore", modifiedBefore)
+    .put("sort", sort)
+    .put("descending", descending)
+    .put("offset", offset)
+    .put("limit", limit)
+
+private fun JSONObject.toScanBrowsePage(): ScanBrowsePage {
+    val scanId = getString("scanId")
+    val items = getJSONArray("items").objects().map { item ->
+        ScanBrowseItem(
+            entry = item.toScanEntry(),
+            category = item.getString("category"),
+            fileCategory = item.getString("fileCategory"),
+            packageName = item.optNullableString("packageName"),
+        )
+    }
+    return ScanBrowsePage(
+        scanId = scanId,
+        generation = getLong("generation"),
+        offset = getInt("offset"),
+        limit = getInt("limit"),
+        totalCount = getLong("totalCount"),
+        totalBytes = getLong("totalBytes"),
+        hasMore = getBoolean("hasMore"),
+        items = items,
+    )
+}
 
 private fun JSONObject.putNullable(name: String, value: Any?): JSONObject = put(name, value ?: JSONObject.NULL)
 private fun JSONObject.optNullableString(name: String): String? = if (!has(name) || isNull(name)) null else getString(name)

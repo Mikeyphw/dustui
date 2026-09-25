@@ -31,6 +31,8 @@ import com.mikeyphw.dustui.data.StorageGrowthPage
 import com.mikeyphw.dustui.data.StorageGrowthScope
 import com.mikeyphw.dustui.data.CleanupVerificationReport
 import com.mikeyphw.dustui.data.ScanDiagnostics
+import com.mikeyphw.dustui.data.ScanBrowsePage
+import com.mikeyphw.dustui.data.ScanBrowseRequest
 import com.mikeyphw.dustui.data.ScanEntryEntity
 import com.mikeyphw.dustui.data.ScanRepository
 import com.mikeyphw.dustui.data.ScanSessionEntity
@@ -62,6 +64,7 @@ import com.mikeyphw.dustui.data.DebugSeverity
 import com.mikeyphw.dustui.data.RootPathInspection
 import com.mikeyphw.dustui.data.RootModuleReport
 import com.mikeyphw.dustui.data.RootFileSearchResult
+import com.mikeyphw.dustui.data.RootFileSearchPage
 import com.mikeyphw.dustui.data.RootFileSearchRequest
 import com.mikeyphw.dustui.data.AppStorageBucketKind
 import com.mikeyphw.dustui.data.AppStorageInspectorAnalysis
@@ -91,6 +94,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.coroutines.coroutineContext
@@ -104,11 +109,6 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val scanDepthProfile: StateFlow<ScanDepthProfile> = _scanDepthProfile
     val latestSession: StateFlow<ScanSessionEntity?> = repository.observeLatestSession()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-    private val allEntries: StateFlow<List<ScanEntryEntity>> = latestSession
-        .flatMapLatest { session -> session?.let { repository.observeEntries(it.id) } ?: flowOf(emptyList()) }
-        .flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
     private val debugEventStore = DebugEventStore()
     val debugEvents: StateFlow<List<DebugEvent>> = debugEventStore.events
     private val _debugProbeResults = MutableStateFlow<List<DebugProbeResult>>(emptyList())
@@ -188,7 +188,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             destinationLabel = destination.label,
             layout = if (wide) "wide" else "compact",
             session = latestSession.value,
-            entries = allEntries.value,
+            entries = entries.value,
             events = debugEvents.value,
             probeResults = debugProbeResults.value,
             rootServiceInfo = rootServiceInfo.value,
@@ -371,7 +371,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
 
     private fun zeroFileScanProbe(): DebugProbeResult {
         val session = latestSession.value
-        val entries = allEntries.value.size
+        val entries = latestSession.value?.persistedEntryCount?.toInt() ?: 0
         val diagnostics = _scanDiagnostics.value
         return when {
             session == null -> DebugProbeResult(
@@ -482,7 +482,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
 
     private fun searchReadinessProbe(): DebugProbeResult {
         val session = latestSession.value
-        val entries = allEntries.value.size
+        val entries = latestSession.value?.persistedEntryCount?.toInt() ?: 0
         return when {
             session == null -> DebugProbeResult(
                 target = DebugProbeTarget.SearchReadiness,
@@ -550,20 +550,44 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     private val _selectedRootInspection = MutableStateFlow<RootPathInspection?>(null)
     val selectedRootInspection: StateFlow<RootPathInspection?> = _selectedRootInspection
 
-    val entries: StateFlow<List<ScanEntryEntity>> = combine(allEntries, latestSession, _explorerPath, _filter) { entries, session, path, filter ->
-        val current = path ?: session?.rootPath
-        entries.asSequence()
-            .filter { current == null || it.parentPath == current }
-            .filter { filter.query.isBlank() || it.name.contains(filter.query, true) || it.path.contains(filter.query, true) }
-            .filter { when (filter.type) { EntryTypeFilter.ALL -> true; EntryTypeFilter.DIRECTORIES -> it.isDirectory; EntryTypeFilter.FILES -> !it.isDirectory } }
-            .filter { it.sizeBytes >= filter.minimumBytes }
-            .filter { filter.category == null || AdvancedStorageAnalyzer.fileCategory(it.name) == filter.category }
-            .sortedWith(when (filter.sort) {
-                EntrySort.SIZE -> compareByDescending<ScanEntryEntity> { it.sizeBytes }.thenBy { it.name.lowercase() }
-                EntrySort.NAME -> compareBy<ScanEntryEntity> { it.name.lowercase() }
-                EntrySort.MODIFIED -> compareByDescending<ScanEntryEntity> { it.modifiedAt }.thenBy { it.name.lowercase() }
-            }).toList()
-    }.flowOn(Dispatchers.Default)
+    private val _explorerPageIndex = MutableStateFlow(0)
+    val explorerPage: StateFlow<ScanBrowsePage> = combine(latestSession, _explorerPath, _filter, _explorerPageIndex) { session, path, filter, pageIndex ->
+        ExplorerPageQuery(session, path, filter, pageIndex)
+    }.flatMapLatest { query ->
+        val session = query.session
+        if (session == null) {
+            flowOf(ScanBrowsePage.empty(limit = EXPLORER_PAGE_SIZE))
+        } else {
+            flow {
+                val current = query.path ?: session.rootPath
+                emit(
+                    repository.browsePage(
+                        session.id,
+                        session.generation,
+                        ScanBrowseRequest(
+                            parentPath = current,
+                            query = query.filter.query,
+                            entryType = when (query.filter.type) {
+                                EntryTypeFilter.ALL -> "ANY"
+                                EntryTypeFilter.DIRECTORIES -> "DIRECTORIES"
+                                EntryTypeFilter.FILES -> "FILES"
+                            },
+                            minBytes = query.filter.minimumBytes,
+                            category = query.filter.category,
+                            sort = query.filter.sort.name,
+                            descending = query.filter.sort != EntrySort.NAME,
+                            offset = query.pageIndex * EXPLORER_PAGE_SIZE,
+                            limit = EXPLORER_PAGE_SIZE,
+                        ),
+                    ),
+                )
+            }
+        }
+    }.flowOn(Dispatchers.IO)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ScanBrowsePage.empty(limit = EXPLORER_PAGE_SIZE))
+
+    val entries: StateFlow<List<ScanEntryEntity>> = explorerPage
+        .map { it.entries }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _rootState = MutableStateFlow<RootUiState>(RootUiState.Checking)
@@ -689,18 +713,34 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     val cleanupReportVerifying: StateFlow<String?> = _cleanupReportVerifying
     val selectedCleanupReport: StateFlow<CleanupVerificationReport?> = _selectedCleanupReport
 
-    private val _rootSearchResults = MutableStateFlow<List<RootFileSearchResult>>(emptyList())
-    val rootSearchResults: StateFlow<List<RootFileSearchResult>> = _rootSearchResults
+    private val _rootSearchPage = MutableStateFlow(RootFileSearchPage.empty())
+    val rootSearchPage: StateFlow<RootFileSearchPage> = _rootSearchPage
+    val rootSearchResults: StateFlow<List<RootFileSearchResult>> = _rootSearchPage
+        .map { it.results }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    private val _rootSearchQuery = MutableStateFlow("")
     private val _categoryFiles = MutableStateFlow<CategoryFileSelection?>(null)
     val categoryFiles: StateFlow<CategoryFileSelection?> = _categoryFiles
-    private val _largeFileSourceEntries = MutableStateFlow<List<ScanEntryEntity>>(emptyList())
     private val _largeFileLoading = MutableStateFlow(false)
     val largeFileLoading: StateFlow<Boolean> = _largeFileLoading
     private val _largeFileFilter = MutableStateFlow(LargeFileFilter())
     val largeFileFilter: StateFlow<LargeFileFilter> = _largeFileFilter
-    val largeFiles: StateFlow<LargeFilePage> = combine(_largeFileSourceEntries, _largeFileFilter) { entries, filter ->
-        LargeFileWorkbenchEngine.evaluate(entries, filter)
-    }.flowOn(Dispatchers.Default)
+    val largeFiles: StateFlow<LargeFilePage> = combine(latestSession, _largeFileFilter) { session, filter -> session to filter }
+        .flatMapLatest { (session, filter) ->
+            if (session == null) {
+                flowOf(LargeFilePage.empty(filter))
+            } else {
+                flow {
+                    _largeFileLoading.value = true
+                    try {
+                        emit(repository.largeFilePage(session.id, session.generation, filter))
+                    } finally {
+                        _largeFileLoading.value = false
+                    }
+                }
+            }
+        }
+        .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LargeFilePage.empty())
     private val _moduleReport = MutableStateFlow<RootModuleReport?>(null)
     val moduleReport: StateFlow<RootModuleReport?> = _moduleReport
@@ -748,15 +788,16 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         )
         _explorerPath.value = session?.rootPath
         _filter.value = ExplorerFilter()
+        _explorerPageIndex.value = 0
         _selectedEntry.value = null
         _selectedIntelligence.value = null
         _selectedRootInspection.value = null
         _selectedPaths.value = emptySet()
         _selectedContentHashes.value = emptyMap()
         _cleanupReview.value = null
-        _rootSearchResults.value = emptyList()
+        _rootSearchPage.value = RootFileSearchPage.empty()
+        _rootSearchQuery.value = ""
         _categoryFiles.value = null
-        _largeFileSourceEntries.value = emptyList()
         _largeFileLoading.value = false
         _largeFileFilter.value = LargeFileFilter()
         duplicateAnalysisJob?.cancel()
@@ -945,25 +986,63 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         }
     }
     fun closeDetails() { _selectedEntry.value = null; _selectedIntelligence.value = null; _selectedRootInspection.value = null }
-    fun navigate(path: String) { _explorerPath.value = path }
+    fun navigate(path: String) { _explorerPath.value = path; _explorerPageIndex.value = 0 }
     fun up() {
         val root = latestSession.value?.rootPath ?: return
         val current = _explorerPath.value ?: root
         if (current == root) return
         _explorerPath.value = current.substringBeforeLast('/').ifBlank { "/" }.let { if (!it.startsWith(root)) root else it }
+        _explorerPageIndex.value = 0
     }
-    fun updateQuery(value: String) { _filter.value = _filter.value.copy(query = value) }
-    fun filterCategory(value: String?) { _filter.value = _filter.value.copy(category = value) }
-    fun selectEntryType(type: EntryTypeFilter) { _filter.value = _filter.value.copy(type = type) }
-    fun selectEntrySort(sort: EntrySort) { _filter.value = _filter.value.copy(sort = sort) }
+    fun updateQuery(value: String) { _filter.value = _filter.value.copy(query = value); _explorerPageIndex.value = 0 }
+    fun filterCategory(value: String?) { _filter.value = _filter.value.copy(category = value); _explorerPageIndex.value = 0 }
+    fun selectEntryType(type: EntryTypeFilter) { _filter.value = _filter.value.copy(type = type); _explorerPageIndex.value = 0 }
+    fun selectEntrySort(sort: EntrySort) { _filter.value = _filter.value.copy(sort = sort); _explorerPageIndex.value = 0 }
+
+    fun previousExplorerPage() {
+        if (_explorerPageIndex.value > 0) _explorerPageIndex.value -= 1
+    }
+
+    fun nextExplorerPage() {
+        if (explorerPage.value.hasMore) _explorerPageIndex.value += 1
+    }
 
     fun openCategoryFiles(label: String, categories: Set<String>) {
-        val matching = CategoryPathSelector.matchingEntries(allEntries.value, categories)
-        if (matching.isEmpty()) {
-            _message.value = "No indexed files are available for $label"
-            return
+        val session = latestSession.value ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = runCatching { loadCategorySelection(session, label, categories) }
+            if (latestSession.value?.let { it.id == session.id && it.generation == session.generation } != true) return@launch
+            result.onSuccess { selection ->
+                if (selection.entries.isEmpty()) _message.value = "No indexed files are available for $label"
+                else _categoryFiles.value = selection
+            }.onFailure { _message.value = it.message ?: "Unable to load category files" }
         }
-        _categoryFiles.value = CategoryFileSelection(label, categories.toSet(), matching)
+    }
+
+    private suspend fun loadCategorySelection(
+        session: ScanSessionEntity,
+        label: String,
+        categories: Set<String>,
+    ): CategoryFileSelection {
+        val page = repository.browsePage(
+            session.id,
+            session.generation,
+            ScanBrowseRequest(
+                entryType = "FILES",
+                fileCategories = categories.sorted(),
+                sort = "SIZE",
+                descending = true,
+                offset = 0,
+                limit = CATEGORY_SELECTION_LIMIT,
+            ),
+        )
+        return CategoryFileSelection(
+            title = label,
+            categories = categories.toSet(),
+            entries = page.entries,
+            totalCount = page.totalCount,
+            truncated = page.hasMore,
+        )
     }
 
     fun dismissCategoryFiles() { _categoryFiles.value = null }
@@ -974,25 +1053,6 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
 
     fun applyLargeFilePreset(preset: LargeFilePreset) {
         _largeFileFilter.value = _largeFileFilter.value.copy(preset = preset, category = null, page = 0)
-        reloadLargeFileEntries(preset)
-    }
-
-    private fun reloadLargeFileEntries(preset: LargeFilePreset = _largeFileFilter.value.preset) {
-        val session = latestSession.value ?: return
-        val scanId = session.id
-        val generation = session.generation
-        val requestId = largeFileRequestId.incrementAndGet()
-        _largeFileLoading.value = true
-        viewModelScope.launch(Dispatchers.IO) {
-            val result = runCatching { repository.largeFileEntries(scanId, preset) }
-            if (latestSession.value?.let { it.id == scanId && it.generation == generation } == true &&
-                _largeFileFilter.value.preset == preset && largeFileRequestId.get() == requestId
-            ) {
-                result.onSuccess { _largeFileSourceEntries.value = it }
-                    .onFailure { _message.value = it.message ?: "Unable to load large files" }
-                _largeFileLoading.value = false
-            }
-        }
     }
 
     fun filterLargeFilesByCategory(category: String?) {
@@ -1831,39 +1891,55 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             _message.value = "Run a new scan before selecting files for deletion"
             return
         }
-        val matching = CategoryPathSelector.matchingEntries(allEntries.value, categories)
-        if (matching.isEmpty()) {
-            _message.value = "No indexed files are available in this category"
-            return
+        val session = latestSession.value ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            val selection = runCatching { loadCategorySelection(session, "Selected category", categories) }
+                .getOrElse { error -> _message.value = error.message ?: "Unable to load category files"; return@launch }
+            if (latestSession.value?.let { it.id == session.id && it.generation == session.generation } != true) return@launch
+            if (selection.entries.isEmpty()) {
+                _message.value = "No indexed files are available in this category"
+            } else if (selection.truncated) {
+                _message.value = "This category contains ${selection.totalCount} files. Refine it before selecting for deletion."
+            } else {
+                _selectedPaths.value = selection.entries.mapTo(linkedSetOf()) { it.path }
+                _selectedContentHashes.value = emptyMap()
+                _cleanupReview.value = null
+                _message.value = "Selected ${selection.entries.size} category file(s)"
+            }
         }
-        _selectedPaths.value = matching.mapTo(linkedSetOf()) { it.path }
-        _selectedContentHashes.value = emptyMap()
-        _cleanupReview.value = null
-        _message.value = "Selected ${matching.size} category file(s)"
     }
 
     fun reviewCategoryPaths(categories: Set<String>) {
-        val matching = CategoryPathSelector.matchingEntries(allEntries.value, categories)
-        if (matching.isEmpty()) {
-            _message.value = "No indexed files are available in this category"
-            return
+        val session = latestSession.value ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            val selection = runCatching { loadCategorySelection(session, "Selected category", categories) }
+                .getOrElse { error -> _message.value = error.message ?: "Unable to load category files"; return@launch }
+            if (latestSession.value?.let { it.id == session.id && it.generation == session.generation } != true) return@launch
+            if (selection.entries.isEmpty()) {
+                _message.value = "No indexed files are available in this category"
+            } else if (selection.truncated) {
+                _message.value = "This category contains ${selection.totalCount} files. Refine it before planning deletion."
+            } else {
+                reviewPaths(selection.entries.map { it.path })
+            }
         }
-        reviewPaths(matching.map { it.path })
     }
 
-    fun cycleSort() { _filter.value = _filter.value.copy(sort = EntrySort.entries[(filter.value.sort.ordinal + 1) % EntrySort.entries.size]) }
-    fun cycleType() { _filter.value = _filter.value.copy(type = EntryTypeFilter.entries[(filter.value.type.ordinal + 1) % EntryTypeFilter.entries.size]) }
-    fun exportCsv() { latestSession.value?.let { repository.exportCsv(it, allEntries.value) } }
+    fun cycleSort() { _filter.value = _filter.value.copy(sort = EntrySort.entries[(filter.value.sort.ordinal + 1) % EntrySort.entries.size]); _explorerPageIndex.value = 0 }
+    fun cycleType() { _filter.value = _filter.value.copy(type = EntryTypeFilter.entries[(filter.value.type.ordinal + 1) % EntryTypeFilter.entries.size]); _explorerPageIndex.value = 0 }
+    fun exportCsv() {
+        val session = latestSession.value ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { repository.exportCsv(session) }
+                .onFailure { _message.value = it.message ?: "Unable to export scan" }
+        }
+    }
 
     fun toggleSelection(entry: ScanEntryEntity) = togglePathSelection(entry.path)
 
     fun togglePathSelection(path: String) {
         if (_scanDataStale.value) {
             _message.value = "Run a new scan before selecting files for deletion"
-            return
-        }
-        allEntries.value.firstOrNull { it.path == path }?.let { entry ->
-            toggleResolvedPath(entry.path)
             return
         }
         val scanId = latestSession.value?.id ?: return
@@ -1889,10 +1965,6 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     }
 
     fun showPathDetails(path: String) {
-        allEntries.value.firstOrNull { it.path == path }?.let { entry ->
-            select(entry)
-            return
-        }
         val scanId = latestSession.value?.id ?: return
         viewModelScope.launch {
             val entry = repository.entry(scanId, path)
@@ -1902,11 +1974,6 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     }
 
     fun revealPath(path: String) {
-        allEntries.value.firstOrNull { it.path == path }?.let { entry ->
-            _explorerPath.value = entry.parentPath
-            _filter.value = ExplorerFilter()
-            return
-        }
         val scanId = latestSession.value?.id ?: return
         viewModelScope.launch {
             val entry = repository.entry(scanId, path)
@@ -1916,6 +1983,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             } else {
                 _explorerPath.value = entry.parentPath
                 _filter.value = ExplorerFilter()
+                _explorerPageIndex.value = 0
             }
         }
     }
@@ -2069,11 +2137,11 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
 
     fun refreshInsights(scanId: String? = latestSession.value?.id) {
         if (scanId == null) return
-        val requestedSession = latestSession.value?.takeIf { it.id == scanId }
-        val requestedGeneration = requestedSession?.generation ?: return
+        val requestedSession = latestSession.value?.takeIf { it.id == scanId } ?: return
+        val requestedGeneration = requestedSession.generation
         val requestId = insightsRequestId.incrementAndGet()
         insightsRefreshJob?.cancel()
-        recordDebugEvent(DebugCategory.App, DebugSeverity.Trace, "insights_refresh_started", "Refreshing storage intelligence off the UI thread", mapOf("scanId" to scanId, "generation" to requestedGeneration.toString(), "requestId" to requestId.toString()))
+        recordDebugEvent(DebugCategory.App, DebugSeverity.Trace, "insights_refresh_started", "Refreshing bounded storage intelligence off the UI thread", mapOf("scanId" to scanId, "generation" to requestedGeneration.toString(), "requestId" to requestId.toString()))
         insightsRefreshJob = viewModelScope.launch(Dispatchers.IO) {
             fun scanStillCurrent(): Boolean = latestSession.value?.let { it.id == scanId && it.generation == requestedGeneration } == true && insightsRequestId.get() == requestId
             suspend fun checkpoint() {
@@ -2081,39 +2149,29 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
                 if (!scanStillCurrent()) throw kotlinx.coroutines.CancellationException("Stale insights request")
                 yield()
             }
-            val analysisEntries = repository.entriesForAnalysis(scanId)
+            val appSummaries = repository.appSummaries(scanId)
             checkpoint()
-            val appSummaries = repository.appSummaries(scanId, analysisEntries)
-            checkpoint()
-            val snapshotDelta = repository.snapshotDelta(scanId, analysisEntries)
+            val snapshotDelta = repository.snapshotDelta(scanId, emptyList())
             val snapshotHistory = repository.snapshotHistory()
             checkpoint()
-            val advancedReport = repository.advancedAnalysis(scanId, analysisEntries)
-            checkpoint()
-            val largeFilePreset = _largeFileFilter.value.preset
-            _largeFileLoading.value = true
-            val largeFileEntries = repository.largeFileEntries(scanId, largeFilePreset)
+            val advancedReport = repository.advancedAnalysis(scanId)
             checkpoint()
             _residueLoading.value = true
-            val residueResult = runCatching { repository.appResidueAnalysis(scanId, analysisEntries) }
+            val residueResult = runCatching { repository.appResidueAnalysis(scanId) }
             val residueAnalysis = residueResult.getOrNull()
             checkpoint()
             _recommendationLoading.value = true
-            val recommendationResult = runCatching { repository.cleanupRecommendations(scanId, residueAnalysis, analysisEntries) }
+            val recommendationResult = runCatching { repository.cleanupRecommendations(scanId, residueAnalysis) }
             checkpoint()
             _appStorageLoading.value = true
-            val appStorageResult = runCatching { repository.appStorageInspector(scanId, residueAnalysis, analysisEntries) }
+            val appStorageResult = runCatching { repository.appStorageInspector(scanId, residueAnalysis) }
             checkpoint()
-            val moduleReport = repository.moduleAnalysis(scanId, analysisEntries)
+            val moduleReport = repository.moduleAnalysis(scanId)
             if (!scanStillCurrent()) return@launch
             _appSummaries.value = appSummaries
             _snapshotDelta.value = snapshotDelta
             _snapshotHistory.value = snapshotHistory
             _advancedReport.value = advancedReport
-            if (_largeFileFilter.value.preset == largeFilePreset) {
-                _largeFileSourceEntries.value = largeFileEntries
-                _largeFileLoading.value = false
-            }
             appStorageResult.onSuccess { _appStorageInspector.value = it }
                 .onFailure { _message.value = it.message ?: "Unable to inspect app storage" }
             _appStorageLoading.value = false
@@ -2140,8 +2198,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
                 DebugCategory.App,
                 DebugSeverity.Info,
                 "insights_refresh_finished",
-                "Storage intelligence refreshed with cooperative checkpoints",
-                mapOf("scanId" to scanId, "entries" to analysisEntries.size.toString(), "recommendations" to (_recommendationAnalysis.value?.items?.size ?: 0).toString()),
+                "Storage intelligence refreshed from bounded Go projections",
+                mapOf("scanId" to scanId, "persistedEntries" to requestedSession.persistedEntryCount.toString(), "recommendations" to (_recommendationAnalysis.value?.items?.size ?: 0).toString()),
             )
             if (scanStillCurrent()) insightsRefreshJob = null
         }
@@ -2246,7 +2304,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         _message.value = if (protect) "Protected $path" else "Removed protection from $path"
     }
 
-    fun rootSearch(query: String) {
+    fun rootSearch(query: String, pageIndex: Int = 0) {
         val session = latestSession.value
         val scanId = session?.id
         val generation = session?.generation
@@ -2255,22 +2313,40 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             recordDebugEvent(DebugCategory.Search, DebugSeverity.Warning, "root_search_blocked", "Run a scan before searching")
             return
         }
+        _rootSearchQuery.value = query
         val requestId = rootSearchRequestId.incrementAndGet()
         recordDebugEvent(DebugCategory.Search, DebugSeverity.Trace, "root_search_started", "Whole-scan search started", mapOf("scanId" to scanId, "generation" to generation.toString(), "requestId" to requestId.toString(), "queryLength" to query.length.toString()))
-        viewModelScope.launch {
-            val results = repository.rootSearch(scanId, RootFileSearchRequest(query = query))
+        viewModelScope.launch(Dispatchers.IO) {
+            val page = repository.rootSearch(
+                scanId,
+                RootFileSearchRequest(query = query, offset = pageIndex.coerceAtLeast(0) * ROOT_SEARCH_PAGE_SIZE, limit = ROOT_SEARCH_PAGE_SIZE),
+            )
             val stillCurrent = latestSession.value?.let { it.id == scanId && it.generation == generation } == true && rootSearchRequestId.get() == requestId
             if (!stillCurrent) return@launch
-            _rootSearchResults.value = results
-            _message.value = "Found ${results.size} root-indexed result(s)"
-            recordDebugEvent(DebugCategory.Search, DebugSeverity.Info, "root_search_finished", "Whole-scan search finished", mapOf("resultCount" to results.size.toString(), "requestId" to requestId.toString()))
+            _rootSearchPage.value = page
+            _message.value = "Found ${page.totalCount} root-indexed result(s)"
+            recordDebugEvent(DebugCategory.Search, DebugSeverity.Info, "root_search_finished", "Whole-scan search finished", mapOf("resultCount" to page.totalCount.toString(), "requestId" to requestId.toString()))
         }
+    }
+
+    fun previousRootSearchPage() {
+        val page = _rootSearchPage.value
+        if (page.hasPrevious) rootSearch(_rootSearchQuery.value, (page.pageIndex - 1).coerceAtLeast(0))
+    }
+
+    fun nextRootSearchPage() {
+        val page = _rootSearchPage.value
+        if (page.hasMore) rootSearch(_rootSearchQuery.value, page.pageIndex + 1)
     }
 
     fun openSearchResult(result: RootFileSearchResult) {
         _explorerPath.value = result.parentPath
         _filter.value = _filter.value.copy(query = result.name)
-        allEntries.value.firstOrNull { it.path == result.path }?.let { select(it) }
+        _explorerPageIndex.value = 0
+        val scanId = latestSession.value?.id ?: return
+        viewModelScope.launch {
+            repository.entry(scanId, result.path)?.let(::select)
+        }
     }
     fun runDeviceCertification() {
         val requestId = certificationRequestId.incrementAndGet()
@@ -2299,6 +2375,16 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
 }
 
 sealed interface RootUiState { data object Checking : RootUiState; data object Available : RootUiState; data object Unavailable : RootUiState }
+private data class ExplorerPageQuery(
+    val session: ScanSessionEntity?,
+    val path: String?,
+    val filter: ExplorerFilter,
+    val pageIndex: Int,
+)
+
+private const val EXPLORER_PAGE_SIZE = 100
+private const val CATEGORY_SELECTION_LIMIT = 500
+private const val ROOT_SEARCH_PAGE_SIZE = 100
 class MainViewModelFactory(private val repository: ScanRepository) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST") override fun <T : ViewModel> create(modelClass: Class<T>): T = MainViewModel(repository) as T
 }

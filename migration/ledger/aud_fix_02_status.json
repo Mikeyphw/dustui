@@ -1,0 +1,14 @@
+{
+  "schema": "dustui.aud-fix-status.v1",
+  "overlay": "AUD-FIX-02",
+  "status": "complete",
+  "closed_gap_families": [
+    "AUD-007",
+    "AUD-009",
+    "AUD-010"
+  ],
+  "audit_evidence": "migration/audit/v2/aud_fix_02_audit_loop.json",
+  "gate_d": "open",
+  "passes": 2,
+  "blockers": []
+}

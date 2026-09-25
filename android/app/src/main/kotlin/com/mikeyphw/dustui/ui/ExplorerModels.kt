@@ -18,6 +18,8 @@ data class CategoryFileSelection(
     val title: String,
     val categories: Set<String>,
     val entries: List<ScanEntryEntity>,
+    val totalCount: Long = entries.size.toLong(),
+    val truncated: Boolean = false,
 )
 
 object CategoryPathSelector {

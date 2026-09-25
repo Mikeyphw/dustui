@@ -125,6 +125,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         val pathPreflight by viewModel.pathPreflight.collectAsStateWithLifecycle()
         val session by viewModel.latestSession.collectAsStateWithLifecycle()
         val entries by viewModel.entries.collectAsStateWithLifecycle()
+        val explorerPage by viewModel.explorerPage.collectAsStateWithLifecycle()
         val path by viewModel.explorerPath.collectAsStateWithLifecycle()
         val filter by viewModel.filter.collectAsStateWithLifecycle()
         val selected by viewModel.selectedEntry.collectAsStateWithLifecycle()
@@ -162,6 +163,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
         val appStoragePage by viewModel.appStoragePage.collectAsStateWithLifecycle()
         val appStorageLoading by viewModel.appStorageLoading.collectAsStateWithLifecycle()
         val rootSearchResults by viewModel.rootSearchResults.collectAsStateWithLifecycle()
+        val rootSearchPage by viewModel.rootSearchPage.collectAsStateWithLifecycle()
         val moduleReport by viewModel.moduleReport.collectAsStateWithLifecycle()
         val debugEvents by viewModel.debugEvents.collectAsStateWithLifecycle()
         val debugProbeResults by viewModel.debugProbeResults.collectAsStateWithLifecycle()
@@ -331,6 +333,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     scanDiagnostics,
                                     path ?: currentSession.rootPath,
                                     entries,
+                                    explorerPage,
                                     filter,
                                     selectedPaths,
                                     viewModel,
@@ -441,6 +444,7 @@ fun DustUiApp(viewModel: MainViewModel, requestNotificationPermission: () -> Uni
                                     Modifier.fillMaxSize(),
                                     currentSession.id,
                                     rootSearchResults,
+                                    rootSearchPage,
                                     selectedPaths,
                                     viewModel,
                                 ) { result ->
@@ -1086,6 +1090,7 @@ private fun Explorer(
     diagnostics: ScanDiagnostics?,
     path: String,
     entries: List<ScanEntryEntity>,
+    page: com.mikeyphw.dustui.data.ScanBrowsePage,
     filter: ExplorerFilter,
     selectedPaths: Set<String>,
     vm: MainViewModel,
@@ -1162,7 +1167,7 @@ private fun Explorer(
                             item { FilterChip(selected = showLargestChart, onClick = { showLargestChart = !showLargestChart }, label = { Text("Chart") }) }
                             item { AssistChip(onClick = openRootSearch, label = { Text("Whole-scan search") }) }
                             filter.category?.let { category -> item { AssistChip(onClick = { vm.filterCategory(null) }, label = { Text(category) }, trailingIcon = { Text("×") }) } }
-                            item { Text("${entries.size} items", style = MaterialTheme.typography.labelMedium) }
+                            item { Text("${page.totalCount} items", style = MaterialTheme.typography.labelMedium) }
                         }
                     }
                 }
@@ -1203,6 +1208,19 @@ private fun Explorer(
                             details = { vm.select(entry) },
                             toggle = { vm.toggleSelection(entry) },
                         )
+                    }
+                }
+            }
+            if (page.pageCount > 1) {
+                item {
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        OutlinedButton(onClick = vm::previousExplorerPage, enabled = page.hasPrevious) { Text("Previous") }
+                        Text("Page ${page.pageIndex + 1} / ${page.pageCount}", style = MaterialTheme.typography.labelMedium)
+                        OutlinedButton(onClick = vm::nextExplorerPage, enabled = page.hasMore) { Text("Next") }
                     }
                 }
             }
@@ -2799,6 +2817,7 @@ private fun RootSearchScreen(
     modifier: Modifier,
     scanId: String,
     results: List<RootFileSearchResult>,
+    page: com.mikeyphw.dustui.data.RootFileSearchPage,
     selectedPaths: Set<String>,
     vm: MainViewModel,
     openResult: (RootFileSearchResult) -> Unit,
@@ -2846,10 +2865,10 @@ private fun RootSearchScreen(
             item {
                 DustSectionHeader(
                     "Search results",
-                    subtitle = if (results.size > 80) "Showing 80 of ${results.size} indexed matches." else "${results.size} indexed matches.",
+                    subtitle = "${page.totalCount} indexed matches · page ${page.pageIndex + 1} of ${page.pageCount.coerceAtLeast(1)}",
                 )
             }
-            items(results.take(80), key = { it.path }) { result ->
+            items(results, key = { it.path }) { result ->
                 ActionablePathCard(
                     path = result.path,
                     name = result.name,
@@ -2864,6 +2883,13 @@ private fun RootSearchScreen(
                     reveal = { openResult(result) },
                     delete = { vm.reviewPaths(listOf(result.path)) },
                 )
+            }
+            item {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedButton(onClick = vm::previousRootSearchPage, enabled = page.hasPrevious) { Text("Previous") }
+                    Text("Page ${page.pageIndex + 1} / ${page.pageCount.coerceAtLeast(1)}", style = MaterialTheme.typography.labelMedium)
+                    OutlinedButton(onClick = vm::nextRootSearchPage, enabled = page.hasMore) { Text("Next") }
+                }
             }
         }
     }

@@ -382,6 +382,7 @@ type AndroidSearchRequest struct {
 	Category    *string `json:"category,omitempty"`
 	PackageName *string `json:"packageName,omitempty"`
 	Extension   *string `json:"extension,omitempty"`
+	Offset      int     `json:"offset"`
 	Limit       int     `json:"limit"`
 }
 
@@ -515,6 +516,7 @@ type normalizedAndroidSearch struct {
 	category    string
 	packageName string
 	extension   string
+	offset      int
 	limit       int
 }
 
@@ -523,10 +525,14 @@ func normalizeAndroidSearch(req AndroidSearchRequest) normalizedAndroidSearch {
 		entryType: strings.ToUpper(strings.TrimSpace(req.EntryType)),
 		minBytes:  req.MinBytes,
 		maxBytes:  req.MaxBytes,
+		offset:    req.Offset,
 		limit:     req.Limit,
 	}
 	if out.entryType == "" {
 		out.entryType = "ANY"
+	}
+	if out.offset < 0 {
+		out.offset = 0
 	}
 	if out.limit < 1 {
 		out.limit = 1
@@ -588,64 +594,65 @@ func parseAndroidSearchSize(raw string) (int64, bool) {
 	return value * multiplier, true
 }
 
-func (s *SQLiteStore) SearchAndroidScanEntries(ctx context.Context, scanID string, request AndroidSearchRequest) ([]AndroidSearchResult, error) {
+type AndroidSearchPage struct {
+	ScanID     string                `json:"scanId"`
+	Generation int64                 `json:"generation"`
+	Offset     int                   `json:"offset"`
+	Limit      int                   `json:"limit"`
+	TotalCount int64                 `json:"totalCount"`
+	TotalBytes int64                 `json:"totalBytes"`
+	HasMore    bool                  `json:"hasMore"`
+	Results    []AndroidSearchResult `json:"results"`
+}
+
+func (s *SQLiteStore) SearchAndroidScanEntriesPage(ctx context.Context, scanID string, generation int64, request AndroidSearchRequest) (AndroidSearchPage, error) {
 	filter := normalizeAndroidSearch(request)
-	query := "SELECT " + androidScanEntryColumns + " FROM scan_entries WHERE scan_id=?"
-	args := []any{scanID}
-	switch filter.entryType {
-	case "FILES":
-		query += " AND is_directory=0"
-	case "DIRECTORIES":
-		query += " AND is_directory=1"
+	var category *string
+	if filter.category != "" {
+		value := filter.category
+		category = &value
 	}
-	if filter.minBytes > 0 {
-		query += " AND logical_size_bytes>=?"
-		args = append(args, filter.minBytes)
+	var packageName *string
+	if filter.packageName != "" {
+		value := filter.packageName
+		packageName = &value
 	}
-	if filter.maxBytes != nil {
-		query += " AND logical_size_bytes<=?"
-		args = append(args, *filter.maxBytes)
+	extensions := []string{}
+	if filter.extension != "" {
+		extensions = append(extensions, filter.extension)
 	}
-	query += " ORDER BY logical_size_bytes DESC,path COLLATE NOCASE"
-	rows, err := s.db.QueryContext(ctx, query, args...)
+	page, err := s.AndroidBrowsePage(ctx, scanID, generation, AndroidBrowseRequest{
+		Query: filter.term, EntryType: filter.entryType, MinBytes: filter.minBytes, MaxBytes: filter.maxBytes,
+		Category: category, PackageName: packageName, Extensions: extensions,
+		Sort: "SIZE", Descending: true, Offset: filter.offset, Limit: filter.limit,
+	})
+	if err != nil {
+		return AndroidSearchPage{}, err
+	}
+	results := make([]AndroidSearchResult, 0, len(page.Items))
+	for _, item := range page.Items {
+		entry := item.AndroidScanEntry
+		results = append(results, AndroidSearchResult{
+			Path: entry.Path, ParentPath: entry.ParentPath, Name: entry.Name, SizeBytes: entry.SizeBytes,
+			ModifiedAt: entry.ModifiedAt, IsDirectory: entry.IsDirectory, Category: item.Category, PackageName: item.PackageName,
+		})
+	}
+	return AndroidSearchPage{
+		ScanID: scanID, Generation: generation, Offset: page.Offset, Limit: page.Limit,
+		TotalCount: page.TotalCount, TotalBytes: page.TotalBytes, HasMore: page.HasMore, Results: results,
+	}, nil
+}
+
+func (s *SQLiteStore) SearchAndroidScanEntries(ctx context.Context, scanID string, request AndroidSearchRequest) ([]AndroidSearchResult, error) {
+	session, err := s.AndroidScanSessionByID(ctx, scanID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	out := make([]AndroidSearchResult, 0, filter.limit)
-	for rows.Next() {
-		if err := ctx.Err(); err != nil {
-			return nil, err
-		}
-		entry, err := scanAndroidEntry(rows)
-		if err != nil {
-			return nil, err
-		}
-		lowerPath := strings.ToLower(entry.Path)
-		lowerName := strings.ToLower(entry.Name)
-		if filter.term != "" && !strings.Contains(lowerPath, filter.term) && !strings.Contains(lowerName, filter.term) {
-			continue
-		}
-		if filter.extension != "" && (entry.IsDirectory || !strings.HasSuffix(lowerName, "."+filter.extension)) {
-			continue
-		}
-		category := androidClassifyPath(entry.Path)
-		if filter.category != "" && category != filter.category {
-			continue
-		}
-		packageName := androidPackageFromPath(entry.Path)
-		if filter.packageName != "" && (packageName == nil || *packageName != filter.packageName) {
-			continue
-		}
-		out = append(out, AndroidSearchResult{
-			Path: entry.Path, ParentPath: entry.ParentPath, Name: entry.Name, SizeBytes: entry.SizeBytes,
-			ModifiedAt: entry.ModifiedAt, IsDirectory: entry.IsDirectory, Category: category, PackageName: packageName,
-		})
-		if len(out) >= filter.limit {
-			break
-		}
+	if session == nil {
+		return []AndroidSearchResult{}, nil
 	}
-	return out, rows.Err()
+	page, err := s.SearchAndroidScanEntriesPage(ctx, scanID, session.Generation, request)
+	return page.Results, err
 }
 
 func androidPackageFromPath(path string) *string {

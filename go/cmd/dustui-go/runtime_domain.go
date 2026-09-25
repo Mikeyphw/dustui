@@ -25,6 +25,11 @@ type entriesPagePayload struct {
 	Offset int    `json:"offset"`
 	Limit  int    `json:"limit"`
 }
+type browsePagePayload struct {
+	ScanID     string                     `json:"scanId"`
+	Generation int64                      `json:"generation"`
+	Request    state.AndroidBrowseRequest `json:"request"`
+}
 
 type entryPathPayload struct {
 	ScanID string `json:"scanId"`
@@ -70,6 +75,15 @@ type operationIDPayload struct {
 type cleanupListPayload struct {
 	Limit  int    `json:"limit"`
 	Status string `json:"status"`
+}
+type productInsightsPayload struct {
+	ScanID  string                       `json:"scanId"`
+	Options state.ProductInsightsOptions `json:"options"`
+}
+type rulePreviewPayload struct {
+	ScanID          string                   `json:"scanId"`
+	Rules           []state.CleanupRuleInput `json:"rules"`
+	IncludeDisabled bool                     `json:"includeDisabled"`
 }
 
 func decodePayload[T any](raw json.RawMessage) (T, error) {
@@ -154,6 +168,17 @@ func domainPayload(ctx context.Context, store *state.SQLiteStore, frame runtimeF
 		}
 		return map[string]any{"ok": true, "entries": v}, nil
 
+	case "domain.scan.browse.page":
+		p, err := decodePayload[browsePagePayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		v, err := store.AndroidBrowsePage(ctx, p.ScanID, p.Generation, p.Request)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "page": v}, nil
+
 	case "domain.scan.entry.get":
 		p, err := decodePayload[entryPathPayload](frame.Payload)
 		if err != nil {
@@ -219,11 +244,18 @@ func domainPayload(ctx context.Context, store *state.SQLiteStore, frame runtimeF
 		if err != nil {
 			return nil, err
 		}
-		v, err := store.SearchAndroidScanEntries(ctx, p.ScanID, p.Request)
+		session, err := store.AndroidScanSessionByID(ctx, p.ScanID)
 		if err != nil {
 			return nil, err
 		}
-		return map[string]any{"ok": true, "results": v}, nil
+		if session == nil {
+			return map[string]any{"ok": true, "page": state.AndroidSearchPage{ScanID: p.ScanID, Limit: p.Request.Limit}}, nil
+		}
+		v, err := store.SearchAndroidScanEntriesPage(ctx, p.ScanID, session.Generation, p.Request)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "page": v}, nil
 	case "domain.scan.prune":
 		p, err := decodePayload[prunePayload](frame.Payload)
 		if err != nil {
@@ -281,6 +313,26 @@ func domainPayload(ctx context.Context, store *state.SQLiteStore, frame runtimeF
 			return nil, err
 		}
 		return map[string]any{"ok": true, "count": count}, nil
+	case "domain.product.rules.preview":
+		p, err := decodePayload[rulePreviewPayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		out, err := store.CleanupRulePreview(ctx, p.ScanID, p.Rules, p.IncludeDisabled)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "preview": out}, nil
+	case "domain.product.insights":
+		p, err := decodePayload[productInsightsPayload](frame.Payload)
+		if err != nil {
+			return nil, err
+		}
+		v, err := store.ProductInsights(ctx, p.ScanID, p.Options)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"ok": true, "insights": v}, nil
 	case "domain.cleanup.operations.list":
 		p, err := decodePayload[cleanupListPayload](frame.Payload)
 		if err != nil {

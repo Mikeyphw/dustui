@@ -7,14 +7,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
+
+	"github.com/mikeyphw/dustui/go/internal/scan"
 )
 
-const progressInterval = 128
-
+// ScanRequest is the privileged transport contract. Privilege changes process
+// identity only: traversal, filtering, hard-link identity and size semantics are
+// delegated to internal/scan, the same authority used by non-root scans.
 type ScanRequest struct {
 	ScanID         string   `json:"scanId"`
 	RootPath       string   `json:"rootPath"`
@@ -28,30 +29,6 @@ type ScanRequest struct {
 	Excludes       []string `json:"excludes"`
 }
 
-type scanTotals struct {
-	bytes uint64
-	files uint64
-}
-
-type scanState struct {
-	ctx                      context.Context
-	out                      *bufio.Writer
-	req                      ScanRequest
-	rootDev                  uint64
-	seen                     map[[2]uint64]struct{}
-	scannedItems             uint64
-	scannedBytes             uint64
-	emittedEntries           uint64
-	emittedFiles             uint64
-	emittedDirectories       uint64
-	warnings                 uint64
-	depthLimitedDirectories  uint64
-	skippedFilesystemEntries uint64
-	truncated                bool
-	rootOpened               bool
-	fatal                    bool
-}
-
 func RunScanStream(ctx context.Context, r io.Reader, w io.Writer) error {
 	var req ScanRequest
 	if err := json.NewDecoder(io.LimitReader(r, 256*1024)).Decode(&req); err != nil {
@@ -60,215 +37,131 @@ func RunScanStream(ctx context.Context, r io.Reader, w io.Writer) error {
 	if req.ScanID == "" || !filepath.IsAbs(req.RootPath) || strings.ContainsRune(req.RootPath, '\x00') {
 		return errors.New("invalid root scan request")
 	}
-	if req.MaxEntries <= 0 {
-		req.MaxEntries = 1<<63 - 1
+	opts := scan.DefaultOptions()
+	opts.Backend = scan.BackendIdentity{Name: "dustui-go-root", Version: "aud-fix-02", Privileged: true}
+	opts.IncludeHidden = req.IncludeHidden
+	opts.Exclusions = append([]string{}, req.Excludes...)
+	opts.MaxDepth = req.MaxDepth
+	if req.MaxEntries > 0 {
+		if req.MaxEntries > int64(^uint(0)>>1) {
+			opts.MaxEntries = int(^uint(0) >> 1)
+		} else {
+			opts.MaxEntries = int(req.MaxEntries)
+		}
 	}
-	if req.MinSize < 0 {
-		req.MinSize = 0
+	opts.MinSizeBytes = req.MinSize
+	opts.EntryMode = req.Mode
+	if req.ApparentSize {
+		opts.SizeSemantics = scan.SizeLogical
+	} else {
+		opts.SizeSemantics = scan.SizeAllocated
 	}
-	info, err := os.Lstat(req.RootPath)
-	if err != nil {
-		emitJSON(w, map[string]any{"type": "error", "code": "ROOT_LSTAT_FAILED", "phase": "root-preflight", "path": req.RootPath, "message": err.Error()})
-		return err
+	if req.SameFilesystem {
+		opts.FilesystemBoundaryPolicy = scan.BoundaryStayOnDevice
+	} else {
+		opts.FilesystemBoundaryPolicy = scan.BoundaryAllowCross
 	}
-	if info.Mode()&os.ModeSymlink != 0 {
-		emitJSON(w, map[string]any{"type": "error", "code": "ROOT_SYMLINK", "phase": "root-preflight", "path": req.RootPath, "message": "Scan root is a symbolic link"})
-		return errors.New("scan root is a symbolic link")
-	}
-	if !info.IsDir() {
-		emitJSON(w, map[string]any{"type": "error", "code": "ROOT_NOT_DIRECTORY", "phase": "root-preflight", "path": req.RootPath, "message": "Scan root is not a directory"})
-		return errors.New("scan root is not a directory")
-	}
-	rootDev := statDevice(info)
+
 	out := bufio.NewWriterSize(w, 256*1024)
-	s := &scanState{ctx: ctx, out: out, req: req, rootDev: rootDev, seen: map[[2]uint64]struct{}{}}
-	if err := s.emit(map[string]any{"type": "start", "backend": "dustui-go-root-v1", "root": req.RootPath}, true); err != nil {
-		return err
-	}
-	totals := s.scanPath(req.RootPath, 0)
-	if ctx.Err() != nil {
-		_ = s.emit(map[string]any{"type": "cancelled", "scannedItems": s.scannedItems, "scannedBytes": s.scannedBytes}, true)
+	emit := func(v any, flush bool) error {
+		b, err := json.Marshal(v)
+		if err != nil {
+			return err
+		}
+		if _, err := out.Write(append(b, '\n')); err != nil {
+			return err
+		}
+		if flush {
+			return out.Flush()
+		}
 		return nil
 	}
-	if s.fatal {
-		_ = out.Flush()
-		return errors.New("fatal root scan failure")
-	}
-	if err := s.emit(map[string]any{
-		"type": "complete", "totalBytes": totals.bytes, "scannedItems": s.scannedItems,
-		"scannedBytes": s.scannedBytes, "warnings": s.warnings, "emittedEntries": s.emittedEntries,
-		"emittedFiles": s.emittedFiles, "emittedDirectories": s.emittedDirectories, "truncated": s.truncated,
-		"depthLimitedDirectories": s.depthLimitedDirectories, "skippedFilesystemEntries": s.skippedFilesystemEntries,
-		"rootOpened": s.rootOpened,
-	}, true); err != nil {
+	if err := emit(map[string]any{"type": "start", "backend": "dustui-go-root/aud-fix-02", "root": req.RootPath}, true); err != nil {
 		return err
 	}
-	return nil
+
+	session, err := scan.ScanContext(ctx, req.RootPath, 1, opts)
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		_ = emit(map[string]any{"type": "cancelled", "scannedItems": session.ObservedEntryCount, "scannedBytes": scanSessionBytes(session, req.ApparentSize)}, true)
+		return nil
+	}
+	if err != nil {
+		_ = emit(map[string]any{"type": "error", "code": "GO_SCAN_FAILED", "phase": "traversal", "path": req.RootPath, "message": err.Error()}, true)
+		return err
+	}
+
+	for _, problem := range session.Problems {
+		if problem.Kind == scan.ProblemTruncated {
+			continue
+		}
+		if err := emit(map[string]any{"type": "warning", "code": string(problem.Kind), "phase": "traversal", "path": problem.Path, "message": problem.Message}, false); err != nil {
+			return err
+		}
+	}
+
+	var emittedFiles, emittedDirs uint64
+	for i, entry := range session.Entries {
+		if err := ctx.Err(); err != nil {
+			_ = emit(map[string]any{"type": "cancelled", "scannedItems": i, "scannedBytes": scanSessionBytes(session, req.ApparentSize)}, true)
+			return nil
+		}
+		absPath := filepath.Join(session.CanonicalRoot, filepath.FromSlash(entry.Path))
+		absParent := filepath.Join(session.CanonicalRoot, filepath.FromSlash(entry.ParentPath))
+		if entry.ParentPath == "" {
+			absParent = session.CanonicalRoot
+		}
+		size := entry.AllocatedSizeBytes
+		if req.ApparentSize {
+			size = entry.LogicalSizeBytes
+		}
+		if err := emit(map[string]any{
+			"type": "entry", "path": absPath, "parentPath": absParent, "name": entry.Name,
+			"sizeBytes": size, "allocatedBytes": entry.AllocatedSizeBytes, "directory": entry.IsDirectory,
+			"depth": entry.Depth, "modifiedAt": entry.ModifiedUnixMs / 1000, "fileCount": entry.FileCount,
+		}, false); err != nil {
+			return err
+		}
+		if entry.IsDirectory {
+			emittedDirs++
+		} else {
+			emittedFiles++
+		}
+		if (i+1)%128 == 0 {
+			if err := emit(map[string]any{"type": "progress", "scannedItems": i + 1, "scannedBytes": scanSessionBytes(session, req.ApparentSize), "currentPath": absPath}, true); err != nil {
+				return err
+			}
+		}
+	}
+	total := scanSessionBytes(session, req.ApparentSize)
+	return emit(map[string]any{
+		"type": "complete", "totalBytes": total, "scannedItems": session.ObservedEntryCount,
+		"scannedBytes": total, "warnings": len(session.Problems), "emittedEntries": len(session.Entries),
+		"emittedFiles": emittedFiles, "emittedDirectories": emittedDirs, "truncated": session.Truncated,
+		"depthLimitedDirectories": 0, "skippedFilesystemEntries": countBoundaryProblems(session), "rootOpened": true,
+	}, true)
 }
 
-func (s *scanState) scanPath(path string, depth int) scanTotals {
-	if s.ctx.Err() != nil {
-		return scanTotals{}
-	}
-	info, err := os.Lstat(path)
-	if err != nil {
-		s.warning("LSTAT_FAILED", "traversal", path, err)
-		return scanTotals{}
-	}
-	dev := statDevice(info)
-	if s.req.SameFilesystem && s.rootDev != 0 && dev != 0 && dev != s.rootDev {
-		s.skippedFilesystemEntries++
-		return scanTotals{}
-	}
-	s.scannedItems++
-	directory := info.IsDir()
-	total := scanTotals{bytes: sizeFor(info, s.req.ApparentSize)}
-	if !directory {
-		total.files = 1
-	}
-	if !directory {
-		if st, ok := info.Sys().(*syscall.Stat_t); ok && st.Nlink > 1 {
-			key := [2]uint64{uint64(st.Dev), uint64(st.Ino)}
-			if _, exists := s.seen[key]; exists {
-				total = scanTotals{}
-			} else {
-				s.seen[key] = struct{}{}
-			}
+func scanSessionBytes(session scan.Session, apparent bool) int64 {
+	var total int64
+	for _, e := range session.Entries {
+		if e.IsDirectory {
+			continue
 		}
-	}
-	mayDescend := directory && (s.req.MaxDepth < 0 || depth < s.req.MaxDepth)
-	if directory && !mayDescend {
-		s.depthLimitedDirectories++
-	}
-	if mayDescend {
-		entries, err := os.ReadDir(path)
-		if err != nil {
-			if depth == 0 {
-				s.fatal = true
-				_ = s.emit(map[string]any{"type": "error", "code": "ROOT_OPEN_FAILED", "phase": "root-open", "path": path, "message": err.Error()}, true)
-			} else {
-				s.warning("DIRECTORY_OPEN_FAILED", "traversal", path, err)
-			}
+		if apparent {
+			total += e.LogicalSizeBytes
 		} else {
-			if depth == 0 {
-				s.rootOpened = true
-			}
-			for _, entry := range entries {
-				if s.ctx.Err() != nil {
-					break
-				}
-				name := entry.Name()
-				if !s.req.IncludeHidden && strings.HasPrefix(name, ".") {
-					continue
-				}
-				child := filepath.Join(path, name)
-				if s.excluded(child, name) {
-					continue
-				}
-				childTotals := s.scanPath(child, depth+1)
-				total.bytes += childTotals.bytes
-				total.files += childTotals.files
-			}
+			total += e.AllocatedSizeBytes
 		}
-	}
-	if !directory {
-		s.scannedBytes += total.bytes
-	}
-	if depth != 0 && int64(total.bytes) >= s.req.MinSize && s.modeAllows(directory) {
-		if s.emittedEntries >= uint64(s.req.MaxEntries) {
-			s.truncated = true
-		} else {
-			parent := filepath.Dir(path)
-			if err := s.emit(map[string]any{
-				"type": "entry", "path": path, "parentPath": parent, "name": filepath.Base(path),
-				"sizeBytes": total.bytes, "allocatedBytes": allocatedSize(info), "directory": directory,
-				"depth": depth, "modifiedAt": info.ModTime().Unix(), "fileCount": total.files,
-			}, false); err == nil {
-				s.emittedEntries++
-				if directory {
-					s.emittedDirectories++
-				} else {
-					s.emittedFiles++
-				}
-			}
-		}
-	}
-	if s.scannedItems%progressInterval == 0 {
-		_ = s.emit(map[string]any{"type": "progress", "scannedItems": s.scannedItems, "scannedBytes": s.scannedBytes, "currentPath": path}, true)
 	}
 	return total
 }
 
-func (s *scanState) excluded(path, name string) bool {
-	for _, pattern := range s.req.Excludes {
-		if pattern == "" {
-			continue
-		}
-		if ok, _ := filepath.Match(pattern, name); ok {
-			return true
-		}
-		if ok, _ := filepath.Match(pattern, path); ok {
-			return true
+func countBoundaryProblems(session scan.Session) int {
+	n := 0
+	for _, p := range session.Problems {
+		if p.Kind == scan.ProblemBoundarySkipped {
+			n++
 		}
 	}
-	return false
-}
-func (s *scanState) modeAllows(directory bool) bool {
-	switch strings.ToUpper(s.req.Mode) {
-	case "DIRECTORIES":
-		return directory
-	case "FILES":
-		return !directory
-	default:
-		return true
-	}
-}
-func (s *scanState) warning(code, phase, path string, err error) {
-	s.warnings++
-	_ = s.emit(map[string]any{"type": "warning", "code": code, "phase": phase, "path": path, "message": err.Error()}, false)
-}
-func (s *scanState) emit(v any, flush bool) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-	if _, err = s.out.Write(append(b, '\n')); err != nil {
-		return err
-	}
-	if flush {
-		return s.out.Flush()
-	}
-	return nil
-}
-func emitJSON(w io.Writer, v any) error {
-	b, e := json.Marshal(v)
-	if e != nil {
-		return e
-	}
-	_, e = w.Write(append(b, '\n'))
-	return e
-}
-func sizeFor(info os.FileInfo, apparent bool) uint64 {
-	if apparent {
-		if info.Size() > 0 {
-			return uint64(info.Size())
-		}
-		return 0
-	}
-	return allocatedSize(info)
-}
-func allocatedSize(info os.FileInfo) uint64 {
-	if st, ok := info.Sys().(*syscall.Stat_t); ok && st.Blocks > 0 {
-		return uint64(st.Blocks) * 512
-	}
-	if info.Size() > 0 {
-		return uint64(info.Size())
-	}
-	return 0
-}
-func statDevice(info os.FileInfo) uint64 {
-	if st, ok := info.Sys().(*syscall.Stat_t); ok {
-		return uint64(st.Dev)
-	}
-	return 0
+	return n
 }

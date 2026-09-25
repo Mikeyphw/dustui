@@ -55,6 +55,18 @@ object GoRootWorker {
         }
     }
 
+    fun verifyDuplicates(
+        context: Context,
+        requestJson: String,
+        onProcess: (Process) -> Unit,
+    ): WorkerResult = call(
+        context = context,
+        command = "root-duplicates-verify",
+        inputJson = requestJson,
+        timeoutMs = 30 * 60 * 1000L,
+        onProcess = onProcess,
+    )
+
     fun reviewCleanup(context: Context, planJson: String): WorkerResult = call(
         context = context,
         command = "root-cleanup-review",

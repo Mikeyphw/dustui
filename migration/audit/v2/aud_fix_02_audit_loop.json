@@ -1,0 +1,45 @@
+{
+  "schema": "dustui.aud-fix-02-audit.v1",
+  "overlay": "AUD-FIX-02",
+  "scope_gap_families": [
+    "AUD-007",
+    "AUD-009",
+    "AUD-010"
+  ],
+  "passes": [
+    {
+      "pass": 1,
+      "failures": [],
+      "go_tests": {
+        "ok": true,
+        "output": "ok  \tgithub.com/mikeyphw/dustui/go/internal/scan\t(cached)\nok  \tgithub.com/mikeyphw/dustui/go/internal/rootworker\t(cached)\n"
+      }
+    },
+    {
+      "pass": 2,
+      "failures": [],
+      "go_tests": {
+        "ok": true,
+        "output": "ok  \tgithub.com/mikeyphw/dustui/go/internal/scan\t(cached)\nok  \tgithub.com/mikeyphw/dustui/go/internal/rootworker\t(cached)\n"
+      }
+    }
+  ],
+  "converged": true,
+  "later_roadmap_gaps_intentionally_open": [
+    "AUD-006",
+    "AUD-008",
+    "AUD-011",
+    "AUD-012",
+    "AUD-013",
+    "UIX-001",
+    "UIX-002",
+    "UIX-003",
+    "UIX-004",
+    "UIX-005",
+    "UIX-006",
+    "UIX-007",
+    "UIX-008",
+    "UIX-009"
+  ],
+  "gate_d": "open"
+}

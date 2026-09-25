@@ -8,16 +8,13 @@ import android.system.ErrnoException
 import android.system.Os
 import android.system.OsConstants
 import com.mikeyphw.dustui.scan.ScanRequest
-import com.mikeyphw.dustui.data.CleanupSafetyPolicy
 import com.topjohnwu.superuser.ipc.RootService
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.LinkOption
-import java.nio.file.Path
 import java.nio.file.Paths
-import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
@@ -36,7 +33,7 @@ class DustRootService : RootService() {
         Thread(runnable, "DustRootService-worker").apply { isDaemon = true }
     }.apply { allowCoreThreadTimeOut(true) }
     private val scans = ConcurrentHashMap<String, ActiveScan>()
-    private val duplicateCancellations = ConcurrentHashMap<String, AtomicBoolean>()
+    private val duplicateProcesses = ConcurrentHashMap<String, java.lang.Process>()
     private val cleanupCancellations = ConcurrentHashMap<String, AtomicBoolean>()
     private val cleanupProcesses = ConcurrentHashMap<String, java.lang.Process>()
 
@@ -195,155 +192,39 @@ class DustRootService : RootService() {
                 ?: deletionFailure(operationId, result.error.ifBlank { "Cleanup reconciliation journal unavailable" })
         }
 
-        override fun verifyDuplicates(requestJson: String): String = runCatching {
-            val request = JSONObject(requestJson)
-            val paths = request.getJSONArray("paths")
-            require(paths.length() in 2..MAX_DUPLICATE_BUCKET_PATHS) {
-                "Duplicate verification accepts 2 to $MAX_DUPLICATE_BUCKET_PATHS files per size bucket"
+        override fun verifyDuplicates(requestJson: String): String {
+            val request = runCatching { JSONObject(requestJson) }.getOrElse { error ->
+                return JSONObject().put("ok", false).put("cancelled", false).put("groups", JSONArray()).put("skipped", JSONArray())
+                    .put("message", error.message ?: "Invalid duplicate verification request").toString()
             }
-            val scanId = request.getString("scanId")
-            require(scanId.isNotBlank()) { "Duplicate verification requires a scan identifier" }
-            val operationId = request.optString("operationId").ifBlank { scanId }
-            require(operationId.isNotBlank()) { "Duplicate verification requires an operation identifier" }
-            val cancellation = AtomicBoolean(false)
-            require(duplicateCancellations.putIfAbsent(operationId, cancellation) == null) { "Duplicate verification operation is already active" }
-            val expectedSize = request.getLong("sizeBytes")
-            require(expectedSize > 0L) { "Duplicate verification requires a positive exact size" }
-            val scanRoot = Paths.get(request.getString("scanRoot")).normalize()
-            require(scanRoot.isAbsolute) { "Duplicate verification scan root must be absolute" }
-            val partialBytes = request.optInt("partialBytes", DEFAULT_PARTIAL_HASH_BYTES)
-                .coerceIn(4 * 1024, MAX_PARTIAL_HASH_BYTES)
-            val probes = mutableListOf<DuplicateProbe>()
-            val skipped = JSONArray()
-            var bytesHashed = 0L
-
-            for (index in 0 until paths.length()) {
-                ensureDuplicateActive(cancellation)
-                val rawPath = paths.getString(index)
-                val path = runCatching { Paths.get(rawPath).normalize() }.getOrNull()
-                val reason = when {
-                    path == null || !path.isAbsolute -> "Path must be absolute"
-                    Files.isSymbolicLink(path) -> "Symbolic links are not duplicate candidates"
-                    !Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS) -> "Path is not a regular file"
-                    else -> null
-                }
-                if (reason != null || path == null) {
-                    skipped.put(JSONObject().put("path", rawPath).put("reason", reason ?: "Invalid path"))
-                    continue
-                }
-                val statResult = runCatching { Os.lstat(path.toString()) }
-                val stat = statResult.getOrNull()
-                if (stat == null) {
-                    val error = statResult.exceptionOrNull()
-                    skipped.put(JSONObject().put("path", rawPath).put("reason", error?.message ?: "Unable to inspect file"))
-                    continue
-                }
-                if (stat.st_size != expectedSize) {
-                    skipped.put(JSONObject().put("path", rawPath).put("reason", "File size changed since scan"))
-                    continue
-                }
-                val partial = hashFileEdges(path, expectedSize, partialBytes) { cancellation.get() }
-                bytesHashed += partial.bytesRead
-                probes += DuplicateProbe(
-                    path = path.toString(),
-                    modifiedAt = stat.st_mtime,
-                    deviceId = stat.st_dev,
-                    inode = stat.st_ino,
-                    linkCount = stat.st_nlink,
-                    partialHash = partial.hash,
-                    deletionBlockReason = CleanupSafetyPolicy.blockReason(path.toString(), scanRoot.toString()),
-                )
+            val operationId = request.optString("operationId").ifBlank { request.optString("scanId") }
+            if (operationId.isBlank()) {
+                return JSONObject().put("ok", false).put("operationId", "").put("cancelled", false).put("groups", JSONArray()).put("skipped", JSONArray())
+                    .put("message", "Duplicate verification requires an operation identifier").toString()
             }
-
-            val partialGroups = probes.groupBy { it.partialHash }.values.filter { it.size > 1 }
-            val fullGroups = linkedMapOf<String, MutableList<DuplicateProbe>>()
-            partialGroups.forEach { partialGroup ->
-                partialGroup.forEach { probe ->
-                    ensureDuplicateActive(cancellation)
-                    val path = Paths.get(probe.path)
-                    val full = hashWholeFile(path) { cancellation.get() }
-                    bytesHashed += full.bytesRead
-                    val after = runCatching { Os.lstat(probe.path) }.getOrNull()
-                    if (after == null || after.st_dev != probe.deviceId || after.st_ino != probe.inode ||
-                        after.st_size != expectedSize || after.st_mtime != probe.modifiedAt
-                    ) {
-                        skipped.put(JSONObject().put("path", probe.path).put("reason", "File changed while hashing"))
-                    } else {
-                        fullGroups.getOrPut(full.hash) { mutableListOf() }.add(probe)
-                    }
-                }
+            if (duplicateProcesses.containsKey(operationId)) {
+                return JSONObject().put("ok", false).put("operationId", operationId).put("cancelled", false).put("groups", JSONArray()).put("skipped", JSONArray())
+                    .put("message", "Duplicate verification operation is already active").toString()
             }
-
-            val verified = JSONArray()
-            fullGroups.filterValues { it.size > 1 }.toSortedMap().forEach { (sha256, matches) ->
-                val physicalCopies = matches.groupBy { "${it.deviceId}:${it.inode}" }
-                if (physicalCopies.size < 2) return@forEach
-                val hardLinkedCopies = physicalCopies.values.count { owned ->
-                    owned.size > 1 || owned.maxOf { it.linkCount } > 1L
+            return try {
+                val result = GoRootWorker.verifyDuplicates(this@DustRootService, requestJson) { process ->
+                    duplicateProcesses[operationId] = process
                 }
-                val eligibleCopies = physicalCopies.values.count { owned ->
-                    owned.size == 1 && owned.single().linkCount == 1L && owned.single().deletionBlockReason == null
-                }
-                val retainedByPolicyCopies = physicalCopies.size - eligibleCopies
-                val copiesToDeleteSafely = (eligibleCopies - if (retainedByPolicyCopies == 0) 1 else 0).coerceAtLeast(0)
-                val records = JSONArray()
-                physicalCopies.toSortedMap().forEach { (copyKey, owned) ->
-                    val hardLinked = owned.size > 1 || owned.maxOf { it.linkCount } > 1L
-                    owned.sortedBy { it.path }.forEach { probe ->
-                        records.put(JSONObject()
-                            .put("path", probe.path)
-                            .put("deviceId", probe.deviceId)
-                            .put("inode", probe.inode)
-                            .put("linkCount", probe.linkCount)
-                            .put("modifiedAt", probe.modifiedAt)
-                            .put("copyKey", copyKey)
-                            .put("hardLinked", hardLinked)
-                            .put("autoDeleteEligible", !hardLinked && owned.size == 1 && probe.deletionBlockReason == null)
-                            .put("deletionBlockReason", probe.deletionBlockReason))
-                    }
-                }
-                verified.put(JSONObject()
-                    .put("sha256", sha256)
-                    .put("partialHash", matches.first().partialHash)
-                    .put("sizeBytes", expectedSize)
-                    .put("paths", records)
-                    .put("physicalCopyCount", physicalCopies.size)
-                    .put("hardLinkedCopyCount", hardLinkedCopies)
-                    .put("reclaimableBytes", expectedSize * (physicalCopies.size - 1L))
-                    .put("safeReclaimableBytes", expectedSize * copiesToDeleteSafely))
+                result.output.takeIf(String::isNotBlank) ?: JSONObject()
+                    .put("ok", false).put("operationId", operationId).put("cancelled", result.exitCode == 130)
+                    .put("groups", JSONArray()).put("skipped", JSONArray())
+                    .put("message", result.error.ifBlank { "Go duplicate verification failed" }).toString()
+            } finally {
+                duplicateProcesses.remove(operationId)
             }
-            duplicateCancellations.remove(operationId, cancellation)
-            JSONObject()
-                .put("ok", true)
-                .put("operationId", operationId)
-                .put("cancelled", false)
-                .put("checkedFiles", probes.size)
-                .put("skipped", skipped)
-                .put("partialGroups", partialGroups.size)
-                .put("bytesHashed", bytesHashed)
-                .put("groups", verified)
-        }.getOrElse { error ->
-            val request = runCatching { JSONObject(requestJson) }.getOrNull()
-            val operationId = request?.optString("operationId")?.takeIf { it.isNotBlank() }
-                ?: request?.optString("scanId")?.takeIf { it.isNotBlank() }
-            operationId?.let { duplicateCancellations.remove(it) }
-            JSONObject()
-                .put("ok", false)
-                .put("operationId", operationId ?: "")
-                .put("cancelled", error is DuplicateVerificationCancelled)
-                .put("checkedFiles", 0)
-                .put("skipped", JSONArray())
-                .put("partialGroups", 0)
-                .put("bytesHashed", 0)
-                .put("groups", JSONArray())
-                .put("message", error.message ?: error.javaClass.simpleName)
-        }.toString()
-
+        }
 
         override fun cancelDuplicateVerification(scanId: String): String {
-            val cancelled = duplicateCancellations[scanId]?.also { it.set(true) } != null
-            return JSONObject().put("ok", true).put("operationId", scanId).put("cancelled", cancelled).toString()
+            val entries = duplicateProcesses.entries.filter { (operationId, _) -> operationId == scanId || operationId.startsWith(scanId) }
+            entries.forEach { (_, process) -> if (process.isAlive) process.destroy() }
+            return JSONObject().put("ok", true).put("operationId", scanId).put("cancelled", entries.isNotEmpty()).toString()
         }
+
 
         override fun installedPackages(): String = installedPackageInventory()
 
@@ -634,80 +515,6 @@ class DustRootService : RootService() {
         }
     }
 
-    private fun hashFileEdges(
-        path: Path,
-        sizeBytes: Long,
-        partialBytes: Int,
-        cancelled: () -> Boolean = { false },
-    ): HashResult {
-        val digest = MessageDigest.getInstance("SHA-256")
-        digest.update(sizeBytes.toString().toByteArray(Charsets.UTF_8))
-        var bytesRead = 0L
-        Files.newByteChannel(path, java.nio.file.StandardOpenOption.READ).use { channel ->
-            fun readAt(position: Long, requested: Int) {
-                ensureDuplicateActive(cancelled)
-                channel.position(position)
-                val buffer = java.nio.ByteBuffer.allocate(requested)
-                while (buffer.hasRemaining()) {
-                    ensureDuplicateActive(cancelled)
-                    val read = channel.read(buffer)
-                    if (read < 0) break
-                    if (read == 0) continue
-                    bytesRead += read
-                }
-                digest.update(buffer.array(), 0, buffer.position())
-            }
-            val firstLength = minOf(sizeBytes, partialBytes.toLong()).toInt()
-            readAt(0L, firstLength)
-            if (sizeBytes > firstLength) {
-                val lastLength = minOf(sizeBytes - firstLength, partialBytes.toLong()).toInt()
-                readAt((sizeBytes - lastLength).coerceAtLeast(0L), lastLength)
-            }
-        }
-        return HashResult(digest.digest().toHex(), bytesRead)
-    }
-
-    private fun hashWholeFile(path: Path, cancelled: () -> Boolean = { false }): HashResult {
-        val digest = MessageDigest.getInstance("SHA-256")
-        var bytesRead = 0L
-        Files.newInputStream(path).use { input ->
-            val buffer = ByteArray(1024 * 1024)
-            while (true) {
-                ensureDuplicateActive(cancelled)
-                val read = input.read(buffer)
-                if (read < 0) break
-                if (read == 0) continue
-                digest.update(buffer, 0, read)
-                bytesRead += read
-            }
-        }
-        return HashResult(digest.digest().toHex(), bytesRead)
-    }
-
-    private fun ByteArray.toHex(): String = joinToString("") { byte ->
-        (byte.toInt() and 0xff).toString(16).padStart(2, '0')
-    }
-
-    private fun ensureDuplicateActive(cancelled: AtomicBoolean) = ensureDuplicateActive { cancelled.get() }
-
-    private fun ensureDuplicateActive(cancelled: () -> Boolean) {
-        if (cancelled()) throw DuplicateVerificationCancelled()
-    }
-
-    private class DuplicateVerificationCancelled : java.io.IOException("Duplicate verification cancelled")
-
-    private data class HashResult(val hash: String, val bytesRead: Long)
-
-    private data class DuplicateProbe(
-        val path: String,
-        val modifiedAt: Long,
-        val deviceId: Long,
-        val inode: Long,
-        val linkCount: Long,
-        val partialHash: String,
-        val deletionBlockReason: String?,
-    )
-
     private data class FixedCommandResult(val ok: Boolean, val output: String)
 
     private class ActiveScan(val scanId: String) {
@@ -749,9 +556,6 @@ class DustRootService : RootService() {
         val PACKAGE_NAME_PATTERN = Regex("^[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z0-9_]+)+$")
         const val FIXED_COMMAND_TIMEOUT_SECONDS = 15L
         const val COMPLETED_RETENTION_MS = 24 * 60 * 60 * 1000L
-        const val MAX_DUPLICATE_BUCKET_PATHS = 2_000
-        const val DEFAULT_PARTIAL_HASH_BYTES = 64 * 1024
-        const val MAX_PARTIAL_HASH_BYTES = 1024 * 1024
         private const val MIN_PRIVILEGED_WORKERS = 1
         private const val MAX_PRIVILEGED_WORKERS = 2
         private const val MAX_PRIVILEGED_QUEUE_DEPTH = 8

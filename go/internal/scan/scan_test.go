@@ -179,3 +179,62 @@ func TestOptionsFingerprintCoversPolicies(t *testing.T) {
 		t.Fatalf("fingerprint should normalize exclusion order")
 	}
 }
+
+func TestZeroValueOptionsRemainUnboundedAndDirectoryAggregationUsesRelativeParents(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, "a", "b"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	payload := []byte("nested payload")
+	if err := os.WriteFile(filepath.Join(root, "a", "b", "file.txt"), payload, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	session, err := Scan(root, 11, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var aDir, bDir, file *Entry
+	for i := range session.Entries {
+		e := &session.Entries[i]
+		switch e.Path {
+		case "a":
+			aDir = e
+		case "a/b":
+			bDir = e
+		case "a/b/file.txt":
+			file = e
+		}
+	}
+	if aDir == nil || bDir == nil || file == nil {
+		t.Fatalf("zero-value options unexpectedly depth-limited scan: %+v", session.Entries)
+	}
+	if bDir.ParentPath != "a" || file.ParentPath != "a/b" {
+		t.Fatalf("parent identity must be scan-relative: b=%+v file=%+v", bDir, file)
+	}
+	if aDir.FileCount != 1 || bDir.FileCount != 1 {
+		t.Fatalf("directory file counts did not aggregate through relative parents: a=%+v b=%+v", aDir, bDir)
+	}
+	if aDir.LogicalSizeBytes < file.LogicalSizeBytes || bDir.LogicalSizeBytes < file.LogicalSizeBytes {
+		t.Fatalf("directory totals did not include nested file: a=%+v b=%+v file=%+v", aDir, bDir, file)
+	}
+}
+
+func TestExplicitMaxDepthZeroStillLimitsToTopLevel(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, "a", "b"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "a", "b", "file.txt"), []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	opts := DefaultOptions()
+	opts.MaxDepth = 0
+	session, err := Scan(root, 12, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(session.Entries) != 0 {
+		t.Fatalf("explicit maxDepth=0 should emit no children: %+v", session.Entries)
+	}
+}

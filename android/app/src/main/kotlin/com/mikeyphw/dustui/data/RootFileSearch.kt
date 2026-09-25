@@ -10,8 +10,26 @@ data class RootFileSearchRequest(
     val category: StorageCategory? = null,
     val packageName: String? = null,
     val extension: String? = null,
-    val limit: Int = 200,
+    val offset: Int = 0,
+    val limit: Int = 100,
 )
+
+
+data class RootFileSearchPage(
+    val scanId: String,
+    val generation: Long,
+    val offset: Int,
+    val limit: Int,
+    val totalCount: Long,
+    val totalBytes: Long,
+    val hasMore: Boolean,
+    val results: List<RootFileSearchResult>,
+) {
+    val pageIndex: Int get() = if (limit <= 0) 0 else offset / limit
+    val pageCount: Int get() = if (totalCount <= 0 || limit <= 0) 0 else ((totalCount + limit - 1) / limit).toInt()
+    val hasPrevious: Boolean get() = offset > 0
+    companion object { fun empty() = RootFileSearchPage("", 0, 0, 100, 0, 0, false, emptyList()) }
+}
 
 data class RootFileSearchResult(
     val path: String,

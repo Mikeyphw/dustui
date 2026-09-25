@@ -43,6 +43,8 @@ func main() {
 			return
 		case "root-scan":
 			err = rootworker.RunScanStream(ctx, os.Stdin, os.Stdout)
+		case "root-duplicates-verify":
+			err = rootworker.VerifyDuplicates(ctx, os.Stdin, os.Stdout)
 		case "root-cleanup-review":
 			err = rootworker.ReviewCleanup(os.Stdin, os.Stdout)
 		case "root-cleanup-execute":

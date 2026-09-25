@@ -1,6 +1,7 @@
 package scan
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -77,6 +78,9 @@ type Options struct {
 	FilesystemBoundaryPolicy BoundaryPolicy  `json:"filesystemBoundaryPolicy"`
 	SizeSemantics            SizeSemantics   `json:"sizeSemantics"`
 	MaxEntries               int             `json:"maxEntries"`
+	MaxDepth                 int             `json:"maxDepth"`
+	MinSizeBytes             int64           `json:"minSizeBytes"`
+	EntryMode                string          `json:"entryMode"`
 }
 
 func DefaultOptions() Options {
@@ -88,10 +92,18 @@ func DefaultOptions() Options {
 		FilesystemBoundaryPolicy: BoundaryStayOnDevice,
 		SizeSemantics:            SizeLogicalAndAllocated,
 		MaxEntries:               0,
+		MaxDepth:                 -1,
+		MinSizeBytes:             0,
+		EntryMode:                "ALL",
 	}
 }
 
 func (o Options) Normalized() Options {
+	zeroValueScanBounds := o.MaxDepth == 0 && o.MaxEntries == 0 && o.MinSizeBytes == 0 && strings.TrimSpace(o.EntryMode) == ""
+	if zeroValueScanBounds {
+		// Preserve the pre-filter zero-value contract: Options{} means an unbounded scan.
+		o.MaxDepth = -1
+	}
 	if o.Backend.Name == "" {
 		o.Backend.Name = "dustui-go-scanner"
 	}
@@ -103,6 +115,16 @@ func (o Options) Normalized() Options {
 	}
 	if o.SizeSemantics == "" {
 		o.SizeSemantics = SizeLogicalAndAllocated
+	}
+	if o.MaxDepth < -1 {
+		o.MaxDepth = -1
+	}
+	if o.MinSizeBytes < 0 {
+		o.MinSizeBytes = 0
+	}
+	o.EntryMode = strings.ToUpper(strings.TrimSpace(o.EntryMode))
+	if o.EntryMode != "FILES" && o.EntryMode != "DIRECTORIES" {
+		o.EntryMode = "ALL"
 	}
 	o.Exclusions = append([]string{}, o.Exclusions...)
 	sort.Strings(o.Exclusions)
@@ -164,6 +186,7 @@ type Entry struct {
 	ModifiedUnixMs     int64  `json:"modifiedUnixMs"`
 	BoundarySkipped    bool   `json:"boundarySkipped"`
 	Unreadable         bool   `json:"unreadable"`
+	FileCount          int64  `json:"fileCount"`
 }
 
 type Session struct {
@@ -257,6 +280,13 @@ func (s Session) MarkStaleAfterCleanup() Session {
 }
 
 func Scan(root string, generation int64, options Options) (Session, error) {
+	return ScanContext(context.Background(), root, generation, options)
+}
+
+// ScanContext is the single production filesystem traversal implementation used
+// by both app-owned and privileged/root execution. Platform adapters may change
+// process identity, never scan semantics.
+func ScanContext(ctx context.Context, root string, generation int64, options Options) (Session, error) {
 	started := time.Now().UnixMilli()
 	opts := options.Normalized()
 	if generation <= 0 {
@@ -292,6 +322,9 @@ func Scan(root string, generation int64, options Options) (Session, error) {
 		Problems:                 []Problem{},
 	}
 	walkErr := filepath.WalkDir(canonical, func(path string, d fs.DirEntry, walkErr error) error {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		if walkErr != nil {
 			session.Problems = append(session.Problems, Problem{Kind: ProblemUnreadable, Path: path, Message: walkErr.Error()})
 			session.MalformedRecordCount++
@@ -307,6 +340,13 @@ func Scan(root string, generation int64, options Options) (Session, error) {
 			rel = ""
 		}
 		name := d.Name()
+		entryDepth := depth(rel)
+		if rel != "" && opts.MaxDepth >= 0 && entryDepth > opts.MaxDepth {
+			if d.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
 		if rel != "" && !opts.IncludeHidden && strings.HasPrefix(name, ".") {
 			if d.IsDir() {
 				return filepath.SkipDir
@@ -346,22 +386,56 @@ func Scan(root string, generation int64, options Options) (Session, error) {
 				session.Problems = append(session.Problems, Problem{Kind: ProblemSymlinkSkipped, Path: path, Message: "symlink not followed"})
 			}
 		}
-		session.ObservedEntryCount++
-		session.Entries = append(session.Entries, entry)
-		if opts.MaxEntries > 0 && len(session.Entries) >= opts.MaxEntries {
-			session.Truncated = true
-			session.Integrity = IntegrityTruncated
-			session.SourceCompleteness = SourceIncomplete
-			session.Problems = append(session.Problems, Problem{Kind: ProblemTruncated, Path: canonical, Message: "max entries reached"})
-			return errors.New("dustui_scan_truncated")
+		// Root is context, not an indexed child. Filtering controls emitted entries
+		// without changing traversal/size semantics.
+		if rel != "" {
+			logical := entry.LogicalSizeBytes
+			allocated := entry.AllocatedSizeBytes
+			sizeForFilter := logical
+			if opts.SizeSemantics == SizeAllocated {
+				sizeForFilter = allocated
+			}
+			modeAllows := opts.EntryMode == "ALL" || (opts.EntryMode == "FILES" && !entry.IsDirectory) || (opts.EntryMode == "DIRECTORIES" && entry.IsDirectory)
+			if modeAllows && sizeForFilter >= opts.MinSizeBytes {
+				session.ObservedEntryCount++
+				session.Entries = append(session.Entries, entry)
+				if opts.MaxEntries > 0 && len(session.Entries) >= opts.MaxEntries {
+					session.Truncated = true
+					session.Integrity = IntegrityTruncated
+					session.SourceCompleteness = SourceIncomplete
+					session.Problems = append(session.Problems, Problem{Kind: ProblemTruncated, Path: canonical, Message: "max entries reached"})
+					return errors.New("dustui_scan_truncated")
+				}
+			}
 		}
 		return nil
 	})
-	if walkErr != nil && walkErr.Error() != "dustui_scan_truncated" {
+	if walkErr != nil && !errors.Is(walkErr, context.Canceled) && !errors.Is(walkErr, context.DeadlineExceeded) && walkErr.Error() != "dustui_scan_truncated" {
 		session.Problems = append(session.Problems, Problem{Kind: ProblemMalformedRecord, Path: canonical, Message: walkErr.Error()})
 		session.MalformedRecordCount++
 		session.Integrity = IntegrityMalformed
 		session.SourceCompleteness = SourceIncomplete
+	}
+	// Directory totals are derived from the same indexed entries so root and
+	// non-root execution cannot disagree about size/file-count semantics.
+	for i := range session.Entries {
+		if !session.Entries[i].IsDirectory {
+			session.Entries[i].FileCount = 1
+		}
+	}
+	for i := len(session.Entries) - 1; i >= 0; i-- {
+		child := session.Entries[i]
+		if child.ParentPath == "" {
+			continue
+		}
+		for j := range session.Entries {
+			if session.Entries[j].Path == child.ParentPath && session.Entries[j].IsDirectory {
+				session.Entries[j].LogicalSizeBytes += child.LogicalSizeBytes
+				session.Entries[j].AllocatedSizeBytes += child.AllocatedSizeBytes
+				session.Entries[j].FileCount += child.FileCount
+				break
+			}
+		}
 	}
 	session.PersistedEntryCount = len(session.Entries)
 	if session.MalformedRecordCount > 0 && session.Integrity == IntegrityComplete {
@@ -370,6 +444,13 @@ func Scan(root string, generation int64, options Options) (Session, error) {
 	}
 	session.CompletedUnixMs = time.Now().UnixMilli()
 	sort.Slice(session.Entries, func(i, j int) bool { return session.Entries[i].Path < session.Entries[j].Path })
+	if err := ctx.Err(); err != nil {
+		session.SourceCompleteness = SourceIncomplete
+		if session.Integrity == IntegrityComplete {
+			session.Integrity = IntegrityPartial
+		}
+		return session, err
+	}
 	return session, nil
 }
 
@@ -400,9 +481,12 @@ func entryFromInfo(root, path string, info os.FileInfo) Entry {
 	if rel == "." {
 		rel = ""
 	}
-	parent := filepath.Dir(path)
-	if path == root {
-		parent = ""
+	parent := ""
+	if rel != "" {
+		parent = filepath.Dir(rel)
+		if parent == "." {
+			parent = ""
+		}
 	}
 	e := Entry{
 		Path:               filepath.ToSlash(rel),

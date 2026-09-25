@@ -23,6 +23,8 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
 import java.util.Locale
 
 class ScanRepository(
@@ -43,7 +45,8 @@ class ScanRepository(
     @Volatile private var packageInventoryCache: Pair<Long, InstalledPackageInventory>? = null
     fun observeLatestSession(): Flow<ScanSessionEntity?> = domainStore.observeLatestSession()
     fun observeCleanupOperations(): Flow<List<CleanupOperationEntity>> = domainStore.observeCleanupOperations(50)
-    fun observeEntries(scanId: String): Flow<List<ScanEntryEntity>> = domainStore.observeEntries(scanId, 10_000)
+    suspend fun browsePage(scanId: String, generation: Long, request: ScanBrowseRequest): ScanBrowsePage =
+        domainStore.browsePage(scanId, generation, request)
     suspend fun rootAvailable(): Boolean = runCatching {
         val info = rootClient.serviceInfo()
         info.ok && info.uid == 0
@@ -80,54 +83,45 @@ class ScanRepository(
         )
     }
 
+    private suspend fun productInsights(scanId: String): JSONObject {
+        val labels = installedPackageMetadata().mapValues { it.value.appLabel }
+        val options = JSONObject()
+            .put("protectedPaths", JSONArray(residueProtectionStore.paths().sorted()))
+            .put("ignoredPackages", JSONArray(appStoragePreferenceStore.ignoredPackages().sorted()))
+            .put("appLabels", JSONObject(labels))
+        return domainStore.authorityRequest(
+            "domain.product.insights",
+            domainStore.session(scanId)?.generation ?: 1L,
+            JSONObject().put("scanId", scanId).put("options", options),
+        ).getJSONObject("insights")
+    }
+
     fun inspect(path: String): EntryIntelligence = intelligence.resolve(path)
     suspend fun inspectRootPath(path: String): RootPathInspection = rootClient.inspectPath(path)
 
     suspend fun snapshotDelta(): SnapshotDelta? {
-        val sessions = domainStore.completedSessions(2)
-        val current = sessions.firstOrNull() ?: return null
-        val previous = sessions.getOrNull(1)
-        return SnapshotAnalyzer.diff(domainStore.entriesOnce(current.id), previous?.let { domainStore.entriesOnce(it.id) }.orEmpty(), current.id, previous?.id)
+        val current = domainStore.completedSessions(1).firstOrNull() ?: return null
+        return GoProductAuthorityMapper.snapshotDelta(productInsights(current.id).getJSONObject("snapshotDelta"))
     }
 
-    suspend fun snapshotDelta(scanId: String, currentEntries: List<ScanEntryEntity>): SnapshotDelta? {
-        val sessions = domainStore.completedSessions(3)
-        val current = domainStore.session(scanId) ?: sessions.firstOrNull { it.id == scanId } ?: return null
-        val previous = sessions.firstOrNull { it.id != scanId }
-        val previousEntries = previous?.let { domainStore.entriesOnce(it.id) }.orEmpty()
-        return SnapshotAnalyzer.diff(currentEntries, previousEntries, current.id, previous?.id)
-    }
+    suspend fun snapshotDelta(scanId: String, currentEntries: List<ScanEntryEntity>): SnapshotDelta? =
+        GoProductAuthorityMapper.snapshotDelta(productInsights(scanId).getJSONObject("snapshotDelta"))
 
-    suspend fun entriesForAnalysis(scanId: String): List<ScanEntryEntity> = domainStore.entriesOnce(scanId)
 
     suspend fun snapshotHistory(limit: Int = 12): List<SnapshotPoint> = domainStore.completedSessions(limit)
         .asReversed()
         .map { SnapshotPoint(it.completedAt ?: it.startedAt, it.totalBytes) }
 
-    suspend fun appSummaries(scanId: String): List<AppStorageSummary> = appSummaries(scanId, domainStore.entriesOnce(scanId))
+    suspend fun appSummaries(scanId: String): List<AppStorageSummary> =
+        GoProductAuthorityMapper.appSummaries(productInsights(scanId).getJSONArray("appSummaries"))
 
-    suspend fun appSummaries(scanId: String, entries: List<ScanEntryEntity>): List<AppStorageSummary> {
-        val installed = context.packageManager.getInstalledPackages(0).mapTo(mutableSetOf()) { it.packageName }
-        return SnapshotAnalyzer.appSummaries(entries, installed)
-    }
+    suspend fun appSummaries(scanId: String, entries: List<ScanEntryEntity>): List<AppStorageSummary> = appSummaries(scanId)
 
-    suspend fun appResidueAnalysis(scanId: String): AppResidueAnalysis = appResidueAnalysis(scanId, domainStore.entriesOnce(scanId))
+    suspend fun appResidueAnalysis(scanId: String): AppResidueAnalysis =
+        GoProductAuthorityMapper.residue(productInsights(scanId).getJSONObject("residue"))
 
-    suspend fun appResidueAnalysis(scanId: String, entries: List<ScanEntryEntity>): AppResidueAnalysis {
-        val session = domainStore.session(scanId)
-        val inventory = installedPackageInventory()
-        val labels = context.packageManager.getInstalledApplications(0).associate { info ->
-            info.packageName to context.packageManager.getApplicationLabel(info).toString()
-        }
-        return AppResidueAnalyzer.analyze(
-            scanId = scanId,
-            entries = entries,
-            inventory = inventory,
-            protectedPaths = residueProtectionStore.paths(),
-            appLabels = labels,
-            scanGeneration = session?.generation ?: 1L,
-        )
-    }
+    suspend fun appResidueAnalysis(scanId: String, entries: List<ScanEntryEntity>): AppResidueAnalysis = appResidueAnalysis(scanId)
+
 
     fun protectResiduePath(path: String) = residueProtectionStore.protect(path)
     fun unprotectResiduePath(path: String) = residueProtectionStore.unprotect(path)
@@ -161,72 +155,63 @@ class ScanRepository(
         return inventory
     }
 
-    suspend fun largeFileEntries(scanId: String, preset: LargeFilePreset): List<ScanEntryEntity> = when (preset) {
-        LargeFilePreset.LARGE -> domainStore.filesAtLeastOnce(scanId, 100L * 1024L * 1024L)
-        LargeFilePreset.VERY_LARGE -> domainStore.filesAtLeastOnce(scanId, 500L * 1024L * 1024L)
-        LargeFilePreset.HUGE -> domainStore.filesAtLeastOnce(scanId, 1024L * 1024L * 1024L)
-        LargeFilePreset.OLD -> domainStore.filesAtLeastOnce(scanId, 100L * 1024L * 1024L)
-        LargeFilePreset.OLD_ARCHIVES -> domainStore.archiveFilesOnce(scanId)
-        LargeFilePreset.LARGE_VIDEOS -> domainStore.filesAtLeastOnce(scanId, 500L * 1024L * 1024L)
-        LargeFilePreset.INSTALLERS -> domainStore.installerFilesOnce(scanId)
+    suspend fun largeFilePage(scanId: String, generation: Long, filter: LargeFileFilter): LargeFilePage {
+        val nowSeconds = System.currentTimeMillis() / 1000L
+        val ninetyDaysAgo = nowSeconds - 90L * 24L * 60L * 60L
+        val request = ScanBrowseRequest(
+            query = filter.query,
+            entryType = "FILES",
+            minBytes = when (filter.preset) {
+                LargeFilePreset.LARGE, LargeFilePreset.OLD -> 100L * 1024L * 1024L
+                LargeFilePreset.VERY_LARGE, LargeFilePreset.LARGE_VIDEOS -> 500L * 1024L * 1024L
+                LargeFilePreset.HUGE -> 1024L * 1024L * 1024L
+                LargeFilePreset.OLD_ARCHIVES, LargeFilePreset.INSTALLERS -> 0L
+            },
+            fileCategories = buildList {
+                filter.category?.let(::add)
+                when (filter.preset) {
+                    LargeFilePreset.OLD_ARCHIVES -> add("Archives")
+                    LargeFilePreset.LARGE_VIDEOS -> add("Video")
+                    LargeFilePreset.INSTALLERS -> add("Android packages")
+                    else -> Unit
+                }
+            }.distinct(),
+            modifiedBefore = when (filter.preset) {
+                LargeFilePreset.OLD, LargeFilePreset.OLD_ARCHIVES -> ninetyDaysAgo
+                else -> null
+            },
+            sort = when (filter.sort) {
+                LargeFileSort.LARGEST -> "SIZE"
+                LargeFileSort.OLDEST -> "OLDEST"
+                LargeFileSort.NEWEST -> "NEWEST"
+                LargeFileSort.PATH, LargeFileSort.PACKAGE -> "PATH"
+            },
+            descending = filter.sort !in setOf(LargeFileSort.OLDEST, LargeFileSort.PATH, LargeFileSort.PACKAGE),
+            offset = filter.page.coerceAtLeast(0) * filter.pageSize.coerceIn(10, 200),
+            limit = filter.pageSize.coerceIn(10, 200),
+        )
+        return LargeFileWorkbenchEngine.fromAuthorityPage(domainStore.browsePage(scanId, generation, request), filter)
     }
 
-    suspend fun advancedAnalysis(scanId: String): AdvancedStorageReport = advancedAnalysis(scanId, domainStore.entriesOnce(scanId))
+    suspend fun advancedAnalysis(scanId: String): AdvancedStorageReport =
+        GoProductAuthorityMapper.advanced(productInsights(scanId).getJSONObject("advanced"))
 
-    suspend fun advancedAnalysis(scanId: String, entries: List<ScanEntryEntity>): AdvancedStorageReport {
-        val installed = context.packageManager.getInstalledPackages(0).mapTo(mutableSetOf()) { it.packageName }
-        return AdvancedStorageAnalyzer.analyze(entries, installed, readMountTable())
-    }
+    suspend fun advancedAnalysis(scanId: String, entries: List<ScanEntryEntity>): AdvancedStorageReport = advancedAnalysis(scanId)
 
-    suspend fun packageProfiles(scanId: String): List<PackageStorageProfile> {
-        val entries = domainStore.entriesOnce(scanId)
-        val installed = context.packageManager.getInstalledPackages(0).mapTo(mutableSetOf()) { it.packageName }
-        val labels = entries.asSequence()
-            .mapNotNull { EntryIntelligenceResolver.packageFromPath(it.path) }
-            .distinct()
-            .associateWith { packageName -> intelligence.resolve("/data/data/$packageName").appLabel }
-            .filterValues { it != null }
-            .mapValues { it.value.orEmpty() }
-        val duplicates = AdvancedStorageAnalyzer.duplicateCandidates(entries.filterNot { it.isDirectory })
-        return PackageIntelligenceAnalyzer.profiles(entries, installed, labels, duplicates)
-    }
+    suspend fun packageProfiles(scanId: String): List<PackageStorageProfile> =
+        GoProductAuthorityMapper.packageProfiles(productInsights(scanId).getJSONArray("packageProfiles"))
 
     suspend fun appStorageInspector(
         scanId: String,
         providedResidueAnalysis: AppResidueAnalysis? = null,
-    ): AppStorageInspectorAnalysis = appStorageInspector(scanId, providedResidueAnalysis, domainStore.entriesOnce(scanId))
+    ): AppStorageInspectorAnalysis = GoProductAuthorityMapper.appStorage(productInsights(scanId).getJSONObject("appStorage"))
 
     suspend fun appStorageInspector(
         scanId: String,
         providedResidueAnalysis: AppResidueAnalysis? = null,
         currentEntries: List<ScanEntryEntity>,
-    ): AppStorageInspectorAnalysis {
-        val currentSession = domainStore.session(scanId)
-        val currentGeneration = currentSession?.generation ?: 1L
-        val sessions = domainStore.completedSessions(100)
-        val currentIndex = sessions.indexOfFirst { it.id == scanId }
-        val previousSession = if (currentIndex >= 0) sessions.getOrNull(currentIndex + 1) else sessions.firstOrNull { it.id != scanId }
-        val previousEntries = previousSession?.let { domainStore.entriesOnce(it.id) }.orEmpty()
-        val inventory = installedPackageInventory()
-        val packageMetadata = installedPackageMetadata().toMutableMap().also { metadata ->
-            inventory.allPackages.forEach { packageName ->
-                metadata.putIfAbsent(packageName, AppPackageMetadata(packageName, packageName, installed = true))
-            }
-        }
-        val residue = providedResidueAnalysis?.takeIf { it.scanGeneration == currentGeneration } ?: runCatching { appResidueAnalysis(scanId, currentEntries) }.getOrNull()
-        return AppStorageInspectorEngine.analyze(
-            scanId = scanId,
-            currentEntries = currentEntries,
-            previousScanId = previousSession?.id,
-            previousEntries = previousEntries,
-            metadata = packageMetadata,
-            packageInventoryComplete = inventory.complete,
-            duplicateSnapshot = duplicateStore.load(scanId)?.takeIf { it.scanGeneration == currentGeneration },
-            residueAnalysis = residue,
-            protectedPaths = residueProtectionStore.paths(),
-            ignoredPackages = appStoragePreferenceStore.ignoredPackages(),
-        )
-    }
+    ): AppStorageInspectorAnalysis = appStorageInspector(scanId, providedResidueAnalysis)
+
 
     fun setAppStorageRecommendationsIgnored(packageName: String, ignored: Boolean) =
         appStoragePreferenceStore.setRecommendationsIgnored(packageName, ignored)
@@ -272,114 +257,38 @@ class ScanRepository(
     @Suppress("DEPRECATION")
     private fun packageVersionCode(info: PackageInfo): Long = if (Build.VERSION.SDK_INT >= 28) info.longVersionCode else info.versionCode.toLong()
 
-    suspend fun rootSearch(scanId: String, request: RootFileSearchRequest): List<RootFileSearchResult> =
+    suspend fun rootSearch(scanId: String, request: RootFileSearchRequest): RootFileSearchPage =
         domainStore.rootSearch(scanId, request)
 
-    suspend fun moduleAnalysis(scanId: String): RootModuleReport = moduleAnalysis(scanId, domainStore.entriesOnce(scanId))
+    suspend fun moduleAnalysis(scanId: String): RootModuleReport = moduleAnalysis(scanId, emptyList())
 
     suspend fun moduleAnalysis(scanId: String, entries: List<ScanEntryEntity>): RootModuleReport {
         val session = domainStore.session(scanId)
-        val analyzed = RootModuleAnalyzer.analyze(entries)
+        val report = GoProductAuthorityMapper.modules(productInsights(scanId).getJSONObject("modules"))
         val moduleRoot = "/data/adb/modules"
-        val scanRoot = session?.rootPath
-        val scanIncludesModules = scanRoot?.let { root ->
-            val normalized = root.trimEnd('/').ifBlank { "/" }
-            normalized == "/" || moduleRoot == normalized || moduleRoot.startsWith("$normalized/")
-        } == true
-        val preflight = runCatching {
-            rootClient.preflightScan(ScanRequest(rootPath = moduleRoot, maxDepth = 1, maxEntries = 64))
-        }.getOrNull()
-        val storedDiagnostics = scanDiagnosticStore.load(scanId)
-        val diagnostic = when {
-            session == null -> ModuleAnalysisDiagnostic(
-                status = ModuleDiagnosticStatus.SCAN_FAILED,
-                message = "No scan session is available for module analysis.",
-                currentScanRoot = null,
-                modulePathAccessible = preflight?.ok,
-                rootCode = preflight?.code,
-            )
-            !scanIncludesModules -> ModuleAnalysisDiagnostic(
-                status = if (preflight?.ok == false) ModuleDiagnosticStatus.ROOT_ACCESS_FAILED else ModuleDiagnosticStatus.WRONG_SCAN_ROOT,
-                message = if (preflight?.ok == false) {
-                    "The current scan does not include /data/adb/modules, and the root service cannot open it: ${preflight.message}"
-                } else {
-                    "Module values come from the current scan. ${session.rootPath} does not include /data/adb/modules."
-                },
-                currentScanRoot = session.rootPath,
-                scanIncludesModules = false,
-                modulePathAccessible = preflight?.ok,
-                rootCode = preflight?.code,
-            )
-            session.status == "FAILED" || storedDiagnostics?.hasFailure == true -> ModuleAnalysisDiagnostic(
-                status = ModuleDiagnosticStatus.SCAN_FAILED,
-                message = session.errorMessage ?: storedDiagnostics?.issues?.lastOrNull { it.severity == ScanDiagnosticSeverity.ERROR }?.message
-                    ?: "The module scan failed before usable entries were indexed.",
-                currentScanRoot = session.rootPath,
-                scanIncludesModules = true,
-                modulePathAccessible = preflight?.ok,
-                rootCode = preflight?.code,
-            )
-            storedDiagnostics?.truncated == true -> ModuleAnalysisDiagnostic(
-                status = ModuleDiagnosticStatus.INCOMPLETE_RESULTS,
-                message = "The module scan reached its result limit. Module totals and conflicts may be incomplete.",
-                currentScanRoot = session.rootPath,
-                scanIncludesModules = true,
-                modulePathAccessible = preflight?.ok,
-                rootCode = "RESULT_LIMIT_REACHED",
-            )
-            analyzed.modules.isEmpty() -> ModuleAnalysisDiagnostic(
-                status = ModuleDiagnosticStatus.NO_MODULES_FOUND,
-                message = if (preflight?.ok == true) {
-                    "The root service can open /data/adb/modules, but the current scan indexed no module files. Review scan warnings, depth, hidden-file, and result-limit settings."
-                } else {
-                    "No module files were indexed, and root access to /data/adb/modules could not be confirmed${preflight?.message?.let { ": $it" }.orEmpty()}."
-                },
-                currentScanRoot = session.rootPath,
-                scanIncludesModules = true,
-                modulePathAccessible = preflight?.ok,
-                rootCode = preflight?.code,
-            )
-            else -> ModuleAnalysisDiagnostic(
-                status = ModuleDiagnosticStatus.READY,
-                message = "Indexed ${analyzed.modules.size} module(s) from ${session.rootPath}.",
-                currentScanRoot = session.rootPath,
-                scanIncludesModules = true,
-                modulePathAccessible = preflight?.ok,
-                rootCode = preflight?.code,
-            )
-        }
-        return analyzed.copy(diagnostic = diagnostic)
+        val preflight = runCatching { rootClient.preflightScan(ScanRequest(rootPath = moduleRoot, maxDepth = 1, maxEntries = 64)) }.getOrNull()
+        val diagnostic = report.diagnostic.copy(
+            modulePathAccessible = preflight?.ok,
+            rootCode = preflight?.code,
+            message = when {
+                report.diagnostic.status == ModuleDiagnosticStatus.READY -> "Indexed ${report.modules.size} module(s) from ${session?.rootPath ?: "the Go scan"}."
+                preflight?.ok == false && report.diagnostic.status == ModuleDiagnosticStatus.WRONG_SCAN_ROOT -> report.diagnostic.message + "; root preflight: ${preflight.message}"
+                else -> report.diagnostic.message
+            },
+        )
+        return report.copy(diagnostic = diagnostic)
     }
 
     suspend fun cleanupRecommendations(
         scanId: String,
         providedResidueAnalysis: AppResidueAnalysis? = null,
-    ): CleanupRecommendationAnalysis = cleanupRecommendations(scanId, providedResidueAnalysis, domainStore.entriesOnce(scanId))
+    ): CleanupRecommendationAnalysis = GoProductAuthorityMapper.recommendations(productInsights(scanId).getJSONObject("recommendations"))
 
     suspend fun cleanupRecommendations(
         scanId: String,
         providedResidueAnalysis: AppResidueAnalysis? = null,
         entries: List<ScanEntryEntity>,
-    ): CleanupRecommendationAnalysis {
-        val sessionGeneration = domainStore.session(scanId)?.generation ?: 1L
-        val duplicateAnalysis = duplicateStore.load(scanId)?.takeIf { it.scanGeneration == sessionGeneration }
-        val residueAnalysis = providedResidueAnalysis?.takeIf { it.scanGeneration == sessionGeneration } ?: appResidueAnalysis(scanId, entries)
-        recommendationPreferenceStore.pruneDismissedScans(scanId)
-        val ignoredPackages = appStoragePreferenceStore.ignoredPackages()
-        val analysis = CleanupRecommendationEngine.analyze(
-            scanId = scanId,
-            entries = entries,
-            duplicateAnalysis = duplicateAnalysis,
-            residueAnalysis = residueAnalysis,
-            scanGeneration = sessionGeneration,
-        )
-        if (ignoredPackages.isEmpty()) return analysis
-        return analysis.copy(items = analysis.items.filterNot { recommendation ->
-            val residuePackage = recommendation.id.removePrefix("residue:").takeIf { recommendation.id.startsWith("residue:") }
-            val packages = recommendation.paths.mapNotNull(EntryIntelligenceResolver::packageFromPath).toSet()
-            residuePackage in ignoredPackages || (packages.size == 1 && packages.single() in ignoredPackages)
-        })
-    }
+    ): CleanupRecommendationAnalysis = cleanupRecommendations(scanId, providedResidueAnalysis)
 
     fun cleanupRecommendationPreferences(scanId: String): CleanupRecommendationPreferences =
         recommendationPreferenceStore.snapshot(scanId)
@@ -419,37 +328,44 @@ class ScanRepository(
         rules: List<CleanupRule> = cleanupRuleStore.rules(),
         includeDisabled: Boolean = false,
     ): CleanupRulePreview {
-        val session = requireNotNull(domainStore.session(scanId)) { "Cleanup-rule scan no longer exists" }
-        val entries = domainStore.entriesOnce(scanId)
-        val duplicateSnapshot = duplicateStore.load(scanId)?.takeIf { it.scanGeneration == session.generation }
-        val duplicatePaths = duplicateSnapshot?.groups.orEmpty().flatMap { group ->
-            val threshold = DuplicateThreshold.entries.firstOrNull { it.minBytes == duplicateSnapshot?.minSizeBytes } ?: DuplicateThreshold.ONE_MIB
-            DuplicateWorkbenchEngine.groupItem(group, DuplicateFilter(threshold = threshold, keepStrategy = DuplicateKeepStrategy.NEWEST)).deletionPaths
-        }.toSet()
-        val residue = appResidueAnalysis(scanId)
-        val residueByPath = residue.groups.flatMap { group -> group.locations.map { it.path to group.confidence } }.toMap()
-        return CleanupRuleEngine.preview(scanId, session.rootPath, entries, rules, duplicatePaths, residueByPath, includeDisabled = includeDisabled, scanGeneration = session.generation)
+        val encodedRules = JSONArray(rules.map { rule ->
+            JSONObject()
+                .put("id", rule.id).put("name", rule.name).put("enabled", rule.enabled).put("imported", rule.imported)
+                .put("reviewedAt", rule.reviewedAt ?: JSONObject.NULL).put("schemaVersion", rule.schemaVersion)
+                .put("conditions", JSONObject()
+                    .put("includePaths", JSONArray(rule.conditions.includePaths))
+                    .put("excludePaths", JSONArray(rule.conditions.excludePaths))
+                    .put("extensions", JSONArray(rule.conditions.extensions))
+                    .put("minimumBytes", rule.conditions.minimumBytes)
+                    .put("maximumBytes", rule.conditions.maximumBytes ?: JSONObject.NULL)
+                    .put("olderThanDays", rule.conditions.olderThanDays ?: JSONObject.NULL)
+                    .put("category", rule.conditions.category ?: JSONObject.NULL)
+                    .put("packageName", rule.conditions.packageName ?: JSONObject.NULL)
+                    .put("regularExpression", rule.conditions.regularExpression ?: JSONObject.NULL)
+                    .put("maximumDepth", rule.conditions.maximumDepth ?: JSONObject.NULL)
+                    .put("entryType", rule.conditions.entryType.name)
+                    .put("duplicateOnly", rule.conditions.duplicateOnly)
+                    .put("residueConfidence", rule.conditions.residueConfidence.name))
+        })
+        val payload = domainStore.authorityRequest(
+            "domain.product.rules.preview",
+            domainStore.session(scanId)?.generation ?: 1L,
+            JSONObject().put("scanId", scanId).put("rules", encodedRules).put("includeDisabled", includeDisabled),
+        )
+        return GoProductAuthorityMapper.rulePreview(payload.getJSONObject("preview"))
     }
+
 
     suspend fun completedStorageGrowthSessions(): List<ScanSessionEntity> =
         domainStore.completedSessions(storageGrowthPreferenceStore.retentionLimit())
 
     suspend fun storageGrowth(currentOffset: Int = 0, previousOffset: Int = 1): StorageGrowthAnalysis? {
-        val retention = storageGrowthPreferenceStore.retentionLimit()
-        val sessions = domainStore.completedSessions(retention)
-        val currentIndex = currentOffset.coerceAtLeast(0)
-        val previousIndex = previousOffset.coerceAtLeast(currentIndex + 1)
-        val current = sessions.getOrNull(currentIndex) ?: return null
-        val previous = sessions.getOrNull(previousIndex) ?: return null
+        val sessions = domainStore.completedSessions(storageGrowthPreferenceStore.retentionLimit())
+        val current = sessions.getOrNull(currentOffset.coerceAtLeast(0)) ?: return null
         storageGrowthPreferenceStore.prune(sessions.mapTo(linkedSetOf()) { it.id })
-        return StorageGrowthEngine.compare(
-            current,
-            domainStore.entriesOnce(current.id),
-            previous,
-            domainStore.entriesOnce(previous.id),
-            timelineSessions = sessions,
-        )
+        return GoProductAuthorityMapper.growth(productInsights(current.id).getJSONObject("growth"))
     }
+
 
     fun storageGrowthUnderstood(): Set<String> = storageGrowthPreferenceStore.understood()
     fun markStorageGrowthUnderstood(identity: String) = storageGrowthPreferenceStore.mark(identity)
@@ -842,8 +758,14 @@ class ScanRepository(
     fun startScan(request: ScanRequest) = ScanForegroundService.start(context, request)
     fun cancelScan(scanId: String) = ScanForegroundService.cancel(context, scanId)
 
-    fun exportCsv(session: ScanSessionEntity, entries: List<ScanEntryEntity>) {
-        val uri = ExportWriter.writeCsv(context, session, entries)
+    suspend fun exportCsv(session: ScanSessionEntity) {
+        val uri = ExportWriter.writeCsvPaged(context, session) { offset, limit ->
+            domainStore.browsePage(
+                session.id,
+                session.generation,
+                ScanBrowseRequest(offset = offset, limit = limit, sort = "PATH", descending = false),
+            )
+        }
         context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
             type = "text/csv"
             putExtra(Intent.EXTRA_STREAM, uri)
