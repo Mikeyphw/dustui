@@ -15,7 +15,7 @@ DEFAULT_REPORT = ROOT / "build/evidence/aud-fix/14/historical_discovery.json"
 WORKTREE_ROOT = ROOT / ".devtool/historical"
 LEGACY_PYTHON = ROOT / "src/dust_tui"
 DEVTOOL_CONFIG = ROOT / ".devtool.toml"
-ORACLE_LEGACY_PYTHON = ROOT / "migration/oracle/python_textual/src/dust_tui"
+ORACLE_LEGACY_PYTHON = ROOT / "migration/archive/oracles/aud_fix_16_python_textual/src/dust_tui"
 EXPECTED_ORACLE_SOURCE_SHA256 = "3255c9fad5be02656c5efdc660f433f2b363b587109a2713b556530d370b1a8e"
 
 

@@ -26,11 +26,16 @@ def host_reachability(failures: list[str]) -> None:
     require("project" not in cfg and "python" not in cfg, "root Python project/default declaration remains", failures)
     require(not (ROOT / "pyproject.toml").exists(), "root pyproject.toml still exposes Python/Textual production packaging", failures)
     require(not any(p.is_file() for p in (ROOT / "src/dust_tui").glob("**/*")), "root src/dust_tui remains production reachable", failures)
-    oracle = ROOT / "migration/oracle/python_textual"
-    require((oracle / "pyproject.toml").is_file() and (oracle / "src/dust_tui").is_dir(), "isolated Python/Textual parity oracle missing", failures)
-    oracle_readme = read("migration/oracle/python_textual/README.md").lower()
-    for token in ["non-production", "not packaged", "aud-fix-16"]:
-        require(token in oracle_readme, f"oracle isolation documentation missing {token!r}", failures)
+    state = json.loads(read("migration/qualification/v1/current_state.json"))
+    retired = state.get("ov14", {}).get("status") == "physically-retired"
+    live_oracle = ROOT / "migration/oracle/python_textual"
+    archived_oracle = ROOT / "migration/archive/oracles/aud_fix_16_python_textual"
+    if retired:
+        require(not live_oracle.exists(), "live Python/Textual oracle remains after AUD-FIX-16", failures)
+        require((archived_oracle / "src/dust_tui").is_dir(), "retired Python/Textual archive missing", failures)
+        require("non-authoritative" in read("migration/archive/oracles/aud_fix_16_python_textual/AUD_FIX_16_ARCHIVE.md").lower(), "retired oracle archive lacks non-authority marker", failures)
+    else:
+        require((live_oracle / "pyproject.toml").is_file() and (live_oracle / "src/dust_tui").is_dir(), "isolated Python/Textual parity oracle missing before retirement", failures)
 
     host = read("go/internal/host/host.go")
     for command in ["scan", "query", "search", "activity", "cleanup-review", "cleanup-execute", "diagnostics", "support-export", "inspect", "tui"]:
@@ -53,7 +58,6 @@ def host_reachability(failures: list[str]) -> None:
     for job in ["audfix07_cli_contract", "audfix07_tui_contract", "audfix07_build"]:
         require(job in go.get("jobs", {}), f"AUD-FIX-07 Go job missing: {job}", failures)
 
-
 def product_identity(failures: list[str]) -> None:
     cfg = tomllib.loads(read(".devtool.toml"))
     gm = cfg.get("targets", {}).get("dustui_go", {}).get("metadata", {})
@@ -61,25 +65,24 @@ def product_identity(failures: list[str]) -> None:
     require(gm.get("target_product_default") is True and gm.get("target_go_cli_default") is True and gm.get("target_go_tui_default") is True, "Go host default declarations missing", failures)
     require(gm.get("host_authority_default") is True, "host_authority_default must be true", failures)
     require(gm.get("legacy_python_textual_production") is False, "legacy Python/Textual production declaration must be false", failures)
-    require(gm.get("python_textual_oracle") == "migration/oracle/python_textual", "Python oracle path declaration is missing", failures)
 
     state = json.loads(read("migration/qualification/v1/current_state.json"))
     gate = state.get("gate_d", {})
     obs = state.get("observed_repository", {})
-    require(gate.get("qualified") is False and gate.get("status") == "open", "AUD-FIX-07 must not claim Android Gate D closure", failures)
+    require(gate.get("status") in {"open", "qualified"}, "canonical Gate D status invalid", failures)
     require(obs.get("legacy_python_textual_present") is False, "canonical observation still sees Python/Textual production host", failures)
-    require(obs.get("python_textual_oracle_present") is True, "canonical observation lost the frozen Python/Textual oracle", failures)
+    if state.get("ov14", {}).get("status") == "physically-retired":
+        require(obs.get("python_textual_oracle_present") is False, "canonical observation still sees live parity oracle after retirement", failures)
+    require("migration/oracle/python_textual" not in read(".devtool.toml"), "Devtool still declares the retired live oracle path", failures)
 
     generated = read("go/internal/qualification/state_generated.go")
     require("const LegacyPythonTextualPresent = false" in generated, "generated production-host observation is stale", failures)
-    require("const PythonTextualOraclePresent = true" in generated, "generated oracle observation is stale", failures)
     product = read("go/internal/product/product.go")
     readiness = read("go/internal/readiness/readiness.go")
     require("HostAuthorityDefault:          true" in product, "product contract does not declare reachable Go host default", failures)
     require("LegacyPythonTextualProduction: false" in product, "product contract still exposes Python/Textual production", failures)
     require("ProductDefault: qualification.GateDQualified" in product, "Android surface must remain Gate-D-controlled", failures)
     require("ProductionEngine:        true" in readiness and "GoCLIDefault:            true" in readiness and "GoTUIDefault:            true" in readiness, "readiness does not reflect Go host cutover", failures)
-
 
 def validate(check: str) -> list[str]:
     failures: list[str] = []
@@ -104,7 +107,7 @@ def main() -> int:
         for item in failures:
             print(f"AUD-FIX-07 contract failure: {item}", file=sys.stderr)
         return 1
-    print(f"DustUI AUD-FIX-07 contract PASS ({args.check}; Gate D remains open)")
+    print(f"DustUI AUD-FIX-07 contract PASS ({args.check}; canonical lifecycle preserved)")
     return 0
 
 

@@ -31,7 +31,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 
 class ScanForegroundService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -211,17 +210,18 @@ class ScanForegroundService : Service() {
                 throw ScanStartFailure(preflight.code, preflight.requestedPath, preflight.message, preflight.errno)
             }
 
-            val streamDirectory = File(filesDir, "scan-streams")
-            check(streamDirectory.exists() || streamDirectory.mkdirs()) { "Unable to create scanner stream directory" }
-            val stream = File(streamDirectory, "${request.scanId}.ndjson")
-            if (stream.exists()) check(stream.delete()) { "Unable to replace previous scanner stream" }
-            check(stream.createNewFile()) { "Unable to create scanner stream" }
-
-            val rootState = ParcelFileDescriptor.open(
-                stream,
-                ParcelFileDescriptor.MODE_WRITE_ONLY or ParcelFileDescriptor.MODE_TRUNCATE,
-            ).use { descriptor -> rootClient.startScan(request, descriptor) }
+            val pipe = ParcelFileDescriptor.createPipe()
+            val readPipe = pipe[0]
+            val writePipe = pipe[1]
+            val rootState = try {
+                rootClient.startScan(request, writePipe)
+            } finally {
+                // Binder duplicates the descriptor for the root service. Closing the app-side
+                // writer is required so EOF can propagate to the reader when the worker exits.
+                runCatching { writePipe.close() }
+            }
             if (!rootState.ok) {
+                runCatching { readPipe.close() }
                 throw ScanStartFailure(
                     code = rootState.code ?: "ROOT_SCANNER_REJECTED",
                     path = rootState.path ?: request.rootPath,
@@ -238,7 +238,7 @@ class ScanForegroundService : Service() {
             var terminalEvent = false
             var emptyAfterTerminal = 0
 
-            NdjsonTailReader(stream).use { reader ->
+            ScanEventStreamReader(readPipe).use { reader ->
                 while (true) {
                     val lines = reader.readAvailable()
                     for (line in lines) {

@@ -49,7 +49,7 @@ def main()->int:
         for section in sections: failures += [f'{section}: {x}' for x in section_failures(section)]
         if args.section in ('all','conformance'): failures += [f'devtool: {x}' for x in check_devtool_binding()]
         state=compute_state(ROOT)
-        if state['qualification']['gate_d_qualified'] is not False: failures.append('Gate D must remain open')
+        if not isinstance(state['qualification']['gate_d_qualified'], bool): failures.append('canonical Gate D qualification boolean missing')
         if state['candidate']['acceptance_converged'] is not True: failures.append('candidate acceptance did not converge')
         print(f'AUD-FIX-13 {args.section} pass {run}: failures={len(failures)}')
         for x in failures: print('  - '+x)

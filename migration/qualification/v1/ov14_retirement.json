@@ -1,0 +1,24 @@
+{
+  "archived_non_authoritative_paths": [
+    "migration/archive/oracles/aud_fix_16_python_textual",
+    "migration/archive/room/aud_fix_16_pre_retirement",
+    "migration/archive/validators/aud_fix_16_post_gate_d",
+    "migration/archive/docs/aud_fix_16_predecessor"
+  ],
+  "gate_d_ancestor_source_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69",
+  "gate_d_bundle": "migration/qualification/v1/gate_d_bundle.json",
+  "gate_d_bundle_sha256": "2a5614d87f08118a9120c2c46d2a5e7674f73cea852fe2c8e1aa9b7046fcc557",
+  "gate_d_resealed": false,
+  "generated_by": "scripts/audfix16_retirement.py",
+  "next_gate": "Gate E",
+  "post_retirement_source_sha256": "28255b2561c04c2c85a53ac644d8e2807d48ef25a645be377a6e5f11f48c67cb",
+  "retired_surfaces": {
+    "generic_android_release_device_helpers": true,
+    "ndjson_file_tail_state_transfer": true,
+    "predecessor_source_token_guards": true,
+    "python_textual_oracle": true,
+    "room_android_integration": true
+  },
+  "schema": "dustui.aud-fix-16.retirement.v1",
+  "status": "pass"
+}

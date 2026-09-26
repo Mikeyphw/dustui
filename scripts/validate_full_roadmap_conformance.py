@@ -13,8 +13,8 @@ from audfix01_core import (  # noqa:E402
 from audfix13_acceptance import lifecycle_failures, ui_matrix_failures, metadata_failures, docs_failures, evaluate_counterexample  # noqa:E402
 
 
-def finding(fid: str, detail: str, family: str, blocking_fix01: bool=False, blocking_fix13: bool=False):
-    return {'id': fid, 'family': family, 'detail': detail, 'blocks_aud_fix_01': blocking_fix01, 'blocks_aud_fix_13': blocking_fix13}
+def finding(fid: str, detail: str, family: str, blocking_fix01: bool=False, blocking_fix13: bool=False, blocking_fix16: bool=False):
+    return {'id': fid, 'family': family, 'detail': detail, 'blocks_aud_fix_01': blocking_fix01, 'blocks_aud_fix_13': blocking_fix13, 'blocks_aud_fix_16': blocking_fix16}
 
 
 def route_names() -> set[str]:
@@ -58,18 +58,30 @@ def evaluate() -> list[dict]:
     if missing: out.append(finding('AF01-MISSING-EVIDENCE-TOPOLOGY',', '.join(missing),'AUD-021',True))
     if state.get('gate_d',{}).get('qualified') and (missing or state['gate_d'].get('nonpassing_nodes')):
         out.append(finding('AF01-FALSE-GATE-D-CLOSURE','qualified despite incomplete evidence','AUD-001',True))
-    if state.get('gate_d',{}).get('status') != 'open':
-        out.append(finding('AF01-GATE-D-NOT-OPEN',str(state.get('gate_d')),'AUD-001',True))
+    if state.get('gate_d',{}).get('status') not in {'open','qualified'}:
+        out.append(finding('AF01-GATE-D-STATE-INVALID',str(state.get('gate_d')),'AUD-001',True))
 
     obs=repository_observations(ROOT)
     if obs['generic_tooling_duplication_paths']:
-        out.append(finding('LATER-RAW-TOOLING',', '.join(obs['generic_tooling_duplication_paths']),'AUD-015'))
+        out.append(finding('LATER-RAW-TOOLING',', '.join(obs['generic_tooling_duplication_paths']),'AUD-015',blocking_fix16=True))
     if obs['legacy_navigation_present']:
         out.append(finding('LATER-LEGACY-NAV','legacy navigation remains reachable/source-present','AUD-005'))
     if obs['legacy_python_textual_present']:
-        out.append(finding('LATER-PYTHON-TEXTUAL','legacy Python/Textual remains','AUD-003'))
+        out.append(finding('LATER-PYTHON-TEXTUAL','legacy Python/Textual remains','AUD-003',blocking_fix16=True))
     if obs['room_artifacts_present'] or obs['ndjson_lifecycle_present']:
-        out.append(finding('LATER-ROOM-NDJSON','legacy Room/NDJSON remains','AUD-014'))
+        out.append(finding('LATER-ROOM-NDJSON','legacy Room/NDJSON remains','AUD-014',blocking_fix16=True))
+    if obs.get('python_textual_oracle_present'):
+        out.append(finding('AF16-LIVE-PARITY-ORACLE','Python/Textual parity oracle remains in the live migration surface','AUD-003',blocking_fix16=True))
+    if obs.get('predecessor_source_token_paths'):
+        out.append(finding('AF16-PREDECESSOR-SOURCE-GUARDS',', '.join(obs['predecessor_source_token_paths']),'AUD-016',blocking_fix16=True))
+    if state.get('gate_d',{}).get('qualified'):
+        if state.get('ov14',{}).get('status') != 'physically-retired':
+            out.append(finding('AF16-OV14-NOT-RETIRED',str(state.get('ov14')),'AUD-014',blocking_fix16=True))
+        if state.get('gate_e',{}).get('status') != 'eligible-for-qualification':
+            out.append(finding('AF16-GATE-E-NOT-ELIGIBLE',str(state.get('gate_e')),'AUD-021',blocking_fix16=True))
+        retirement=ROOT/'migration/qualification/v1/ov14_retirement.json'
+        if not retirement.is_file():
+            out.append(finding('AF16-RETIREMENT-EVIDENCE-MISSING','ov14_retirement.json missing','AUD-021',blocking_fix16=True))
     names=route_names()
     required_top={'Overview','Files','Clean','Apps','Activity','System'}
     if not required_top.issubset(names):
@@ -122,15 +134,16 @@ def evaluate() -> list[dict]:
 
 
 def main():
-    ap=argparse.ArgumentParser(); ap.add_argument('--scope',default='all',choices=['all','AUD-FIX-01','AUD-FIX-13','AUD-FIX-14','GATE-D']); ap.add_argument('--json',action='store_true')
+    ap=argparse.ArgumentParser(); ap.add_argument('--scope',default='all',choices=['all','AUD-FIX-01','AUD-FIX-13','AUD-FIX-14','AUD-FIX-16','GATE-D']); ap.add_argument('--json',action='store_true')
     args=ap.parse_args(); findings=evaluate()
     blocking=[x for x in findings if x['blocks_aud_fix_01']]
     blocking13=[x for x in findings if x.get('blocks_aud_fix_13')]
     topology_families={'AUD-018','AUD-021','AUD-023'}
     blocking14=[x for x in findings if x['family'] in topology_families]
+    blocking16=[x for x in findings if x.get('blocks_aud_fix_16')]
     gate_d_allowed_open={'AUD-014','AUD-015'}
     gate_d_blockers=[x for x in findings if x['family'] not in gate_d_allowed_open]
-    payload={'schema':'dustui.full-roadmap-conformance.v4','scope':args.scope,'aud_fix_01_blockers':blocking,'aud_fix_13_blockers':blocking13,'aud_fix_14_topology_blockers':blocking14,'gate_d_blockers':gate_d_blockers,'findings':findings}
+    payload={'schema':'dustui.full-roadmap-conformance.v4','scope':args.scope,'aud_fix_01_blockers':blocking,'aud_fix_13_blockers':blocking13,'aud_fix_14_topology_blockers':blocking14,'aud_fix_16_blockers':blocking16,'gate_d_blockers':gate_d_blockers,'findings':findings}
     if args.json: print(json.dumps(payload,indent=2))
     else:
         print(f"FULL ROADMAP CONFORMANCE [{args.scope}]")
@@ -138,10 +151,12 @@ def main():
         print(f"AUD-FIX-01 blockers: {len(blocking)}")
         print(f"AUD-FIX-13 blockers: {len(blocking13)}")
         print(f"AUD-FIX-14 topology blockers: {len(blocking14)}")
+        print(f"AUD-FIX-16 blockers: {len(blocking16)}")
         print(f"Gate-D blockers: {len(gate_d_blockers)}")
     if args.scope=='AUD-FIX-01': selected=blocking
     elif args.scope=='AUD-FIX-13': selected=blocking13
     elif args.scope=='AUD-FIX-14': selected=blocking14
+    elif args.scope=='AUD-FIX-16': selected=blocking16
     elif args.scope=='GATE-D': selected=gate_d_blockers
     else: selected=findings
     return 1 if selected else 0

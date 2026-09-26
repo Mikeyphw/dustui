@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.compose.compiler) apply false
-    alias(libs.plugins.ksp) apply false
 }
 
 tasks.register<Delete>("clean") {
@@ -18,7 +17,6 @@ val verifyStableToolchainBaseline = tasks.register("verifyStableToolchainBaselin
         val expectedJava = 21
         val expectedAgp = "9.3.1"
         val expectedKotlin = "2.4.10"
-        val expectedKsp = "2.3.11"
 
         check(gradle.gradleVersion == expectedGradle) {
             "DustUI requires Gradle $expectedGradle; found ${gradle.gradleVersion}."
@@ -45,7 +43,6 @@ val verifyStableToolchainBaseline = tasks.register("verifyStableToolchainBaselin
         }
         requireVersion("agp", expectedAgp)
         requireVersion("kotlin", expectedKotlin)
-        requireVersion("ksp", expectedKsp)
 
         val prerelease = Regex("(?i)(?:alpha|beta|rc|preview|milestone|snapshot|eap)")
         val versionLines = catalog.lineSequence()

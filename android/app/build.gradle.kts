@@ -3,7 +3,6 @@ import org.gradle.api.tasks.Exec
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.ksp)
 }
 
 android {
@@ -69,7 +68,6 @@ android {
 
     sourceSets {
         getByName("main").jniLibs.directories.add(layout.buildDirectory.dir("generated/goRuntime/jniLibs").get().asFile.absolutePath)
-        getByName("androidTest").assets.srcDir(file("$projectDir/schemas"))
     }
 
 
@@ -84,12 +82,6 @@ android {
 kotlin {
     jvmToolchain(21)
 }
-
-ksp {
-    arg("room.generateKotlin", "true")
-    arg("room.schemaLocation", "$projectDir/schemas")
-}
-
 
 val buildGoAndroidRuntime = tasks.register("buildGoAndroidRuntime", Exec::class) {
     group = "build"
@@ -121,21 +113,17 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.room.ktx)
-    implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.work.runtime)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.libsu.core)
     implementation(libs.libsu.service)
     implementation(libs.json)
 
-    ksp(libs.androidx.room.compiler)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test)
     androidTestImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
 }

@@ -1,3 +1,13 @@
+## AUD-FIX-16 — physical predecessor retirement and Gate-E preparation
+
+- Preserved the qualified AUD-FIX-15 Gate-D source ancestor while recording a distinct post-retirement source identity; Gate D is not resealed.
+- Archived the Python/Textual oracle, historical Room schemas/migration test, predecessor source-token validators, and stale phase documentation as explicitly non-authoritative history.
+- Removed live Room/KSP persistence integration and the one-time Room importer; Go-owned SQLite remains the product persistence authority.
+- Replaced persisted NDJSON scan-tail state transfer with a direct Binder pipe and explicit local writer closure.
+- Retired app-local generic ADB/install/release helpers and successorized the remaining qualification/acceptance validators.
+- Added the `aud_fix_16` Devtool workflow and `./devtoolw aud-fix-16` command for retirement evidence, conformance, Go regression, Android unit/lint/assemble, and canonical qualification-state checks.
+- Advanced OV14 to physically retired and made Gate E eligible for AUD-FIX-17 qualification.
+
 ## AUD-FIX-12 — adaptive tablet/master-detail and route continuity
 
 - Added compact/medium/expanded layout policy derived from semantic route identity.

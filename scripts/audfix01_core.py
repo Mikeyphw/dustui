@@ -42,6 +42,7 @@ REQUIRED_GATE_D_NODES = (
 DESIRED_RETIREMENT = {
     "cpp_scanner_runtime": "none",
     "python_runtime": "none",
+    "python_textual_oracle": "none",
     "room_domain_artifacts": "none",
     "legacy_destructive_executor": "none",
     "legacy_navigation": "none",
@@ -103,7 +104,7 @@ def repository_observations(root: Path) -> dict[str, Any]:
     room_artifacts = _any_file(root, [
         "android/app/src/main/kotlin/com/mikeyphw/dustui/data/DustDatabase.kt",
         "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ScanDao.kt",
-    ]) or any(t in (gradle + android_src) for t in ["androidx.room", "RoomDatabase", "@Dao", "@Entity"])
+    ]) or any(t in (android_build_gradle + android_src) for t in ["androidx.room", "RoomDatabase", "@Dao", "@Entity"])
     ndjson_present = "NdjsonTailReader" in android_src or "scan-streams" in android_src
     legacy_navigation = any(t in ui_src for t in ["enum class DustDestination", "object DustShellNavigation", "layoutDestination("])
     cpp_scanner = "NativeDustScanner" in root_src and any(t in root_src for t in ["NativeDustScanner.scan(", "System.loadLibrary(\"dustui_scanner\")"])
@@ -131,6 +132,14 @@ def repository_observations(root: Path) -> dict[str, Any]:
             "android/app/src/main/kotlin/com/mikeyphw/dustui/data/ReleaseReadiness.kt",
         ] if (root / r).is_file()
     ]
+    predecessor_source_tests = [
+        r for r in [
+            "android/app/src/test/kotlin/com/mikeyphw/dustui/automation/AudFix04AutomationContractTest.kt",
+            "android/app/src/test/kotlin/com/mikeyphw/dustui/diagnostics/AudFix05DiagnosticsContractTest.kt",
+            "android/app/src/test/kotlin/com/mikeyphw/dustui/go/DomainAuthorityProductionReachabilityContractTest.kt",
+            "android/app/src/test/kotlin/com/mikeyphw/dustui/go/GoRuntimeProductionBindingContractTest.kt",
+        ] if (root / r).is_file()
+    ]
 
     return {
         "legacy_python_textual_present": python_present,
@@ -145,6 +154,7 @@ def repository_observations(root: Path) -> dict[str, Any]:
         "go_sqlite_implementation_present": sqlite_code and sqlite_driver,
         "generic_tooling_duplication_paths": raw_tooling,
         "release_kotlin_authority_paths": release_kotlin,
+        "predecessor_source_token_paths": predecessor_source_tests,
         "go_runtime_operation_count": len(set(re.findall(r'"(domain\.[a-z0-9_.-]+)"', go_runtime))),
     }
 
@@ -202,11 +212,44 @@ def compute_qualification(root: Path, registry: dict[str, Any]) -> dict[str, Any
 
     coherent_tree = len(gate_tree_hashes) <= 1
     qualified = not missing_definitions and not nonpassing and not invalid_bindings and coherent_tree
+    observations = repository_observations(root)
+    retirement_blockers = []
+    if observations["python_textual_oracle_present"]:
+        retirement_blockers.append("python-textual-oracle-live")
+    if observations["room_artifacts_present"]:
+        retirement_blockers.append("room-production-integration-live")
+    if observations["ndjson_lifecycle_present"]:
+        retirement_blockers.append("ndjson-state-transfer-live")
+    if observations["generic_tooling_duplication_paths"]:
+        retirement_blockers.append("generic-app-local-tooling-live")
+    if observations["release_kotlin_authority_paths"]:
+        retirement_blockers.append("release-kotlin-authority-live")
+    if observations["predecessor_source_token_paths"]:
+        retirement_blockers.append("predecessor-source-token-tests-live")
+    if observations["legacy_python_textual_present"] or observations["legacy_navigation_present"] or observations["cpp_scanner_present"] or observations["legacy_destructive_executor_present"]:
+        retirement_blockers.append("legacy-production-surface-live")
+    if not observations["go_sqlite_implementation_present"] or not observations["android_go_process_binding_present"] or not observations["android_go_packaging_present"]:
+        retirement_blockers.append("successor-authority-incomplete")
+
+    retirement_complete = qualified and not retirement_blockers
+    retirement_record_path = root / "migration/qualification/v1/ov14_retirement.json"
+    retirement_record = load_json(retirement_record_path) if retirement_record_path.is_file() else {}
+    retirement_record_valid = bool(
+        retirement_complete
+        and retirement_record.get("status") == "pass"
+        and retirement_record.get("gate_d_resealed") is False
+        and retirement_record.get("gate_d_ancestor_source_sha256") == next(iter(gate_tree_hashes), None)
+    )
+
     if qualified:
         gate_status = "qualified"
         reason = "all-required-gate-d-evidence-passed-and-bound"
-        ov14_status = "eligible-for-physical-retirement"
-        gate_e_status = "blocked-on-ov14-retirement"
+        if retirement_complete and retirement_record_valid:
+            ov14_status = "physically-retired"
+            gate_e_status = "eligible-for-qualification"
+        else:
+            ov14_status = "retirement-evidence-pending" if retirement_complete else "eligible-for-physical-retirement"
+            gate_e_status = "blocked-on-ov14-retirement"
     else:
         gate_status = "open"
         reason = "historical-gate-evidence-incomplete-or-unrecoverable" if historical_blockers else "required-gate-d-evidence-incomplete-or-unbound"
@@ -234,9 +277,15 @@ def compute_qualification(root: Path, registry: dict[str, Any]) -> dict[str, Any
             "coherent_source_tree_binding": coherent_tree,
             "passing_source_tree_sha256": next(iter(gate_tree_hashes), None) if coherent_tree else None,
         },
-        "ov14": {"status": ov14_status},
+        "ov14": {
+            "status": ov14_status,
+            "retirement_complete": retirement_complete,
+            "retirement_blockers": sorted(retirement_blockers),
+            "retirement_evidence": "migration/qualification/v1/ov14_retirement.json" if retirement_record_valid else None,
+            "post_retirement_source_sha256": retirement_record.get("post_retirement_source_sha256") if retirement_record_valid else None,
+        },
         "gate_e": {"status": gate_e_status},
-        "observed_repository": repository_observations(root),
+        "observed_repository": observations,
     }
 
 
@@ -246,6 +295,7 @@ def retirement_observation(root: Path, qualification: dict[str, Any]) -> tuple[d
     observed = {
         "cpp_scanner_runtime": "legacy-artifact-or-runtime-present" if obs["cpp_scanner_present"] else "none",
         "python_runtime": "legacy-python-textual-present" if obs["legacy_python_textual_present"] else "none",
+        "python_textual_oracle": "live-parity-oracle-present" if obs["python_textual_oracle_present"] else "none",
         "room_domain_artifacts": "legacy-room-artifacts-present" if obs["room_artifacts_present"] or obs["ndjson_lifecycle_present"] else "none",
         "legacy_destructive_executor": "legacy-executor-present" if obs["legacy_destructive_executor_present"] else "none",
         "legacy_navigation": "predecessor-navigation-present" if obs["legacy_navigation_present"] else "none",

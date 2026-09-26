@@ -108,7 +108,7 @@ target_go_cli_default = true
 target_go_tui_default = true
 host_authority_default = true
 legacy_python_textual_production = false
-python_textual_oracle = "migration/oracle/python_textual"
+python_textual_oracle_archived = "migration/archive/oracles/aud_fix_16_python_textual"
 android_reconnect_gate = "Gate D"
 android_buildability = "mandatory"
 legacy_python_observation_source = "migration/qualification/v1/current_state.json"
@@ -284,7 +284,7 @@ read_only = true
 runner = "command"
 root = ".."
 command = ["python3", "scripts/validate_audfix07_contract.py", "--check", "host-reachability"]
-inputs = ["scripts/validate_audfix07_contract.py", "go/internal/host", "go/internal/tui", "go/cmd", "scripts/install.sh", "scripts/run-dev.sh", "migration/oracle/python_textual", ".devtool.toml"]
+inputs = ["scripts/validate_audfix07_contract.py", "go/internal/host", "go/internal/tui", "go/cmd", "scripts/install.sh", "scripts/run-dev.sh", "migration/archive/oracles/aud_fix_16_python_textual", ".devtool.toml"]
 [targets.dustui_android.jobs.audfix07_host_reachability.metadata]
 read_only = true
 
@@ -571,7 +571,7 @@ outputs = ["build/evidence/gate-d/devtool-artifact-identity.json"]
 runner = "command"
 root = ".."
 command = ["python3", "scripts/audfix14_gate_d_probe.py", "production-reachability"]
-inputs = ["scripts/audfix14_gate_d_probe.py", "scripts/validate_audfix07_contract.py", "scripts/validate_audfix08_contract.py", "scripts/validate_audfix09_contract.py", "migration/oracle/python_textual", "android/app/src/main", "go/internal/product"]
+inputs = ["scripts/audfix14_gate_d_probe.py", "scripts/validate_audfix07_contract.py", "scripts/validate_audfix08_contract.py", "scripts/validate_audfix09_contract.py", "migration/archive/oracles/aud_fix_16_python_textual", "android/app/src/main", "go/internal/product"]
 outputs = ["build/evidence/gate-d/production-reachability.json"]
 
 [targets.dustui_android.jobs.gate_d_evidence_finalize]
@@ -627,6 +627,30 @@ root = ".."
 command = ["python3", "scripts/validate_ov13_contract.py"]
 inputs = ["scripts/validate_ov13_contract.py", "scripts/validate_audfix13_contract.py", "migration/acceptance/v1", "migration/contracts/v1"]
 [targets.dustui_android.jobs.ov13_contract.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.audfix16_retirement_contract]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_audfix16_contract.py", "--audit-loop"]
+inputs = ["scripts/validate_audfix16_contract.py", "scripts/audfix16_retirement.py", "scripts/audfix01_core.py", "migration/qualification/v1", "migration/archive/oracles/aud_fix_16_python_textual", "migration/archive/room/aud_fix_16_pre_retirement", "migration/archive/validators/aud_fix_16_post_gate_d", "android/app/src/main", "android/app/build.gradle.kts", "android/gradle/libs.versions.toml", ".devtool.toml"]
+[targets.dustui_android.jobs.audfix16_retirement_contract.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.audfix16_full_conformance]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_full_roadmap_conformance.py", "--scope", "AUD-FIX-16"]
+inputs = ["scripts/validate_full_roadmap_conformance.py", "scripts/audfix16_retirement.py", "scripts/validate_audfix16_contract.py", "scripts/audfix13_acceptance.py", "migration/qualification/v1", "migration/acceptance/v1", "migration/ledger", "migration/archive", "android/app/src", "android/app/build.gradle.kts", ".devtool.toml", "README.md", "RELEASE_CHECKLIST.md", "VALIDATION.md"]
+[targets.dustui_android.jobs.audfix16_full_conformance.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.audfix16_retirement_evidence]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/audfix16_retirement.py", "check"]
+inputs = ["scripts/audfix16_retirement.py", "scripts/audfix01_core.py", "migration/qualification/v1", "android/app/src/main", "android/app/build.gradle.kts", ".devtool.toml"]
+[targets.dustui_android.jobs.audfix16_retirement_evidence.metadata]
 read_only = true
 
 [targets.dustui_android.workflows]
@@ -834,6 +858,18 @@ aud-fix-15-fast = [
   "job:gate_d_production_reachability",
   "job:gate_d_evidence_finalize",
   "job:qualification_state",
+]
+
+# AUD-FIX-16 is post-Gate-D physical retirement. It must never finalize/reseal Gate D.
+aud_fix_16 = [
+  { id = "retirement_contract", ref = "job:audfix16_retirement_contract", depends_on = [] },
+  { id = "full_conformance", ref = "job:audfix16_full_conformance", depends_on = ["retirement_contract"] },
+  { id = "retirement_evidence", ref = "job:audfix16_retirement_evidence", depends_on = ["full_conformance"] },
+  { id = "go_successor", ref = "target:dustui_go#fast", depends_on = ["retirement_evidence"] },
+  { id = "android_unit", ref = "job:android_unit", depends_on = ["retirement_evidence"] },
+  { id = "android_lint", ref = "job:android_lint", depends_on = ["android_unit"] },
+  { id = "android_assemble", ref = "job:android_assemble", depends_on = ["android_lint", "go_successor"] },
+  { id = "qualification_state", ref = "job:qualification_state", depends_on = ["android_assemble"] },
 ]
 
 [targets.dustui_go.jobs.go_test_all]
@@ -1272,6 +1308,12 @@ description = "Run the Android Gradle migration contract through Devtool"
 workflow = "android_gradle_contract_only"
 target = "dustui_android"
 aliases = ["android-gradle-contract"]
+
+[wrapper.commands.aud-fix-16]
+description = "Run post-Gate-D physical retirement successor checks; preserves Gate-D ancestor and prepares Gate E"
+workflow = "aud_fix_16"
+target = "dustui_android"
+aliases = ["ov14-retirement", "physical-retirement", "gate-e-prep"]
 
 [wrapper.commands.aud-fix-15-fast]
 description = "Resume AUD-FIX-15 Gate D at Android release assemble; skip already-passed jobs"

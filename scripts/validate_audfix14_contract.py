@@ -110,7 +110,7 @@ def topology_failures() -> list[str]:
     for token in required_isolation_tokens:
         if token not in history_source:
             failures.append(f"AUD-FIX-14 historical isolation missing preexisting-residue guard token: {token}")
-    oracle = ROOT / "migration/oracle/python_textual/src/dust_tui"
+    oracle = ROOT / "migration/archive/oracles/aud_fix_16_python_textual/src/dust_tui"
     oracle_files = {
         p.relative_to(oracle).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
         for p in oracle.rglob("*") if p.is_file() and not p.is_symlink()

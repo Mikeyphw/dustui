@@ -170,8 +170,9 @@ def metadata_failures(root: Path = ROOT) -> list[str]:
         for forbidden in ("production_authority_qualified", "android_cutover_complete", "gate_d_truth", "ov15_status"):
             if forbidden in md:
                 failures.append(f"{target_name}: independent qualified claim {forbidden}")
-    if qualification.get("gate_d", {}).get("qualified") is not False or qualification.get("gate_d", {}).get("status") != "open":
-        failures.append("AUD-FIX-13 requires Gate D to remain open/unqualified")
+    gate = qualification.get("gate_d", {})
+    if gate.get("status") not in {"open", "qualified"} or not isinstance(gate.get("qualified"), bool):
+        failures.append("canonical Gate-D qualification state is invalid")
     go_md = (targets.get("dustui_go") or {}).get("metadata", {})
     if go_md.get("target_product_default_scope") != "host-cli-tui-only":
         failures.append("Go target product-default declaration is not explicitly host-scoped")
@@ -188,10 +189,11 @@ def metadata_failures(root: Path = ROOT) -> list[str]:
 
 def docs_failures(root: Path = ROOT) -> list[str]:
     failures: list[str] = []
-    marker = "AUD-FIX-13 acceptance authority"
+    markers = ("AUD-FIX-13 acceptance authority", "AUD-FIX successor-aware")
     for rel in ("README.md", "RELEASE_CHECKLIST.md", "VALIDATION.md", "UI_UX_CONTRACT.md", "docs/UI_UX_CONTRACT.md"):
         p = root / rel
-        if not p.is_file() or marker not in p.read_text(encoding="utf-8", errors="replace"):
+        text = p.read_text(encoding="utf-8", errors="replace") if p.is_file() else ""
+        if not any(marker in text for marker in markers):
             failures.append(f"current acceptance doc not successorized: {rel}")
     return failures
 
@@ -218,7 +220,7 @@ def compute_state(root: Path = ROOT) -> dict[str, Any]:
         "source_snapshot_sha256": qualification.get("source_snapshot_sha256"),
         "candidate": {
             "acceptance_converged": not failures,
-            "status": "pre-gate-d-ready" if not failures else "acceptance-contradiction",
+            "status": ("post-gate-d-successor-converged" if qualification.get("gate_d", {}).get("qualified") else "pre-gate-d-ready") if not failures else "acceptance-contradiction",
             "failures": failures,
             "ui_requirement_status_counts": counts,
             "live_source_reading_validators": discover_live_source_reading_tests(root),
@@ -227,7 +229,7 @@ def compute_state(root: Path = ROOT) -> dict[str, Any]:
         "qualification": {
             "gate_d_status": qualification.get("gate_d", {}).get("status"),
             "gate_d_qualified": qualification.get("gate_d", {}).get("qualified"),
-            "statement": "candidate acceptance convergence is not Gate D qualification",
+            "statement": "acceptance convergence follows canonical Gate-D truth and does not independently qualify any gate",
         },
     }
 

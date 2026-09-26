@@ -1,14 +1,9 @@
 package com.mikeyphw.dustui.data
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Index
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
 
-@Entity(tableName = "cleanup_operations", primaryKeys = ["id"], indices = [Index("scanId")])
 data class CleanupOperationEntity(
     val id: String,
     val scanId: String,
@@ -16,41 +11,17 @@ data class CleanupOperationEntity(
     val status: String,
     val selectedCount: Int,
     val plannedBytes: Long,
-    @ColumnInfo(name = "reclaimedBytes") val deletedBytes: Long = 0,
+    val deletedBytes: Long = 0,
     val createdAt: Long,
     val completedAt: Long? = null,
     val message: String? = null,
-    @ColumnInfo(defaultValue = "''") val reviewId: String = "",
-    @ColumnInfo(defaultValue = "1") val scanGeneration: Long = 1L,
-    @ColumnInfo(defaultValue = "''") val planHash: String = "",
-    @ColumnInfo(defaultValue = "0") val expiresAt: Long = 0L,
-    @ColumnInfo(defaultValue = "'CERTAIN'") val outcomeCertainty: String = CleanupOutcomeCertainty.CERTAIN.name,
+    val reviewId: String = "",
+    val scanGeneration: Long = 1L,
+    val planHash: String = "",
+    val expiresAt: Long = 0L,
+    val outcomeCertainty: String = CleanupOutcomeCertainty.CERTAIN.name,
 )
 
-/** Retained only so existing version-2 databases remain readable. New cleanup never writes this table. */
-@Entity(tableName = "quarantine_entries", primaryKeys = ["id"], indices = [Index("operationId")])
-data class QuarantineEntryEntity(
-    val id: String,
-    val operationId: String,
-    val originalPath: String,
-    val quarantinePath: String,
-    val sizeBytes: Long,
-    val restoredAt: Long? = null,
-)
-
-@Entity(
-    tableName = "cleanup_plan_items",
-    primaryKeys = ["operationId", "path"],
-    indices = [Index("operationId"), Index("role")],
-    foreignKeys = [
-        ForeignKey(
-            entity = CleanupOperationEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["operationId"],
-            onDelete = ForeignKey.CASCADE,
-        ),
-    ],
-)
 data class CleanupPlanItemEntity(
     val operationId: String,
     val path: String,

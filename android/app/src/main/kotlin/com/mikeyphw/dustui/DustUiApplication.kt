@@ -17,7 +17,6 @@ class DustUiApplication : Application() {
         super.onCreate()
         Shell.enableVerboseLogging = BuildConfig.DEBUG
         applicationScope.launch {
-            runCatching { container.legacyRoomV3Importer.importOnce() }
             container.scanRepository.recoverInterruptedOperations()
         }
     }

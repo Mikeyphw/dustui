@@ -49,14 +49,14 @@
     {
       "acceptance_authority": "none",
       "archive_path": "migration/archive/validators/aud_fix_13_pre_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/data/DatabaseSchemaContractTest.kt",
-      "note": "behavioral successor exists; source-token guard removed from live Android tests",
+      "note": "Room schema predecessor guard retired; Gate-D release evidence plus AUD-FIX-16 physical-retirement evidence supersede it",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/data/DatabaseSchemaContractTest.kt",
       "retirement_owner": "AUD-FIX-13",
       "status": "archived-historical",
       "successor_evidence": [
-        "file:android/app/src/androidTest/kotlin/com/mikeyphw/dustui/validation/DustDatabaseMigrationInstrumentedTest.kt",
-        "file:scripts/validate_audfix03_contract.py",
-        "future:AUD-FIX-16:room-ndjson-absence"
+        "gate:android_release_assemble",
+        "file:migration/qualification/v1/ov14_retirement.json",
+        "file:scripts/validate_audfix16_contract.py"
       ]
     },
     {
@@ -210,26 +210,28 @@
       ]
     },
     {
-      "acceptance_authority": "pre-gate-static-evidence",
-      "note": "retained only for static integration/fixture evidence until executed Gate-D proof",
+      "acceptance_authority": "none",
+      "note": "Gate-D executed successor evidence passed; source-token predecessor guard physically retired by AUD-FIX-16",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/automation/AudFix04AutomationContractTest.kt",
       "retirement_owner": "AUD-FIX-16",
-      "status": "live-pre-gate-static",
+      "status": "archived-historical",
       "successor_evidence": [
         "workflow:aud_fix_11",
         "gate:durable_operation_terminal_truth"
-      ]
+      ],
+      "archive_path": "migration/archive/validators/aud_fix_16_post_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/automation/AudFix04AutomationContractTest.kt"
     },
     {
-      "acceptance_authority": "pre-gate-static-evidence",
-      "note": "retained only for static integration/fixture evidence until executed Gate-D proof",
+      "acceptance_authority": "none",
+      "note": "Gate-D executed successor evidence passed; source-token predecessor guard physically retired by AUD-FIX-16",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/diagnostics/AudFix05DiagnosticsContractTest.kt",
       "retirement_owner": "AUD-FIX-16",
-      "status": "live-pre-gate-static",
+      "status": "archived-historical",
       "successor_evidence": [
         "workflow:aud_fix_11",
         "gate:diagnostics_support_seal"
-      ]
+      ],
+      "archive_path": "migration/archive/validators/aud_fix_16_post_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/diagnostics/AudFix05DiagnosticsContractTest.kt"
     },
     {
       "acceptance_authority": "fixture-contract",
@@ -243,26 +245,28 @@
       ]
     },
     {
-      "acceptance_authority": "pre-gate-static-evidence",
-      "note": "retained only for static integration/fixture evidence until executed Gate-D proof",
+      "acceptance_authority": "none",
+      "note": "Gate-D executed successor evidence passed; source-token predecessor guard physically retired by AUD-FIX-16",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/go/DomainAuthorityProductionReachabilityContractTest.kt",
       "retirement_owner": "AUD-FIX-16",
-      "status": "live-pre-gate-static",
+      "status": "archived-historical",
       "successor_evidence": [
         "gate:production_reachability",
         "file:scripts/validate_audfix03_contract.py"
-      ]
+      ],
+      "archive_path": "migration/archive/validators/aud_fix_16_post_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/go/DomainAuthorityProductionReachabilityContractTest.kt"
     },
     {
-      "acceptance_authority": "pre-gate-static-evidence",
-      "note": "retained only for static integration/fixture evidence until executed Gate-D proof",
+      "acceptance_authority": "none",
+      "note": "Gate-D executed successor evidence passed; source-token predecessor guard physically retired by AUD-FIX-16",
       "path": "android/app/src/test/kotlin/com/mikeyphw/dustui/go/GoRuntimeProductionBindingContractTest.kt",
       "retirement_owner": "AUD-FIX-16",
-      "status": "live-pre-gate-static",
+      "status": "archived-historical",
       "successor_evidence": [
         "gate:runtime_apk_binding",
         "gate:android_debug_assemble"
-      ]
+      ],
+      "archive_path": "migration/archive/validators/aud_fix_16_post_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/go/GoRuntimeProductionBindingContractTest.kt"
     }
   ]
 }

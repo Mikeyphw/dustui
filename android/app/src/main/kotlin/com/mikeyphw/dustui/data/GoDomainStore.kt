@@ -20,7 +20,7 @@ import kotlin.math.max
 /**
  * Android's production domain-state adapter after REM-03.
  *
- * This is intentionally API-shaped like the former ScanDao at the shell boundary,
+ * This exposes the stable Android domain-store boundary,
  * but every authoritative read/write is transported to the app-owned Go process
  * and persisted in Go-owned SQLite. Room is no longer a live domain authority.
  */

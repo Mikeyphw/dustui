@@ -9,6 +9,42 @@
         "migration/archive/validators/aud_fix_13_pre_gate_d/android/scripts/validate-root-scan-diagnostics.py"
       ],
       "live_removed": true
+    },
+    {
+      "live_path": "android/app/src/test/kotlin/com/mikeyphw/dustui/automation/AudFix04AutomationContractTest.kt",
+      "reason": "Gate-D executed successor evidence superseded pre-gate source-token guard",
+      "successor_guard": "AUD-FIX-16_POST_GATE_D_RETIREMENT",
+      "archive_paths": [
+        "migration/archive/validators/aud_fix_16_post_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/automation/AudFix04AutomationContractTest.kt"
+      ],
+      "live_removed": true
+    },
+    {
+      "live_path": "android/app/src/test/kotlin/com/mikeyphw/dustui/diagnostics/AudFix05DiagnosticsContractTest.kt",
+      "reason": "Gate-D executed successor evidence superseded pre-gate source-token guard",
+      "successor_guard": "AUD-FIX-16_POST_GATE_D_RETIREMENT",
+      "archive_paths": [
+        "migration/archive/validators/aud_fix_16_post_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/diagnostics/AudFix05DiagnosticsContractTest.kt"
+      ],
+      "live_removed": true
+    },
+    {
+      "live_path": "android/app/src/test/kotlin/com/mikeyphw/dustui/go/DomainAuthorityProductionReachabilityContractTest.kt",
+      "reason": "Gate-D executed successor evidence superseded pre-gate source-token guard",
+      "successor_guard": "AUD-FIX-16_POST_GATE_D_RETIREMENT",
+      "archive_paths": [
+        "migration/archive/validators/aud_fix_16_post_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/go/DomainAuthorityProductionReachabilityContractTest.kt"
+      ],
+      "live_removed": true
+    },
+    {
+      "live_path": "android/app/src/test/kotlin/com/mikeyphw/dustui/go/GoRuntimeProductionBindingContractTest.kt",
+      "reason": "Gate-D executed successor evidence superseded pre-gate source-token guard",
+      "successor_guard": "AUD-FIX-16_POST_GATE_D_RETIREMENT",
+      "archive_paths": [
+        "migration/archive/validators/aud_fix_16_post_gate_d/android/app/src/test/kotlin/com/mikeyphw/dustui/go/GoRuntimeProductionBindingContractTest.kt"
+      ],
+      "live_removed": true
     }
   ]
 }

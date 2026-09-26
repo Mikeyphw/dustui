@@ -79,7 +79,7 @@ object CleaningIntelligenceQualification {
             blocker("lint", CleaningQualificationArea.BUILD, evidence.lintErrors == 0 && evidence.lintWarnings == 0,
                 "${evidence.lintErrors} errors, ${evidence.lintWarnings} warnings"),
             blocker("database-schema", CleaningQualificationArea.DATABASE, evidence.databaseSchemaPassed,
-                "Room schema and compatibility contract"),
+                "Go-owned SQLite schema and compatibility contract"),
             blocker("protected-paths", CleaningQualificationArea.DELETION_SAFETY, evidence.protectedPathSuitePassed,
                 "Protected path, scan-root, outside-root, symlink, and mount-boundary cases"),
             blocker("fingerprints", CleaningQualificationArea.DELETION_SAFETY, evidence.fingerprintSuitePassed,

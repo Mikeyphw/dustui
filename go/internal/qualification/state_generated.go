@@ -6,16 +6,18 @@ const EvidenceRegistry = "migration/qualification/v1/gate_d_evidence.json"
 const GateDQualified = true
 const GateDStatus = "qualified"
 const GateDReason = "all-required-gate-d-evidence-passed-and-bound"
-const OV14Status = "eligible-for-physical-retirement"
-const GateEStatus = "blocked-on-ov14-retirement"
+const OV14Status = "physically-retired"
+const OV14RetirementComplete = true
+const PostRetirementSourceSHA256 = "28255b2561c04c2c85a53ac644d8e2807d48ef25a645be377a6e5f11f48c67cb"
+const GateEStatus = "eligible-for-qualification"
 const LegacyPythonTextualPresent = false
-const PythonTextualOraclePresent = true
-const RoomArtifactsPresent = true
+const PythonTextualOraclePresent = false
+const RoomArtifactsPresent = false
 const LegacyNavigationPresent = false
 const AndroidGoProcessBindingPresent = true
 const AndroidGoPackagingPresent = true
 const GoSQLiteImplementationPresent = true
-const GenericToolingDuplicationPresent = true
+const GenericToolingDuplicationPresent = false
 
 var RequiredEvidenceNodes = []string{
 	"historical_gate_a_exo",

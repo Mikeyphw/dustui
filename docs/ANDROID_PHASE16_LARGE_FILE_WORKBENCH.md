@@ -6,7 +6,7 @@ Phase 16 turns large-file discovery into a dedicated cleaning workspace. It does
 
 ## Data source
 
-The workbench loads the complete active scan through `ScanDao.entriesOnce(scanId)`. It does not reuse the Explorer observation, which is intentionally limited for interactive rendering.
+The workbench loads the complete active scan through the Go-owned domain store (`GoDomainStore.entriesOnce(scanId)`). It does not reuse the Explorer observation, which is intentionally limited for interactive rendering.
 
 Directories are excluded before filtering and paging.
 

@@ -1,12 +1,5 @@
 {
-  "blockers": [
-    "android_go_runtime_binding:source-binding-present-unqualified",
-    "generic_release_truth:duplicated-app-local",
-    "go_authority:not-gate-d-qualified",
-    "legacy_navigation:predecessor-navigation-present",
-    "python_runtime:legacy-python-textual-present",
-    "room_domain_artifacts:legacy-room-artifacts-present"
-  ],
+  "blockers": [],
   "closure_rule": "OV14 physical retirement may close only after canonical Gate D qualification and behavioral/reachability retirement proof; this ledger cannot close Gate D.",
   "desired": {
     "android_go_runtime_binding": "production-qualified",
@@ -17,25 +10,25 @@
     "legacy_destructive_executor": "none",
     "legacy_navigation": "none",
     "python_runtime": "none",
-    "room_domain_artifacts": "none",
-    "room_domain_authority": "none"
+    "python_textual_oracle": "none",
+    "room_domain_artifacts": "none"
   },
-  "gate_d_observed_status": "open",
-  "next": "AUD-FIX-02; rem03_android_domain_protocol_cutover",
+  "gate_d_observed_status": "qualified",
+  "next": "AUD-FIX-16",
   "observed": {
-    "android_go_runtime_binding": "source-binding-present-unqualified",
+    "android_go_runtime_binding": "production-qualified",
     "cpp_scanner_runtime": "none",
-    "generic_release_truth": "duplicated-app-local",
-    "go_authority": "not-gate-d-qualified",
+    "generic_release_truth": "devtool-only",
+    "go_authority": "product-default-qualified",
     "go_sqlite_persistence": "go-owned-sqlite",
     "legacy_destructive_executor": "none",
-    "legacy_navigation": "predecessor-navigation-present",
-    "python_runtime": "legacy-python-textual-present",
-    "room_domain_artifacts": "legacy-room-artifacts-present",
-    "room_domain_authority": "none"
+    "legacy_navigation": "none",
+    "python_runtime": "none",
+    "python_textual_oracle": "none",
+    "room_domain_artifacts": "none"
   },
   "phase": "OV14",
   "qualification_state_source": "migration/qualification/v1/current_state.json",
   "schema": "dustui.ov14-retirement-observation.v2",
-  "status": "reopened_blocked"
+  "status": "retirement_conditions_observed"
 }
