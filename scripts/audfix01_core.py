@@ -39,6 +39,29 @@ REQUIRED_GATE_D_NODES = (
     "production_reachability",
 )
 
+REQUIRED_GATE_E_NODES = (
+    "gate_e_contract",
+    "canonical_devtool_release",
+    "full_roadmap_conformance",
+    "aud16_retirement_regression",
+    "successor_migration_validators",
+    "go_full_regression",
+    "go_adversarial_failure_windows",
+    "go_race_where_supported",
+    "android_debug_unit",
+    "android_debug_lint",
+    "android_debug_assemble",
+    "android_release_unit",
+    "android_release_lint",
+    "android_release_assemble",
+    "connected_instrumentation_full",
+    "rooted_arm64_runtime",
+    "runtime_apk_binding",
+    "final_migration_audit",
+    "final_promise_audit",
+    "counterexample_convergence",
+)
+
 DESIRED_RETIREMENT = {
     "cpp_scanner_runtime": "none",
     "python_runtime": "none",
@@ -241,12 +264,77 @@ def compute_qualification(root: Path, registry: dict[str, Any]) -> dict[str, Any
         and retirement_record.get("gate_d_ancestor_source_sha256") == next(iter(gate_tree_hashes), None)
     )
 
+    gate_e_path = root / "migration/qualification/v1/gate_e_evidence.json"
+    gate_e_record = load_json(gate_e_path) if gate_e_path.is_file() else {}
+    gate_e_nodes = {
+        n.get("id"): n
+        for n in gate_e_record.get("nodes", [])
+        if isinstance(n, dict) and n.get("id")
+    }
+    gate_e_missing = [n for n in REQUIRED_GATE_E_NODES if n not in gate_e_nodes]
+    gate_e_nonpassing = [n for n in REQUIRED_GATE_E_NODES if gate_e_nodes.get(n, {}).get("status") != "pass"]
+    gate_e_invalid: list[str] = []
+    expected_post_retirement = str(retirement_record.get("post_retirement_source_sha256") or "")
+    if gate_e_record:
+        if gate_e_record.get("schema") != "dustui.gate-e.evidence-registry.v1" or gate_e_record.get("status") != "pass":
+            gate_e_invalid.append("registry-status-or-schema")
+        if list(gate_e_record.get("required_nodes") or []) != list(REQUIRED_GATE_E_NODES):
+            gate_e_invalid.append("required-node-topology")
+        if str(gate_e_record.get("source_projection_sha256") or "") != expected_post_retirement:
+            gate_e_invalid.append("source-projection-binding")
+        if str(gate_e_record.get("gate_d_ancestor_source_sha256") or "") != next(iter(gate_tree_hashes), None):
+            gate_e_invalid.append("gate-d-ancestor-binding")
+        validation_run = str(gate_e_record.get("validation_run_id") or "").strip()
+        release_run = str(gate_e_record.get("release_run_id") or "").strip()
+        if not validation_run or not release_run or validation_run == release_run:
+            gate_e_invalid.append("validation-release-run-cross-binding")
+        if not str(gate_e_record.get("source_git_head") or "").strip() or not str(gate_e_record.get("source_git_tree") or "").strip():
+            gate_e_invalid.append("git-identity-binding")
+        for key in ("release_report_sha256", "release_apk_sha256", "signing_identity_sha256", "go_runtime_sha256"):
+            value = str(gate_e_record.get(key) or "")
+            if not re.fullmatch(r"[0-9a-fA-F]{64}", value):
+                gate_e_invalid.append(key)
+        for node_id in REQUIRED_GATE_E_NODES:
+            node = gate_e_nodes.get(node_id)
+            if not node:
+                continue
+            binding = node.get("binding") or {}
+            if str(binding.get("source_projection_sha256") or "") != expected_post_retirement:
+                gate_e_invalid.append(f"{node_id}:source-projection")
+            if str(binding.get("validation_run_id") or "") != validation_run:
+                gate_e_invalid.append(f"{node_id}:validation-run")
+        release_node = gate_e_nodes.get("canonical_devtool_release", {})
+        release_binding = release_node.get("binding") or {}
+        if str(release_binding.get("release_run_id") or "") != release_run:
+            gate_e_invalid.append("canonical_devtool_release:release-run")
+        if str(release_binding.get("artifact_sha256") or "") != str(gate_e_record.get("release_apk_sha256") or ""):
+            gate_e_invalid.append("canonical_devtool_release:artifact")
+        if str(release_binding.get("runtime_sha256") or "") != str(gate_e_record.get("go_runtime_sha256") or ""):
+            gate_e_invalid.append("canonical_devtool_release:runtime")
+        if str(release_binding.get("signing_identity_sha256") or "") != str(gate_e_record.get("signing_identity_sha256") or ""):
+            gate_e_invalid.append("canonical_devtool_release:signer")
+
+    gate_e_qualified = bool(
+        qualified
+        and retirement_complete
+        and retirement_record_valid
+        and gate_e_record
+        and not gate_e_missing
+        and not gate_e_nonpassing
+        and not gate_e_invalid
+    )
+
     if qualified:
         gate_status = "qualified"
         reason = "all-required-gate-d-evidence-passed-and-bound"
         if retirement_complete and retirement_record_valid:
             ov14_status = "physically-retired"
-            gate_e_status = "eligible-for-qualification"
+            if gate_e_qualified:
+                gate_e_status = "qualified"
+            elif gate_e_record:
+                gate_e_status = "qualification-evidence-invalid"
+            else:
+                gate_e_status = "eligible-for-qualification"
         else:
             ov14_status = "retirement-evidence-pending" if retirement_complete else "eligible-for-physical-retirement"
             gate_e_status = "blocked-on-ov14-retirement"
@@ -284,7 +372,22 @@ def compute_qualification(root: Path, registry: dict[str, Any]) -> dict[str, Any
             "retirement_evidence": "migration/qualification/v1/ov14_retirement.json" if retirement_record_valid else None,
             "post_retirement_source_sha256": retirement_record.get("post_retirement_source_sha256") if retirement_record_valid else None,
         },
-        "gate_e": {"status": gate_e_status},
+        "gate_e": {
+            "status": gate_e_status,
+            "qualified": gate_e_qualified,
+            "evidence_registry": "migration/qualification/v1/gate_e_evidence.json" if gate_e_record else None,
+            "required_nodes": list(REQUIRED_GATE_E_NODES),
+            "missing_node_definitions": gate_e_missing,
+            "nonpassing_nodes": gate_e_nonpassing,
+            "invalid_binding_nodes": sorted(set(gate_e_invalid)),
+            "source_projection_sha256": gate_e_record.get("source_projection_sha256") if gate_e_record else None,
+            "source_git_head": gate_e_record.get("source_git_head") if gate_e_record else None,
+            "validation_run_id": gate_e_record.get("validation_run_id") if gate_e_record else None,
+            "release_run_id": gate_e_record.get("release_run_id") if gate_e_record else None,
+            "release_apk_sha256": gate_e_record.get("release_apk_sha256") if gate_e_record else None,
+            "signing_identity_sha256": gate_e_record.get("signing_identity_sha256") if gate_e_record else None,
+            "go_runtime_sha256": gate_e_record.get("go_runtime_sha256") if gate_e_record else None,
+        },
         "observed_repository": observations,
     }
 

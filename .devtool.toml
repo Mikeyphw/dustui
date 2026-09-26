@@ -25,6 +25,16 @@ aapt2_provider = "auto"
 instrumentation = "when-device-present"
 prefer_native_termux = true
 
+[targets.dustui_android.android.release]
+variant = "release"
+unit_tests = true
+lint = true
+device_tests = "required"
+install_smoke = true
+upgrade_smoke = false
+verify_signature = true
+verify_certificate_identity = true
+
 [targets.dustui_android.gradle]
 version = "9.7.1"
 provider = "auto"
@@ -77,15 +87,15 @@ affected_module_lint = true
 
 [targets.dustui_android.metadata]
 android_buildability = "mandatory"
-gate = "Gate D - Android reconnect mandatory"
+gate = "Gate E - final qualification"
 primary = true
-migration_phase = "OV13"
+migration_phase = "OV15"
 structured_events = true
 max_gradle_nodes = 1
 abi_policy = "arm64-v8a production first; x86_64 is test-only until a matching Go runtime exists"
 release_authority = "devtool"
 qualification_state_source = "migration/qualification/v1/current_state.json"
-qualification_evidence_source = "migration/qualification/v1/gate_d_evidence.json"
+qualification_evidence_source = "migration/qualification/v1/current_state.json"
 acceptance_state_source = "migration/acceptance/v1/current_state.json"
 android_domain_authority = "go-process+go-sqlite"
 legacy_room_authority = false
@@ -100,7 +110,7 @@ inputs = ["."]
 
 [targets.dustui_go.metadata]
 target_production_authority = true
-migration_phase = "OV13"
+migration_phase = "OV15"
 readiness_only = false
 target_product_default = true
 target_product_default_scope = "host-cli-tui-only"
@@ -109,7 +119,7 @@ target_go_tui_default = true
 host_authority_default = true
 legacy_python_textual_production = false
 python_textual_oracle_archived = "migration/archive/oracles/aud_fix_16_python_textual"
-android_reconnect_gate = "Gate D"
+android_reconnect_gate = "Gate E"
 android_buildability = "mandatory"
 legacy_python_observation_source = "migration/qualification/v1/current_state.json"
 legacy_kotlin_observation_source = "migration/qualification/v1/current_state.json"
@@ -137,7 +147,7 @@ read_authority = "go-sqlite"
 android_runtime_packaging = "arm64-v8a-only"
 shell_scaffold = true
 qualification_state_source = "migration/qualification/v1/current_state.json"
-qualification_evidence_source = "migration/qualification/v1/gate_d_evidence.json"
+qualification_evidence_source = "migration/qualification/v1/current_state.json"
 acceptance_state_source = "migration/acceptance/v1/current_state.json"
 android_domain_authority = "go-process+go-sqlite"
 legacy_room_authority = false
@@ -653,6 +663,92 @@ inputs = ["scripts/audfix16_retirement.py", "scripts/audfix01_core.py", "migrati
 [targets.dustui_android.jobs.audfix16_retirement_evidence.metadata]
 read_only = true
 
+[targets.dustui_android.jobs.audfix17_contract]
+runner = "command"
+root = ".."
+command = ["sh", "-lc", "python3 scripts/validate_audfix17_contract.py --audit-loop && python3 scripts/audfix17_gate_e.py preflight"]
+inputs = ["scripts/validate_audfix17_contract.py", "scripts/audfix17_gate_e.py", "scripts/audfix01_core.py", "migration/qualification/v1", "migration/acceptance/v1", ".devtool.toml"]
+[targets.dustui_android.jobs.audfix17_contract.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.audfix17_release_evidence]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/audfix17_gate_e.py", "release-evidence"]
+inputs = ["scripts/audfix17_gate_e.py", "migration/qualification/v1/current_state.json", "migration/qualification/v1/ov14_retirement.json", ".devtool/reports/android-release", ".devtool/artifacts", "android/app/build/generated/goRuntime"]
+outputs = ["build/evidence/gate-e/canonical-release.json"]
+
+[targets.dustui_android.jobs.audfix17_full_conformance]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_full_roadmap_conformance.py", "--scope", "all"]
+inputs = ["scripts/validate_full_roadmap_conformance.py", "scripts/validate_audfix17_contract.py", "migration/qualification/v1", "migration/acceptance/v1", "migration/requirements/v2", "migration/ledger", ".devtool.toml", "README.md", "RELEASE_CHECKLIST.md", "VALIDATION.md"]
+[targets.dustui_android.jobs.audfix17_full_conformance.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.audfix17_go_race]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/audfix17_gate_e.py", "go-race"]
+inputs = ["scripts/audfix17_gate_e.py", "go", "migration/qualification/v1/current_state.json"]
+outputs = ["build/evidence/gate-e/go-race.json"]
+
+[targets.dustui_android.jobs.audfix17_instrumentation_full]
+runner = "command"
+command = ["sh", "-lc", "MAIN_ROOT=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; case \"$PWD\" in */android) MAIN_ROOT=\"$(dirname \"$PWD\")\" ;; */.devtool/historical/*) MAIN_ROOT=\"${PWD%%/.devtool/historical/*}\" ;; esac; python3 \"$MAIN_ROOT/scripts/audfix15_android_job_bridge.py\" --gradle-arg=-Pandroid.testInstrumentationRunnerArguments.dustui.requireMultiUser=true ':app:connectedDebugAndroidTest'"]
+inputs = ["app/src/main", "app/src/androidTest", "build.gradle.kts", "settings.gradle.kts", "../go", "../migration"]
+outputs = ["app/build/outputs/androidTest-results", "app/build/reports/androidTests"]
+
+[targets.dustui_android.jobs.audfix17_rooted_arm64_runtime]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/audfix17_gate_e.py", "rooted-runtime"]
+inputs = ["scripts/audfix17_gate_e.py", "scripts/audfix14_gate_d_probe.py", "android/app/build.gradle.kts", "go/internal/runtime", "migration/qualification/v1/current_state.json"]
+outputs = ["build/evidence/gate-e/rooted-arm64-runtime.json"]
+
+[targets.dustui_android.jobs.audfix17_runtime_apk_binding]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/audfix17_gate_e.py", "runtime-apk-binding"]
+inputs = ["scripts/audfix17_gate_e.py", "scripts/audfix14_gate_d_probe.py", "android/app/build/outputs/apk", "android/app/build/generated/goRuntime", "migration/qualification/v1/current_state.json"]
+outputs = ["build/evidence/gate-e/runtime-apk-binding.json"]
+
+[targets.dustui_android.jobs.audfix17_migration_preflight]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/audfix17_gate_e.py", "migration-preflight"]
+inputs = ["scripts/audfix17_gate_e.py", "scripts/audfix01_core.py", "migration/qualification/v1", "migration/archive", "android/app/src/main", "android/app/build.gradle.kts", ".devtool.toml"]
+outputs = ["build/evidence/gate-e/final-migration-preflight.json"]
+
+[targets.dustui_android.jobs.audfix17_promise_preflight]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/audfix17_gate_e.py", "promise-preflight"]
+inputs = ["scripts/audfix17_gate_e.py", "scripts/validate_full_roadmap_conformance.py", "migration/requirements/v2/requirements.json", "migration/qualification/v1", "migration/acceptance/v1", ".devtool.toml"]
+outputs = ["build/evidence/gate-e/final-promise-preflight.json"]
+
+[targets.dustui_android.jobs.audfix17_counterexample_convergence]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/audfix17_gate_e.py", "counterexample-convergence"]
+inputs = ["scripts/audfix17_gate_e.py", "scripts/validate_full_roadmap_conformance.py", "migration/requirements/v2", "migration/qualification/v1", "migration/acceptance/v1", ".devtool.toml"]
+outputs = ["build/evidence/gate-e/counterexample-convergence.json"]
+
+[targets.dustui_android.jobs.audfix17_finalize]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/audfix17_gate_e.py", "finalize"]
+inputs = ["scripts/audfix17_gate_e.py", "scripts/refresh_qualification_state.py", "scripts/refresh_acceptance_state.py", "scripts/audfix01_core.py", "migration/qualification/v1/gate_e_topology.json", "migration/qualification/v1/ov14_retirement.json", "build/evidence/gate-e"]
+outputs = ["migration/qualification/v1/gate_e_evidence.json", "migration/qualification/v1/gate_e_bundle.json", "migration/qualification/v1/current_state.json", "migration/acceptance/v1/current_state.json", "go/internal/qualification/state_generated.go", "go/internal/qualification/acceptance_generated.go"]
+
+[targets.dustui_android.jobs.audfix17_postseal_audit]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_full_roadmap_conformance.py", "--scope", "AUD-FIX-17"]
+inputs = ["scripts/validate_full_roadmap_conformance.py", "scripts/validate_audfix17_contract.py", "migration/qualification/v1", "migration/acceptance/v1", "migration/requirements/v2", ".devtool.toml"]
+[targets.dustui_android.jobs.audfix17_postseal_audit.metadata]
+read_only = true
+
 [targets.dustui_android.workflows]
 aud_fix_regression = [
   { id = "a01", ref = "job:audfix01_truth", depends_on = [] },
@@ -872,6 +968,35 @@ aud_fix_16 = [
   { id = "qualification_state", ref = "job:qualification_state", depends_on = ["android_assemble"] },
 ]
 
+# AUD-FIX-17 / Gate E final qualification. The canonical signed release is a
+# separate Devtool run imported by canonical_release; this workflow cannot
+# manufacture or substitute release/signing evidence.
+gate_e = [
+  { id = "contract", ref = "job:audfix17_contract", depends_on = [] },
+  { id = "canonical_release", ref = "job:audfix17_release_evidence", depends_on = ["contract"] },
+  { id = "full_conformance", ref = "job:audfix17_full_conformance", depends_on = ["contract"] },
+  { id = "aud16_retirement_regression", ref = "job:audfix16_retirement_evidence", depends_on = ["full_conformance"] },
+  { id = "successor_migration_validators", ref = "target:dustui_android#gate_d_successor_validators", depends_on = ["full_conformance"] },
+  { id = "go_core", ref = "target:dustui_go#gate_e_core", depends_on = ["canonical_release", "aud16_retirement_regression"] },
+  { id = "go_adversarial", ref = "target:dustui_go#gate_e_adversarial", depends_on = ["go_core"] },
+  { id = "go_race", ref = "job:audfix17_go_race", depends_on = ["go_adversarial"] },
+  { id = "android_debug_unit", ref = "job:android_unit", depends_on = ["canonical_release", "aud16_retirement_regression"] },
+  { id = "android_debug_lint", ref = "job:android_lint", depends_on = ["android_debug_unit"] },
+  { id = "android_debug_assemble", ref = "job:android_assemble", depends_on = ["android_debug_lint"] },
+  { id = "android_release_unit", ref = "job:android_release_unit", depends_on = ["canonical_release", "aud16_retirement_regression"] },
+  { id = "android_release_lint", ref = "job:android_release_lint", depends_on = ["android_release_unit"] },
+  { id = "android_release_assemble", ref = "job:android_release_assemble", depends_on = ["android_release_lint"] },
+  { id = "instrumentation_full", ref = "job:audfix17_instrumentation_full", depends_on = ["android_debug_assemble", "go_adversarial", "successor_migration_validators"] },
+  { id = "rooted_arm64", ref = "job:audfix17_rooted_arm64_runtime", depends_on = ["android_debug_assemble"] },
+  { id = "runtime_binding", ref = "job:audfix17_runtime_apk_binding", depends_on = ["android_debug_assemble", "android_release_assemble", "rooted_arm64"] },
+  { id = "migration_audit", ref = "job:audfix17_migration_preflight", depends_on = ["go_race", "instrumentation_full", "runtime_binding"] },
+  { id = "promise_audit", ref = "job:audfix17_promise_preflight", depends_on = ["migration_audit"] },
+  { id = "counterexample_convergence", ref = "job:audfix17_counterexample_convergence", depends_on = ["promise_audit"] },
+  { id = "finalize", ref = "job:audfix17_finalize", depends_on = ["counterexample_convergence"] },
+  { id = "postseal_audit", ref = "job:audfix17_postseal_audit", depends_on = ["finalize"] },
+  { id = "qualification_state", ref = "job:qualification_state", depends_on = ["postseal_audit"] },
+]
+
 [targets.dustui_go.jobs.go_test_all]
 runner = "command"
 command = ["sh", "-lc", 'mkdir -p .devtool/tmp/go-test && export TMPDIR="$PWD/.devtool/tmp/go-test"; MAIN_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; case "$PWD" in */.devtool/historical/*/go) MAIN_ROOT="${PWD%%/.devtool/historical/*}" ;; esac; python3 "$MAIN_ROOT/scripts/audfix15_termux_hardlink_compat.py" --root "$PWD" && go test ./...']
@@ -993,7 +1118,28 @@ inputs = ["internal/diagnostics", "internal/state", "cmd/dustui-go/runtime_domai
 [targets.dustui_go.jobs.gate_d_diagnostics.metadata]
 read_only = true
 
+[targets.dustui_go.jobs.gate_e_adversarial]
+runner = "command"
+command = ["sh", "-lc", 'mkdir -p .devtool/tmp/go-gate-e && export TMPDIR="$PWD/.devtool/tmp/go-gate-e"; MAIN_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; python3 "$MAIN_ROOT/scripts/audfix15_termux_hardlink_compat.py" --root "$PWD" && go test -count=1 ./internal/cleanup ./internal/privileged ./internal/runtime ./internal/rootworker ./internal/scan ./internal/query ./internal/packageevidence ./internal/state ./internal/diagnostics ./internal/shell ./internal/operations']
+inputs = ["internal", "cmd", "go.mod", "go.sum", "../migration/qualification/v1/current_state.json"]
+outputs = [".devtool/tmp/go-gate-e"]
+[targets.dustui_go.jobs.gate_e_adversarial.metadata]
+read_only = true
+
 [targets.dustui_go.workflows]
+gate_e_core = [
+  { id = "tests", ref = "job:go_test_all", depends_on = [] },
+  { id = "product", ref = "job:product_contract", depends_on = [] },
+  { id = "schema", ref = "job:schema_contract", depends_on = [] },
+  { id = "cli", ref = "job:gate_d_cli_smoke", depends_on = ["tests", "product"] },
+  { id = "tui", ref = "job:gate_d_tui_smoke", depends_on = ["tests", "product"] },
+  { id = "durable", ref = "job:gate_d_durable_truth", depends_on = ["tests"] },
+  { id = "diagnostics", ref = "job:gate_d_diagnostics", depends_on = ["tests"] },
+  { id = "build", ref = "job:go_build", depends_on = ["tests", "product", "schema", "cli", "tui", "durable", "diagnostics"] },
+]
+gate_e_adversarial = [
+  { id = "adversarial", ref = "job:gate_e_adversarial", depends_on = [] },
+]
 aud_fix_regression = [
   { id = "tests", ref = "job:go_test_all", depends_on = [] },
   { id = "product", ref = "job:product_contract", depends_on = [] },
@@ -1320,3 +1466,16 @@ description = "Resume AUD-FIX-15 Gate D at Android release assemble; skip alread
 workflow = "aud-fix-15-fast"
 target = "dustui_android"
 aliases = ["gate-d-fast", "aud15-fast"]
+
+[wrapper.commands.gate-e-release]
+description = "Run the canonical Devtool signed Android release that Gate E imports and cross-binds"
+devtool = "release"
+target = "dustui_android"
+allow_passthrough = true
+aliases = ["release-final", "ov15-release"]
+
+[wrapper.commands.aud-fix-17]
+description = "Run AUD-FIX-17 Gate-E final adversarial qualification after a passing canonical signed release"
+workflow = "gate_e"
+target = "dustui_android"
+aliases = ["gate-e", "ov15", "final-qualification"]

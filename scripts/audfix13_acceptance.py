@@ -220,7 +220,11 @@ def compute_state(root: Path = ROOT) -> dict[str, Any]:
         "source_snapshot_sha256": qualification.get("source_snapshot_sha256"),
         "candidate": {
             "acceptance_converged": not failures,
-            "status": ("post-gate-d-successor-converged" if qualification.get("gate_d", {}).get("qualified") else "pre-gate-d-ready") if not failures else "acceptance-contradiction",
+            "status": (
+                "gate-e-qualified-final-converged"
+                if qualification.get("gate_e", {}).get("qualified")
+                else ("post-gate-d-successor-converged" if qualification.get("gate_d", {}).get("qualified") else "pre-gate-d-ready")
+            ) if not failures else "acceptance-contradiction",
             "failures": failures,
             "ui_requirement_status_counts": counts,
             "live_source_reading_validators": discover_live_source_reading_tests(root),
@@ -229,7 +233,9 @@ def compute_state(root: Path = ROOT) -> dict[str, Any]:
         "qualification": {
             "gate_d_status": qualification.get("gate_d", {}).get("status"),
             "gate_d_qualified": qualification.get("gate_d", {}).get("qualified"),
-            "statement": "acceptance convergence follows canonical Gate-D truth and does not independently qualify any gate",
+            "gate_e_status": qualification.get("gate_e", {}).get("status"),
+            "gate_e_qualified": qualification.get("gate_e", {}).get("qualified"),
+            "statement": "acceptance convergence follows canonical Gate-D/Gate-E truth and does not independently qualify any gate",
         },
     }
 

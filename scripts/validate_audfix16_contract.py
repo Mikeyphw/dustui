@@ -54,7 +54,7 @@ def audit() -> list[str]:
     obs = state.get("observed_repository", {})
     req(gate.get("qualified") is True and gate.get("status") == "qualified", "Gate-D qualified ancestor was not preserved")
     req(ov14.get("status") == "physically-retired" and ov14.get("retirement_complete") is True, "OV14 is not physically retired")
-    req(state.get("gate_e", {}).get("status") == "eligible-for-qualification", "Gate E is not eligible after physical retirement")
+    req(state.get("gate_e", {}).get("status") in {"eligible-for-qualification", "qualified"}, "Gate E is not eligible after physical retirement")
     req(record.get("status") == "pass" and record.get("gate_d_resealed") is False, "retirement record missing/pass or incorrectly reseals Gate D")
     req(record.get("gate_d_ancestor_source_sha256") == gate.get("passing_source_tree_sha256"), "retirement record Gate-D ancestor drift")
     if bundle.get("source_snapshot_sha256"):

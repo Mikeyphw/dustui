@@ -1,0 +1,47 @@
+{
+  "schema": "dustui.gate-e.topology.v1",
+  "gate": "Gate E",
+  "phase": "OV15",
+  "aud_fix": "AUD-FIX-17",
+  "qualification_rule": "Every required node must execute successfully on one clean post-AUD-FIX-16 source identity; canonical Devtool Android release evidence must come from a separate passing release run on the same Git/source identity and carry verified artifact/signing identity.",
+  "required_nodes": [
+    "gate_e_contract",
+    "canonical_devtool_release",
+    "full_roadmap_conformance",
+    "aud16_retirement_regression",
+    "successor_migration_validators",
+    "go_full_regression",
+    "go_adversarial_failure_windows",
+    "go_race_where_supported",
+    "android_debug_unit",
+    "android_debug_lint",
+    "android_debug_assemble",
+    "android_release_unit",
+    "android_release_lint",
+    "android_release_assemble",
+    "connected_instrumentation_full",
+    "rooted_arm64_runtime",
+    "runtime_apk_binding",
+    "final_migration_audit",
+    "final_promise_audit",
+    "counterexample_convergence"
+  ],
+  "release_cross_binding": [
+    "source_git_head",
+    "source_git_tree",
+    "source_projection_sha256",
+    "release_run_id",
+    "validation_run_id",
+    "release_apk_sha256",
+    "go_runtime_sha256",
+    "signing_identity_sha256",
+    "release_report_sha256"
+  ],
+  "environment_policy": {
+    "rooted_arm64": "required",
+    "multi_user_or_work_profile": "required",
+    "device_instrumentation": "required",
+    "signed_release": "required",
+    "qualification_deferred_when_missing": true
+  }
+}

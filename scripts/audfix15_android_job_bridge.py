@@ -83,9 +83,27 @@ def find_android_runtime_command() -> list[str]:
 
 
 def main() -> int:
-    tasks = [arg for arg in sys.argv[1:] if arg.strip()]
+    tasks: list[str] = []
+    extra_gradle_args: list[str] = []
+    argv = list(sys.argv[1:])
+    index = 0
+    while index < len(argv):
+        arg = argv[index]
+        if arg == "--gradle-arg":
+            index += 1
+            if index >= len(argv):
+                raise SystemExit("--gradle-arg requires a value")
+            extra_gradle_args.append(argv[index])
+        elif arg.startswith("--gradle-arg="):
+            extra_gradle_args.append(arg.split("=", 1)[1])
+        elif arg.strip():
+            tasks.append(arg)
+        index += 1
     if not tasks:
-        raise SystemExit("usage: audfix15_android_job_bridge.py :app:task [:app:otherTask ...]")
+        raise SystemExit(
+            "usage: audfix15_android_job_bridge.py "
+            "[--gradle-arg ARG ...] :app:task [:app:otherTask ...]"
+        )
 
     root = find_repo_root()
     android_dir = root / "android"
@@ -144,7 +162,7 @@ def main() -> int:
     if init_script.is_file():
         gradle_tail = ["--init-script", str(init_script), *gradle_tail]
 
-    cmd += ["--", *gradle_tail]
+    cmd += ["--", *gradle_tail, *extra_gradle_args]
 
     env = os.environ.copy()
     env.setdefault("JAVA_TOOL_OPTIONS", "-XX:ActiveProcessorCount=2")

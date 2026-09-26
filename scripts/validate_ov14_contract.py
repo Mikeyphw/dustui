@@ -49,7 +49,7 @@ def validate() -> list[str]:
             req(not ledger.get("blockers"), "OV14 retirement ledger still has blockers")
             req(retirement.get("status") == "pass" and retirement.get("gate_d_resealed") is False, "AUD-FIX-16 retirement evidence missing or reseals Gate D")
             req(retirement.get("gate_d_ancestor_source_sha256") == gate_d.get("passing_source_tree_sha256"), "OV14 retirement evidence drifted from the qualified Gate-D ancestor")
-            req(gate_e.get("status") == "eligible-for-qualification", "Gate E must be eligible after physical retirement")
+            req(gate_e.get("status") in {"eligible-for-qualification", "qualified"}, "Gate E must be eligible after physical retirement")
             req("aud_fix_16" in flows, "AUD-FIX-16 successor workflow missing")
         else:
             req(ledger.get("status") == "ready_for_retirement_work", "qualified Gate D must expose OV14 as ready for retirement work")

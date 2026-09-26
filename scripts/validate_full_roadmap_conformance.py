@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 from audfix01_core import (  # noqa:E402
-    REQUIRED_GATE_D_NODES, HISTORICAL_GATE_D_NODES, independent_gate_claims, load_json,
+    REQUIRED_GATE_D_NODES, REQUIRED_GATE_E_NODES, HISTORICAL_GATE_D_NODES, independent_gate_claims, load_json,
     predecessor_ui_authority_paths, repository_observations,
 )
 from audfix13_acceptance import lifecycle_failures, ui_matrix_failures, metadata_failures, docs_failures, evaluate_counterexample  # noqa:E402
@@ -77,7 +77,7 @@ def evaluate() -> list[dict]:
     if state.get('gate_d',{}).get('qualified'):
         if state.get('ov14',{}).get('status') != 'physically-retired':
             out.append(finding('AF16-OV14-NOT-RETIRED',str(state.get('ov14')),'AUD-014',blocking_fix16=True))
-        if state.get('gate_e',{}).get('status') != 'eligible-for-qualification':
+        if state.get('gate_e',{}).get('status') not in {'eligible-for-qualification','qualified'}:
             out.append(finding('AF16-GATE-E-NOT-ELIGIBLE',str(state.get('gate_e')),'AUD-021',blocking_fix16=True))
         retirement=ROOT/'migration/qualification/v1/ov14_retirement.json'
         if not retirement.is_file():
@@ -134,7 +134,7 @@ def evaluate() -> list[dict]:
 
 
 def main():
-    ap=argparse.ArgumentParser(); ap.add_argument('--scope',default='all',choices=['all','AUD-FIX-01','AUD-FIX-13','AUD-FIX-14','AUD-FIX-16','GATE-D']); ap.add_argument('--json',action='store_true')
+    ap=argparse.ArgumentParser(); ap.add_argument('--scope',default='all',choices=['all','AUD-FIX-01','AUD-FIX-13','AUD-FIX-14','AUD-FIX-16','AUD-FIX-17','GATE-D']); ap.add_argument('--json',action='store_true')
     args=ap.parse_args(); findings=evaluate()
     blocking=[x for x in findings if x['blocks_aud_fix_01']]
     blocking13=[x for x in findings if x.get('blocks_aud_fix_13')]
@@ -143,7 +143,11 @@ def main():
     blocking16=[x for x in findings if x.get('blocks_aud_fix_16')]
     gate_d_allowed_open={'AUD-014','AUD-015'}
     gate_d_blockers=[x for x in findings if x['family'] not in gate_d_allowed_open]
-    payload={'schema':'dustui.full-roadmap-conformance.v4','scope':args.scope,'aud_fix_01_blockers':blocking,'aud_fix_13_blockers':blocking13,'aud_fix_14_topology_blockers':blocking14,'aud_fix_16_blockers':blocking16,'gate_d_blockers':gate_d_blockers,'findings':findings}
+    state=load_json(ROOT/'migration/qualification/v1/current_state.json') if (ROOT/'migration/qualification/v1/current_state.json').is_file() else {}
+    blocking17=list(findings)
+    if state.get('gate_e',{}).get('status') != 'qualified' or not state.get('gate_e',{}).get('qualified'):
+        blocking17.append(finding('AF17-GATE-E-OPEN',str(state.get('gate_e')),'AUD-024'))
+    payload={'schema':'dustui.full-roadmap-conformance.v5','scope':args.scope,'aud_fix_01_blockers':blocking,'aud_fix_13_blockers':blocking13,'aud_fix_14_topology_blockers':blocking14,'aud_fix_16_blockers':blocking16,'aud_fix_17_blockers':blocking17,'gate_d_blockers':gate_d_blockers,'findings':findings}
     if args.json: print(json.dumps(payload,indent=2))
     else:
         print(f"FULL ROADMAP CONFORMANCE [{args.scope}]")
@@ -152,11 +156,13 @@ def main():
         print(f"AUD-FIX-13 blockers: {len(blocking13)}")
         print(f"AUD-FIX-14 topology blockers: {len(blocking14)}")
         print(f"AUD-FIX-16 blockers: {len(blocking16)}")
+        print(f"AUD-FIX-17 blockers: {len(blocking17)}")
         print(f"Gate-D blockers: {len(gate_d_blockers)}")
     if args.scope=='AUD-FIX-01': selected=blocking
     elif args.scope=='AUD-FIX-13': selected=blocking13
     elif args.scope=='AUD-FIX-14': selected=blocking14
     elif args.scope=='AUD-FIX-16': selected=blocking16
+    elif args.scope=='AUD-FIX-17': selected=blocking17
     elif args.scope=='GATE-D': selected=gate_d_blockers
     else: selected=findings
     return 1 if selected else 0

@@ -1,14 +1,18 @@
-# Android validation remediation — successor authority
+# Android validation remediation — final successor authority
 
-> AUD-FIX successor-aware. Gate D is qualified. AUD-FIX-16 physically retires predecessor Room/NDJSON/app-local release authority; Gate E is next.
+> Gate D is qualified and preserved. AUD-FIX-16 physical retirement is complete. AUD-FIX-17 / Gate E is the final qualification boundary.
 
-Use Devtool rather than direct Gradle/ADB helper scripts:
+Do not call raw Gradle/ADB or restore app-local device/release helper scripts. The final Android campaign is owned by Devtool and uses two source-bound runs:
 
 ```bash
 cd "$HOME/Code/dustui"
-./devtoolw aud-fix-16
+export ANDROID_SERIAL=localhost:5555
+./devtoolw gate-e-release
+./devtoolw aud-fix-17
 ```
 
-The AUD-FIX-16 workflow runs the read-only retirement audit twice, verifies the checked-in retirement evidence, runs the Go successor workflow, then Android debug unit, lint, assemble, and canonical qualification-state checks. It intentionally does **not** rerun or reseal Gate D.
+The first command creates canonical signed release evidence through Devtool's Android release orchestrator. The second imports/cross-binds that report and runs the Gate-E adversarial, Debug/Release, connected-device, rooted ARM64, migration/promise, and final seal graph.
 
-Historical Room migration, device-certification, and release-helper instructions are retained only under `migration/archive/` for provenance.
+Gate-E connected instrumentation intentionally requires `dustui.requireMultiUser=true`; a secondary Android user/work profile is a qualification prerequisite rather than an optional skip. Missing signing credentials, root, ARM64, device instrumentation, or multi-user state leaves Gate E open/deferred.
+
+Historical Room migration, device-certification, and release-helper instructions live only under `migration/archive/` for provenance. Gate-D evidence is immutable ancestor evidence and is never regenerated for the final tree.

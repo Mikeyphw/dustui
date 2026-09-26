@@ -22,6 +22,8 @@ EXCLUDED_EXACT = {
     # self-referential or order-dependent.
     "migration/qualification/v1/current_state.json",
     "migration/qualification/v1/ov14_retirement.json",
+    "migration/qualification/v1/gate_e_evidence.json",
+    "migration/qualification/v1/gate_e_bundle.json",
     "migration/acceptance/v1/current_state.json",
     "migration/ledger/ov14_legacy_retirement_status.json",
     "go/internal/qualification/state_generated.go",
@@ -48,6 +50,12 @@ AUD16_ADDED_FILES = (
     "android/app/src/test/kotlin/com/mikeyphw/dustui/scan/ScanEventStreamReaderTest.kt",
     "scripts/audfix16_retirement.py",
     "scripts/validate_audfix16_contract.py",
+    # Successor files must participate before their overlay commit as well as
+    # after Git begins tracking them, otherwise the retirement/source identity
+    # would change at the commit boundary.
+    "migration/qualification/v1/gate_e_topology.json",
+    "scripts/audfix17_gate_e.py",
+    "scripts/validate_audfix17_contract.py",
 )
 
 
