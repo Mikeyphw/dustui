@@ -2,8 +2,8 @@
 package qualification
 
 const AcceptanceStateSource = "migration/acceptance/v1/current_state.json"
-const CandidateAcceptanceConverged = true
-const CandidateAcceptanceStatus = "post-gate-d-successor-converged"
+const CandidateAcceptanceConverged = false
+const CandidateAcceptanceStatus = "acceptance-contradiction"
 const AcceptanceGateDQualified = true
 const AcceptanceGateEQualified = false
 const AcceptanceGateEStatus = "eligible-for-qualification"

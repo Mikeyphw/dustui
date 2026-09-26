@@ -1,8 +1,49 @@
 import org.gradle.api.tasks.Exec
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
+}
+
+val dustuiRepositoryRoot = rootProject.projectDir.parentFile.canonicalFile
+val dustuiSigningPropertiesFile = File(
+    providers.environmentVariable("DUSTUI_ANDROID_SIGNING_PROPERTIES").orNull
+        ?: File(
+            System.getProperty("user.home"),
+            ".config/devtool/dustui/android-signing.properties",
+        ).absolutePath,
+).absoluteFile
+
+val dustuiPersonalSigningConfigured = dustuiSigningPropertiesFile.isFile
+val dustuiSigningProperties = Properties().apply {
+    if (dustuiPersonalSigningConfigured) {
+        dustuiSigningPropertiesFile.inputStream().use { load(it) }
+    }
+}
+
+fun dustuiSigningValue(name: String): String {
+    val value = dustuiSigningProperties.getProperty(name)?.trim().orEmpty()
+    check(value.isNotEmpty() && value != "REPLACE_ME") {
+        "DustUI personal signing property '$name' is missing in ${dustuiSigningPropertiesFile.absolutePath}"
+    }
+    return value
+}
+
+val dustuiPersonalSigningStoreFile = if (dustuiPersonalSigningConfigured) {
+    check(!dustuiSigningPropertiesFile.canonicalFile.toPath().startsWith(dustuiRepositoryRoot.toPath())) {
+        "DustUI signing properties must live outside the repository: ${dustuiSigningPropertiesFile.absolutePath}"
+    }
+    File(dustuiSigningValue("storeFile")).canonicalFile.also { store ->
+        check(store.isAbsolute && store.isFile) {
+            "DustUI personal signing keystore does not exist: ${store.absolutePath}"
+        }
+        check(!store.toPath().startsWith(dustuiRepositoryRoot.toPath())) {
+            "DustUI personal signing keystore must live outside the repository: ${store.absolutePath}"
+        }
+    }
+} else {
+    null
 }
 
 android {
@@ -30,6 +71,17 @@ android {
         }
     }
 
+    signingConfigs {
+        if (dustuiPersonalSigningConfigured) {
+            create("dustuiPersonal") {
+                storeFile = dustuiPersonalSigningStoreFile
+                storePassword = dustuiSigningValue("storePassword")
+                keyAlias = dustuiSigningValue("keyAlias")
+                keyPassword = dustuiSigningValue("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
@@ -39,6 +91,9 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            if (dustuiPersonalSigningConfigured) {
+                signingConfig = signingConfigs.getByName("dustuiPersonal")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -78,6 +133,45 @@ android {
         lintConfig = file("lint.xml")
     }
 }
+
+val dustuiSigningStatus = tasks.register("dustuiSigningStatus") {
+    group = "help"
+    description = "Show whether DustUI permanent personal release signing is configured."
+    doLast {
+        if (dustuiPersonalSigningConfigured) {
+            println("DustUI personal signing: configured")
+            println("Properties: ${dustuiSigningPropertiesFile.absolutePath}")
+            println("Keystore: ${dustuiPersonalSigningStoreFile?.absolutePath.orEmpty()}")
+            println("Alias: ${dustuiSigningValue("keyAlias")}")
+            println("Release APKs use this permanent certificate.")
+        } else {
+            println("DustUI personal signing: NOT configured")
+            println("Expected properties: ${dustuiSigningPropertiesFile.absolutePath}")
+            println("Run bash android/tools/setup-personal-signing.sh or set DUSTUI_ANDROID_SIGNING_PROPERTIES.")
+        }
+    }
+}
+
+val verifyDustuiPersonalSigningConfigured = tasks.register("verifyDustuiPersonalSigningConfigured") {
+    group = "verification"
+    description = "Fail unless DustUI permanent personal release signing is configured outside the repository."
+    doLast {
+        check(
+            dustuiPersonalSigningConfigured &&
+                dustuiPersonalSigningStoreFile?.isFile == true
+        ) {
+            "DustUI permanent personal signing is not configured. " +
+                "Run bash android/tools/setup-personal-signing.sh or set DUSTUI_ANDROID_SIGNING_PROPERTIES."
+        }
+        println("DustUI permanent personal signing configuration: PASS")
+    }
+}
+
+// Fail before expensive release compilation/R8/package work.
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+    dependsOn(verifyDustuiPersonalSigningConfigured)
+}
+
 
 kotlin {
     jvmToolchain(21)

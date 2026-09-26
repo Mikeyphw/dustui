@@ -293,3 +293,9 @@ Thumbs.db
 
 # AUD-FIX-14 exact historical Gate A/B/C replay worktrees
 .devtool/historical/
+# Android private signing material
+*.jks
+*.keystore
+*.p12
+*.pfx
+**/android-signing.properties

@@ -1,0 +1,5 @@
+# Real owner-only file defaults to ~/.config/devtool/dustui/android-signing.properties
+storeFile=/absolute/path/outside/repo/dustui-personal.p12
+storePassword=REPLACE_ME
+keyAlias=dustui
+keyPassword=REPLACE_ME
