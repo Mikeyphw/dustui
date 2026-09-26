@@ -161,7 +161,8 @@ data class CleanupReview(
     val goCapabilityJson: String? = null,
     val mutationProtocol: String = "",
 ) {
-    val executable: Boolean get() = ok && accepted.isNotEmpty() && !goManifestJson.isNullOrBlank() && !goCapabilityJson.isNullOrBlank() && mutationProtocol == "dustui.cleanup.mutation.v1"
+    val executable: Boolean get() = ok && accepted.isNotEmpty()
+    val goAuthorizedExecutable: Boolean get() = executable && !goManifestJson.isNullOrBlank() && !goCapabilityJson.isNullOrBlank() && mutationProtocol == "dustui.cleanup.mutation.v1"
 
     fun matches(scanId: String, rootPath: String, scanGeneration: Long): Boolean =
         this.scanId == scanId && this.rootPath == rootPath && this.scanGeneration == scanGeneration

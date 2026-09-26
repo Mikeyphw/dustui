@@ -180,6 +180,21 @@ class AppStorageInspectorTest {
     private fun report(packageName: String, installed: Boolean, cache: Long, total: Long): AppStoragePackageReport {
         val cacheBucket = AppStorageBucket(AppStorageBucketKind.CACHE, cache, 1, emptyList())
         val other = AppStorageBucket(AppStorageBucketKind.OTHER, total - cache, 1, emptyList())
-        return AppStoragePackageReport(packageName, packageName, installed, false, null, null, total, 0, listOf(cacheBucket, other), emptyList(), emptyList(), false)
+        return AppStoragePackageReport(
+            packageName = packageName,
+            appLabel = packageName,
+            installed = installed,
+            systemApp = false,
+            evidenceState = AppStorageEvidenceState.SUPPORTED,
+            evidenceReasons = emptyList(),
+            versionName = null,
+            versionCode = null,
+            totalBytes = total,
+            recentGrowthBytes = 0L,
+            buckets = listOf(cacheBucket, other),
+            duplicatePaths = emptyList(),
+            residuePaths = emptyList(),
+            recommendationsIgnored = false,
+        )
     }
 }

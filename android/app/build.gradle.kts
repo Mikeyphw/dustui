@@ -7,6 +7,12 @@ plugins {
 }
 
 android {
+    // DustUI production runtime is intentionally arm64-v8a.
+    // x86_64 is not packaged because the Go runtime contract binds production to arm64.
+    lint {
+        disable += "ChromeOsAbiSupport"
+    }
+
     namespace = "com.mikeyphw.dustui"
     compileSdk = 36
     buildToolsVersion = "36.0.0"
@@ -62,8 +68,8 @@ android {
     }
 
     sourceSets {
-        getByName("main").jniLibs.directories.add(layout.buildDirectory.dir("generated/goRuntime/jniLibs").get().asFile)
-        getByName("androidTest").assets.directories.add(file("$projectDir/schemas"))
+        getByName("main").jniLibs.directories.add(layout.buildDirectory.dir("generated/goRuntime/jniLibs").get().asFile.absolutePath)
+        getByName("androidTest").assets.srcDir(file("$projectDir/schemas"))
     }
 
 
@@ -85,7 +91,7 @@ ksp {
 }
 
 
-val buildGoAndroidRuntime by tasks.registering(Exec::class) {
+val buildGoAndroidRuntime = tasks.register("buildGoAndroidRuntime", Exec::class) {
     group = "build"
     description = "Build the production arm64 Android Go runtime and privileged root worker packaged as libdustui_go.so"
     val goRoot = rootProject.projectDir.parentFile.resolve("go")
@@ -127,6 +133,7 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     testImplementation(libs.junit)
+    testImplementation(libs.kotlin.test)
     androidTestImplementation(libs.junit)
     androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(libs.androidx.test.ext.junit)

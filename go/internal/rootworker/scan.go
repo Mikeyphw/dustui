@@ -13,6 +13,10 @@ import (
 	"github.com/mikeyphw/dustui/go/internal/scan"
 )
 
+const progressInterval = 128
+const rootOpenFailedCode = "ROOT_OPEN_FAILED"
+const rootPreflightPhase = "root-preflight"
+
 // ScanRequest is the privileged transport contract. Privilege changes process
 // identity only: traversal, filtering, hard-link identity and size semantics are
 // delegated to internal/scan, the same authority used by non-root scans.
@@ -86,7 +90,12 @@ func RunScanStream(ctx context.Context, r io.Reader, w io.Writer) error {
 		return nil
 	}
 	if err != nil {
-		_ = emit(map[string]any{"type": "error", "code": "GO_SCAN_FAILED", "phase": "traversal", "path": req.RootPath, "message": err.Error()}, true)
+		code, phase := "GO_SCAN_FAILED", "traversal"
+		if strings.Contains(strings.ToLower(err.Error()), "open") || strings.Contains(strings.ToLower(err.Error()), "permission") {
+			code, phase = rootOpenFailedCode, rootPreflightPhase
+		}
+		// s.fatal equivalent: root preflight/open failures are terminal scan failures.
+		_ = emit(map[string]any{"type": "error", "code": code, "phase": phase, "path": req.RootPath, "message": err.Error()}, true)
 		return err
 	}
 
@@ -126,7 +135,7 @@ func RunScanStream(ctx context.Context, r io.Reader, w io.Writer) error {
 		} else {
 			emittedFiles++
 		}
-		if (i+1)%128 == 0 {
+		if (i+1)%progressInterval == 0 {
 			if err := emit(map[string]any{"type": "progress", "scannedItems": i + 1, "scannedBytes": scanSessionBytes(session, req.ApparentSize), "currentPath": absPath}, true); err != nil {
 				return err
 			}

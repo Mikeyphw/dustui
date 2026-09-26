@@ -24,8 +24,20 @@ def rooted()->int:
     obj={'schema':'dustui.gate-d.rooted-arm64-runtime.v1','status':'fail'}
     if not adb: obj['reason']='adb not found'; return write('rooted-arm64-runtime',obj)
     cp=run(adb,'devices'); devices=[ln.split()[0] for ln in cp.stdout.splitlines()[1:] if ln.strip().endswith('\tdevice')]
-    if len(devices)!=1: obj['reason']=f'exactly one adb device required, found {len(devices)}'; obj['devices']=devices; return write('rooted-arm64-runtime',obj)
-    serial=devices[0]
+    requested=os.environ.get('ANDROID_SERIAL','').strip()
+    if requested:
+        if requested not in devices:
+            obj['reason']=f'ANDROID_SERIAL={requested!r} is not an online adb device'
+            obj['requested_device']=requested
+            obj['devices']=devices
+            return write('rooted-arm64-runtime',obj)
+        serial=requested
+    else:
+        if len(devices)!=1:
+            obj['reason']=f'exactly one adb device required when ANDROID_SERIAL is unset, found {len(devices)}'
+            obj['devices']=devices
+            return write('rooted-arm64-runtime',obj)
+        serial=devices[0]
     abi=run(adb,'-s',serial,'shell','getprop','ro.product.cpu.abi').stdout.strip()
     roots=[]
     for argv in ([adb,'-s',serial,'shell','su','-c','id'],[adb,'-s',serial,'shell','su','0','id']):
@@ -55,9 +67,82 @@ def runtime_binding()->int:
     return write('runtime-apk-binding',obj)
 
 def artifact_identity()->int:
-    tree=run('git','rev-parse','HEAD^{tree}'); ver=run('devtool','--version') if shutil.which('devtool') else None
-    obj={'schema':'dustui.gate-d.devtool-artifact-identity.v1','status':'pass' if tree.returncode==0 and ver and ver.returncode==0 else 'fail','source_tree_sha256':tree.stdout.strip() if tree.returncode==0 else None,'devtool_version':(ver.stdout or ver.stderr).strip() if ver else None,'devtool_run_id':os.environ.get('DEVTOOL_RUN_ID') or os.environ.get('DEVTOOL_RUN_UUID'),'note':'Canonical EXO run/log/artifact hashes are bound by Gate-D registry finalization; this leaf proves source-tree and installed Devtool identity.'}
-    if obj['status']!='pass': obj['reason']='git tree or devtool version unavailable'
+    tree=run('git','rev-parse','HEAD^{tree}')
+    exe=shutil.which('devtool')
+    help_cp=subprocess.run(
+        [exe,'--help'],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+    ) if exe else None
+
+    exe_path=Path(exe).resolve() if exe else None
+    exe_sha=sha(exe_path) if exe_path and exe_path.is_file() else None
+
+    module_path=None
+    module_sha=None
+    module_cp=run(
+        sys.executable,
+        '-c',
+        "import devtool, pathlib; "
+        "p=getattr(devtool,'__file__',None) or "
+        "getattr(getattr(devtool,'__spec__',None),'origin',None); "
+        "print(pathlib.Path(p).resolve() if p else '')",
+    )
+    if module_cp.returncode==0 and module_cp.stdout.strip():
+        candidate=Path(module_cp.stdout.strip())
+        if candidate.is_file():
+            module_path=str(candidate)
+            module_sha=sha(candidate)
+
+    dist_name=None
+    version=None
+    try:
+        import importlib.metadata as metadata
+        for candidate in metadata.packages_distributions().get('devtool', []):
+            try:
+                version=metadata.version(candidate)
+                dist_name=candidate
+                break
+            except metadata.PackageNotFoundError:
+                continue
+    except Exception:
+        pass
+
+    ok=(
+        tree.returncode==0
+        and help_cp is not None
+        and help_cp.returncode==0
+        and exe_path is not None
+        and exe_sha is not None
+    )
+
+    obj={
+        'schema':'dustui.gate-d.devtool-artifact-identity.v1',
+        'status':'pass' if ok else 'fail',
+        'source_tree_sha256':tree.stdout.strip() if tree.returncode==0 else None,
+        'devtool_version':version,
+        'devtool_distribution':dist_name,
+        'devtool_executable':str(exe_path) if exe_path else None,
+        'devtool_executable_sha256':exe_sha,
+        'devtool_module':module_path,
+        'devtool_module_sha256':module_sha,
+        'devtool_run_id':os.environ.get('DEVTOOL_RUN_ID')
+            or os.environ.get('DEVTOOL_RUN_UUID'),
+        'note':(
+            'Canonical EXO run/log/artifact hashes are bound by Gate-D '
+            'registry finalization; this leaf proves source-tree and '
+            'installed Devtool identity without assuming an unsupported '
+            '--version flag.'
+        ),
+    }
+
+    if not ok:
+        obj['reason']='git tree or installed Devtool executable identity unavailable'
+        if help_cp is not None and help_cp.returncode!=0:
+            obj['devtool_help_rc']=help_cp.returncode
+            obj['devtool_help_stderr']=help_cp.stderr[-2000:]
+
     return write('devtool-artifact-identity',obj)
 
 def reachability()->int:

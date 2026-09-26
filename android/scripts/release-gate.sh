@@ -2,7 +2,7 @@
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
-./gradlew --no-daemon --max-workers=1 clean testReleaseUnitTest lintRelease assembleRelease
+python3 "$(git rev-parse --show-toplevel)/scripts/devtool_gradle_bridge.py" --no-daemon --max-workers=1 clean testReleaseUnitTest lintRelease assembleRelease
 release_count="$(find app/build/outputs/apk/release -type f -name '*.apk' 2>/dev/null | wc -l | tr -d ' ')"
 if [[ "$release_count" -lt 1 ]]; then
   echo "missing release-gate artifact: release APK" >&2

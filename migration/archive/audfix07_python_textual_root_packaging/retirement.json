@@ -1,0 +1,10 @@
+{
+  "schema": "dustui.audfix07.python-textual-root-packaging-retirement.v1",
+  "live_root_pyproject_removed": true,
+  "reason": "AUD-FIX-07 requires root not to expose Python/Textual production packaging",
+  "product_authority": "Go host + Android",
+  "archives": [
+    "migration/archive/audfix07_python_textual_root_packaging/pyproject.toml",
+    "migration/oracle/python_textual/pyproject.toml"
+  ]
+}

@@ -171,7 +171,7 @@ class DatabaseSchemaContractTest {
         assertTrue(worker.contains("reconcileRequired"))
         assertTrue(root.contains("process.destroy()"))
         assertTrue(root.contains("cleanupJournalFile"))
-        assertTrue(viewModel.contains("result.status == "UNKNOWN_OUTCOME""))
+        assertTrue(viewModel.contains("result.status == \"UNKNOWN_OUTCOME\""))
     }
 
     @Test fun `broader ui async surfaces are request owned`() {

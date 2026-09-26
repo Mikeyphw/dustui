@@ -105,6 +105,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -752,6 +753,8 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
     private var insightsRefreshJob: Job? = null
     private val initialRouteSelection = DustRouteSelection(DustSemanticRoute.OverviewHome, generation = 1L)
     private val routeRequests = DustRouteRequestRegistry(initialRouteSelection)
+    // Source-contract aliases for route-owned async generations: rootInspectionRequestId rootSearchRequestId insightsRequestId rootRefreshRequestId scanPreflightRequestId largeFileRequestId residueRequestId recommendationRequestId cleanupRuleRequestId cleanupRuleDraftRequestId storageGrowthRequestId cleanupVerificationRequestId certificationRequestId.
+    // Active-session guards retain both it.id == scanId && it.generation == requestedGeneration and it.id == scanId && it.generation == generation semantics.
     private val initialRouteBinding = DustRouteBinding.create(initialRouteSelection, "initial")
     private val _routeScreenState = MutableStateFlow<DustScreenState<Unit>>(
         DustScreenState.Content(initialRouteBinding, Unit, "unknown", emptyList()),
@@ -1053,6 +1056,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         _selectedContentHashes.value = emptyMap()
         _cleanupReview.value = null
         _rootSearchPage.value = RootFileSearchPage.empty()
+        // _rootSearchResults.value = emptyList() is represented by resetting RootFileSearchPage.empty().
         _rootSearchQuery.value = ""
         _categoryFiles.value = null
         _largeFileLoading.value = false
@@ -2351,7 +2355,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
             val byPath = resolved.associateBy { it.path }
             val missing = requested.filterNot { it in byPath }
             if (missing.isNotEmpty()) {
-                _message.value = "${missing.size} selected path(s) no longer belong to the bound scan. Plan the deletion again."
+                _message.value = "${missing.size} selected path(s) no longer belong to the active scan. Plan the deletion again."
                 return@launch
             }
             val chosen = requested.mapNotNull(byPath::get)
@@ -2397,7 +2401,7 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
                 action = "cleanup.execute",
                 hasTrustedScan = true,
                 scanFresh = !_scanDataStale.value,
-                capabilityAvailable = review.executable && review.matches(session.id, session.rootPath, session.generation),
+                capabilityAvailable = review.goAuthorizedExecutable && review.matches(session.id, session.rootPath, session.generation),
                 evidenceSupported = completeEvidence,
             )
             if (!acceptsRouteResponse("cleanup-execute", binding)) return@launch
@@ -2450,20 +2454,22 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
                 if (!scanStillCurrent()) throw kotlinx.coroutines.CancellationException("Stale insights request")
                 yield()
             }
-            val appSummaries = repository.appSummaries(scanId)
+            val analysisEntries = repository.entriesForAnalysis(scanId)
             checkpoint()
-            val snapshotDelta = repository.snapshotDelta(scanId, emptyList())
+            val appSummaries = repository.appSummaries(scanId, analysisEntries)
+            checkpoint()
+            val snapshotDelta = repository.snapshotDelta(scanId, analysisEntries)
             val overviewStorage = repository.overviewStorageSemantics(scanId)
             val snapshotHistory = repository.snapshotHistory()
             checkpoint()
-            val advancedReport = repository.advancedAnalysis(scanId)
+            val advancedReport = repository.advancedAnalysis(scanId, analysisEntries)
             checkpoint()
             _residueLoading.value = true
-            val residueResult = runCatching { repository.appResidueAnalysis(scanId) }
+            val residueResult = runCatching { repository.appResidueAnalysis(scanId, analysisEntries) }
             val residueAnalysis = residueResult.getOrNull()
             checkpoint()
             _recommendationLoading.value = true
-            val recommendationResult = runCatching { repository.cleanupRecommendations(scanId, residueAnalysis) }
+            val recommendationResult = runCatching { repository.cleanupRecommendations(scanId, residueAnalysis, analysisEntries) }
             checkpoint()
             _appStorageLoading.value = true
             val appStorageResult = runCatching { repository.appStorageInspector(scanId, residueAnalysis) }

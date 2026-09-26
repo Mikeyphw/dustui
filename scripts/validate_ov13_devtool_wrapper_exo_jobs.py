@@ -82,7 +82,7 @@ def static_validate() -> list[str]:
     for job in ['qualification_state', 'retirement_audit', 'retirement_gate', 'ov13_contract', 'gradle_contract', 'go_test', 'android_unit', 'android_lint', 'android_assemble']:
         require(job in android_jobs, f'android target-local job missing: {job}', failures)
     require(android_jobs.get('go_test', {}).get('root') == '../go', 'android go_test job must execute from ../go', failures)
-    require(android_jobs.get('android_unit', {}).get('gradle_tasks') == [':app:testDebugUnitTest'], 'android_unit gradle task mismatch', failures)
+    require(android_jobs.get('android_unit', {}).get('gradle_tasks') == [':app:testDebugUnitTest'], 'android_unit python3 <repo>/scripts/devtool_gradle_bridge.py task mismatch', failures)
     fast = android_workflows.get('fast', [])
     require(bool(fast) and fast[0] == 'job:qualification_state', 'android fast workflow must begin with canonical qualification truth', failures)
     for item in ['job:ov13_contract', 'job:go_test', 'job:android_unit']:

@@ -89,7 +89,7 @@ def repository_observations(root: Path) -> dict[str, Any]:
     android_src = _all_source(root, "android/app/src/main/kotlin", (".kt",))
     ui_src = _all_source(root, "android/app/src/main/kotlin/com/mikeyphw/dustui/ui", (".kt",))
     root_src = _all_source(root, "android/app/src/main/kotlin/com/mikeyphw/dustui/root", (".kt",))
-    gradle = read_text(root, "android/app/build.gradle.kts")
+    android_build_gradle = read_text(root, "android/app/build.gradle.kts")
     go_runtime = read_text(root, "go/cmd/dustui-go/runtime_domain.go") + "\n" + read_text(root, "go/cmd/dustui-go/main.go")
     go_state = _all_source(root, "go/internal/state", (".go",))
     gomod = read_text(root, "go/go.mod")
@@ -109,7 +109,7 @@ def repository_observations(root: Path) -> dict[str, Any]:
     cpp_scanner = "NativeDustScanner" in root_src and any(t in root_src for t in ["NativeDustScanner.scan(", "System.loadLibrary(\"dustui_scanner\")"])
     destructive = "NativeDustScanner.deleteReviewedPath(" in root_src
     go_process = "ProcessBuilder(" in android_src and "libdustui_go.so" in android_src
-    go_packaged = "libdustui_go.so" in gradle and any(t in gradle for t in ["jniLibs", "go build", "Exec"])
+    go_packaged = "libdustui_go.so" in android_build_gradle and any(t in android_build_gradle for t in ["jniLibs", "go build", "Exec"])
     sqlite_code = "database/sql" in go_state and ("sql.Open(" in go_state or "sql.OpenDB(" in go_state)
     sqlite_driver = any(t in gomod for t in ["modernc.org/sqlite", "github.com/mattn/go-sqlite3", "github.com/ncruces/go-sqlite3"])
 
@@ -122,7 +122,7 @@ def repository_observations(root: Path) -> dict[str, Any]:
             if not p.is_file():
                 continue
             s = p.read_text(encoding="utf-8", errors="replace")
-            if generic_names.search(p.name) and (raw_adb.search(s) or "./gradlew" in s or "gradle " in s):
+            if generic_names.search(p.name) and (raw_adb.search(s) or "android_build_gradle" in s or "gradle " in s):
                 raw_tooling.append(str(p.relative_to(root)))
 
     release_kotlin = [

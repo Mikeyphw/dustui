@@ -17,10 +17,11 @@
     "legacy_destructive_executor": "none",
     "legacy_navigation": "none",
     "python_runtime": "none",
-    "room_domain_artifacts": "none"
+    "room_domain_artifacts": "none",
+    "room_domain_authority": "none"
   },
   "gate_d_observed_status": "open",
-  "next": "AUD-FIX-02",
+  "next": "AUD-FIX-02; rem03_android_domain_protocol_cutover",
   "observed": {
     "android_go_runtime_binding": "source-binding-present-unqualified",
     "cpp_scanner_runtime": "none",
@@ -30,10 +31,11 @@
     "legacy_destructive_executor": "none",
     "legacy_navigation": "predecessor-navigation-present",
     "python_runtime": "legacy-python-textual-present",
-    "room_domain_artifacts": "legacy-room-artifacts-present"
+    "room_domain_artifacts": "legacy-room-artifacts-present",
+    "room_domain_authority": "none"
   },
   "phase": "OV14",
   "qualification_state_source": "migration/qualification/v1/current_state.json",
   "schema": "dustui.ov14-retirement-observation.v2",
-  "status": "blocked_on_gate_d"
+  "status": "reopened_blocked"
 }

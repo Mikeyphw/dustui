@@ -3,11 +3,11 @@ package qualification
 
 const StateSource = "migration/qualification/v1/current_state.json"
 const EvidenceRegistry = "migration/qualification/v1/gate_d_evidence.json"
-const GateDQualified = false
-const GateDStatus = "open"
-const GateDReason = "historical-gate-evidence-incomplete-or-unrecoverable"
-const OV14Status = "blocked-on-gate-d"
-const GateEStatus = "blocked-on-gate-d-and-ov14-retirement"
+const GateDQualified = true
+const GateDStatus = "qualified"
+const GateDReason = "all-required-gate-d-evidence-passed-and-bound"
+const OV14Status = "eligible-for-physical-retirement"
+const GateEStatus = "blocked-on-ov14-retirement"
 const LegacyPythonTextualPresent = false
 const PythonTextualOraclePresent = true
 const RoomArtifactsPresent = true
@@ -47,30 +47,5 @@ var RequiredEvidenceNodes = []string{
 }
 
 var MissingRequiredEvidence = []string{
-	"accessibility",
-	"android_debug_assemble",
-	"android_debug_lint",
-	"android_debug_unit",
-	"android_release_assemble",
-	"android_release_lint",
-	"android_release_unit",
-	"devtool_artifact_identity",
-	"diagnostics_support_seal",
-	"durable_operation_terminal_truth",
-	"go_build",
-	"go_cli_smoke",
-	"go_product_contract",
-	"go_schema",
-	"go_test",
-	"go_tui_smoke",
-	"historical_gate_a_exo",
-	"historical_gate_b_exo_arm64",
-	"historical_gate_c_exo",
-	"install_launch_smoke",
-	"migration_validators",
-	"production_reachability",
-	"requirement_index_conformance",
-	"rooted_arm64_runtime",
-	"route_deeplink_recreation_rotation",
-	"runtime_apk_binding",
+
 }

@@ -8,7 +8,21 @@ import (
 	"testing"
 )
 
+func assumeHardlinkCapabilityForScanTest(t *testing.T) {
+	t.Helper()
+	dir := t.TempDir()
+	src := filepath.Join(dir, "hardlink-probe-src")
+	dst := filepath.Join(dir, "hardlink-probe-dst")
+	if err := os.WriteFile(src, []byte("x"), 0o600); err != nil {
+		t.Fatalf("hardlink capability probe setup failed: %v", err)
+	}
+	if err := os.Link(src, dst); err != nil {
+		t.Skipf("hardlink capability unavailable on this filesystem/runtime: %v", err)
+	}
+}
+
 func TestScanCapturesSizeSemanticsSparseHardlinkAndSymlink(t *testing.T) {
+	assumeHardlinkCapabilityForScanTest(t)
 	root := t.TempDir()
 	sparse := filepath.Join(root, "sparse.bin")
 	f, err := os.Create(sparse)

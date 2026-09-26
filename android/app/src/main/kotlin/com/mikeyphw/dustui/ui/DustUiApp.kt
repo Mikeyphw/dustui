@@ -1347,7 +1347,7 @@ private fun ScanLauncherSheet(
                                 enabled = rootReady && custom.isNotBlank(),
                                 modifier = Modifier.fillMaxWidth(),
                             ) { Text("Review this scope") }
-                            scanActionDisabledReason(rootReady, rootFailure)?.let(::DisabledReasonNotice)
+                            scanActionDisabledReason(rootReady, rootFailure)?.let { reason -> DisabledReasonNotice(reason) }
                         }
                     }
                 }
@@ -1601,9 +1601,12 @@ private fun Explorer(
                     Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)) {
                         Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("Treemap · tap a block to open", style = MaterialTheme.typography.titleSmall)
-                            StorageTreemap(entries) { entry ->
-                                if (entry.isDirectory) vm.open(entry) else openEntryDetails(entry)
-                            }
+                            StorageTreemap(
+                                entries = entries,
+                                onOpen = { entry: ScanEntryEntity ->
+                                    if (entry.isDirectory) vm.open(entry) else openEntryDetails(entry)
+                                },
+                            )
                             Text("Every visual block keeps a matching accessible row. Exact sizes remain available in the list and details sheet.", style = MaterialTheme.typography.labelSmall)
                         }
                     }

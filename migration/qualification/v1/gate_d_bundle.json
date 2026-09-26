@@ -1,0 +1,155 @@
+{
+  "closure_contract": {
+    "path": "scripts/audfix15_gate_d_closure.py",
+    "schema": "dustui.aud-fix-15.gate-d-closure-contract.v1",
+    "sha256": "c2cebf00f34e4af13deb5e625940f6f2aea07eabd421ddfc2a390b0c71799526"
+  },
+  "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+  "devtool_version": "devtool-version-unavailable",
+  "evidence_bridge_schema": "dustui.aud-fix-15.gate-d-evidence-bridge.v1",
+  "evidence_requirement_count": 26,
+  "git_commit": "9b1ac5d828556b0561b09aa0655c4b0515f95020",
+  "git_tree": "a8341b62aaac738f1cf80128a3e61452741aedb6",
+  "historical_discovery_sha256": "f4fa68746cce31fc780cff56c831cb338bccfc93104c1b9a698966b0e6c9d707",
+  "node_evidence": [
+    {
+      "path": "build/evidence/gate-d/nodes/historical_gate_a_exo.json",
+      "sha256": "e23e534e15fcc88c05dd288cdae8fd86decfc89964ca298698c5cdca27c829f0"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/historical_gate_b_exo_arm64.json",
+      "sha256": "29bd085f06ab0de54eed6572b6d312194ca8b0cea65db9bf7f82b068919b5967"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/historical_gate_c_exo.json",
+      "sha256": "f277291093911308cb783526eb2378d5678580338d203a4ec07ef389c65bed0a"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/requirement_index_conformance.json",
+      "sha256": "e8a56f98944acb1c454f18f33c2ea5c3811ca6401e1a0fa40771c3c777590662"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/go_test.json",
+      "sha256": "50942fcdbcb6849ff7a4efa229a3b1d2fb6ffa900d27940bbaf557ebdfebcdc3"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/go_build.json",
+      "sha256": "9c4c98f27b48cd284140fed773a9262fc4d7206250ff2ef0b5bf4c5766ff0617"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/go_schema.json",
+      "sha256": "700445924f1828c171615e18506a4fdaaeffb251c5478ae071d003f10d5f1c6f"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/go_product_contract.json",
+      "sha256": "d0c0cec0b396c65c070e151083ecf25e698e8cb77d3c543e9a4c581d22f92be0"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/go_cli_smoke.json",
+      "sha256": "a0d276093aeead9205d89d9fb1447ea8917c264af2ad7945b88e5dcbc72c5c62"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/go_tui_smoke.json",
+      "sha256": "f7a6a96866bf91e2fbec065b2c9eb5d8e7a480906d62080ca1b1f9e3a2f6b8aa"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/android_debug_unit.json",
+      "sha256": "d1322bc4af516c001b15b8cda1796f1926479f7fb56786f4c93558e10c0d7883"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/android_debug_lint.json",
+      "sha256": "83c310f29578f5223059b4cb8feb16d5ad11694ed4680443bfffc3ad7004a151"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/android_debug_assemble.json",
+      "sha256": "df8f45affbba2d9591ef1e732a29abf2f08fb26644d81f95f0629c0021efb7b0"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/android_debug_assemble-artifact.json",
+      "sha256": "fc10f3602481ba61a1582ec24a79ce2b70757e73a7f0156e231474ac5be29ab8"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/android_release_unit.json",
+      "sha256": "b4f09d8f25fe23587d193030a73f09b1f79dd59c0d235634727044d9c536c24d"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/android_release_lint.json",
+      "sha256": "a239d652be31af4bdbeffa21d0fe118a7f5dbffc693ddeb2173dda1a2d3a71ab"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/android_release_assemble.json",
+      "sha256": "ebfc3b5f71c7a17cb2063499e9138c5d704917b2aa45f6acb1e33f9059522a39"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/android_release_assemble-artifact.json",
+      "sha256": "665b4db3ef331b9898b8ad54e27d1e0d475a0be423acf0d631c2fb0852b85061"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/migration_validators.json",
+      "sha256": "807ef8874d041d393ca62457725117bc178b90d68b1f5eb82c2d37ab07011562"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/install_launch_smoke.json",
+      "sha256": "5e9aa44b9dbc8795a541ec366eeba3bca45ad7e57cd1439dab24565b375ce143"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/install_launch_smoke-artifact.json",
+      "sha256": "82c0e0cd479dee7ce300bcd0b24719d634364cf191f5e68b43e37bba71addc75"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/route_deeplink_recreation_rotation.json",
+      "sha256": "f4d1c897f6c17cad2b27897460c287bd3da6bf82ee17add0c00120a2d173bd40"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/accessibility.json",
+      "sha256": "65402432bd2031965ff5ac46a5caf23b21516960fc6f23ef8c311155c362f67c"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/rooted_arm64_runtime.json",
+      "sha256": "3247f49b3d03522fa52b5dd108105b68aa1163c266d753dc5fc6e45de6443a10"
+    },
+    {
+      "path": "build/evidence/gate-d/rooted-arm64-runtime.json",
+      "schema": "dustui.gate-d.rooted-arm64-runtime.v1",
+      "sha256": "db04116df36ab017df159596f948a7faff1390683b3ca289b4f47e9887d807b6"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/runtime_apk_binding.json",
+      "sha256": "1bbe4168be53064bcaf241d406501c7c9c407f1fa808861b212c5569e1b216fd"
+    },
+    {
+      "path": "build/evidence/gate-d/runtime-apk-binding.json",
+      "schema": "dustui.gate-d.runtime-apk-binding.v1",
+      "sha256": "75b8dabe1630f8782009e7d5f333a5c1bd1ac0c3fef6eaf4a7dc1a55bbb5c835"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/devtool_artifact_identity.json",
+      "sha256": "8ee139c8ae3cd78b85288531bab26f0d52a9984e26ee3c96538d167264b43c23"
+    },
+    {
+      "path": "build/evidence/gate-d/devtool-artifact-identity.json",
+      "schema": "dustui.gate-d.devtool-artifact-identity.v1",
+      "sha256": "18fb79a0a62b0d37df574f79a19cd26784981c5a0c783e240764ba60dc6d1c57"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/durable_operation_terminal_truth.json",
+      "sha256": "77bc5ef981e5a3d61c74e84547b1b630c8b9e8a99dfd3bcdba7c2f095ab380af"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/diagnostics_support_seal.json",
+      "sha256": "211d6d9a9dc6f955a2e6c44d8dd9fadd358ba39528b970f2dbaef5b24c0b7b6a"
+    },
+    {
+      "path": "build/evidence/gate-d/nodes/production_reachability.json",
+      "sha256": "53c50ecb36b4791087c5bb3b6e02d86408d8a0b604789e46766c10626f513282"
+    },
+    {
+      "path": "build/evidence/gate-d/production-reachability.json",
+      "schema": "dustui.gate-d.production-reachability.v1",
+      "sha256": "4a3b75dd0dea35d7a42f7eadf1936f3a641f8fba85d9173d292b3d06b6df7dd3"
+    }
+  ],
+  "schema": "dustui.gate-d-bundle.v1",
+  "source_snapshot_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69",
+  "topology_sha256": "c51348670b6eb090a87c893880696954168b22592a2bd07892b59a99318d444c"
+}

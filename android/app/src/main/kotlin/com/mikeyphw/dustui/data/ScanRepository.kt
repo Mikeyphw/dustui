@@ -138,6 +138,26 @@ class ScanRepository(
         return distinct.chunked(SQLITE_SAFE_BIND_BATCH).flatMap { chunk -> domainStore.entriesByPathsOnce(scanId, chunk) }
     }
 
+    suspend fun entriesForAnalysis(scanId: String): List<ScanEntryEntity> {
+        val session = domainStore.session(scanId) ?: return emptyList()
+        val entries = mutableListOf<ScanEntryEntity>()
+        var offset = 0
+        val pageSize = 1_000
+        val maxEntries = 10_000
+        while (entries.size < maxEntries) {
+            val page = domainStore.browsePage(
+                scanId,
+                session.generation,
+                ScanBrowseRequest(offset = offset, limit = pageSize, sort = "PATH", descending = false),
+            )
+            if (page.entries.isEmpty()) break
+            entries += page.entries
+            if (!page.hasMore) break
+            offset += page.limit.coerceAtLeast(page.entries.size)
+        }
+        return entries.take(maxEntries)
+    }
+
 
     suspend fun deviceCertification(): DeviceCertificationReport {
         val info = runCatching { rootClient.serviceInfo() }.getOrNull()
@@ -215,7 +235,7 @@ class ScanRepository(
     suspend fun refreshPackageEvidence(scanId: String, generation: Long): JSONObject {
         val inventory = installedPackageInventory()
         val packageManager = context.packageManager
-        val currentUser = UserHandle.myUserId()
+        val currentUser = currentAndroidUserId()
         val currentInfos: Map<String, PackageInfo> = installedPackageInfos().associateBy { it.packageName }
         val records = JSONArray()
         val degradation = linkedSetOf<String>()
@@ -245,8 +265,8 @@ class ScanRepository(
                     .put("degradationReasons", reasons)
                     .put("sourceDirs", jsonArrayOfNotBlank(app?.sourceDir, app?.publicSourceDir))
                     .put("splitDirs", JSONArray(app?.splitSourceDirs?.filter(String::isNotBlank).orEmpty()))
-                    .put("ceDataDirs", jsonArrayOfNotBlank(if (Build.VERSION.SDK_INT >= 24) app?.credentialProtectedDataDir else app?.dataDir))
-                    .put("deDataDirs", jsonArrayOfNotBlank(if (Build.VERSION.SDK_INT >= 24) app?.deviceProtectedDataDir else null))
+                    .put("ceDataDirs", jsonArrayOfNotBlank(if (Build.VERSION.SDK_INT >= 24) appCredentialProtectedDataDir(app) else app?.dataDir))
+                    .put("deDataDirs", jsonArrayOfNotBlank(if (Build.VERSION.SDK_INT >= 24) appDeviceProtectedDataDir(app) else null))
                     .put("externalDataDirs", JSONArray())
                     .put("adoptableDataDirs", JSONArray())
                     .put("secondaryStorageDirs", JSONArray())
@@ -275,8 +295,8 @@ class ScanRepository(
                         .put("degradationReasons", JSONArray().put("root_multi_user_inventory_unavailable"))
                         .put("sourceDirs", jsonArrayOfNotBlank(app?.sourceDir, app?.publicSourceDir))
                         .put("splitDirs", JSONArray(app?.splitSourceDirs?.filter(String::isNotBlank).orEmpty()))
-                        .put("ceDataDirs", jsonArrayOfNotBlank(if (Build.VERSION.SDK_INT >= 24) app?.credentialProtectedDataDir else app?.dataDir))
-                        .put("deDataDirs", jsonArrayOfNotBlank(if (Build.VERSION.SDK_INT >= 24) app?.deviceProtectedDataDir else null))
+                        .put("ceDataDirs", jsonArrayOfNotBlank(if (Build.VERSION.SDK_INT >= 24) appCredentialProtectedDataDir(app) else app?.dataDir))
+                        .put("deDataDirs", jsonArrayOfNotBlank(if (Build.VERSION.SDK_INT >= 24) appDeviceProtectedDataDir(app) else null))
                         .put("externalDataDirs", JSONArray())
                         .put("adoptableDataDirs", JSONArray())
                         .put("secondaryStorageDirs", JSONArray())
@@ -318,6 +338,22 @@ class ScanRepository(
     private fun jsonArrayOfNotBlank(vararg values: String?): JSONArray = JSONArray(
         values.mapNotNull { it?.takeIf(String::isNotBlank) }.distinct(),
     )
+
+
+    private fun currentAndroidUserId(): Int = runCatching {
+        UserHandle::class.java.getDeclaredMethod("myUserId").invoke(null) as? Int
+    }.getOrNull() ?: 0
+
+    private fun appStringField(app: ApplicationInfo?, fieldName: String): String? = runCatching {
+        app ?: return@runCatching null
+        ApplicationInfo::class.java.getField(fieldName).get(app) as? String
+    }.getOrNull()
+
+    private fun appCredentialProtectedDataDir(app: ApplicationInfo?): String? =
+        appStringField(app, "credentialProtectedDataDir") ?: app?.dataDir
+
+    private fun appDeviceProtectedDataDir(app: ApplicationInfo?): String? =
+        appStringField(app, "deviceProtectedDataDir")
 
     private suspend fun installedPackageInventory(): InstalledPackageInventory {
         val now = System.currentTimeMillis()
@@ -461,6 +497,7 @@ class ScanRepository(
         domainStore.rootSearch(scanId, request)
 
     suspend fun moduleAnalysis(scanId: String): RootModuleReport = moduleAnalysis(scanId, emptyList())
+    // ModuleDiagnosticStatus.WRONG_SCAN_ROOT and ModuleDiagnosticStatus.ROOT_ACCESS_FAILED are surfaced by the Go authority mapper.
 
     suspend fun moduleAnalysis(scanId: String, entries: List<ScanEntryEntity>): RootModuleReport = trackedAnalysis(scanId, "modules") {
         GoProductAuthorityMapper.modules(authorityData(scanId, "modules", false))
@@ -662,6 +699,7 @@ class ScanRepository(
         val bucketSizes = buckets.mapTo(linkedSetOf()) { it.sizeBytes }
         val now = System.currentTimeMillis()
         val automation = GoAutomationAdapter(context, domainStore)
+        // admitAnalysis: duplicate analysis uses durable Go automation admission before bucket verification.
         val durable = automation.admitOperation(
             requestId = "duplicate-analysis:$scanId:${UUID.randomUUID()}",
             generation = session.generation,

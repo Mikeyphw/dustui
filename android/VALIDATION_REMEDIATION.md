@@ -6,7 +6,7 @@ This file is part of the single master remediation overlay. It converts the rema
 
 ```bash
 cd android
-./gradlew --no-daemon --max-workers=1 :app:compileDebugKotlin :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+python3 "$(git rev-parse --show-toplevel)/scripts/devtool_gradle_bridge.py" --no-daemon --max-workers=1 :app:compileDebugKotlin :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
 ```
 
 ## Required Room migration validation

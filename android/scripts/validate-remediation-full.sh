@@ -4,7 +4,7 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 
-./gradlew --no-daemon --max-workers=1 \
+python3 "$(git rev-parse --show-toplevel)/scripts/devtool_gradle_bridge.py" --no-daemon --max-workers=1 \
   :app:compileDebugKotlin \
   :app:testDebugUnitTest \
   :app:lintDebug \

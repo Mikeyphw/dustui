@@ -8,7 +8,7 @@ tasks.register<Delete>("clean") {
     delete(layout.buildDirectory)
 }
 
-val verifyStableToolchainBaseline by tasks.registering {
+val verifyStableToolchainBaseline = tasks.register("verifyStableToolchainBaseline") {
     group = "verification"
     description = "Verifies DustUI's normalized stable Android toolchain baseline."
 
@@ -68,7 +68,7 @@ val verifyStableToolchainBaseline by tasks.registering {
 }
 
 
-val verifyDustMigrationContract by tasks.registering(Exec::class) {
+val verifyDustMigrationContract = tasks.register("verifyDustMigrationContract", Exec::class) {
     group = "verification"
     description = "Verifies DustUI OV13 Gate D product reconnect contract."
     workingDir = rootDir.parentFile

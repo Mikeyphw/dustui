@@ -140,7 +140,7 @@ class DatabaseSchemaContractTest {
     @Test fun `go deletion uses fd relative openat unlinkat contract`() {
         val worker = File(androidRoot.parentFile, "go/internal/rootworker/cleanup.go").readText()
         val root = File(androidRoot, "app/src/main/kotlin/com/mikeyphw/dustui/root/DustRootService.kt").readText()
-        val gradle = File(androidRoot, "app/build.gradle.kts").readText()
+        val python3 "$(git rev-parse --show-toplevel)/scripts/devtool_gradle_bridge.py" = File(androidRoot, "app/build.gradle.kts").readText()
         assertTrue(worker.contains("syscall.Openat"))
         assertTrue(worker.contains("O_NOFOLLOW"))
         assertTrue(worker.contains("syscall.Unlinkat"))

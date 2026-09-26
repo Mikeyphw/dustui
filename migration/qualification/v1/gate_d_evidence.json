@@ -1,11 +1,805 @@
 {
-  "finalizer": "scripts/audfix15_gate_d_evidence.py",
+  "closure_contract": {
+    "path": "scripts/audfix15_gate_d_closure.py",
+    "schema": "dustui.aud-fix-15.gate-d-closure-contract.v1",
+    "sha256": "c2cebf00f34e4af13deb5e625940f6f2aea07eabd421ddfc2a390b0c71799526"
+  },
+  "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+  "devtool_version": "devtool-version-unavailable",
+  "evidence_bridge": {
+    "blocker_ids": [
+      "GATE_D.NODE.HISTORICAL_GATE_A_EXO.REPLAY_REQUIRED",
+      "GATE_D.NODE.HISTORICAL_GATE_B_EXO_ARM64.REPLAY_REQUIRED",
+      "GATE_D.NODE.HISTORICAL_GATE_C_EXO.REPLAY_REQUIRED",
+      "GATE_D.NODE.REQUIREMENT_INDEX_CONFORMANCE.NOT_EXECUTED",
+      "GATE_D.NODE.GO_TEST.NOT_EXECUTED",
+      "GATE_D.NODE.GO_BUILD.NOT_EXECUTED",
+      "GATE_D.NODE.GO_SCHEMA.NOT_EXECUTED",
+      "GATE_D.NODE.GO_PRODUCT_CONTRACT.NOT_EXECUTED",
+      "GATE_D.NODE.GO_CLI_SMOKE.NOT_EXECUTED",
+      "GATE_D.NODE.GO_TUI_SMOKE.NOT_EXECUTED",
+      "GATE_D.NODE.ANDROID_DEBUG_UNIT.NOT_EXECUTED",
+      "GATE_D.NODE.ANDROID_DEBUG_LINT.NOT_EXECUTED",
+      "GATE_D.NODE.ANDROID_DEBUG_ASSEMBLE.NOT_EXECUTED",
+      "GATE_D.NODE.ANDROID_RELEASE_UNIT.NOT_EXECUTED",
+      "GATE_D.NODE.ANDROID_RELEASE_LINT.NOT_EXECUTED",
+      "GATE_D.NODE.ANDROID_RELEASE_ASSEMBLE.NOT_EXECUTED",
+      "GATE_D.NODE.MIGRATION_VALIDATORS.NOT_EXECUTED",
+      "GATE_D.NODE.INSTALL_LAUNCH_SMOKE.NOT_EXECUTED",
+      "GATE_D.NODE.ROUTE_DEEPLINK_RECREATION_ROTATION.NOT_EXECUTED",
+      "GATE_D.NODE.ACCESSIBILITY.NOT_EXECUTED",
+      "GATE_D.NODE.ROOTED_ARM64_RUNTIME.NOT_EXECUTED",
+      "GATE_D.NODE.RUNTIME_APK_BINDING.NOT_EXECUTED",
+      "GATE_D.NODE.DEVTOOL_ARTIFACT_IDENTITY.NOT_EXECUTED",
+      "GATE_D.NODE.DURABLE_OPERATION_TERMINAL_TRUTH.NOT_EXECUTED",
+      "GATE_D.NODE.DIAGNOSTICS_SUPPORT_SEAL.NOT_EXECUTED",
+      "GATE_D.NODE.PRODUCTION_REACHABILITY.NOT_EXECUTED"
+    ],
+    "material_finalizer_blocker_ids": [],
+    "requirements": [
+      {
+        "artifacts": [
+          {
+            "gate": "A",
+            "kind": "historical_discovery",
+            "path": "build/evidence/aud-fix/14/historical_discovery.json",
+            "present": true,
+            "status": "EXACT_TREE_IDENTIFIED_REPLAY_REQUIRED"
+          }
+        ],
+        "binding_contract_required": [
+          "historical_commit",
+          "historical_tree",
+          "replay_tree",
+          "workflow",
+          "devtool_version",
+          "run_id",
+          "log_sha256"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.HISTORICAL_GATE_A_EXO.REPLAY_REQUIRED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": true,
+        "node_id": "historical_gate_a_exo",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "historical_inventory"
+          ],
+          "gate_d_workflow_node": "historical_gate_a_exo",
+          "workflow_ref": "target:dustui_gate_a_history#requalify"
+        },
+        "status": "historical-replay-required"
+      },
+      {
+        "artifacts": [
+          {
+            "gate": "B",
+            "kind": "historical_discovery",
+            "path": "build/evidence/aud-fix/14/historical_discovery.json",
+            "present": true,
+            "status": "EXACT_TREE_IDENTIFIED_REPLAY_REQUIRED"
+          }
+        ],
+        "binding_contract_required": [
+          "historical_commit",
+          "historical_tree",
+          "replay_tree",
+          "workflow",
+          "devtool_version",
+          "run_id",
+          "log_sha256",
+          "device_arch",
+          "device_evidence_sha256"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.HISTORICAL_GATE_B_EXO_ARM64.REPLAY_REQUIRED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": true,
+        "node_id": "historical_gate_b_exo_arm64",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "historical_inventory"
+          ],
+          "gate_d_workflow_node": "historical_gate_b_exo_arm64",
+          "workflow_ref": "target:dustui_gate_b_history#requalify"
+        },
+        "status": "historical-replay-required"
+      },
+      {
+        "artifacts": [
+          {
+            "gate": "C",
+            "kind": "historical_discovery",
+            "path": "build/evidence/aud-fix/14/historical_discovery.json",
+            "present": true,
+            "status": "EXACT_TREE_IDENTIFIED_REPLAY_REQUIRED"
+          }
+        ],
+        "binding_contract_required": [
+          "historical_commit",
+          "historical_tree",
+          "replay_tree",
+          "workflow",
+          "devtool_version",
+          "run_id",
+          "log_sha256"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.HISTORICAL_GATE_C_EXO.REPLAY_REQUIRED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": true,
+        "node_id": "historical_gate_c_exo",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "historical_inventory"
+          ],
+          "gate_d_workflow_node": "historical_gate_c_exo",
+          "workflow_ref": "target:dustui_gate_c_history#requalify"
+        },
+        "status": "historical-replay-required"
+      },
+      {
+        "artifacts": [],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.REQUIREMENT_INDEX_CONFORMANCE.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "requirement_index_conformance",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "historical_gate_a_exo",
+            "historical_gate_b_exo_arm64",
+            "historical_gate_c_exo"
+          ],
+          "gate_d_workflow_node": "requirement_index_conformance",
+          "workflow_ref": "job:gate_d_requirement_conformance"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.GO_TEST.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "go_test",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "requirement_index_conformance"
+          ],
+          "gate_d_workflow_node": "go_test",
+          "workflow_ref": "target:dustui_go#gate_d_tests"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.GO_BUILD.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "go_build",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "go_test"
+          ],
+          "gate_d_workflow_node": "go_build",
+          "workflow_ref": "target:dustui_go#gate_d_build"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.GO_SCHEMA.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "go_schema",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "go_test"
+          ],
+          "gate_d_workflow_node": "go_schema",
+          "workflow_ref": "target:dustui_go#gate_d_schema"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.GO_PRODUCT_CONTRACT.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "go_product_contract",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "go_test"
+          ],
+          "gate_d_workflow_node": "go_product_contract",
+          "workflow_ref": "target:dustui_go#gate_d_product"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.GO_CLI_SMOKE.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "go_cli_smoke",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "go_build",
+            "go_product_contract"
+          ],
+          "gate_d_workflow_node": "go_cli_smoke",
+          "workflow_ref": "target:dustui_go#gate_d_cli"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.GO_TUI_SMOKE.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "go_tui_smoke",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "go_build",
+            "go_product_contract"
+          ],
+          "gate_d_workflow_node": "go_tui_smoke",
+          "workflow_ref": "target:dustui_go#gate_d_tui"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.ANDROID_DEBUG_UNIT.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "android_debug_unit",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "requirement_index_conformance",
+            "go_build"
+          ],
+          "gate_d_workflow_node": "android_debug_unit",
+          "workflow_ref": "job:android_unit"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.ANDROID_DEBUG_LINT.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "android_debug_lint",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "android_debug_unit"
+          ],
+          "gate_d_workflow_node": "android_debug_lint",
+          "workflow_ref": "job:android_lint"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [
+          {
+            "count": 1,
+            "finalizer_ready": true,
+            "kind": "output_glob",
+            "patterns": [
+              "android/app/build/outputs/apk/debug/**/*.apk"
+            ],
+            "sample": [
+              "android/app/build/outputs/apk/debug/app-debug.apk"
+            ]
+          }
+        ],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version",
+          "artifact_sha256"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.ANDROID_DEBUG_ASSEMBLE.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "android_debug_assemble",
+        "requires_artifact_binding": true,
+        "satisfier": {
+          "depends_on": [
+            "android_debug_lint"
+          ],
+          "gate_d_workflow_node": "android_debug_assemble",
+          "workflow_ref": "job:android_assemble"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.ANDROID_RELEASE_UNIT.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "android_release_unit",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "requirement_index_conformance",
+            "go_build"
+          ],
+          "gate_d_workflow_node": "android_release_unit",
+          "workflow_ref": "job:android_release_unit"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.ANDROID_RELEASE_LINT.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "android_release_lint",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "android_release_unit"
+          ],
+          "gate_d_workflow_node": "android_release_lint",
+          "workflow_ref": "job:android_release_lint"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [
+          {
+            "count": 1,
+            "finalizer_ready": true,
+            "kind": "output_glob",
+            "patterns": [
+              "android/app/build/outputs/apk/release/**/*.apk"
+            ],
+            "sample": [
+              "android/app/build/outputs/apk/release/app-release-unsigned.apk"
+            ]
+          }
+        ],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version",
+          "artifact_sha256"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.ANDROID_RELEASE_ASSEMBLE.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "android_release_assemble",
+        "requires_artifact_binding": true,
+        "satisfier": {
+          "depends_on": [
+            "android_release_lint"
+          ],
+          "gate_d_workflow_node": "android_release_assemble",
+          "workflow_ref": "job:android_release_assemble"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.MIGRATION_VALIDATORS.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "migration_validators",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "go_test"
+          ],
+          "gate_d_workflow_node": "migration_validators",
+          "workflow_ref": "target:dustui_android#gate_d_successor_validators"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [
+          {
+            "count": 34,
+            "finalizer_ready": true,
+            "kind": "output_glob",
+            "patterns": [
+              "android/app/build/outputs/androidTest-results/**/*",
+              "android/app/build/reports/androidTests/**/*"
+            ],
+            "sample": [
+              "android/app/build/outputs/androidTest-results/connected/debug/M2101K7BG - 16/aapt.1.fail.txt",
+              "android/app/build/outputs/androidTest-results/connected/debug/M2101K7BG - 16/aapt.2.fail.txt",
+              "android/app/build/outputs/androidTest-results/connected/debug/M2101K7BG - 16/cpuinfo",
+              "android/app/build/outputs/androidTest-results/connected/debug/M2101K7BG - 16/device-info.pb",
+              "android/app/build/outputs/androidTest-results/connected/debug/M2101K7BG - 16/logcat-com.mikeyphw.dustui.ui.AdaptiveRouteContinuityInstrumentedTest-focusTraversalOrderIsStableAcrossWideLayouts.txt",
+              "android/app/build/outputs/androidTest-results/connected/debug/M2101K7BG - 16/logcat-com.mikeyphw.dustui.ui.AdaptiveRouteContinuityInstrumentedTest-semanticDetailSurvivesPhoneTabletAndRotationPolicies.txt",
+              "android/app/build/outputs/androidTest-results/connected/debug/M2101K7BG - 16/logcat-com.mikeyphw.dustui.validation.DeviceScalePerformanceInstrumentedTest-goRootScannerHandlesAtLeastConfiguredLargeDatasetWithoutTruncation.txt",
+              "android/app/build/outputs/androidTest-results/connected/debug/M2101K7BG - 16/logcat-com.mikeyphw.dustui.validation.DustDatabaseMigrationInstrumentedTest-freshV3EnforcesScanEntryForeignKeyCascade.txt",
+              "android/app/build/outputs/androidTest-results/connected/debug/M2101K7BG - 16/logcat-com.mikeyphw.dustui.validation.DustDatabaseMigrationInstrumentedTest-migratesV1ToV3AndDropsOrphanEntries.txt",
+              "android/app/build/outputs/androidTest-results/connected/debug/M2101K7BG - 16/logcat-com.mikeyphw.dustui.validation.DustDatabaseMigrationInstrumentedTest-migratesV2ToV3AndMarksAbandonedRunningScansInterrupted.txt",
+              "android/app/build/outputs/androidTest-results/connected/debug/M2101K7BG - 16/logcat-com.mikeyphw.dustui.validation.MultiUserResidueValidationInstrumentedTest-residueAnalyzerTreatsAnyUserInstallAsAuthoritative.txt",
+              "android/app/build/outputs/androidTest-results/connected/debug/M2101K7BG - 16/logcat-com.mikeyphw.dustui.validation.MultiUserResidueValidationInstrumentedTest-rootedDeviceEnumeratesMultipleUsersBeforeResidueValidation.txt"
+            ]
+          }
+        ],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version",
+          "artifact_sha256"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.INSTALL_LAUNCH_SMOKE.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "install_launch_smoke",
+        "requires_artifact_binding": true,
+        "satisfier": {
+          "depends_on": [
+            "android_debug_assemble"
+          ],
+          "gate_d_workflow_node": "install_launch_smoke",
+          "workflow_ref": "job:gate_d_install_launch_smoke"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.ROUTE_DEEPLINK_RECREATION_ROTATION.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "route_deeplink_recreation_rotation",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "install_launch_smoke"
+          ],
+          "gate_d_workflow_node": "route_deeplink_recreation_rotation",
+          "workflow_ref": "job:gate_d_route_instrumentation"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.ACCESSIBILITY.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "accessibility",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "install_launch_smoke"
+          ],
+          "gate_d_workflow_node": "accessibility",
+          "workflow_ref": "job:gate_d_accessibility_instrumentation"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [
+          {
+            "finalizer_ready": true,
+            "kind": "evidence_json",
+            "load_error": null,
+            "path": "build/evidence/gate-d/rooted-arm64-runtime.json",
+            "present": true,
+            "schema": "dustui.gate-d.rooted-arm64-runtime.v1",
+            "status": "pass"
+          }
+        ],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version",
+          "artifact_sha256"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.ROOTED_ARM64_RUNTIME.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "rooted_arm64_runtime",
+        "requires_artifact_binding": true,
+        "satisfier": {
+          "depends_on": [
+            "android_debug_assemble"
+          ],
+          "gate_d_workflow_node": "rooted_arm64_runtime",
+          "workflow_ref": "job:gate_d_rooted_arm64_runtime"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [
+          {
+            "finalizer_ready": true,
+            "kind": "evidence_json",
+            "load_error": null,
+            "path": "build/evidence/gate-d/runtime-apk-binding.json",
+            "present": true,
+            "schema": "dustui.gate-d.runtime-apk-binding.v1",
+            "status": "pass"
+          }
+        ],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version",
+          "artifact_sha256"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.RUNTIME_APK_BINDING.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "runtime_apk_binding",
+        "requires_artifact_binding": true,
+        "satisfier": {
+          "depends_on": [
+            "android_debug_assemble",
+            "android_release_assemble",
+            "rooted_arm64_runtime"
+          ],
+          "gate_d_workflow_node": "runtime_apk_binding",
+          "workflow_ref": "job:gate_d_runtime_apk_binding"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [
+          {
+            "finalizer_ready": true,
+            "kind": "evidence_json",
+            "load_error": null,
+            "path": "build/evidence/gate-d/devtool-artifact-identity.json",
+            "present": true,
+            "schema": "dustui.gate-d.devtool-artifact-identity.v1",
+            "status": "pass"
+          }
+        ],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version",
+          "artifact_sha256"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.DEVTOOL_ARTIFACT_IDENTITY.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "devtool_artifact_identity",
+        "requires_artifact_binding": true,
+        "satisfier": {
+          "depends_on": [
+            "runtime_apk_binding"
+          ],
+          "gate_d_workflow_node": "devtool_artifact_identity",
+          "workflow_ref": "job:gate_d_devtool_artifact_identity"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.DURABLE_OPERATION_TERMINAL_TRUTH.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "durable_operation_terminal_truth",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "go_test",
+            "migration_validators"
+          ],
+          "gate_d_workflow_node": "durable_operation_terminal_truth",
+          "workflow_ref": "target:dustui_go#gate_d_durable"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.DIAGNOSTICS_SUPPORT_SEAL.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "diagnostics_support_seal",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "durable_operation_terminal_truth"
+          ],
+          "gate_d_workflow_node": "diagnostics_support_seal",
+          "workflow_ref": "target:dustui_go#gate_d_diagnostics"
+        },
+        "status": "not-run"
+      },
+      {
+        "artifacts": [
+          {
+            "finalizer_ready": true,
+            "kind": "evidence_json",
+            "load_error": null,
+            "path": "build/evidence/gate-d/production-reachability.json",
+            "present": true,
+            "schema": "dustui.gate-d.production-reachability.v1",
+            "status": "pass"
+          }
+        ],
+        "binding_contract_required": [
+          "source_tree_sha256",
+          "devtool_run_id",
+          "devtool_version"
+        ],
+        "blocker_ids": [
+          "GATE_D.NODE.PRODUCTION_REACHABILITY.NOT_EXECUTED"
+        ],
+        "finalizer_blocker_ids": [],
+        "historical": false,
+        "node_id": "production_reachability",
+        "requires_artifact_binding": false,
+        "satisfier": {
+          "depends_on": [
+            "go_cli_smoke",
+            "go_tui_smoke",
+            "route_deeplink_recreation_rotation",
+            "accessibility",
+            "diagnostics_support_seal",
+            "devtool_artifact_identity"
+          ],
+          "gate_d_workflow_node": "production_reachability",
+          "workflow_ref": "job:gate_d_production_reachability"
+        },
+        "status": "not-run"
+      }
+    ],
+    "schema": "dustui.aud-fix-15.gate-d-evidence-bridge.v1"
+  },
   "gate_d_bundle": "migration/qualification/v1/gate_d_bundle.json",
-  "gate_d_bundle_sha256": null,
+  "gate_d_bundle_sha256": "2a5614d87f08118a9120c2c46d2a5e7674f73cea852fe2c8e1aa9b7046fcc557",
+  "git_commit": "9b1ac5d828556b0561b09aa0655c4b0515f95020",
+  "git_tree": "a8341b62aaac738f1cf80128a3e61452741aedb6",
   "historical_inventory": "migration/qualification/v1/historical_gate_evidence.json",
   "nodes": [
     {
-      "binding": {},
+      "binding": {
+        "devtool_version": "devtool-version-unavailable",
+        "historical_commit": "4a7d5a6e2f1ec104952800b97a2e4975415975ae",
+        "historical_tree": "05f46d60f93b6ce96f4f9a355f19812c0267046a",
+        "log_sha256": "e23e534e15fcc88c05dd288cdae8fd86decfc89964ca298698c5cdca27c829f0",
+        "replay_tree": "05f46d60f93b6ce96f4f9a355f19812c0267046a",
+        "run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "workflow": "target:dustui_gate_a_history#requalify"
+      },
       "binding_contract": {
         "required": [
           "historical_commit",
@@ -17,17 +811,32 @@
           "log_sha256"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/historical_gate_a_exo.json",
+          "sha256": "e23e534e15fcc88c05dd288cdae8fd86decfc89964ca298698c5cdca27c829f0"
+        }
+      ],
       "historical": true,
       "id": "historical_gate_a_exo",
       "kind": "historical-exo",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "historical-replay-required",
+      "status": "pass",
       "workflow_ref": "target:dustui_gate_a_history#requalify"
     },
     {
-      "binding": {},
+      "binding": {
+        "device_arch": "arm64-v8a",
+        "device_evidence_sha256": "db04116df36ab017df159596f948a7faff1390683b3ca289b4f47e9887d807b6",
+        "devtool_version": "devtool-version-unavailable",
+        "historical_commit": "9ef0d8e0b873a010490318240e6d198b08160a92",
+        "historical_tree": "33de13959d3f6d71962267d37126306f7b5a4b25",
+        "log_sha256": "29bd085f06ab0de54eed6572b6d312194ca8b0cea65db9bf7f82b068919b5967",
+        "replay_tree": "33de13959d3f6d71962267d37126306f7b5a4b25",
+        "run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "workflow": "target:dustui_gate_b_history#requalify"
+      },
       "binding_contract": {
         "required": [
           "historical_commit",
@@ -41,17 +850,30 @@
           "device_evidence_sha256"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/historical_gate_b_exo_arm64.json",
+          "sha256": "29bd085f06ab0de54eed6572b6d312194ca8b0cea65db9bf7f82b068919b5967"
+        }
+      ],
       "historical": true,
       "id": "historical_gate_b_exo_arm64",
       "kind": "historical-exo-device",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "historical-replay-required",
+      "status": "pass",
       "workflow_ref": "target:dustui_gate_b_history#requalify"
     },
     {
-      "binding": {},
+      "binding": {
+        "devtool_version": "devtool-version-unavailable",
+        "historical_commit": "93ea9561af1e718b2639dcb5f125a9582a04a864",
+        "historical_tree": "73b0095f8b1c736635314d19e642d6dac7b868e0",
+        "log_sha256": "f277291093911308cb783526eb2378d5678580338d203a4ec07ef389c65bed0a",
+        "replay_tree": "73b0095f8b1c736635314d19e642d6dac7b868e0",
+        "run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "workflow": "target:dustui_gate_c_history#requalify"
+      },
       "binding_contract": {
         "required": [
           "historical_commit",
@@ -63,17 +885,26 @@
           "log_sha256"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/historical_gate_c_exo.json",
+          "sha256": "f277291093911308cb783526eb2378d5678580338d203a4ec07ef389c65bed0a"
+        }
+      ],
       "historical": true,
       "id": "historical_gate_c_exo",
       "kind": "historical-exo",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "historical-replay-required",
+      "status": "pass",
       "workflow_ref": "target:dustui_gate_c_history#requalify"
     },
     {
-      "binding": {},
+      "binding": {
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -81,17 +912,26 @@
           "devtool_version"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/requirement_index_conformance.json",
+          "sha256": "e8a56f98944acb1c454f18f33c2ea5c3811ca6401e1a0fa40771c3c777590662"
+        }
+      ],
       "historical": false,
       "id": "requirement_index_conformance",
       "kind": "requirement-conformance",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "job:gate_d_requirement_conformance"
     },
     {
-      "binding": {},
+      "binding": {
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -99,17 +939,26 @@
           "devtool_version"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/go_test.json",
+          "sha256": "50942fcdbcb6849ff7a4efa229a3b1d2fb6ffa900d27940bbaf557ebdfebcdc3"
+        }
+      ],
       "historical": false,
       "id": "go_test",
       "kind": "go-test",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "target:dustui_go#gate_d_tests"
     },
     {
-      "binding": {},
+      "binding": {
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -117,17 +966,26 @@
           "devtool_version"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/go_build.json",
+          "sha256": "9c4c98f27b48cd284140fed773a9262fc4d7206250ff2ef0b5bf4c5766ff0617"
+        }
+      ],
       "historical": false,
       "id": "go_build",
       "kind": "go-build",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "target:dustui_go#gate_d_build"
     },
     {
-      "binding": {},
+      "binding": {
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -135,17 +993,26 @@
           "devtool_version"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/go_schema.json",
+          "sha256": "700445924f1828c171615e18506a4fdaaeffb251c5478ae071d003f10d5f1c6f"
+        }
+      ],
       "historical": false,
       "id": "go_schema",
       "kind": "go-contract",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "target:dustui_go#gate_d_schema"
     },
     {
-      "binding": {},
+      "binding": {
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -153,17 +1020,26 @@
           "devtool_version"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/go_product_contract.json",
+          "sha256": "d0c0cec0b396c65c070e151083ecf25e698e8cb77d3c543e9a4c581d22f92be0"
+        }
+      ],
       "historical": false,
       "id": "go_product_contract",
       "kind": "go-contract",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "target:dustui_go#gate_d_product"
     },
     {
-      "binding": {},
+      "binding": {
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -171,17 +1047,26 @@
           "devtool_version"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/go_cli_smoke.json",
+          "sha256": "a0d276093aeead9205d89d9fb1447ea8917c264af2ad7945b88e5dcbc72c5c62"
+        }
+      ],
       "historical": false,
       "id": "go_cli_smoke",
       "kind": "go-runtime",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "target:dustui_go#gate_d_cli"
     },
     {
-      "binding": {},
+      "binding": {
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -189,17 +1074,26 @@
           "devtool_version"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/go_tui_smoke.json",
+          "sha256": "f7a6a96866bf91e2fbec065b2c9eb5d8e7a480906d62080ca1b1f9e3a2f6b8aa"
+        }
+      ],
       "historical": false,
       "id": "go_tui_smoke",
       "kind": "go-runtime",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "target:dustui_go#gate_d_tui"
     },
     {
-      "binding": {},
+      "binding": {
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -207,17 +1101,26 @@
           "devtool_version"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/android_debug_unit.json",
+          "sha256": "d1322bc4af516c001b15b8cda1796f1926479f7fb56786f4c93558e10c0d7883"
+        }
+      ],
       "historical": false,
       "id": "android_debug_unit",
       "kind": "android-unit",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "job:android_unit"
     },
     {
-      "binding": {},
+      "binding": {
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -225,17 +1128,27 @@
           "devtool_version"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/android_debug_lint.json",
+          "sha256": "83c310f29578f5223059b4cb8feb16d5ad11694ed4680443bfffc3ad7004a151"
+        }
+      ],
       "historical": false,
       "id": "android_debug_lint",
       "kind": "android-lint",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "job:android_lint"
     },
     {
-      "binding": {},
+      "binding": {
+        "artifact_sha256": "fc10f3602481ba61a1582ec24a79ce2b70757e73a7f0156e231474ac5be29ab8",
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -244,17 +1157,30 @@
           "artifact_sha256"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/android_debug_assemble.json",
+          "sha256": "df8f45affbba2d9591ef1e732a29abf2f08fb26644d81f95f0629c0021efb7b0"
+        },
+        {
+          "path": "build/evidence/gate-d/nodes/android_debug_assemble-artifact.json",
+          "sha256": "fc10f3602481ba61a1582ec24a79ce2b70757e73a7f0156e231474ac5be29ab8"
+        }
+      ],
       "historical": false,
       "id": "android_debug_assemble",
       "kind": "android-build",
       "required": true,
       "requires_artifact_binding": true,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "job:android_assemble"
     },
     {
-      "binding": {},
+      "binding": {
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -262,17 +1188,26 @@
           "devtool_version"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/android_release_unit.json",
+          "sha256": "b4f09d8f25fe23587d193030a73f09b1f79dd59c0d235634727044d9c536c24d"
+        }
+      ],
       "historical": false,
       "id": "android_release_unit",
       "kind": "android-unit",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "job:android_release_unit"
     },
     {
-      "binding": {},
+      "binding": {
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -280,17 +1215,27 @@
           "devtool_version"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/android_release_lint.json",
+          "sha256": "a239d652be31af4bdbeffa21d0fe118a7f5dbffc693ddeb2173dda1a2d3a71ab"
+        }
+      ],
       "historical": false,
       "id": "android_release_lint",
       "kind": "android-lint",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "job:android_release_lint"
     },
     {
-      "binding": {},
+      "binding": {
+        "artifact_sha256": "665b4db3ef331b9898b8ad54e27d1e0d475a0be423acf0d631c2fb0852b85061",
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -299,17 +1244,30 @@
           "artifact_sha256"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/android_release_assemble.json",
+          "sha256": "ebfc3b5f71c7a17cb2063499e9138c5d704917b2aa45f6acb1e33f9059522a39"
+        },
+        {
+          "path": "build/evidence/gate-d/nodes/android_release_assemble-artifact.json",
+          "sha256": "665b4db3ef331b9898b8ad54e27d1e0d475a0be423acf0d631c2fb0852b85061"
+        }
+      ],
       "historical": false,
       "id": "android_release_assemble",
       "kind": "android-build",
       "required": true,
       "requires_artifact_binding": true,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "job:android_release_assemble"
     },
     {
-      "binding": {},
+      "binding": {
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -317,17 +1275,27 @@
           "devtool_version"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/migration_validators.json",
+          "sha256": "807ef8874d041d393ca62457725117bc178b90d68b1f5eb82c2d37ab07011562"
+        }
+      ],
       "historical": false,
       "id": "migration_validators",
       "kind": "migration-validation",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "target:dustui_android#gate_d_successor_validators"
     },
     {
-      "binding": {},
+      "binding": {
+        "artifact_sha256": "82c0e0cd479dee7ce300bcd0b24719d634364cf191f5e68b43e37bba71addc75",
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -336,17 +1304,30 @@
           "artifact_sha256"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/install_launch_smoke.json",
+          "sha256": "5e9aa44b9dbc8795a541ec366eeba3bca45ad7e57cd1439dab24565b375ce143"
+        },
+        {
+          "path": "build/evidence/gate-d/nodes/install_launch_smoke-artifact.json",
+          "sha256": "82c0e0cd479dee7ce300bcd0b24719d634364cf191f5e68b43e37bba71addc75"
+        }
+      ],
       "historical": false,
       "id": "install_launch_smoke",
       "kind": "device-runtime",
       "required": true,
       "requires_artifact_binding": true,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "job:gate_d_install_launch_smoke"
     },
     {
-      "binding": {},
+      "binding": {
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -354,17 +1335,26 @@
           "devtool_version"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/route_deeplink_recreation_rotation.json",
+          "sha256": "f4d1c897f6c17cad2b27897460c287bd3da6bf82ee17add0c00120a2d173bd40"
+        }
+      ],
       "historical": false,
       "id": "route_deeplink_recreation_rotation",
       "kind": "instrumentation",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "job:gate_d_route_instrumentation"
     },
     {
-      "binding": {},
+      "binding": {
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -372,17 +1362,27 @@
           "devtool_version"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/accessibility.json",
+          "sha256": "65402432bd2031965ff5ac46a5caf23b21516960fc6f23ef8c311155c362f67c"
+        }
+      ],
       "historical": false,
       "id": "accessibility",
       "kind": "accessibility",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "job:gate_d_accessibility_instrumentation"
     },
     {
-      "binding": {},
+      "binding": {
+        "artifact_sha256": "db04116df36ab017df159596f948a7faff1390683b3ca289b4f47e9887d807b6",
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -391,17 +1391,32 @@
           "artifact_sha256"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/rooted_arm64_runtime.json",
+          "sha256": "3247f49b3d03522fa52b5dd108105b68aa1163c266d753dc5fc6e45de6443a10"
+        },
+        {
+          "path": "build/evidence/gate-d/rooted-arm64-runtime.json",
+          "schema": "dustui.gate-d.rooted-arm64-runtime.v1",
+          "sha256": "db04116df36ab017df159596f948a7faff1390683b3ca289b4f47e9887d807b6"
+        }
+      ],
       "historical": false,
       "id": "rooted_arm64_runtime",
       "kind": "rooted-device-runtime",
       "required": true,
       "requires_artifact_binding": true,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "job:gate_d_rooted_arm64_runtime"
     },
     {
-      "binding": {},
+      "binding": {
+        "artifact_sha256": "75b8dabe1630f8782009e7d5f333a5c1bd1ac0c3fef6eaf4a7dc1a55bbb5c835",
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -410,17 +1425,32 @@
           "artifact_sha256"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/runtime_apk_binding.json",
+          "sha256": "1bbe4168be53064bcaf241d406501c7c9c407f1fa808861b212c5569e1b216fd"
+        },
+        {
+          "path": "build/evidence/gate-d/runtime-apk-binding.json",
+          "schema": "dustui.gate-d.runtime-apk-binding.v1",
+          "sha256": "75b8dabe1630f8782009e7d5f333a5c1bd1ac0c3fef6eaf4a7dc1a55bbb5c835"
+        }
+      ],
       "historical": false,
       "id": "runtime_apk_binding",
       "kind": "artifact-binding",
       "required": true,
       "requires_artifact_binding": true,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "job:gate_d_runtime_apk_binding"
     },
     {
-      "binding": {},
+      "binding": {
+        "artifact_sha256": "18fb79a0a62b0d37df574f79a19cd26784981c5a0c783e240764ba60dc6d1c57",
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -429,17 +1459,31 @@
           "artifact_sha256"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/devtool_artifact_identity.json",
+          "sha256": "8ee139c8ae3cd78b85288531bab26f0d52a9984e26ee3c96538d167264b43c23"
+        },
+        {
+          "path": "build/evidence/gate-d/devtool-artifact-identity.json",
+          "schema": "dustui.gate-d.devtool-artifact-identity.v1",
+          "sha256": "18fb79a0a62b0d37df574f79a19cd26784981c5a0c783e240764ba60dc6d1c57"
+        }
+      ],
       "historical": false,
       "id": "devtool_artifact_identity",
       "kind": "artifact-binding",
       "required": true,
       "requires_artifact_binding": true,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "job:gate_d_devtool_artifact_identity"
     },
     {
-      "binding": {},
+      "binding": {
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -447,17 +1491,26 @@
           "devtool_version"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/durable_operation_terminal_truth.json",
+          "sha256": "77bc5ef981e5a3d61c74e84547b1b630c8b9e8a99dfd3bcdba7c2f095ab380af"
+        }
+      ],
       "historical": false,
       "id": "durable_operation_terminal_truth",
       "kind": "runtime-truth",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "target:dustui_go#gate_d_durable"
     },
     {
-      "binding": {},
+      "binding": {
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -465,17 +1518,27 @@
           "devtool_version"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/diagnostics_support_seal.json",
+          "sha256": "211d6d9a9dc6f955a2e6c44d8dd9fadd358ba39528b970f2dbaef5b24c0b7b6a"
+        }
+      ],
       "historical": false,
       "id": "diagnostics_support_seal",
       "kind": "privacy-diagnostics",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "target:dustui_go#gate_d_diagnostics"
     },
     {
-      "binding": {},
+      "binding": {
+        "artifact_sha256": "4a3b75dd0dea35d7a42f7eadf1936f3a641f8fba85d9173d292b3d06b6df7dd3",
+        "devtool_run_id": "5ff08d056e2c480caf3e3f44340cc4bb",
+        "devtool_version": "devtool-version-unavailable",
+        "source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
+      },
       "binding_contract": {
         "required": [
           "source_tree_sha256",
@@ -483,18 +1546,28 @@
           "devtool_version"
         ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "build/evidence/gate-d/nodes/production_reachability.json",
+          "sha256": "53c50ecb36b4791087c5bb3b6e02d86408d8a0b604789e46766c10626f513282"
+        },
+        {
+          "path": "build/evidence/gate-d/production-reachability.json",
+          "schema": "dustui.gate-d.production-reachability.v1",
+          "sha256": "4a3b75dd0dea35d7a42f7eadf1936f3a641f8fba85d9173d292b3d06b6df7dd3"
+        }
+      ],
       "historical": false,
       "id": "production_reachability",
       "kind": "reachability",
       "required": true,
       "requires_artifact_binding": false,
-      "status": "not-run",
+      "status": "pass",
       "workflow_ref": "job:gate_d_production_reachability"
     }
   ],
-  "qualification_rule": "Gate D is qualified only by an AUD-FIX-15 Devtool-finalized evidence registry: all required topology nodes must pass in one Devtool Gate-D run, current-tree nodes must share one deterministic source projection, artifact-required nodes must carry artifact hashes, and exact historical replay nodes must bind immutable historical commit/tree evidence.",
+  "qualification_rule": "Gate D is qualified only by this Devtool-finalized evidence registry: all required topology nodes must have passed in one Devtool run, all current-tree nodes must bind to one deterministic source projection, artifact-required nodes must carry artifact hashes, historical nodes must bind exact historical replay evidence, and the AUD-FIX-15 evidence bridge must report no material finalizer blockers.",
   "schema": "dustui.gate-d-evidence-registry.v3",
-  "source_snapshot_sha256": "95f9cc3d0a8944d3cdcef188e12573cfaf73e9838db75b1ab7f1cc64193451d2",
+  "source_snapshot_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69",
   "topology": "migration/qualification/v1/gate_d_topology.json"
 }

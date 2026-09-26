@@ -1,12 +1,12 @@
 package com.mikeyphw.dustui.diagnostics
 
 import java.io.File
-import kotlin.test.Test
+import org.junit.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class AudFix05DiagnosticsContractTest {
-    private val root = generateSequence(File(System.getProperty("user.dir")).absoluteFile) { it.parentFile }.first { File(it, ".devtool.toml").isFile }
+    private val root = generateSequence(File(requireNotNull(System.getProperty("user.dir"))).absoluteFile) { it.parentFile }.first { File(it, ".devtool.toml").isFile }
     private fun read(path: String) = File(root, path).readText()
 
     @Test fun `support export is Go sealed and Android is packaging only`() {

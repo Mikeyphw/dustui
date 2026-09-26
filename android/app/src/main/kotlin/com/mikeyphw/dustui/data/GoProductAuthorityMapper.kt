@@ -72,7 +72,7 @@ internal object GoProductAuthorityMapper {
         typeBuckets = o.optJSONArray("typeBuckets").objects().map(::storageBucket),
         ageBuckets = o.optJSONArray("ageBuckets").objects().map(::storageBucket),
         mountTopology = o.optJSONArray("mountTopology").objects().map { x -> MountTopology(x.optString("source"), x.optString("target"), x.optString("filesystem"), x.optBoolean("bind"), x.optBoolean("overlay"), x.optBoolean("readOnly")) },
-        orphanedPackages = appSummaries(o.optJSONArray("orphanedPackages")),
+        orphanedPackages = appSummaries(o.optJSONArray("orphanedPackages") ?: JSONArray()),
     )
 
     private fun storageBucket(o: JSONObject) = StorageBucket(o.optString("label"), o.optLong("bytes"), o.optInt("count"))

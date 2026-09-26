@@ -28,7 +28,7 @@
       "python3 scripts/validate_audfix04_contract.py --audit-loop --write-evidence",
       "cd go && go test ./internal/automation ./internal/product",
       "cd go && go test ./internal/state -run ^TestAUD_FIX04 -count=1",
-      "cd android && ./gradlew :app:testDebugUnitTest --tests com.mikeyphw.dustui.automation.AudFix04AutomationContractTest"
+      "cd android && python3 "$(git rev-parse --show-toplevel)/scripts/devtool_gradle_bridge.py" :app:testDebugUnitTest --tests com.mikeyphw.dustui.automation.AudFix04AutomationContractTest"
     ],
     "sandbox_deferred_evidence": [
       "modernc.org/sqlite v1.36.3 unavailable in model sandbox",

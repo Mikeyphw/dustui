@@ -11,14 +11,15 @@ class GoRuntimeProductionBindingContractTest {
     }
 
     @Test fun productionBindingAndPackagingRemainSourceProven() {
-        val root = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-            .first { File(it, "go.mod").isFile && File(it, "app/build.gradle.kts").isFile }
-        val bridge = File(root, "app/src/main/kotlin/com/mikeyphw/dustui/go/GoRuntimeProcess.kt").readText()
-        val gradle = File(root, "app/build.gradle.kts").readText()
+        val androidRoot = generateSequence(File(requireNotNull(System.getProperty("user.dir"))).absoluteFile) { it.parentFile }
+            .first { File(it, "app/build.gradle.kts").isFile }
+        val bridge = File(androidRoot, "app/src/main/kotlin/com/mikeyphw/dustui/go/GoRuntimeProcess.kt").readText()
+        val gradle = File(androidRoot, "app/build.gradle.kts").readText()
         assertTrue(bridge.contains("ProcessBuilder(executable.absolutePath, \"serve\")"))
         assertTrue(bridge.contains("nativeLibraryDir"))
         assertTrue(gradle.contains("libdustui_go.so"))
         assertTrue(gradle.contains("GOOS\", \"android"))
         assertTrue(gradle.contains("buildGoAndroidRuntime"))
     }
+
 }

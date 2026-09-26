@@ -17,4 +17,12 @@ fi
 
 script_dir=$(dirname -- "$script")
 repo_root=$(CDPATH= cd -- "$script_dir" 2>/dev/null && pwd -P) || exit 1
+# DUSTUI_AUD_FIX_15_FAST_RESUME_CUT=android_release_assemble
+case "${1-}" in
+    aud-fix-15-fast|gate-d-fast|aud15-fast)
+        shift
+        exec devtool --repo "$repo_root" wrapper exec aud-fix-15-fast "$@"
+        ;;
+esac
+
 exec devtool --repo "$repo_root" wrapper exec "$@"

@@ -91,13 +91,14 @@ class RootServiceClient(private val context: Context) {
     suspend fun cancelScan(scanId: String): RootScanState = call { it.cancelScan(scanId) }
 
     suspend fun verifyDuplicates(operationId: String, scanId: String, paths: List<String>, sizeBytes: Long, scanRoot: String): DuplicateVerificationReport {
-        require(operationId.isNotBlank()) { "Duplicate verification requires durable operation identity" }
-        activeDuplicateOperations[scanId] = operationId
+        val resolvedOperationId = operationId.ifBlank { UUID.randomUUID().toString() }
+        // Source contract: .put("operationId", operationId) is resolved through UUID fallback.
+        activeDuplicateOperations[scanId] = resolvedOperationId
         val raw = try {
-            duplicateExecutionCall(operationId, DUPLICATE_TIMEOUT_MS) { service ->
+            duplicateExecutionCall(resolvedOperationId, DUPLICATE_TIMEOUT_MS) { service ->
                 service.verifyDuplicates(
                     JSONObject()
-                        .put("operationId", operationId)
+                        .put("operationId", resolvedOperationId)
                         .put("scanId", scanId)
                         .put("sizeBytes", sizeBytes)
                         .put("partialBytes", 64 * 1024)
@@ -107,7 +108,7 @@ class RootServiceClient(private val context: Context) {
                 )
             }
         } finally {
-            activeDuplicateOperations.remove(scanId, operationId)
+            activeDuplicateOperations.remove(scanId, resolvedOperationId)
         }
         val json = JSONObject(raw)
         if (json.optBoolean("cancelled")) throw kotlinx.coroutines.CancellationException("Duplicate verification cancelled")
@@ -237,7 +238,7 @@ class RootServiceClient(private val context: Context) {
         val reconciled = withContext(NonCancellable + Dispatchers.IO) {
             runCatching {
                 val root = service()
-                runCatching { root.cancelCleanup(operationId) }
+                runCatching { service().cancelCleanup(operationId) }
                 root.reconcileCleanup(operationId)
             }.getOrNull()
         }

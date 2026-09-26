@@ -10,7 +10,7 @@ import java.io.File
 
 class DomainAuthorityGoldenContractTest {
     private fun fixture(): JSONObject {
-        val root = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
+        val root = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
             .first { File(it, "migration/contracts/v2/fixtures/domain_authority_golden_v1.json").isFile }
         return JSONObject(File(root, "migration/contracts/v2/fixtures/domain_authority_golden_v1.json").readText())
     }

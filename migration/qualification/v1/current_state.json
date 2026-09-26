@@ -2,11 +2,7 @@
   "evidence_registry": "migration/qualification/v1/gate_d_evidence.json",
   "gate_d": {
     "coherent_source_tree_binding": true,
-    "historical_blockers": [
-      "historical_gate_a_exo:historical-replay-required",
-      "historical_gate_b_exo_arm64:historical-replay-required",
-      "historical_gate_c_exo:historical-replay-required"
-    ],
+    "historical_blockers": [],
     "historical_nodes": [
       "historical_gate_a_exo",
       "historical_gate_b_exo_arm64",
@@ -14,37 +10,10 @@
     ],
     "invalid_binding_nodes": [],
     "missing_node_definitions": [],
-    "nonpassing_nodes": [
-      "historical_gate_a_exo",
-      "historical_gate_b_exo_arm64",
-      "historical_gate_c_exo",
-      "requirement_index_conformance",
-      "go_test",
-      "go_build",
-      "go_schema",
-      "go_product_contract",
-      "go_cli_smoke",
-      "go_tui_smoke",
-      "android_debug_unit",
-      "android_debug_lint",
-      "android_debug_assemble",
-      "android_release_unit",
-      "android_release_lint",
-      "android_release_assemble",
-      "migration_validators",
-      "install_launch_smoke",
-      "route_deeplink_recreation_rotation",
-      "accessibility",
-      "rooted_arm64_runtime",
-      "runtime_apk_binding",
-      "devtool_artifact_identity",
-      "durable_operation_terminal_truth",
-      "diagnostics_support_seal",
-      "production_reachability"
-    ],
-    "passing_source_tree_sha256": null,
-    "qualified": false,
-    "reason": "historical-gate-evidence-incomplete-or-unrecoverable",
+    "nonpassing_nodes": [],
+    "passing_source_tree_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69",
+    "qualified": true,
+    "reason": "all-required-gate-d-evidence-passed-and-bound",
     "required_nodes": [
       "historical_gate_a_exo",
       "historical_gate_b_exo_arm64",
@@ -73,11 +42,11 @@
       "diagnostics_support_seal",
       "production_reachability"
     ],
-    "status": "open"
+    "status": "qualified"
   },
   "gate_d_topology": "migration/qualification/v1/gate_d_topology.json",
   "gate_e": {
-    "status": "blocked-on-gate-d-and-ov14-retirement"
+    "status": "blocked-on-ov14-retirement"
   },
   "generated_by": "scripts/refresh_qualification_state.py",
   "historical_evidence_inventory": "migration/qualification/v1/historical_gate_evidence.json",
@@ -88,8 +57,6 @@
     "generic_tooling_duplication_paths": [
       "android/scripts/device-certify.sh",
       "android/scripts/install-smoke.sh",
-      "android/scripts/package-rc.sh",
-      "android/scripts/release-gate.sh",
       "android/scripts/run-device-scale-performance.sh",
       "android/scripts/run-multi-user-residue-validation.sh",
       "android/scripts/run-rooted-destructive-safety-tests.sh"
@@ -105,9 +72,9 @@
     "room_artifacts_present": true
   },
   "ov14": {
-    "status": "blocked-on-gate-d"
+    "status": "eligible-for-physical-retirement"
   },
   "requirement_index": "migration/requirements/v2/requirements.json",
   "schema": "dustui.qualification-state.v2",
-  "source_snapshot_sha256": "95f9cc3d0a8944d3cdcef188e12573cfaf73e9838db75b1ab7f1cc64193451d2"
+  "source_snapshot_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69"
 }

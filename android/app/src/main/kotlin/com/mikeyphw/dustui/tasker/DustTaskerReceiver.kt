@@ -83,18 +83,18 @@ class DustTaskerReceiver : BroadcastReceiver() {
             operation.terminal -> Activity.RESULT_CANCELED
             else -> RESULT_PENDING
         }
-        resultExtras = bundleOf(
+        setResultExtras(bundleOf(
             RESULT_STATUS to if (operation.terminal) operation.terminalTruth else operation.state,
             RESULT_TERMINAL to operation.terminal,
             RESULT_SCAN_ID to operation.requestId,
             RESULT_OPERATION_ID to operation.operationId,
             RESULT_PATH to path,
-        )
+        ))
     }
 
     private fun PendingResult.fail(status: String, message: String? = null) {
         resultCode = Activity.RESULT_CANCELED
-        resultExtras = bundleOf(RESULT_STATUS to status, RESULT_TERMINAL to true, RESULT_MESSAGE to message)
+        setResultExtras(bundleOf(RESULT_STATUS to status, RESULT_TERMINAL to true, RESULT_MESSAGE to message))
     }
 
     companion object {

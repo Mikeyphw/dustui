@@ -34,6 +34,7 @@ class DustRootService : RootService() {
     }.apply { allowCoreThreadTimeOut(true) }
     private val scans = ConcurrentHashMap<String, ActiveScan>()
     private val duplicateProcesses = ConcurrentHashMap<String, java.lang.Process>()
+    private val duplicateCancellations = ConcurrentHashMap<String, AtomicBoolean>()
     private val cleanupCancellations = ConcurrentHashMap<String, AtomicBoolean>()
     private val cleanupProcesses = ConcurrentHashMap<String, java.lang.Process>()
 
@@ -121,7 +122,7 @@ class DustRootService : RootService() {
             val accepted = process?.isAlive == true
             if (accepted) {
                 active.status.set("cancelling")
-                process?.destroy()
+                process.destroy()
             }
             return state(active).let { raw -> JSONObject(raw).put("cancelAccepted", accepted).toString() }
         }
@@ -197,18 +198,21 @@ class DustRootService : RootService() {
                 return JSONObject().put("ok", false).put("cancelled", false).put("groups", JSONArray()).put("skipped", JSONArray())
                     .put("message", error.message ?: "Invalid duplicate verification request").toString()
             }
-            val operationId = request.optString("operationId").ifBlank { request.optString("scanId") }
+            val scanId = request.optString("scanId")
+            val operationId = request.optString("operationId").ifBlank { scanId }
             if (operationId.isBlank()) {
                 return JSONObject().put("ok", false).put("operationId", "").put("cancelled", false).put("groups", JSONArray()).put("skipped", JSONArray())
                     .put("message", "Duplicate verification requires an operation identifier").toString()
             }
-            if (duplicateProcesses.containsKey(operationId)) {
+            val cancellation = AtomicBoolean(false)
+            if (duplicateCancellations.putIfAbsent(operationId, cancellation) != null || duplicateProcesses.containsKey(operationId)) {
                 return JSONObject().put("ok", false).put("operationId", operationId).put("cancelled", false).put("groups", JSONArray()).put("skipped", JSONArray())
                     .put("message", "Duplicate verification operation is already active").toString()
             }
             return try {
                 val result = GoRootWorker.verifyDuplicates(this@DustRootService, requestJson) { process ->
                     duplicateProcesses[operationId] = process
+                    if (cancellation.get()) process.destroy()
                 }
                 result.output.takeIf(String::isNotBlank) ?: JSONObject()
                     .put("ok", false).put("operationId", operationId).put("cancelled", result.exitCode == 130)
@@ -216,13 +220,17 @@ class DustRootService : RootService() {
                     .put("message", result.error.ifBlank { "Go duplicate verification failed" }).toString()
             } finally {
                 duplicateProcesses.remove(operationId)
+                duplicateCancellations.remove(operationId, cancellation)
             }
         }
 
-        override fun cancelDuplicateVerification(scanId: String): String {
-            val entries = duplicateProcesses.entries.filter { (operationId, _) -> operationId == scanId || operationId.startsWith(scanId) }
-            entries.forEach { (_, process) -> if (process.isAlive) process.destroy() }
-            return JSONObject().put("ok", true).put("operationId", scanId).put("cancelled", entries.isNotEmpty()).toString()
+        override fun cancelDuplicateVerification(operationId: String): String {
+            val cancellation = duplicateCancellations[operationId]
+            val process = duplicateProcesses[operationId]
+            val accepted = cancellation != null || process?.isAlive == true
+            cancellation?.set(true)
+            if (process?.isAlive == true) process.destroy()
+            return JSONObject().put("ok", true).put("operationId", operationId).put("cancelled", accepted).toString()
         }
 
 

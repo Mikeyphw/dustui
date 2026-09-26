@@ -6,7 +6,7 @@ import org.junit.Test
 import java.io.File
 
 class DomainAuthorityProductionReachabilityContractTest {
-    private fun androidRoot(): File = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
+    private fun androidRoot(): File = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
         .first { File(it, "app/src/main/kotlin").isDirectory }
 
     @Test fun migratedProductTruthHasNoProductionKotlinAnalyzerCaller() {

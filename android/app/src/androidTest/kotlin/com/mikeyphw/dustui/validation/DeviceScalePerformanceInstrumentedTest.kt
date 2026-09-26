@@ -17,6 +17,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 import java.util.UUID
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.math.max
 
 /** Device-scale validation for the production Go root scanner and NDJSON stream. */
@@ -54,9 +57,63 @@ class DeviceScalePerformanceInstrumentedTest {
             excludes = emptyList(),
         )
         val started = SystemClock.elapsedRealtime()
-        val startState = client.startScan(request, pipe[1])
+
+        val startState = try {
+            client.startScan(request, pipe[1])
+        } finally {
+            /*
+             * startScan() sends the write descriptor across Binder. The root
+             * service duplicates/owns its descriptor before returning.
+             *
+             * The caller MUST close its own write end here. If it remains open,
+             * the read side can never observe EOF after the Go worker exits and
+             * input.copyTo() waits forever.
+             */
+            runCatching { pipe[1].close() }
+        }
+
         assertTrue("Go root scan did not start: $startState", startState.ok)
-        ParcelFileDescriptor.AutoCloseInputStream(pipe[0]).use { input -> output.outputStream().use(input::copyTo) }
+
+        val reader = Executors.newSingleThreadExecutor()
+        try {
+            val readFuture = reader.submit<Long> {
+                ParcelFileDescriptor.AutoCloseInputStream(pipe[0]).use { input ->
+                    output.outputStream().use { sink ->
+                        input.copyTo(sink)
+                    }
+                }
+            }
+
+            val alreadyElapsed = SystemClock.elapsedRealtime() - started
+            val remainingMillis = (maxMillis - alreadyElapsed).coerceAtLeast(1L)
+
+            try {
+                readFuture.get(remainingMillis, TimeUnit.MILLISECONDS)
+            } catch (error: TimeoutException) {
+                /*
+                 * Closing the local read descriptor guarantees a blocked pipe
+                 * read is released even if thread interruption alone cannot
+                 * interrupt the underlying Android/Linux read().
+                 */
+                runCatching { pipe[0].close() }
+                readFuture.cancel(true)
+
+                try {
+                    client.cancelScan(scanId)
+                } catch (_: Throwable) {
+                    // Preserve the primary timeout failure.
+                }
+
+                throw AssertionError(
+                    "Go root scan did not close its NDJSON stream within ${maxMillis}ms",
+                    error,
+                )
+            }
+        } finally {
+            reader.shutdownNow()
+            runCatching { pipe[0].close() }
+        }
+
         val elapsed = SystemClock.elapsedRealtime() - started
         val complete = output.useLines { lines -> lines.lastOrNull { it.contains("\"type\":\"complete\"") } }?.let(::JSONObject)
         assertTrue("Go root scanner did not emit a complete event", complete != null)

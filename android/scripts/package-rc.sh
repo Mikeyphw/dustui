@@ -17,7 +17,7 @@ mkdir -p "$out"
 
 tasks=(testReleaseUnitTest lintRelease assembleRelease)
 if [[ "${DUSTUI_SKIP_BUILD:-0}" != "1" ]]; then
-  ./gradlew --no-daemon --max-workers=1 "${tasks[@]}"
+  python3 "$(git rev-parse --show-toplevel)/scripts/devtool_gradle_bridge.py" --no-daemon --max-workers=1 "${tasks[@]}"
 fi
 
 if [[ "${DUSTUI_INCLUDE_DEBUG_APK:-0}" == "1" ]]; then

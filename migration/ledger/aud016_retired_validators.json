@@ -1,0 +1,14 @@
+{
+  "schema": "dustui.aud016.retired-validators.v1",
+  "retired": [
+    {
+      "live_path": "android/scripts/validate-root-scan-diagnostics.py",
+      "reason": "root diagnostics source-token validator retired from live Gate-D validation",
+      "successor_guard": "AUD016_VALIDATOR_SUCCESSOR_GUARD",
+      "archive_paths": [
+        "migration/archive/validators/aud_fix_13_pre_gate_d/android/scripts/validate-root-scan-diagnostics.py"
+      ],
+      "live_removed": true
+    }
+  ]
+}

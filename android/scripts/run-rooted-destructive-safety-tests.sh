@@ -11,7 +11,7 @@ if [[ "$root_uid" != "0" ]]; then
   exit 2
 fi
 
-./gradlew --no-daemon --max-workers=1 :app:connectedDebugAndroidTest \
+python3 "$(git rev-parse --show-toplevel)/scripts/devtool_gradle_bridge.py" --no-daemon --max-workers=1 :app:connectedDebugAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.class=com.mikeyphw.dustui.validation.RootedDestructiveSafetyInstrumentedTest
 
 printf 'DustUI rooted destructive-safety validation passed\n'
