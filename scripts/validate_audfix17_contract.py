@@ -72,12 +72,13 @@ def audit() -> list[str]:
         req(job in jobs, f"Gate-E target-local job missing: {job}")
 
     req(wrapper.get("aud-fix-17", {}).get("workflow") == "gate_e", "aud-fix-17 wrapper is missing/misbound")
+    req(wrapper.get("aud-fix-17-fast", {}).get("workflow") == "gate_e_fast", "aud-fix-17-fast wrapper is missing/misbound")
     req("gate-e-release" not in wrapper, "gate-e-release must not use wrapper.commands; nested Android release is launcher-owned")
     launcher = read("devtoolw")
     req(
         "gate-e-release|release-final|ov15-release" in launcher
-        and '--target dustui_android android release "$@"' in launcher,
-        "gate-e-release launcher must dispatch directly to canonical Devtool android release",
+        and '--target dustui_android release "$@"' in launcher,
+        "gate-e-release launcher must dispatch directly to top-level canonical Devtool release",
     )
 
     req(release.get("variant") == "release", "Devtool Android release variant must be release")

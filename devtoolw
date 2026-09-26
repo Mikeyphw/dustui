@@ -25,7 +25,7 @@ case "${1-}" in
         ;;
     gate-e-release|release-final|ov15-release)
         shift
-        exec devtool --repo "$repo_root" --target dustui_android android release "$@"
+        exec devtool --repo "$repo_root" --target dustui_android release "$@"
         ;;
 esac
 

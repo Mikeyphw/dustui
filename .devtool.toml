@@ -997,6 +997,31 @@ gate_e = [
   { id = "qualification_state", ref = "job:qualification_state", depends_on = ["postseal_audit"] },
 ]
 
+# TEMPORARY Gate-E resume workflow. Remove after Gate E qualifies.
+# A passing canonical release substitutes only release unit/lint/assemble.
+gate_e_fast = [
+  { id = "contract", ref = "job:audfix17_contract", depends_on = [] },
+  { id = "canonical_release", ref = "job:audfix17_release_evidence", depends_on = ["contract"] },
+  { id = "full_conformance", ref = "job:audfix17_full_conformance", depends_on = ["contract"] },
+  { id = "aud16_retirement_regression", ref = "job:audfix16_retirement_evidence", depends_on = ["full_conformance"] },
+  { id = "successor_migration_validators", ref = "target:dustui_android#gate_d_successor_validators", depends_on = ["full_conformance"] },
+  { id = "go_core", ref = "target:dustui_go#gate_e_core", depends_on = ["canonical_release", "aud16_retirement_regression"] },
+  { id = "go_adversarial", ref = "target:dustui_go#gate_e_adversarial", depends_on = ["go_core"] },
+  { id = "go_race", ref = "job:audfix17_go_race", depends_on = ["go_adversarial"] },
+  { id = "android_debug_unit", ref = "job:android_unit", depends_on = ["canonical_release", "aud16_retirement_regression"] },
+  { id = "android_debug_lint", ref = "job:android_lint", depends_on = ["android_debug_unit"] },
+  { id = "android_debug_assemble", ref = "job:android_assemble", depends_on = ["android_debug_lint"] },
+  { id = "instrumentation_full", ref = "job:audfix17_instrumentation_full", depends_on = ["android_debug_assemble", "go_adversarial", "successor_migration_validators"] },
+  { id = "rooted_arm64", ref = "job:audfix17_rooted_arm64_runtime", depends_on = ["android_debug_assemble"] },
+  { id = "runtime_binding", ref = "job:audfix17_runtime_apk_binding", depends_on = ["android_debug_assemble", "canonical_release", "rooted_arm64"] },
+  { id = "migration_audit", ref = "job:audfix17_migration_preflight", depends_on = ["go_race", "instrumentation_full", "runtime_binding"] },
+  { id = "promise_audit", ref = "job:audfix17_promise_preflight", depends_on = ["migration_audit"] },
+  { id = "counterexample_convergence", ref = "job:audfix17_counterexample_convergence", depends_on = ["promise_audit"] },
+  { id = "finalize", ref = "job:audfix17_finalize", depends_on = ["counterexample_convergence"] },
+  { id = "postseal_audit", ref = "job:audfix17_postseal_audit", depends_on = ["finalize"] },
+  { id = "qualification_state", ref = "job:qualification_state", depends_on = ["postseal_audit"] },
+]
+
 [targets.dustui_go.jobs.go_test_all]
 runner = "command"
 command = ["sh", "-lc", 'mkdir -p .devtool/tmp/go-test && export TMPDIR="$PWD/.devtool/tmp/go-test"; MAIN_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; case "$PWD" in */.devtool/historical/*/go) MAIN_ROOT="${PWD%%/.devtool/historical/*}" ;; esac; python3 "$MAIN_ROOT/scripts/audfix15_termux_hardlink_compat.py" --root "$PWD" && go test ./...']
@@ -1472,3 +1497,9 @@ description = "Run AUD-FIX-17 Gate-E final adversarial qualification after a pas
 workflow = "gate_e"
 target = "dustui_android"
 aliases = ["gate-e", "ov15", "final-qualification"]
+
+[wrapper.commands.aud-fix-17-fast]
+description = "TEMP: resume Gate E using canonical release proof for release unit/lint/assemble"
+workflow = "gate_e_fast"
+target = "dustui_android"
+aliases = ["gate-e-fast", "ov15-fast"]

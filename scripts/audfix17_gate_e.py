@@ -300,6 +300,19 @@ def select_release_report(identity: dict[str, str]) -> tuple[Path, dict[str, Any
         if not report_is_pass(report) or report_has_failure(report):
             failures.append(f"{path.name}: final release verdict is not passing")
             continue
+        gates = {
+            str(item.get("name") or ""): str(item.get("status") or "").strip().lower()
+            for item in (report.get("gates") or [])
+            if isinstance(item, dict)
+        }
+        reusable = ("unit-tests", "lint", "package")
+        missing = [name for name in reusable if gates.get(name) != "passed"]
+        if missing:
+            failures.append(
+                f"{path.name}: canonical release did not prove required reusable gate(s): "
+                + ", ".join(missing)
+            )
+            continue
         return path, report
     detail = "; ".join(failures[:5]) if failures else "no Android release reports found"
     raise RuntimeError("no current-tree passing canonical Devtool Android release report: " + detail)
@@ -579,6 +592,13 @@ def finalize() -> dict[str, Any]:
                 "artifact_sha256": release["release_apk_sha256"],
                 "signing_identity_sha256": release["signing_identity_sha256"],
                 "runtime_sha256": release["embedded_runtime_sha256"],
+            })
+        elif node_id in {"android_release_unit", "android_release_lint", "android_release_assemble"}:
+            binding.update({
+                "evidence_source": "canonical_devtool_release",
+                "producer_run_id": release["release_run_id"],
+                "release_report_sha256": release["release_report_sha256"],
+                "artifact_sha256": release["release_apk_sha256"],
             })
         elif node_id == "rooted_arm64_runtime":
             binding.update({"device_serial": rooted.get("device_serial"), "device_arch": rooted.get("device_arch")})
