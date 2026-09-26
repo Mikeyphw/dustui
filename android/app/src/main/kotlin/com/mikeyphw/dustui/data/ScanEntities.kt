@@ -25,6 +25,11 @@ data class ScanSessionEntity(
 
 enum class ScanIntegrityStatus { UNKNOWN, COMPLETE, COMPLETE_WITH_WARNINGS, TRUNCATED, FAILED_INTEGRITY, INTERRUPTED }
 
+data class DuplicateSizeBucket(
+    val sizeBytes: Long,
+    val candidateCount: Int,
+)
+
 data class ScanEntryEntity(
     val scanId: String,
     val path: String,

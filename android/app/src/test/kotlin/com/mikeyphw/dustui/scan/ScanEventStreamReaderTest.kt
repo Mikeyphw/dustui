@@ -1,7 +1,7 @@
 package com.mikeyphw.dustui.scan
 
 import java.io.ByteArrayInputStream
-import kotlin.test.Test
+import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 

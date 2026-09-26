@@ -13,7 +13,7 @@ import java.io.InputStream
 class ScanEventStreamReader internal constructor(
     input: InputStream,
 ) : Closeable {
-    private val reader = input.bufferedReader(Charsets.UTF_8, BUFFER_BYTES)
+    private val reader = input.reader(Charsets.UTF_8).buffered(BUFFER_BYTES)
     private var eof = false
 
     constructor(descriptor: ParcelFileDescriptor) : this(ParcelFileDescriptor.AutoCloseInputStream(descriptor))
