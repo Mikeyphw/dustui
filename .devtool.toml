@@ -1467,13 +1467,6 @@ workflow = "aud-fix-15-fast"
 target = "dustui_android"
 aliases = ["gate-d-fast", "aud15-fast"]
 
-[wrapper.commands.gate-e-release]
-description = "Run the canonical Devtool signed Android release that Gate E imports and cross-binds"
-devtool = "release"
-target = "dustui_android"
-allow_passthrough = true
-aliases = ["release-final", "ov15-release"]
-
 [wrapper.commands.aud-fix-17]
 description = "Run AUD-FIX-17 Gate-E final adversarial qualification after a passing canonical signed release"
 workflow = "gate_e"

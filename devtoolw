@@ -23,6 +23,10 @@ case "${1-}" in
         shift
         exec devtool --repo "$repo_root" wrapper exec aud-fix-15-fast "$@"
         ;;
+    gate-e-release|release-final|ov15-release)
+        shift
+        exec devtool --repo "$repo_root" --target dustui_android android release "$@"
+        ;;
 esac
 
 exec devtool --repo "$repo_root" wrapper exec "$@"
