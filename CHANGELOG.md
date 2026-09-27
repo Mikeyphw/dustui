@@ -1,3 +1,10 @@
+## 2026-09-27 — Gate-E qualification identity/reuse v2
+
+- Gate-E validity now binds to `source_projection_sha256`; Git commit/tree IDs remain provenance.
+- Added `gate-e-plan` and `gate-e-reconcile` Devtool wrapper workflows.
+- Added fail-closed node-input fingerprints for expensive/environment-bearing Gate-E evidence and policy-only requalification composition.
+- Fresh finalization emits Gate-E evidence/bundle schema v2 while v1 evidence remains importable for migration.
+
 ## AUD-FIX-16 — physical predecessor retirement and Gate-E preparation
 
 - Preserved the qualified AUD-FIX-15 Gate-D source ancestor while recording a distinct post-retirement source identity; Gate D is not resealed.

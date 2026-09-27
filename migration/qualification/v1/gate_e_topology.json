@@ -1,9 +1,28 @@
 {
-  "schema": "dustui.gate-e.topology.v1",
+  "aud_fix": "AUD-FIX-17",
+  "environment_policy": {
+    "conditional_unavailable_evidence_status": "unavailable",
+    "conditional_unavailable_is_blocking": false,
+    "device_instrumentation": "required",
+    "multi_user_or_work_profile": "conditional",
+    "qualification_deferred_when_missing": true,
+    "rooted_arm64": "required",
+    "signed_release": "required"
+  },
   "gate": "Gate E",
   "phase": "OV15",
-  "aud_fix": "AUD-FIX-17",
-  "qualification_rule": "Every required node must execute successfully on one clean post-AUD-FIX-16 source identity; canonical Devtool Android release evidence must come from a separate passing release run on the same Git/source identity and carry verified artifact/signing identity.",
+  "qualification_rule": "Gate E is valid for one canonical source_projection_sha256. Git commit/tree IDs are provenance, not validity. A fresh qualification executes every required node. A successor projection may compose prior passing expensive/environment-bearing node evidence only when that node input fingerprint is unchanged; policy/qualification nodes rerun on the successor projection.",
+  "release_cross_binding": [
+    "source_projection_sha256",
+    "validated_at_git_head",
+    "input_fingerprint_sha256",
+    "release_run_id",
+    "qualification_run_id",
+    "release_apk_sha256",
+    "go_runtime_sha256",
+    "signing_identity_sha256",
+    "release_report_sha256"
+  ],
   "required_nodes": [
     "gate_e_contract",
     "canonical_devtool_release",
@@ -26,24 +45,14 @@
     "final_promise_audit",
     "counterexample_convergence"
   ],
-  "release_cross_binding": [
-    "source_git_head",
-    "source_git_tree",
-    "source_projection_sha256",
-    "release_run_id",
-    "validation_run_id",
-    "release_apk_sha256",
-    "go_runtime_sha256",
-    "signing_identity_sha256",
-    "release_report_sha256"
-  ],
-  "environment_policy": {
-    "rooted_arm64": "required",
-    "multi_user_or_work_profile": "conditional",
-    "device_instrumentation": "required",
-    "signed_release": "required",
-    "qualification_deferred_when_missing": true,
-    "conditional_unavailable_is_blocking": false,
-    "conditional_unavailable_evidence_status": "unavailable"
-  }
+  "reuse_policy": {
+    "changed_projection": "reuse only node evidence with identical curated input fingerprint",
+    "generic_execution_cache_owner": "Devtool",
+    "git_identity_role": "provenance-not-validity",
+    "material_execution_change": "fail closed and require canonical execution for changed nodes",
+    "policy_nodes": "always rerun when source projection changes",
+    "qualification_identity": "source_projection_sha256",
+    "unchanged_projection": "preserve qualification without rerunning execution"
+  },
+  "schema": "dustui.gate-e.topology.v2"
 }

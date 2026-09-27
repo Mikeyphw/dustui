@@ -1,0 +1,29 @@
+{
+  "format": 1,
+  "overlay": "dustui_gate_e_qualification_reuse_v2",
+  "target": "dustui_android",
+  "phase": "POST-GATE-E",
+  "files": [
+    ".devtool.toml",
+    "CHANGELOG.md",
+    "README.md",
+    "RELEASE_CHECKLIST.md",
+    "VALIDATION.md",
+    "migration/audit/v2/tests/test_audfix17_reuse.py",
+    "migration/qualification/v1/README.md",
+    "migration/qualification/v1/gate_e_topology.json",
+    "scripts/audfix01_core.py",
+    "scripts/audfix17_gate_e.py",
+    "scripts/audfix17_identity.py",
+    "scripts/audfix17_reuse.py",
+    "scripts/validate_audfix17_contract.py"
+  ],
+  "notes": [
+    "effective baseline: dustui-20260927-023015-518392 plus post-Gate-E closure patch",
+    "qualification identity is canonical source_projection_sha256; Git commit/tree remain provenance",
+    "unchanged expensive Gate-E node fingerprints may reuse prior executed evidence",
+    "policy/contract nodes are revalidated before successor qualification is composed",
+    "material execution fingerprint changes fail closed and require canonical fresh Gate-E execution",
+    "generic execution cache/resume remains owned by Devtool"
+  ]
+}

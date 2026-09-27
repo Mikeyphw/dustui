@@ -276,12 +276,23 @@ def compute_qualification(root: Path, registry: dict[str, Any]) -> dict[str, Any
     gate_e_invalid: list[str] = []
     expected_post_retirement = str(retirement_record.get("post_retirement_source_sha256") or "")
     if gate_e_record:
-        if gate_e_record.get("schema") != "dustui.gate-e.evidence-registry.v1" or gate_e_record.get("status") != "pass":
+        gate_e_schema = str(gate_e_record.get("schema") or "")
+        if gate_e_schema not in {"dustui.gate-e.evidence-registry.v1", "dustui.gate-e.evidence-registry.v2"} or gate_e_record.get("status") != "pass":
             gate_e_invalid.append("registry-status-or-schema")
         if list(gate_e_record.get("required_nodes") or []) != list(REQUIRED_GATE_E_NODES):
             gate_e_invalid.append("required-node-topology")
-        if str(gate_e_record.get("source_projection_sha256") or "") != expected_post_retirement:
+        qualified_projection = str(
+            gate_e_record.get("qualified_source_projection_sha256")
+            or gate_e_record.get("source_projection_sha256")
+            or ""
+        )
+        if qualified_projection != expected_post_retirement:
             gate_e_invalid.append("source-projection-binding")
+        if gate_e_schema == "dustui.gate-e.evidence-registry.v2":
+            if gate_e_record.get("qualification_identity") != "source_projection_sha256":
+                gate_e_invalid.append("qualification-identity")
+            if gate_e_record.get("git_identity_role") != "provenance-not-validity":
+                gate_e_invalid.append("git-identity-role")
         if str(gate_e_record.get("gate_d_ancestor_source_sha256") or "") != next(iter(gate_tree_hashes), None):
             gate_e_invalid.append("gate-d-ancestor-binding")
         validation_run = str(gate_e_record.get("validation_run_id") or "").strip()
@@ -301,8 +312,22 @@ def compute_qualification(root: Path, registry: dict[str, Any]) -> dict[str, Any
             binding = node.get("binding") or {}
             if str(binding.get("source_projection_sha256") or "") != expected_post_retirement:
                 gate_e_invalid.append(f"{node_id}:source-projection")
-            if str(binding.get("validation_run_id") or "") != validation_run:
-                gate_e_invalid.append(f"{node_id}:validation-run")
+            if gate_e_schema == "dustui.gate-e.evidence-registry.v1":
+                if str(binding.get("validation_run_id") or "") != validation_run:
+                    gate_e_invalid.append(f"{node_id}:validation-run")
+            else:
+                if not str(binding.get("validated_source_projection_sha256") or "").strip():
+                    gate_e_invalid.append(f"{node_id}:validated-source-projection")
+                if not str(binding.get("validated_at_git_head") or "").strip():
+                    gate_e_invalid.append(f"{node_id}:validated-git-provenance")
+                fingerprint = str(binding.get("input_fingerprint_sha256") or "")
+                if not re.fullmatch(r"[0-9a-fA-F]{64}", fingerprint):
+                    gate_e_invalid.append(f"{node_id}:input-fingerprint")
+                reused = binding.get("evidence_reused")
+                if not isinstance(reused, bool):
+                    gate_e_invalid.append(f"{node_id}:reuse-flag")
+                elif reused and not str(binding.get("reused_from_validation_run_id") or binding.get("validation_run_id") or "").strip():
+                    gate_e_invalid.append(f"{node_id}:reuse-lineage")
         release_node = gate_e_nodes.get("canonical_devtool_release", {})
         release_binding = release_node.get("binding") or {}
         if str(release_binding.get("release_run_id") or "") != release_run:
@@ -380,9 +405,11 @@ def compute_qualification(root: Path, registry: dict[str, Any]) -> dict[str, Any
             "missing_node_definitions": gate_e_missing,
             "nonpassing_nodes": gate_e_nonpassing,
             "invalid_binding_nodes": sorted(set(gate_e_invalid)),
-            "source_projection_sha256": gate_e_record.get("source_projection_sha256") if gate_e_record else None,
+            "source_projection_sha256": (gate_e_record.get("qualified_source_projection_sha256") or gate_e_record.get("source_projection_sha256")) if gate_e_record else None,
             "source_git_head": gate_e_record.get("source_git_head") if gate_e_record else None,
+            "qualification_identity": gate_e_record.get("qualification_identity") if gate_e_record else None,
             "validation_run_id": gate_e_record.get("validation_run_id") if gate_e_record else None,
+            "reuse": gate_e_record.get("reuse") if gate_e_record else None,
             "release_run_id": gate_e_record.get("release_run_id") if gate_e_record else None,
             "release_apk_sha256": gate_e_record.get("release_apk_sha256") if gate_e_record else None,
             "signing_identity_sha256": gate_e_record.get("signing_identity_sha256") if gate_e_record else None,

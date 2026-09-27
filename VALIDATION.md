@@ -20,6 +20,15 @@ export ANDROID_SERIAL=localhost:5555
 
 A missing required environment leaves qualification open/deferred. Rooted ARM64 and device instrumentation are required. Multi-user/work-profile coverage is capability-conditional according to `gate_e_topology.json`: absence must be represented truthfully and must never be converted into manufactured evidence.
 
+## Gate-E v2 reuse / reconcile
+
+```bash
+./devtoolw gate-e-plan
+./devtoolw gate-e-reconcile
+```
+
+`gate-e-plan` is read-only. `gate-e-reconcile` is qualification-specific evidence composition, not an app-local generic task cache: Devtool remains the owner of generic execution/resume semantics. Reused nodes retain their original execution Git/run provenance and receive a current node-input fingerprint; policy nodes are executed on the successor projection.
+
 ## Narrow development checks
 
 Use repository wrapper commands rather than raw permanent Gradle/ADB fallbacks:
@@ -52,6 +61,6 @@ Canonical current-state and final evidence live under `migration/qualification/v
 - `ov14_retirement.json` — post-Gate-D physical-retirement/source projection
 - `gate_e_evidence.json`, `gate_e_bundle.json` — final Gate-E executed evidence and cross-bindings
 
-These derived files are not independent declarations. A source-projection change invalidates the current-tree retirement/Gate-E binding. Refresh the post-retirement projection as required, commit the intended source tree, then run a fresh `gate-e-release` followed without source changes by `aud-fix-17`.
+These derived files are not independent declarations. Gate-E v2 binds qualification to `source_projection_sha256`; commit/tree IDs record provenance only. After a clean commit, use `./devtoolw gate-e-plan`. If the projection is unchanged, the existing seal remains valid without rerunning execution. If the projection changed only in policy/qualification surfaces and all expensive/environment node fingerprints are unchanged, `./devtoolw gate-e-reconcile` refreshes AUD-FIX-16 projection evidence, reruns the cheap policy leaves, and composes the unchanged execution evidence. If any expensive/environment fingerprint changed, reconciliation fails closed and canonical execution is required.
 
 The temporary `gate_e_fast` / `aud-fix-17-fast` resume path is intentionally absent after Gate-E qualification. Historical validation procedures remain available only under `migration/archive/` for provenance and must not be used as live release authority.

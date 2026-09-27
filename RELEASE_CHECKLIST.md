@@ -30,4 +30,6 @@
 
 - [ ] Commit intended derived Gate-E evidence without changing qualified source content.
 - [ ] `git status --short` is clean.
-- [ ] Any later source-projection change is treated as a new candidate and receives fresh canonical release + AUD-FIX-17 qualification before release.
+- [ ] After later commits, run `./devtoolw gate-e-plan`; an unchanged source projection does **not** require qualification execution to repeat.
+- [ ] For policy-only source changes with unchanged expensive/environment node fingerprints, run `./devtoolw gate-e-reconcile` and require policy revalidation + recomposed v2 evidence to pass.
+- [ ] If reconciliation reports any changed expensive/environment node, treat the candidate as materially changed and run the canonical release/final qualification path required for that change.

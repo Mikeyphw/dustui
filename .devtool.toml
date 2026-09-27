@@ -753,6 +753,21 @@ inputs = ["scripts/validate_full_roadmap_conformance.py", "scripts/validate_audf
 [targets.dustui_android.jobs.audfix17_postseal_audit.metadata]
 read_only = true
 
+[targets.dustui_android.jobs.audfix17_reuse_plan]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/audfix17_reuse.py", "plan"]
+inputs = ["scripts/audfix17_reuse.py", "scripts/audfix17_identity.py", "scripts/audfix17_gate_e.py", "scripts/audfix16_retirement.py", "scripts/audfix01_core.py", "migration/qualification/v1", ".devtool.toml"]
+[targets.dustui_android.jobs.audfix17_reuse_plan.metadata]
+read_only = true
+
+[targets.dustui_android.jobs.audfix17_reconcile]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/audfix17_reuse.py", "reconcile"]
+inputs = ["scripts/audfix17_reuse.py", "scripts/audfix17_identity.py", "scripts/audfix17_gate_e.py", "scripts/audfix16_retirement.py", "scripts/audfix01_core.py", "scripts/validate_audfix17_contract.py", "scripts/validate_full_roadmap_conformance.py", "migration/qualification/v1", "migration/acceptance/v1", "migration/requirements/v2", "migration/ledger", "android/app/src", "android/app/build.gradle.kts", "android/build.gradle.kts", "android/settings.gradle.kts", "android/gradle", "go", ".devtool.toml"]
+outputs = ["migration/qualification/v1/gate_e_evidence.json", "migration/qualification/v1/gate_e_bundle.json", "migration/qualification/v1/current_state.json", "migration/acceptance/v1/current_state.json", "migration/qualification/v1/ov14_retirement.json", "go/internal/qualification/state_generated.go", "go/internal/qualification/acceptance_generated.go"]
+
 [targets.dustui_android.workflows]
 aud_fix_regression = [
   { id = "a01", ref = "job:audfix01_truth", depends_on = [] },
@@ -999,6 +1014,19 @@ gate_e = [
   { id = "finalize", ref = "job:audfix17_finalize", depends_on = ["counterexample_convergence"] },
   { id = "postseal_audit", ref = "job:audfix17_postseal_audit", depends_on = ["finalize"] },
   { id = "qualification_state", ref = "job:qualification_state", depends_on = ["postseal_audit"] },
+]
+
+# Gate-E v2 reconciliation is qualification-specific reuse, not a generic task cache.
+# Unchanged source projection => no execution rerun. Changed projection => only
+# expensive/environment nodes with identical curated fingerprints may be reused;
+# policy truth is rerun and the seal is recomposed fail-closed.
+gate_e_reuse_plan = [
+  { id = "plan", ref = "job:audfix17_reuse_plan", depends_on = [] },
+]
+
+gate_e_reconcile = [
+  { id = "reconcile", ref = "job:audfix17_reconcile", depends_on = [] },
+  { id = "qualification_state", ref = "job:qualification_state", depends_on = ["reconcile"] },
 ]
 
 [targets.dustui_go.jobs.go_test_all]
@@ -1476,3 +1504,15 @@ description = "Run AUD-FIX-17 Gate-E final adversarial qualification after a pas
 workflow = "gate_e"
 target = "dustui_android"
 aliases = ["gate-e", "ov15", "final-qualification"]
+
+[wrapper.commands.gate-e-plan]
+description = "Plan Gate-E evidence reuse from source projection and node fingerprints without executing qualification"
+workflow = "gate_e_reuse_plan"
+target = "dustui_android"
+aliases = ["aud-fix-17-plan", "gate-e-reuse-plan"]
+
+[wrapper.commands.gate-e-reconcile]
+description = "Reconcile Gate-E qualification without rerunning unchanged expensive execution evidence"
+workflow = "gate_e_reconcile"
+target = "dustui_android"
+aliases = ["aud-fix-17-reconcile", "gate-e-reuse"]

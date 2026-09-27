@@ -20,7 +20,8 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from audfix01_core import load_json, repository_observations, sha256_file
-from audfix16_retirement import source_projection_sha256
+from audfix16_retirement import included, source_projection_sha256
+from audfix17_identity import REUSABLE_EXECUTION_NODES, node_fingerprint
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "build/evidence/gate-e"
@@ -56,7 +57,7 @@ def run(*argv: str, cwd: Path | None = None, timeout: int = 180) -> subprocess.C
 
 
 def git_value(*args: str) -> str:
-    cp = run("git", *args, timeout=30)
+    cp = run("git", "-c", f"safe.directory={ROOT}", *args, timeout=30)
     if cp.returncode != 0:
         raise RuntimeError(f"git {' '.join(args)} failed: {cp.stderr.strip()}")
     return cp.stdout.strip()
@@ -66,9 +67,25 @@ def current_identity(require_clean: bool = True) -> dict[str, str]:
     head = git_value("rev-parse", "HEAD")
     tree = git_value("rev-parse", "HEAD^{tree}")
     if require_clean:
-        dirty = git_value("status", "--porcelain")
-        if dirty:
-            raise RuntimeError("Gate E requires a clean Git worktree; commit or discard source changes first")
+        cp = run("git", "-c", f"safe.directory={ROOT}", "status", "--porcelain=v1", "-z", timeout=30)
+        if cp.returncode != 0:
+            raise RuntimeError(f"git status failed: {cp.stderr.strip()}")
+        source_dirty: list[str] = []
+        for record in cp.stdout.split("\0"):
+            if not record:
+                continue
+            # Porcelain v1 records begin with XY + space. Derived qualification
+            # projections are intentionally outside the source identity and may
+            # be refreshed during reconcile without making the candidate dirty.
+            rel = record[3:] if len(record) >= 4 and record[2] == " " else record
+            rel = rel.strip()
+            if rel and included(rel):
+                source_dirty.append(rel)
+        if source_dirty:
+            raise RuntimeError(
+                "Gate E requires a clean source worktree; commit or discard source changes first: "
+                + ", ".join(source_dirty[:8])
+            )
     return {
         "git_head": head,
         "git_tree": tree,
@@ -564,9 +581,9 @@ def finalize() -> dict[str, Any]:
         bound = str(data.get("source_projection_sha256") or data.get("gate_e_source_projection_sha256") or "")
         if bound and bound != identity["source_projection_sha256"]:
             raise RuntimeError(f"{name} evidence is bound to a different Gate-E source projection")
-        bound_head = str(data.get("source_git_head") or data.get("gate_e_source_git_head") or "")
-        if bound_head and bound_head != identity["git_head"]:
-            raise RuntimeError(f"{name} evidence is bound to a different Git HEAD")
+        # Git commit/tree IDs are provenance. Gate-E validity is bound to the
+        # canonical source projection; evidence-only commits must not force
+        # expensive execution to repeat.
 
     if runtime.get("generated_runtime_sha256") and runtime.get("generated_runtime_sha256") != release.get("generated_runtime_sha256"):
         raise RuntimeError("Gate-E release/runtime probe hashes disagree")
@@ -579,11 +596,21 @@ def finalize() -> dict[str, Any]:
         raise RuntimeError("Gate-E topology has no required nodes")
     nodes = []
     for node_id in required_nodes:
+        input_fingerprint = (
+            node_fingerprint(identity["git_head"], node_id)["fingerprint_sha256"]
+            if node_id in REUSABLE_EXECUTION_NODES
+            else identity["source_projection_sha256"]
+        )
         binding = {
             "source_projection_sha256": identity["source_projection_sha256"],
             "source_git_head": identity["git_head"],
             "source_git_tree": identity["git_tree"],
+            "validated_source_projection_sha256": identity["source_projection_sha256"],
+            "validated_at_git_head": identity["git_head"],
             "validation_run_id": validation_run_id,
+            "qualification_run_id": validation_run_id,
+            "input_fingerprint_sha256": input_fingerprint,
+            "evidence_reused": False,
         }
         if node_id == "canonical_devtool_release":
             binding.update({
@@ -608,14 +635,19 @@ def finalize() -> dict[str, Any]:
 
     retirement = load_json(RETIREMENT)
     registry = {
-        "schema": "dustui.gate-e.evidence-registry.v1",
+        "schema": "dustui.gate-e.evidence-registry.v2",
         "status": "pass",
         "generated_by": "scripts/audfix17_gate_e.py finalize",
+        "qualification_identity": "source_projection_sha256",
+        "git_identity_role": "provenance-not-validity",
         "source_git_head": identity["git_head"],
         "source_git_tree": identity["git_tree"],
+        "qualified_at_git_head": identity["git_head"],
         "source_projection_sha256": identity["source_projection_sha256"],
+        "qualified_source_projection_sha256": identity["source_projection_sha256"],
         "gate_d_ancestor_source_sha256": retirement.get("gate_d_ancestor_source_sha256"),
         "validation_run_id": validation_run_id,
+        "qualification_run_id": validation_run_id,
         "release_run_id": release["release_run_id"],
         "release_report_sha256": release["release_report_sha256"],
         "release_apk_sha256": release["release_apk_sha256"],
@@ -623,6 +655,11 @@ def finalize() -> dict[str, Any]:
         "go_runtime_sha256": release["embedded_runtime_sha256"],
         "required_nodes": required_nodes,
         "nodes": nodes,
+        "reuse": {
+            "mode": "fresh-execution",
+            "reused_execution_nodes": [],
+            "revalidated_policy_nodes": [],
+        },
     }
     write_json(GATE_E_EVIDENCE, registry)
 
@@ -638,14 +675,17 @@ def finalize() -> dict[str, Any]:
         "open_migration_promises": 0,
     }
     bundle = {
-        "schema": "dustui.gate-e.final-bundle.v1",
+        "schema": "dustui.gate-e.final-bundle.v2",
         "status": "pass",
         "gate": "Gate E",
         "phase": "OV15",
         "aud_fix": "AUD-FIX-17",
+        "qualification_identity": "source_projection_sha256",
+        "git_identity_role": "provenance-not-validity",
         "source_git_head": identity["git_head"],
         "source_git_tree": identity["git_tree"],
         "source_projection_sha256": identity["source_projection_sha256"],
+        "qualified_source_projection_sha256": identity["source_projection_sha256"],
         "gate_d_ancestor_source_sha256": retirement.get("gate_d_ancestor_source_sha256"),
         "validation_run_id": validation_run_id,
         "release_run_id": release["release_run_id"],
@@ -662,6 +702,7 @@ def finalize() -> dict[str, Any]:
             "status": "closed-by-executed-gate-e-evidence",
         },
         "evidence_registry": "migration/qualification/v1/gate_e_evidence.json",
+        "reuse": {"mode": "fresh-execution", "reused_execution_nodes": []},
     }
     write_json(GATE_E_BUNDLE, bundle)
 
