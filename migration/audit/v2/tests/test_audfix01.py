@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[4]
 sys.path.insert(0,str(ROOT/'scripts'))
 from audfix01_core import *
+from validate_audfix01_contract import gate_d_phase_failures
 
 class AudFix01(unittest.TestCase):
     def test_requirement_index_has_every_gap(self):
@@ -41,6 +42,42 @@ class AudFix01(unittest.TestCase):
         reg={'source_snapshot_sha256':'x','nodes':nodes}
         q=compute_qualification(ROOT,reg)
         self.assertFalse(q['gate_d']['qualified']); self.assertIn('runtime_apk_binding',q['gate_d']['invalid_binding_nodes'])
+    def test_gate_d_phase_prequalification(self):
+        state={
+            'gate_d':{'qualified':False,'status':'open'},
+            'ov14':{'status':'blocked-on-gate-d'},
+            'gate_e':{'qualified':False,'status':'blocked-on-gate-d-and-ov14-retirement'},
+        }
+        self.assertEqual([],gate_d_phase_failures(state,ROOT))
+        state['gate_d']['status']='qualified'
+        self.assertIn('AUD001_GATE_D',{x['code'] for x in gate_d_phase_failures(state,ROOT)})
+
+    def test_gate_d_phase_successor(self):
+        ancestor='a'*64
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            q=root/'migration/qualification/v1'
+            q.mkdir(parents=True)
+            for name in ('gate_d_evidence.json','gate_d_bundle.json'):
+                (q/name).write_text(json.dumps({'source_snapshot_sha256':ancestor}))
+            state={
+                'gate_d':{
+                    'qualified':True,
+                    'status':'qualified',
+                    'passing_source_tree_sha256':ancestor,
+                },
+                'ov14':{'status':'physically-retired'},
+                'gate_e':{'qualified':False,'status':'eligible-for-qualification'},
+            }
+            self.assertEqual([],gate_d_phase_failures(state,root))
+            state['gate_e']={'qualified':True,'status':'qualified'}
+            self.assertEqual([],gate_d_phase_failures(state,root))
+            (q/'gate_d_bundle.json').write_text(json.dumps({'source_snapshot_sha256':'b'*64}))
+            self.assertIn(
+                'AUD001_GATE_D_BUNDLE_ANCESTOR',
+                {x['code'] for x in gate_d_phase_failures(state,root)},
+            )
+
     def test_negative_fixtures(self):
         for p in sorted((ROOT/'migration/fixtures/audfix01').glob('*.json')):
             o=load_json(p); self.assertEqual(sorted(o['expected_findings']),sorted(evaluate_fixture(o)),p.name)
