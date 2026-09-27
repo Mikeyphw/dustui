@@ -5,6 +5,8 @@ import argparse
 import json
 from pathlib import Path
 
+from validate_audfix01_contract import gate_d_phase_failures
+
 ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE = ROOT / "migration/audit/v2/aud_fix_04_audit_loop.json"
 LEDGER = ROOT / "migration/ledger/aud_fix_04_status.json"
@@ -34,7 +36,8 @@ def check_source() -> list[dict[str, str]]:
     service = text("android/app/src/main/kotlin/com/mikeyphw/dustui/scan/ScanForegroundService.kt")
     worker = text("android/app/src/main/kotlin/com/mikeyphw/dustui/scan/ScheduledScanWorker.kt")
     tasker = text("android/app/src/main/kotlin/com/mikeyphw/dustui/tasker/DustTaskerReceiver.kt")
-    android_test = text("android/app/src/test/kotlin/com/mikeyphw/dustui/automation/AudFix04AutomationContractTest.kt")
+    android_test_rel = "android/app/src/test/kotlin/com/mikeyphw/dustui/automation/AudFix04AutomationContractTest.kt"
+    android_test = text(android_test_rel)
     lifecycle_path = ROOT / "migration/acceptance/v1/validator_lifecycle.json"
     lifecycle = json.loads(lifecycle_path.read_text()) if lifecycle_path.is_file() else {}
     lifecycle_by_path = {e.get("path"): e for e in lifecycle.get("validators", []) if isinstance(e, dict)}
@@ -138,8 +141,28 @@ def check_source() -> list[dict[str, str]]:
         "TestAUD_FIX04AnalysisActionGatesMatchExecutableAdapters",
     ]:
         require(f, token in state_test, "AUD011_AUD012_BEHAVIOR_FIXTURE", f"Go lifecycle/replay/reconnect fixture missing {token}")
-    require(f, "AudFix04AutomationContractTest" in android_test and "activityRuns" in android_test,
-            "AUD011_ANDROID_CONTRACT_TEST", "Android WorkManager/Tasker/Activity contract fixture missing")
+    # The predecessor Android source-token fixture is valid before AUD-FIX-16.
+    # After physical retirement it must be absent from live source and preserved
+    # under the lifecycle-declared archive with named executed successors.
+    if android_test:
+        require(f, "AudFix04AutomationContractTest" in android_test and "activityRuns" in android_test,
+                "AUD011_ANDROID_CONTRACT_TEST", "Android WorkManager/Tasker/Activity contract fixture is malformed")
+    else:
+        android_entry = lifecycle_by_path.get(android_test_rel, {})
+        archive_rel = android_entry.get("archive_path") if isinstance(android_entry, dict) else None
+        archive_test = text(archive_rel) if isinstance(archive_rel, str) and archive_rel else ""
+        successors = set(android_entry.get("successor_evidence", [])) if isinstance(android_entry, dict) else set()
+        require(f, android_entry.get("status") == "archived-historical" and
+                android_entry.get("retirement_owner") == "AUD-FIX-16" and
+                android_entry.get("acceptance_authority") == "none",
+                "AUD011_ANDROID_CONTRACT_LIFECYCLE",
+                "retired AUD-FIX-04 Android contract lacks AUD-FIX-16 lifecycle truth")
+        require(f, {"workflow:aud_fix_11", "gate:durable_operation_terminal_truth"}.issubset(successors),
+                "AUD011_ANDROID_CONTRACT_SUCCESSORS",
+                "retired AUD-FIX-04 Android contract lacks its executed successor mapping")
+        require(f, bool(archive_test) and "AudFix04AutomationContractTest" in archive_test and "activityRuns" in archive_test,
+                "AUD011_ANDROID_CONTRACT_ARCHIVE",
+                "retired AUD-FIX-04 Android contract archive is missing or malformed")
 
     # AUD-FIX-13 lifecycle successorization: predecessor source-token guards are archived,
     # and this leaf consumes their exact behavioral successor map instead of requiring them live.
@@ -155,12 +178,14 @@ def check_source() -> list[dict[str, str]]:
             (ROOT / "migration/archive/validators/aud_fix_13_pre_gate_d/android/scripts/validate-root-scan-diagnostics.py").is_file(),
             "AUD016_VALIDATOR_SUCCESSOR_GUARD", "retired root diagnostics source-token validator is still live or lacks an archive copy")
 
-    # Gate D must remain open.
+    # AUD-FIX-03/04/05 successor replay uses canonical AUD-FIX-01 phase truth.
     q = ROOT / "migration/qualification/v1/current_state.json"
     if q.is_file():
         obj = json.loads(q.read_text())
-        require(f, obj.get("gate_d", {}).get("qualified") is False,
-                "ROADMAP_GATE_D_MUST_STAY_OPEN", "AUD-FIX-04 must not qualify Gate D")
+        phase_failures = gate_d_phase_failures(obj)
+        require(f, not phase_failures, "ROADMAP_GATE_D_SUCCESSOR_STATE",
+                "AUD-FIX-04 Gate-D/Gate-E successor phase is invalid: " +
+                ", ".join(x.get("code", "unknown") for x in phase_failures))
     return f
 
 

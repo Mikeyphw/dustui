@@ -2,6 +2,8 @@
 from __future__ import annotations
 import argparse, json, re, tomllib
 from pathlib import Path
+
+from validate_audfix01_contract import gate_d_phase_failures
 ROOT=Path(__file__).resolve().parents[1]
 def text(rel):
     p=ROOT/rel; return p.read_text(encoding='utf-8',errors='replace') if p.is_file() else ''
@@ -53,8 +55,14 @@ def check_source():
     for n in range(1,6):
         src=text(f'scripts/validate_audfix0{n}_contract.py')
         req(re.search(r'\bimport\s+subprocess\b|\bsubprocess\.', src) is None,'AUD021_NO_CUSTOM_ORCHESTRATION',f'AUD-FIX-0{n} checker still launches subprocesses')
+    # AUD-FIX-03/04/05 successor replay uses canonical AUD-FIX-01 phase truth.
     q=ROOT/'migration/qualification/v1/current_state.json'
-    if q.is_file(): req(json.loads(q.read_text()).get('gate_d',{}).get('qualified') is False,'ROADMAP_GATE_D_OPEN','Gate D must remain open at Gate R1')
+    if q.is_file():
+        obj=json.loads(q.read_text())
+        phase_failures=gate_d_phase_failures(obj)
+        req(not phase_failures,'ROADMAP_GATE_D_SUCCESSOR_STATE',
+            'AUD-FIX-05 Gate-D/Gate-E successor phase is invalid: '+
+            ', '.join(x.get('code','unknown') for x in phase_failures))
     return f
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument('--audit-loop',action='store_true'); args=ap.parse_args()

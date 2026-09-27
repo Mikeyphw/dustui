@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse, json, re
 from pathlib import Path
 
+from validate_audfix01_contract import gate_d_phase_failures
+
 ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE = ROOT / "migration/audit/v2/aud_fix_03_audit_loop.json"
 LEDGER = ROOT / "migration/ledger/aud_fix_03_status.json"
@@ -103,11 +105,14 @@ def check_source() -> list[dict[str, str]]:
     req("TestAuthorityGoldenFixtureIsSharedAndVersioned" in go_golden and "DomainAuthorityGoldenContractTest" in kotlin_golden,
         "AUD008_CROSS_LANGUAGE_GOLDEN", "Go/Android do not share the authority golden fixture")
 
+    # AUD-FIX-03/04/05 successor replay uses canonical AUD-FIX-01 phase truth.
     qual = ROOT / "migration/qualification/v1/current_state.json"
     if qual.is_file():
         obj = json.loads(qual.read_text())
-        req(obj.get("gate_d", {}).get("qualified") is False,
-            "ROADMAP_GATE_D_MUST_STAY_OPEN", "AUD-FIX-03 must not qualify Gate D")
+        phase_failures = gate_d_phase_failures(obj)
+        req(not phase_failures, "ROADMAP_GATE_D_SUCCESSOR_STATE",
+            "AUD-FIX-03 Gate-D/Gate-E successor phase is invalid: " +
+            ", ".join(x.get("code", "unknown") for x in phase_failures))
     return failures
 
 

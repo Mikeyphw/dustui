@@ -1,5 +1,5 @@
 from __future__ import annotations
-import json, sys, tempfile, unittest
+import json, sys, tempfile, tomllib, unittest
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[4]
 sys.path.insert(0,str(ROOT/'scripts'))
@@ -20,13 +20,18 @@ class AudFix01(unittest.TestCase):
             self.assertEqual(digest,hashlib.sha256((source/name).read_bytes()).hexdigest(),name)
     def test_source_guard_lifecycle_is_explicit(self):
         ledger=load_json(ROOT/'migration/ledger/source_token_contract_tests.json')
-        self.assertEqual('dustui.source-contract-lifecycle.v2',ledger['schema'])
-        for item in ledger['tests']:
-            self.assertIn(item['status'],{'successor-aware-bridge','historical-tripwire'})
-            self.assertIn(item['acceptance_authority'],{'invariant-only','temporary-migration-guard'})
-            if item['status']=='successor-aware-bridge':
-                body=read_text(ROOT,item['path'])
-                self.assertIn('AUD-FIX successor-aware',body,item['path'])
+        self.assertEqual('dustui.validator-lifecycle.v1',ledger['schema'])
+        self.assertEqual('acceptance-governance-only',ledger['authority'])
+        for item in ledger['validators']:
+            self.assertIn(item['status'],{'archived-historical','live-fixture-contract'})
+            self.assertIn(item['acceptance_authority'],{'none','fixture-contract'})
+            if item['status']=='archived-historical':
+                self.assertEqual('none',item['acceptance_authority'])
+                self.assertTrue(item.get('archive_path'),item['path'])
+                self.assertTrue((ROOT/item['archive_path']).is_file(),item['path'])
+                self.assertTrue(item.get('successor_evidence'),item['path'])
+            else:
+                self.assertTrue((ROOT/item['path']).is_file(),item['path'])
     def test_current_truth_has_no_independent_gate_claims(self):
         self.assertEqual([],independent_gate_claims(ROOT))
         self.assertEqual([],predecessor_ui_authority_paths(ROOT))
@@ -86,9 +91,34 @@ class AudFix01(unittest.TestCase):
         self.assertNotIn('gate_d_truth',o); self.assertNotIn('ov15_status',o)
         self.assertEqual('migration/qualification/v1/current_state.json',o['qualification_state_source'])
     def test_gate_d_workflow_precedes_retirement(self):
-        s=read_text(ROOT,'.devtool.toml')
-        m=__import__('re').search(r'(?m)^gate_d\s*=\s*\[(.*?)\]$',s)
-        self.assertIsNotNone(m); wf=m.group(1)
-        self.assertIn('job:qualification_state',wf); self.assertNotIn('job:retirement_gate',wf)
+        cfg=tomllib.loads(read_text(ROOT,'.devtool.toml'))
+        workflow=cfg['targets']['dustui_android']['workflows']['gate_d']
+        refs={node.get('ref') if isinstance(node,dict) else node for node in workflow}
+        self.assertIn('job:qualification_state',refs)
+        self.assertNotIn('job:retirement_gate',refs)
+        self.assertNotIn('job:audfix16_retirement_evidence',refs)
+
+    def test_gate_d_successor_leaf_validators_use_canonical_phase_contract(self):
+        for rel in (
+            'scripts/validate_audfix03_contract.py',
+            'scripts/validate_audfix04_contract.py',
+            'scripts/validate_audfix05_contract.py',
+        ):
+            body=read_text(ROOT,rel)
+            self.assertIn('from validate_audfix01_contract import gate_d_phase_failures',body,rel)
+            self.assertIn('ROADMAP_GATE_D_SUCCESSOR_STATE',body,rel)
+            self.assertNotIn('ROADMAP_GATE_D_MUST_STAY_OPEN',body,rel)
+            self.assertNotIn("'ROADMAP_GATE_D_OPEN'",body,rel)
+
+    def test_audfix04_retired_android_fixture_has_successor_evidence(self):
+        rel='android/app/src/test/kotlin/com/mikeyphw/dustui/automation/AudFix04AutomationContractTest.kt'
+        lifecycle=load_json(ROOT/'migration/acceptance/v1/validator_lifecycle.json')
+        entry=next(item for item in lifecycle['validators'] if item.get('path')==rel)
+        self.assertFalse((ROOT/rel).exists())
+        self.assertEqual('archived-historical',entry['status'])
+        self.assertEqual('AUD-FIX-16',entry['retirement_owner'])
+        self.assertEqual('none',entry['acceptance_authority'])
+        self.assertTrue((ROOT/entry['archive_path']).is_file())
+        self.assertTrue({'workflow:aud_fix_11','gate:durable_operation_terminal_truth'}.issubset(set(entry['successor_evidence'])))
 
 if __name__=='__main__': unittest.main()

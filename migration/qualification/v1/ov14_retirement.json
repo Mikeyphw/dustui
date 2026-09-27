@@ -11,7 +11,7 @@
   "gate_d_resealed": false,
   "generated_by": "scripts/audfix16_retirement.py",
   "next_gate": "Gate E",
-  "post_retirement_source_sha256": "f5dd1f32f51a8158d2b3f4e9e4371f3342fa7b237ffafa382d6893ad7bcf53ad",
+  "post_retirement_source_sha256": "0e6c617162d8d0b5c8012842b9e5748e3e9a273ca6e550949de35998c24fe9b0",
   "retired_surfaces": {
     "generic_android_release_device_helpers": true,
     "ndjson_file_tail_state_transfer": true,
