@@ -72,7 +72,8 @@ def audit() -> list[str]:
         req(job in jobs, f"Gate-E target-local job missing: {job}")
 
     req(wrapper.get("aud-fix-17", {}).get("workflow") == "gate_e", "aud-fix-17 wrapper is missing/misbound")
-    req(wrapper.get("aud-fix-17-fast", {}).get("workflow") == "gate_e_fast", "aud-fix-17-fast wrapper is missing/misbound")
+    req("gate_e_fast" not in workflows, "qualified source still exposes temporary gate_e_fast resume workflow")
+    req("aud-fix-17-fast" not in wrapper, "qualified source still exposes temporary aud-fix-17-fast wrapper")
     req("gate-e-release" not in wrapper, "gate-e-release must not use wrapper.commands; nested Android release is launcher-owned")
     launcher = read("devtoolw")
     req(
@@ -109,6 +110,30 @@ def audit() -> list[str]:
     req(not obs.get("predecessor_source_token_paths"), "predecessor source-token validators returned")
     req(obs.get("android_go_process_binding_present") and obs.get("android_go_packaging_present"), "Android Go runtime binding/packaging missing")
     req(obs.get("go_sqlite_implementation_present"), "Go-owned SQLite implementation missing")
+
+    live_docs = {
+        rel: read(rel)
+        for rel in (
+            "README.md",
+            "RELEASE_CHECKLIST.md",
+            "VALIDATION.md",
+            "KNOWN_ISSUES.md",
+            "android/VALIDATION_REMEDIATION.md",
+            "migration/qualification/v1/README.md",
+        )
+    }
+    stale_live_claims = (
+        "Gate E remains pending",
+        "Gate E is the next qualification boundary",
+        "Gate D remains open",
+        "blocks `scripts/final-rc-gate.sh`",
+        "`release-gate.sh` runs the same audit",
+    )
+    for rel, body in live_docs.items():
+        for stale in stale_live_claims:
+            req(stale not in body, f"live operator doc {rel} retains stale post-Gate-E claim: {stale}")
+    req("Gate E is qualified" in live_docs["README.md"], "README does not state current qualified Gate-E truth")
+    req("Gate E is qualified" in live_docs["migration/qualification/v1/README.md"], "qualification README does not state current qualified Gate-E truth")
 
     req(not (ROOT / "pyproject.toml").exists(), "root pyproject.toml must remain absent")
     main_vm = read("android/app/src/main/kotlin/com/mikeyphw/dustui/ui/MainViewModel.kt")

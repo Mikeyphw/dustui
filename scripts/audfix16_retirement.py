@@ -175,7 +175,15 @@ def main() -> int:
     if args.json:
         print(text, end="")
     else:
-        print("AUD-FIX-16 physical retirement evidence PASS; Gate D ancestor preserved; Gate E is next")
+        gate_e_qualified = False
+        state_path = ROOT / "migration/qualification/v1/current_state.json"
+        if state_path.is_file():
+            try:
+                gate_e_qualified = load_json(state_path).get("gate_e", {}).get("qualified") is True
+            except Exception:
+                gate_e_qualified = False
+        successor = "Gate E successor qualified" if gate_e_qualified else "Gate E is next"
+        print(f"AUD-FIX-16 physical retirement evidence PASS; Gate D ancestor preserved; {successor}")
     return 0
 
 

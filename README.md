@@ -2,7 +2,7 @@
 
 DustUI is a Go-authoritative storage analysis and cleanup engine with two supported host surfaces—machine-readable CLI and interactive terminal UI—and an Android client that consumes the same Go domain/runtime contracts.
 
-As of **AUD-FIX-16**, Go is the supported/default host and persistence authority, Gate D is qualified by the preserved AUD-FIX-15 evidence bundle, and the predecessor Python/Textual, Room, NDJSON file-tail, and app-local release/device authorities are physically retired. Historical predecessor material is retained only under `migration/archive/` and is non-authoritative. Gate E is the next qualification boundary.
+As of **AUD-FIX-17**, Go is the supported/default host and persistence authority, Gate D remains a preserved qualified ancestor, AUD-FIX-16 physical retirement is complete, and Gate E is qualified by executed canonical release/device/adversarial evidence. Historical predecessor material is retained only under `migration/archive/` and is non-authoritative.
 
 ## Supported host commands
 
@@ -133,15 +133,15 @@ Android and Go now share 27 stable semantic routes across Overview, Files, Clean
 Every content request is now tied to semantic route + generation + entity + request ID + optional query/draft fingerprint. Late work cannot populate a newer route or entity. Android renders one shared Loading / Empty / Blocked / Error / Content protocol and consumes structured Go action gates (`allowed`, `reasonCode`, `message`, `remediationActions`) for risky/evidence-dependent actions instead of rebuilding those decisions from local booleans.
 
 ### Scan, Overview, and Apps truth (AUD-FIX-10)
-AUD-FIX-10 removes direct scan-start shortcuts: every scan request now passes through scope selection, preflight, review, and an explicit Start action. Overview separates logical bytes from allocated filesystem bytes and surfaces scan identity/integrity plus durable operation/activity state. Apps keeps measured scan bytes distinct from typed package-evidence completeness (`SUPPORTED`, `PARTIAL`, `UNAVAILABLE`, `BLOCKED`), so missing evidence is never presented as zero. Gate D is qualified under AUD-FIX-15; Gate E remains pending.
+AUD-FIX-10 removes direct scan-start shortcuts: every scan request now passes through scope selection, preflight, review, and an explicit Start action. Overview separates logical bytes from allocated filesystem bytes and surfaces scan identity/integrity plus durable operation/activity state. Apps keeps measured scan bytes distinct from typed package-evidence completeness (`SUPPORTED`, `PARTIAL`, `UNAVAILABLE`, `BLOCKED`), so missing evidence is never presented as zero. Gate D is qualified under AUD-FIX-15 and preserved as ancestor evidence; Gate E is qualified under AUD-FIX-17.
 
 
 
 ### Activity and Diagnostics convergence (AUD-FIX-11)
-Activity now renders durable Go operation truth for active/history/recovery states and owns cleanup verification as correlated evidence. System → Diagnostics is backed by the Go ProblemGraph and leads with root causes, evidence health, remediation, and support export; raw events/probes stay under Advanced diagnostics. Both surfaces navigate by the same durable operation ID. Gate D is qualified under AUD-FIX-15; Gate E remains pending.
+Activity now renders durable Go operation truth for active/history/recovery states and owns cleanup verification as correlated evidence. System → Diagnostics is backed by the Go ProblemGraph and leads with root causes, evidence health, remediation, and support export; raw events/probes stay under Advanced diagnostics. Both surfaces navigate by the same durable operation ID. Gate D is qualified under AUD-FIX-15 and preserved as ancestor evidence; Gate E is qualified under AUD-FIX-17.
 
 ### Adaptive tablet and route continuity (AUD-FIX-12)
-AUD-FIX-12 derives compact/medium/expanded layout from the active semantic route without changing route identity. Files, Clean, Apps, Activity, and System gain route-driven supporting/master panes on larger windows; compact and expanded layouts share the same deep links, entity IDs, generations, action gates, and durable Go authorities. Accessibility traversal is explicit and charts/treemap use exact shared textual equivalents. Gate D is qualified under AUD-FIX-15; Gate E remains pending.
+AUD-FIX-12 derives compact/medium/expanded layout from the active semantic route without changing route identity. Files, Clean, Apps, Activity, and System gain route-driven supporting/master panes on larger windows; compact and expanded layouts share the same deep links, entity IDs, generations, action gates, and durable Go authorities. Accessibility traversal is explicit and charts/treemap use exact shared textual equivalents. Gate D is qualified under AUD-FIX-15 and preserved as ancestor evidence; Gate E is qualified under AUD-FIX-17.
 
 ## AUD-FIX-13 acceptance authority
 
@@ -156,3 +156,9 @@ AUD-FIX-14 adds exact-tree Gate A/B/C history discovery and the complete Gate-D 
 AUD-FIX-16 removes predecessor production authority after the qualified Gate-D milestone. Android now streams root-worker scan events directly over a Binder pipe; Go-owned SQLite remains the persistence authority. Room/KSP integration, the migration-only Room importer, persisted NDJSON file tailing, generic Android-local release/device helper scripts, and Gate-D-superseded source-token tests are absent from live source sets.
 
 Canonical post-retirement evidence is `migration/qualification/v1/ov14_retirement.json`. It records the new source projection while preserving the Gate-D ancestor hash and explicitly states `gate_d_resealed=false`. Run `./devtoolw aud-fix-16` for the targeted successor test/lint/build sweep.
+
+## AUD-FIX-17 Gate E final qualification
+
+Gate E is qualified only from the canonical signed Devtool release plus the full AUD-FIX-17 regression/adversarial graph. `migration/qualification/v1/gate_e_evidence.json` and `gate_e_bundle.json` are derived qualification outputs bound to the qualified source projection, release report/APK, Go runtime, signing identity, device evidence, and final convergence audit.
+
+The temporary `gate_e_fast` / `aud-fix-17-fast` resume path is retired after qualification. Future source-projection changes require a fresh clean-tree `./devtoolw gate-e-release` followed, without source changes between runs, by `./devtoolw aud-fix-17`.

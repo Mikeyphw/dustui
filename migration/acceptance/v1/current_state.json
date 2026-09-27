@@ -7,7 +7,7 @@
       "android/app/src/test/kotlin/com/mikeyphw/dustui/go/DomainAuthorityGoldenContractTest.kt"
     ],
     "quarantined_generic_helpers": [],
-    "status": "gate-e-qualified-final-converged",
+    "status": "post-gate-d-successor-converged",
     "ui_requirement_status_counts": {
       "candidate-covered": 22,
       "gate-d-required": 1,
@@ -18,8 +18,8 @@
   "qualification": {
     "gate_d_qualified": true,
     "gate_d_status": "qualified",
-    "gate_e_qualified": true,
-    "gate_e_status": "qualified",
+    "gate_e_qualified": false,
+    "gate_e_status": "eligible-for-qualification",
     "statement": "acceptance convergence follows canonical Gate-D/Gate-E truth and does not independently qualify any gate"
   },
   "qualification_state_source": "migration/qualification/v1/current_state.json",

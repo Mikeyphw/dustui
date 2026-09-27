@@ -1,32 +1,18 @@
-
-## AUD-FIX-10 validation note
-- AUD-FIX-10 is a non-gate UX-truth convergence stage. Gate D remains open; final release qualification still depends on the later remediation gates and evidence registry.
-- The stage-owned workflow includes Android unit and Go truth/gate tests; full lint/assemble/validation stays reserved for the next designated roadmap gate.
-
-# DustUI known issues
+# DustUI known issues — post Gate E
 
 ## Release-blocking issues
 
-None known at the time of this RC ledger.
+None are recorded in the qualified Gate-E evidence for the current qualified source projection. A later source-projection change is a new release candidate and is not covered by the previous Gate-E seal.
 
-## Non-blocking notes
+## Environment / evidence notes
 
-- A release APK may be unsigned in local RC evidence until distribution signing is configured.
-- Device certification must be collected per target device because root backend, SELinux, battery policy, and notification readiness are device-specific.
-- Install smoke evidence is expected to be generated from a real device or emulator with ADB access.
+- Device/runtime evidence is environment-specific and must remain bound to the qualifying Devtool run.
+- Rooted ARM64 and connected-device instrumentation are required by the final qualification topology.
+- Multi-user/work-profile evidence is capability-conditional: when the qualification device cannot provide it, the absence must be explicit and non-fabricated rather than silently reported as executed coverage.
+- Gate-D evidence is immutable ancestor evidence; post-Gate-D work must not reseal or rewrite it.
 
 ## Review rule
 
-Any item written as `- [blocker] ...`, `- [p0] ...`, or `- [p1] ...` blocks `scripts/final-rc-gate.sh`.
+Any newly discovered `blocker`, `p0`, or `p1` issue reopens release readiness for the changed/current candidate and must be resolved before a fresh canonical `./devtoolw gate-e-release` + `./devtoolw aud-fix-17` qualification can be treated as passing.
 
-## AUD-FIX-09 validation note
-- Full Gate D remains open; AUD-FIX-09 only converges async presentation and action-gate authority. Final release qualification still depends on the later roadmap gates and evidence registry.
-
-- AUD-FIX-11 intentionally does not implement adaptive tablet/master-detail behavior; that remains AUD-FIX-12.
-
-- AUD-FIX-12 implements and statically/unit-tests adaptive route continuity; connected-device rotation/accessibility evidence is defined by `./devtoolw aud-fix-12-device` and remains qualification evidence to execute on a qualifying device/tree. Gate D remains open.
-- AUD-FIX-13 converges candidate acceptance only. Gate D remains open; historical Gate A/B/C evidence and complete Gate-D topology remain AUD-FIX-14, while quarantined generic helpers and Room/NDJSON retirement remain later roadmap work.
-
-### AUD-FIX-14 historical qualification evidence
-
-Gate A/B/C exact-tree evidence must be discovered from the real repository history. A checkout without those commits reports `UNRECOVERABLE_HISTORICAL_EVIDENCE`; this is an explicit Gate-D blocker rather than permission to substitute current-tree evidence.
+Historical issue/roadmap notes and retired release scripts are provenance only under `migration/archive/`; they are not current acceptance or release authority.

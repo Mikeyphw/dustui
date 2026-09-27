@@ -121,4 +121,33 @@ class AudFix01(unittest.TestCase):
         self.assertTrue((ROOT/entry['archive_path']).is_file())
         self.assertTrue({'workflow:aud_fix_11','gate:durable_operation_terminal_truth'}.issubset(set(entry['successor_evidence'])))
 
+    def test_post_gate_e_temporary_resume_authority_is_retired(self):
+        cfg=tomllib.loads(read_text(ROOT,'.devtool.toml'))
+        workflows=cfg['targets']['dustui_android']['workflows']
+        wrapper=cfg.get('wrapper',{}).get('commands',{})
+        self.assertNotIn('gate_e_fast',workflows)
+        self.assertNotIn('aud-fix-17-fast',wrapper)
+        contract=read_text(ROOT,'scripts/validate_audfix17_contract.py')
+        self.assertIn('"gate_e_fast" not in workflows',contract)
+        self.assertIn('"aud-fix-17-fast" not in wrapper',contract)
+
+    def test_live_operator_docs_are_post_gate_e(self):
+        rels=(
+            'README.md','RELEASE_CHECKLIST.md','VALIDATION.md','KNOWN_ISSUES.md',
+            'android/VALIDATION_REMEDIATION.md','migration/qualification/v1/README.md',
+        )
+        bodies={rel:read_text(ROOT,rel) for rel in rels}
+        joined='\n'.join(bodies.values())
+        for stale in (
+            'Gate E remains pending',
+            'Gate E is the next qualification boundary',
+            'Gate D remains open',
+            'blocks `scripts/final-rc-gate.sh`',
+            '`release-gate.sh` runs the same audit',
+        ):
+            self.assertNotIn(stale,joined,stale)
+        self.assertIn('Gate E is qualified',bodies['README.md'])
+        self.assertIn('Gate E is qualified',bodies['migration/qualification/v1/README.md'])
+
+
 if __name__=='__main__': unittest.main()
