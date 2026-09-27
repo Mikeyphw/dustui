@@ -1,15 +1,13 @@
 {
   "candidate": {
-    "acceptance_converged": false,
-    "failures": [
-      "unmapped live source-reading tests: android/app/src/test/kotlin/com/mikeyphw/dustui/contracts/PersonalSigningContractTest.kt"
-    ],
+    "acceptance_converged": true,
+    "failures": [],
     "live_source_reading_validators": [
       "android/app/src/test/kotlin/com/mikeyphw/dustui/contracts/PersonalSigningContractTest.kt",
       "android/app/src/test/kotlin/com/mikeyphw/dustui/go/DomainAuthorityGoldenContractTest.kt"
     ],
     "quarantined_generic_helpers": [],
-    "status": "acceptance-contradiction",
+    "status": "post-gate-d-successor-converged",
     "ui_requirement_status_counts": {
       "candidate-covered": 22,
       "gate-d-required": 1,

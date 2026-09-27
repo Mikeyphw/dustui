@@ -22,8 +22,12 @@ inputs = ["app", "../go", "../migration", "../.devtool.toml"]
 [targets.dustui_android.android]
 variant = "debug"
 aapt2_provider = "auto"
-instrumentation = "when-device-present"
 prefer_native_termux = true
+
+[targets.dustui_android.android.instrumentation]
+policy = "when-device-present"
+test_runner = "com.mikeyphw.dustui.debug.test/androidx.test.runner.AndroidJUnitRunner"
+target_package = "com.mikeyphw.dustui.debug"
 
 [targets.dustui_android.android.release]
 variant = "release"

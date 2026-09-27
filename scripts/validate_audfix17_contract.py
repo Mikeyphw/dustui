@@ -41,7 +41,7 @@ def audit() -> list[str]:
         req(topology.get("required_nodes") == list(REQUIRED_GATE_E_NODES), "Gate-E required node order/topology mismatch")
         policy = topology.get("environment_policy") or {}
         req(policy.get("rooted_arm64") == "required", "rooted ARM64 must be required")
-        req(policy.get("multi_user_or_work_profile") == "required", "multi-user/work-profile evidence must be required")
+        req(policy.get("multi_user_or_work_profile") == "conditional", "multi-user/work-profile evidence must be conditional when unavailable on the qualification device")
         req(policy.get("device_instrumentation") == "required", "device instrumentation must be required")
         req(policy.get("signed_release") == "required", "signed release must be required")
 

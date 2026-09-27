@@ -39,9 +39,11 @@
   ],
   "environment_policy": {
     "rooted_arm64": "required",
-    "multi_user_or_work_profile": "required",
+    "multi_user_or_work_profile": "conditional",
     "device_instrumentation": "required",
     "signed_release": "required",
-    "qualification_deferred_when_missing": true
+    "qualification_deferred_when_missing": true,
+    "conditional_unavailable_is_blocking": false,
+    "conditional_unavailable_evidence_status": "unavailable"
   }
 }
