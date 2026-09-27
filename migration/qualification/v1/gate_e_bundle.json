@@ -1,0 +1,70 @@
+{
+  "aud_fix": "AUD-FIX-17",
+  "counterexample_new_root_family_count": 0,
+  "evidence_registry": "migration/qualification/v1/gate_e_evidence.json",
+  "final_migration_audit": {
+    "android_ui": "Kotlin/Compose",
+    "cpp_scanner_runtime": "none",
+    "engine_database": "Go-owned SQLite",
+    "legacy_destructive_executor": "none",
+    "legacy_navigation": "none",
+    "open_migration_promises": 0,
+    "python_runtime": "none",
+    "room_domain_authority": "none",
+    "runtime": "go-native-android"
+  },
+  "gate": "Gate E",
+  "gate_d_ancestor_source_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69",
+  "git_identity_role": "provenance-not-validity",
+  "go_race_disposition": "not-supported-by-current-go-target",
+  "go_runtime_sha256": "3195fd3581a5e51467b668f6dbf80b804f86236d0692b072baa7001c5d0dd111",
+  "phase": "OV15",
+  "promise_ledger": {
+    "final_gate_promise": "GAP:AUD-024",
+    "open_root_gaps": 0,
+    "status": "closed-by-executed-or-reused-gate-e-evidence"
+  },
+  "qualification_identity": "source_projection_sha256",
+  "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+  "qualified_source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+  "release_apk_sha256": "e18846d4eefac4546b2e600312662700e450760d65b17a59692d45a26931d35a",
+  "release_report_sha256": "9fcfe0305f2a44aa2c8a008cecc0ad102ded30feec08296561ae0ed2225a0016",
+  "release_run_id": "b1f95a2d4f0e4053a1956d6d8f7cbbd0",
+  "reuse": {
+    "mode": "node-input-fingerprint-composition",
+    "prior_evidence_commit": "2a3ccfaae6dc5f9128a7b72861e056178d3073ae",
+    "prior_evidence_sha256": "e251c61b637a2ccbc73ffef4b86c3b324b30b16ca7ae4345fb3c692e050aef93",
+    "prior_source_projection_sha256": "0e6c617162d8d0b5c8012842b9e5748e3e9a273ca6e550949de35998c24fe9b0",
+    "reused_execution_nodes": [
+      "canonical_devtool_release",
+      "go_full_regression",
+      "go_adversarial_failure_windows",
+      "go_race_where_supported",
+      "android_debug_unit",
+      "android_debug_lint",
+      "android_debug_assemble",
+      "android_release_unit",
+      "android_release_lint",
+      "android_release_assemble",
+      "connected_instrumentation_full",
+      "rooted_arm64_runtime",
+      "runtime_apk_binding"
+    ],
+    "revalidated_policy_nodes": [
+      "gate_e_contract",
+      "full_roadmap_conformance",
+      "aud16_retirement_regression",
+      "successor_migration_validators",
+      "final_migration_audit",
+      "final_promise_audit",
+      "counterexample_convergence"
+    ]
+  },
+  "schema": "dustui.gate-e.final-bundle.v2",
+  "signing_identity_sha256": "88f33a4695bc891c0c95ef00956d5df9464242cfed60abb3256ed76a99c611d8",
+  "source_git_head": "f042d0ecc9c2237093151f533ad97d927d4c0b2b",
+  "source_git_tree": "91a94c4742c093fb7ab5b297bd1419ed5a4f5553",
+  "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+  "status": "pass",
+  "validation_run_id": "a1bc288b513840b185c631c8ff5e5825"
+}

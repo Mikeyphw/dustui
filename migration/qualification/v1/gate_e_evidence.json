@@ -1,0 +1,408 @@
+{
+  "gate_d_ancestor_source_sha256": "e8844878021c0590cc08cb0b0cdbb662fc4caddfa10ecad072a622b491f49c69",
+  "generated_by": "scripts/audfix17_reuse.py reconcile",
+  "git_identity_role": "provenance-not-validity",
+  "go_runtime_sha256": "3195fd3581a5e51467b668f6dbf80b804f86236d0692b072baa7001c5d0dd111",
+  "nodes": [
+    {
+      "binding": {
+        "evidence_reused": false,
+        "input_fingerprint_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "source_git_head": "f042d0ecc9c2237093151f533ad97d927d4c0b2b",
+        "source_git_tree": "91a94c4742c093fb7ab5b297bd1419ed5a4f5553",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "f042d0ecc9c2237093151f533ad97d927d4c0b2b",
+        "validated_source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validation_run_id": "a1bc288b513840b185c631c8ff5e5825"
+      },
+      "id": "gate_e_contract",
+      "status": "pass"
+    },
+    {
+      "binding": {
+        "artifact_sha256": "e18846d4eefac4546b2e600312662700e450760d65b17a59692d45a26931d35a",
+        "evidence_reused": true,
+        "input_fingerprint_sha256": "1d59c28ab3af6b3a3ac5f8ce43355f312afeb83eb89c9b583f72928e98d1b20d",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "release_report_sha256": "9fcfe0305f2a44aa2c8a008cecc0ad102ded30feec08296561ae0ed2225a0016",
+        "release_run_id": "b1f95a2d4f0e4053a1956d6d8f7cbbd0",
+        "reused_from_validation_run_id": "935f3c0ce70f4268b77ed4172f37c739",
+        "runtime_sha256": "3195fd3581a5e51467b668f6dbf80b804f86236d0692b072baa7001c5d0dd111",
+        "signing_identity_sha256": "88f33a4695bc891c0c95ef00956d5df9464242cfed60abb3256ed76a99c611d8",
+        "source_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "source_git_tree": "314123c7cd390a933fc5a5978a74788762ef6974",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "validated_source_projection_sha256": "0e6c617162d8d0b5c8012842b9e5748e3e9a273ca6e550949de35998c24fe9b0",
+        "validation_run_id": "935f3c0ce70f4268b77ed4172f37c739"
+      },
+      "id": "canonical_devtool_release",
+      "status": "pass"
+    },
+    {
+      "binding": {
+        "evidence_reused": false,
+        "input_fingerprint_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "source_git_head": "f042d0ecc9c2237093151f533ad97d927d4c0b2b",
+        "source_git_tree": "91a94c4742c093fb7ab5b297bd1419ed5a4f5553",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "f042d0ecc9c2237093151f533ad97d927d4c0b2b",
+        "validated_source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validation_run_id": "a1bc288b513840b185c631c8ff5e5825"
+      },
+      "id": "full_roadmap_conformance",
+      "status": "pass"
+    },
+    {
+      "binding": {
+        "evidence_reused": false,
+        "input_fingerprint_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "source_git_head": "f042d0ecc9c2237093151f533ad97d927d4c0b2b",
+        "source_git_tree": "91a94c4742c093fb7ab5b297bd1419ed5a4f5553",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "f042d0ecc9c2237093151f533ad97d927d4c0b2b",
+        "validated_source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validation_run_id": "a1bc288b513840b185c631c8ff5e5825"
+      },
+      "id": "aud16_retirement_regression",
+      "status": "pass"
+    },
+    {
+      "binding": {
+        "evidence_reused": false,
+        "input_fingerprint_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "source_git_head": "f042d0ecc9c2237093151f533ad97d927d4c0b2b",
+        "source_git_tree": "91a94c4742c093fb7ab5b297bd1419ed5a4f5553",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "f042d0ecc9c2237093151f533ad97d927d4c0b2b",
+        "validated_source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validation_run_id": "a1bc288b513840b185c631c8ff5e5825"
+      },
+      "id": "successor_migration_validators",
+      "status": "pass"
+    },
+    {
+      "binding": {
+        "evidence_reused": true,
+        "input_fingerprint_sha256": "48626c05f0b0e3952e61cdb148fd7aebfd331e61d01500e000c0d972bbe879e3",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "reused_from_validation_run_id": "935f3c0ce70f4268b77ed4172f37c739",
+        "source_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "source_git_tree": "314123c7cd390a933fc5a5978a74788762ef6974",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "validated_source_projection_sha256": "0e6c617162d8d0b5c8012842b9e5748e3e9a273ca6e550949de35998c24fe9b0",
+        "validation_run_id": "935f3c0ce70f4268b77ed4172f37c739"
+      },
+      "id": "go_full_regression",
+      "status": "pass"
+    },
+    {
+      "binding": {
+        "evidence_reused": true,
+        "input_fingerprint_sha256": "ba9c82fa4b1cb21ad3dea5f43615a2c1e5dff153ca1eb4fd4c6f82d2f9c80f94",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "reused_from_validation_run_id": "935f3c0ce70f4268b77ed4172f37c739",
+        "source_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "source_git_tree": "314123c7cd390a933fc5a5978a74788762ef6974",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "validated_source_projection_sha256": "0e6c617162d8d0b5c8012842b9e5748e3e9a273ca6e550949de35998c24fe9b0",
+        "validation_run_id": "935f3c0ce70f4268b77ed4172f37c739"
+      },
+      "id": "go_adversarial_failure_windows",
+      "status": "pass"
+    },
+    {
+      "binding": {
+        "evidence_reused": true,
+        "input_fingerprint_sha256": "ed39d3fcb9403b5d285de6ef4067c5d91f47dcc1801f24e6ca0177d20c19fef1",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "reused_from_validation_run_id": "935f3c0ce70f4268b77ed4172f37c739",
+        "source_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "source_git_tree": "314123c7cd390a933fc5a5978a74788762ef6974",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "validated_source_projection_sha256": "0e6c617162d8d0b5c8012842b9e5748e3e9a273ca6e550949de35998c24fe9b0",
+        "validation_run_id": "935f3c0ce70f4268b77ed4172f37c739"
+      },
+      "id": "go_race_where_supported",
+      "status": "pass"
+    },
+    {
+      "binding": {
+        "evidence_reused": true,
+        "input_fingerprint_sha256": "84702adbd5a51f85e4d1ad7fa2f37f4952d3b23325c0559849c51fc82087a126",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "reused_from_validation_run_id": "935f3c0ce70f4268b77ed4172f37c739",
+        "source_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "source_git_tree": "314123c7cd390a933fc5a5978a74788762ef6974",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "validated_source_projection_sha256": "0e6c617162d8d0b5c8012842b9e5748e3e9a273ca6e550949de35998c24fe9b0",
+        "validation_run_id": "935f3c0ce70f4268b77ed4172f37c739"
+      },
+      "id": "android_debug_unit",
+      "status": "pass"
+    },
+    {
+      "binding": {
+        "evidence_reused": true,
+        "input_fingerprint_sha256": "6c68d4ade82beff5bae63c1c71e07269b9146c11a0a8a010109bdb1fcd184f64",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "reused_from_validation_run_id": "935f3c0ce70f4268b77ed4172f37c739",
+        "source_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "source_git_tree": "314123c7cd390a933fc5a5978a74788762ef6974",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "validated_source_projection_sha256": "0e6c617162d8d0b5c8012842b9e5748e3e9a273ca6e550949de35998c24fe9b0",
+        "validation_run_id": "935f3c0ce70f4268b77ed4172f37c739"
+      },
+      "id": "android_debug_lint",
+      "status": "pass"
+    },
+    {
+      "binding": {
+        "evidence_reused": true,
+        "input_fingerprint_sha256": "743453406b48b8a1798aeb330739199a2408244c1a1b2d76d7078b2b80e9b610",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "reused_from_validation_run_id": "935f3c0ce70f4268b77ed4172f37c739",
+        "source_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "source_git_tree": "314123c7cd390a933fc5a5978a74788762ef6974",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "validated_source_projection_sha256": "0e6c617162d8d0b5c8012842b9e5748e3e9a273ca6e550949de35998c24fe9b0",
+        "validation_run_id": "935f3c0ce70f4268b77ed4172f37c739"
+      },
+      "id": "android_debug_assemble",
+      "status": "pass"
+    },
+    {
+      "binding": {
+        "artifact_sha256": "e18846d4eefac4546b2e600312662700e450760d65b17a59692d45a26931d35a",
+        "evidence_reused": true,
+        "evidence_source": "canonical_devtool_release",
+        "input_fingerprint_sha256": "5ea242c41e6aad035a0dc4a7d6b7bfaac8e163dca4ba53cdb8cc5e7d14aaddcf",
+        "producer_run_id": "b1f95a2d4f0e4053a1956d6d8f7cbbd0",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "release_report_sha256": "9fcfe0305f2a44aa2c8a008cecc0ad102ded30feec08296561ae0ed2225a0016",
+        "reused_from_validation_run_id": "935f3c0ce70f4268b77ed4172f37c739",
+        "source_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "source_git_tree": "314123c7cd390a933fc5a5978a74788762ef6974",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "validated_source_projection_sha256": "0e6c617162d8d0b5c8012842b9e5748e3e9a273ca6e550949de35998c24fe9b0",
+        "validation_run_id": "935f3c0ce70f4268b77ed4172f37c739"
+      },
+      "id": "android_release_unit",
+      "status": "pass"
+    },
+    {
+      "binding": {
+        "artifact_sha256": "e18846d4eefac4546b2e600312662700e450760d65b17a59692d45a26931d35a",
+        "evidence_reused": true,
+        "evidence_source": "canonical_devtool_release",
+        "input_fingerprint_sha256": "76d0931f999f6d7810350eec3ebfcd061e923b1ec6731d6ef753ddbad619fb48",
+        "producer_run_id": "b1f95a2d4f0e4053a1956d6d8f7cbbd0",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "release_report_sha256": "9fcfe0305f2a44aa2c8a008cecc0ad102ded30feec08296561ae0ed2225a0016",
+        "reused_from_validation_run_id": "935f3c0ce70f4268b77ed4172f37c739",
+        "source_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "source_git_tree": "314123c7cd390a933fc5a5978a74788762ef6974",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "validated_source_projection_sha256": "0e6c617162d8d0b5c8012842b9e5748e3e9a273ca6e550949de35998c24fe9b0",
+        "validation_run_id": "935f3c0ce70f4268b77ed4172f37c739"
+      },
+      "id": "android_release_lint",
+      "status": "pass"
+    },
+    {
+      "binding": {
+        "artifact_sha256": "e18846d4eefac4546b2e600312662700e450760d65b17a59692d45a26931d35a",
+        "evidence_reused": true,
+        "evidence_source": "canonical_devtool_release",
+        "input_fingerprint_sha256": "9158147e948a927d61352ea2f6c7b10cc9f76f5bc748cf3dd8ba5320f43abbd3",
+        "producer_run_id": "b1f95a2d4f0e4053a1956d6d8f7cbbd0",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "release_report_sha256": "9fcfe0305f2a44aa2c8a008cecc0ad102ded30feec08296561ae0ed2225a0016",
+        "reused_from_validation_run_id": "935f3c0ce70f4268b77ed4172f37c739",
+        "source_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "source_git_tree": "314123c7cd390a933fc5a5978a74788762ef6974",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "validated_source_projection_sha256": "0e6c617162d8d0b5c8012842b9e5748e3e9a273ca6e550949de35998c24fe9b0",
+        "validation_run_id": "935f3c0ce70f4268b77ed4172f37c739"
+      },
+      "id": "android_release_assemble",
+      "status": "pass"
+    },
+    {
+      "binding": {
+        "evidence_reused": true,
+        "input_fingerprint_sha256": "2c1a542de7298a2bb643ad29cc0b60946c5f00ca1545e4f620fe94b8db5c5f28",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "reused_from_validation_run_id": "935f3c0ce70f4268b77ed4172f37c739",
+        "source_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "source_git_tree": "314123c7cd390a933fc5a5978a74788762ef6974",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "validated_source_projection_sha256": "0e6c617162d8d0b5c8012842b9e5748e3e9a273ca6e550949de35998c24fe9b0",
+        "validation_run_id": "935f3c0ce70f4268b77ed4172f37c739"
+      },
+      "id": "connected_instrumentation_full",
+      "status": "pass"
+    },
+    {
+      "binding": {
+        "device_arch": "arm64-v8a",
+        "device_serial": "localhost:5555",
+        "evidence_reused": true,
+        "input_fingerprint_sha256": "f8b0d2a335f50f42bb6d629d323536046b0454754eedec1b0353f80eb723b79a",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "reused_from_validation_run_id": "935f3c0ce70f4268b77ed4172f37c739",
+        "source_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "source_git_tree": "314123c7cd390a933fc5a5978a74788762ef6974",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "validated_source_projection_sha256": "0e6c617162d8d0b5c8012842b9e5748e3e9a273ca6e550949de35998c24fe9b0",
+        "validation_run_id": "935f3c0ce70f4268b77ed4172f37c739"
+      },
+      "id": "rooted_arm64_runtime",
+      "status": "pass"
+    },
+    {
+      "binding": {
+        "artifact_sha256": "e18846d4eefac4546b2e600312662700e450760d65b17a59692d45a26931d35a",
+        "evidence_reused": true,
+        "input_fingerprint_sha256": "974667825b4e648959fe6213a9b003817db83bd4bc149d36f9611ebeaffc260b",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "reused_from_validation_run_id": "935f3c0ce70f4268b77ed4172f37c739",
+        "runtime_sha256": "3195fd3581a5e51467b668f6dbf80b804f86236d0692b072baa7001c5d0dd111",
+        "source_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "source_git_tree": "314123c7cd390a933fc5a5978a74788762ef6974",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "246677a1d24c059500c62b80a785450d731a8376",
+        "validated_source_projection_sha256": "0e6c617162d8d0b5c8012842b9e5748e3e9a273ca6e550949de35998c24fe9b0",
+        "validation_run_id": "935f3c0ce70f4268b77ed4172f37c739"
+      },
+      "id": "runtime_apk_binding",
+      "status": "pass"
+    },
+    {
+      "binding": {
+        "evidence_reused": false,
+        "input_fingerprint_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "source_git_head": "f042d0ecc9c2237093151f533ad97d927d4c0b2b",
+        "source_git_tree": "91a94c4742c093fb7ab5b297bd1419ed5a4f5553",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "f042d0ecc9c2237093151f533ad97d927d4c0b2b",
+        "validated_source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validation_run_id": "a1bc288b513840b185c631c8ff5e5825"
+      },
+      "id": "final_migration_audit",
+      "status": "pass"
+    },
+    {
+      "binding": {
+        "evidence_reused": false,
+        "input_fingerprint_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "source_git_head": "f042d0ecc9c2237093151f533ad97d927d4c0b2b",
+        "source_git_tree": "91a94c4742c093fb7ab5b297bd1419ed5a4f5553",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "f042d0ecc9c2237093151f533ad97d927d4c0b2b",
+        "validated_source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validation_run_id": "a1bc288b513840b185c631c8ff5e5825"
+      },
+      "id": "final_promise_audit",
+      "status": "pass"
+    },
+    {
+      "binding": {
+        "evidence_reused": false,
+        "input_fingerprint_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+        "source_git_head": "f042d0ecc9c2237093151f533ad97d927d4c0b2b",
+        "source_git_tree": "91a94c4742c093fb7ab5b297bd1419ed5a4f5553",
+        "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validated_at_git_head": "f042d0ecc9c2237093151f533ad97d927d4c0b2b",
+        "validated_source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+        "validation_run_id": "a1bc288b513840b185c631c8ff5e5825"
+      },
+      "id": "counterexample_convergence",
+      "status": "pass"
+    }
+  ],
+  "qualification_identity": "source_projection_sha256",
+  "qualification_run_id": "a1bc288b513840b185c631c8ff5e5825",
+  "qualified_at_git_head": "f042d0ecc9c2237093151f533ad97d927d4c0b2b",
+  "qualified_source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+  "release_apk_sha256": "e18846d4eefac4546b2e600312662700e450760d65b17a59692d45a26931d35a",
+  "release_report_sha256": "9fcfe0305f2a44aa2c8a008cecc0ad102ded30feec08296561ae0ed2225a0016",
+  "release_run_id": "b1f95a2d4f0e4053a1956d6d8f7cbbd0",
+  "required_nodes": [
+    "gate_e_contract",
+    "canonical_devtool_release",
+    "full_roadmap_conformance",
+    "aud16_retirement_regression",
+    "successor_migration_validators",
+    "go_full_regression",
+    "go_adversarial_failure_windows",
+    "go_race_where_supported",
+    "android_debug_unit",
+    "android_debug_lint",
+    "android_debug_assemble",
+    "android_release_unit",
+    "android_release_lint",
+    "android_release_assemble",
+    "connected_instrumentation_full",
+    "rooted_arm64_runtime",
+    "runtime_apk_binding",
+    "final_migration_audit",
+    "final_promise_audit",
+    "counterexample_convergence"
+  ],
+  "reuse": {
+    "mode": "node-input-fingerprint-composition",
+    "prior_evidence_commit": "2a3ccfaae6dc5f9128a7b72861e056178d3073ae",
+    "prior_evidence_sha256": "e251c61b637a2ccbc73ffef4b86c3b324b30b16ca7ae4345fb3c692e050aef93",
+    "prior_source_projection_sha256": "0e6c617162d8d0b5c8012842b9e5748e3e9a273ca6e550949de35998c24fe9b0",
+    "reused_execution_nodes": [
+      "canonical_devtool_release",
+      "go_full_regression",
+      "go_adversarial_failure_windows",
+      "go_race_where_supported",
+      "android_debug_unit",
+      "android_debug_lint",
+      "android_debug_assemble",
+      "android_release_unit",
+      "android_release_lint",
+      "android_release_assemble",
+      "connected_instrumentation_full",
+      "rooted_arm64_runtime",
+      "runtime_apk_binding"
+    ],
+    "revalidated_policy_nodes": [
+      "gate_e_contract",
+      "full_roadmap_conformance",
+      "aud16_retirement_regression",
+      "successor_migration_validators",
+      "final_migration_audit",
+      "final_promise_audit",
+      "counterexample_convergence"
+    ]
+  },
+  "schema": "dustui.gate-e.evidence-registry.v2",
+  "signing_identity_sha256": "88f33a4695bc891c0c95ef00956d5df9464242cfed60abb3256ed76a99c611d8",
+  "source_git_head": "f042d0ecc9c2237093151f533ad97d927d4c0b2b",
+  "source_git_tree": "91a94c4742c093fb7ab5b297bd1419ed5a4f5553",
+  "source_projection_sha256": "a4fcb05a63094ea1fdcac54b3f66d105808515f0662a6f06dfeb3a350c5e9597",
+  "status": "pass",
+  "validation_run_id": "a1bc288b513840b185c631c8ff5e5825"
+}
