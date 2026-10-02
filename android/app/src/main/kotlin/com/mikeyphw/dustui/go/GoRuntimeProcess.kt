@@ -133,6 +133,12 @@ class GoRuntimeProcess private constructor(
             val processBuilder = ProcessBuilder(executable.absolutePath, "serve")
             processBuilder.command().add("--db")
             processBuilder.command().add(database.absolutePath)
+            GoChildProcessPolicy.apply(
+                builder = processBuilder,
+                workingDirectory = stateDir,
+                homeDirectory = context.filesDir,
+                temporaryDirectory = context.cacheDir,
+            )
             val process = processBuilder.start()
             val stderrCapture = BoundedStderrCapture(
                 BufferedReader(InputStreamReader(process.errorStream, Charsets.UTF_8)),

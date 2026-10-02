@@ -9,8 +9,13 @@ functional_test = root / "go/internal/state/product_views_bounded_deadlock_test.
 contract_test = root / "go/internal/deadlockcontract/single_connection_test.go"
 
 errors = []
-if "db.SetMaxOpenConns(1)" not in store:
-    errors.append("SQLiteStore single-connection production invariant missing")
+for token in (
+    "const sqliteAuthorityMaxOpenConnections = 1",
+    "db.SetMaxOpenConns(sqliteAuthorityMaxOpenConnections)",
+    "db.SetMaxIdleConns(sqliteAuthorityMaxOpenConnections)",
+):
+    if token not in store:
+        errors.append(f"SQLiteStore single-connection production invariant missing: {token}")
 
 signature = "func (s *SQLiteStore) boundedDuplicateCandidates"
 start = product.find(signature)

@@ -14,6 +14,7 @@ import (
 	"github.com/mikeyphw/dustui/go/internal/diagnostics"
 	"github.com/mikeyphw/dustui/go/internal/host"
 	"github.com/mikeyphw/dustui/go/internal/intelligence"
+	"github.com/mikeyphw/dustui/go/internal/launchcontract"
 	"github.com/mikeyphw/dustui/go/internal/packageevidence"
 	"github.com/mikeyphw/dustui/go/internal/privileged"
 	"github.com/mikeyphw/dustui/go/internal/product"
@@ -35,6 +36,10 @@ func main() {
 		os.Exit(host.Run(ctx, nil, host.Streams{In: os.Stdin, Out: os.Stdout, Err: os.Stderr}))
 	}
 	command := os.Args[1]
+	if err := launchcontract.ValidateAndroidChild(); err != nil {
+		fmt.Fprintf(os.Stderr, "launch contract: %v\n", err)
+		os.Exit(2)
+	}
 
 	if strings.HasPrefix(command, "root-") {
 		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -98,6 +103,8 @@ func main() {
 
 	case "runtime-contract":
 		payload = runtimecontract.CurrentSpec()
+	case "launch-contract":
+		payload = launchcontract.Current()
 	case "product-contract", "cli-contract", "android-cutover-contract", "gate-d-contract":
 		payload = product.CurrentContract()
 	case "tui-contract", "tui-smoke":
@@ -163,7 +170,7 @@ func main() {
 		}
 		payload = session
 	default:
-		fmt.Fprintf(os.Stderr, "unknown command %q; supported: readiness, version, protocol, schema, runtime-contract, product-contract, cli-contract, tui-contract, android-cutover-contract, diagnostics-contract, cleanup-contract, mutation-contract, cleanup-intelligence-contract, package-storage-contract, privileged-contract, shell-contract, query-contract, scan-contract, scan [root]\n", command)
+		fmt.Fprintf(os.Stderr, "unknown command %q; supported: readiness, version, protocol, schema, runtime-contract, launch-contract, product-contract, cli-contract, tui-contract, android-cutover-contract, diagnostics-contract, cleanup-contract, mutation-contract, cleanup-intelligence-contract, package-storage-contract, privileged-contract, shell-contract, query-contract, scan-contract, scan [root]\n", command)
 		os.Exit(2)
 	}
 	encoded, err := json.MarshalIndent(payload, "", "  ")

@@ -51,7 +51,13 @@ func TestDuplicateCandidateQueryReleasesSingleConnectionBeforePathLookup(t *test
 
 func TestSQLiteAuthorityRemainsIntentionallySingleConnection(t *testing.T) {
 	source := readRepoFile(t, "state", "sqlite_store.go")
-	if !strings.Contains(source, "db.SetMaxOpenConns(1)") {
-		t.Fatalf("contract assumes the production SQLite authority remains single-connection")
+	for _, token := range []string{
+		"const sqliteAuthorityMaxOpenConnections = 1",
+		"db.SetMaxOpenConns(sqliteAuthorityMaxOpenConnections)",
+		"db.SetMaxIdleConns(sqliteAuthorityMaxOpenConnections)",
+	} {
+		if !strings.Contains(source, token) {
+			t.Fatalf("single-connection SQLite authority contract missing %q", token)
+		}
 	}
 }

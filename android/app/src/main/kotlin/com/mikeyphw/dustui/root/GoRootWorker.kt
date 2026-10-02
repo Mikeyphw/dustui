@@ -2,6 +2,7 @@ package com.mikeyphw.dustui.root
 
 import android.content.Context
 import android.os.ParcelFileDescriptor
+import com.mikeyphw.dustui.go.GoChildProcessPolicy
 import com.mikeyphw.dustui.go.GoRuntimePathContract
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -136,7 +137,15 @@ object GoRootWorker {
     private fun start(context: Context, command: String): Process {
         val executable = File(GoRuntimePathContract.executablePath(context.applicationInfo.nativeLibraryDir))
         require(executable.isFile) { "go_root_worker_missing:${executable.absolutePath}" }
-        return ProcessBuilder(executable.absolutePath, command).start()
+        val workingDirectory = File(context.noBackupFilesDir, "go-root-worker").apply { mkdirs() }
+        val builder = ProcessBuilder(executable.absolutePath, command)
+        GoChildProcessPolicy.apply(
+            builder = builder,
+            workingDirectory = workingDirectory,
+            homeDirectory = context.filesDir,
+            temporaryDirectory = context.cacheDir,
+        )
+        return builder.start()
     }
 
     private class Drain(val buffer: ByteArrayOutputStream, val thread: Thread, @Volatile var overflowed: Boolean = false) {

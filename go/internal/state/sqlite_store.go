@@ -13,6 +13,8 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+const sqliteAuthorityMaxOpenConnections = 1
+
 // SQLiteStore is the durable Go-owned persistence authority used by the
 // production Android child process.  Android may transport requests, but it
 // does not own this database's domain state.
@@ -75,7 +77,13 @@ func OpenSQLiteStore(path string) (*SQLiteStore, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open sqlite: %w", err)
 	}
-	db.SetMaxOpenConns(1)
+	// The Android runtime protocol is intentionally single-flight: Android serializes
+	// requests on GoRuntimeProcess and ServeFrames dispatches one frame at a time.
+	// Keep one SQLite connection as a correctness invariant rather than using extra
+	// connections to hide accidental query re-entry while Rows/Tx still owns the
+	// authority connection. It also keeps connection-local PRAGMAs deterministic.
+	db.SetMaxOpenConns(sqliteAuthorityMaxOpenConnections)
+	db.SetMaxIdleConns(sqliteAuthorityMaxOpenConnections)
 	store := &SQLiteStore{db: db, path: path}
 	if err := store.initialize(context.Background()); err != nil {
 		db.Close()
