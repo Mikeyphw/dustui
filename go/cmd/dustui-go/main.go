@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -22,6 +21,7 @@ import (
 	"github.com/mikeyphw/dustui/go/internal/readiness"
 	"github.com/mikeyphw/dustui/go/internal/rootworker"
 	runtimecontract "github.com/mikeyphw/dustui/go/internal/runtime"
+	"github.com/mikeyphw/dustui/go/internal/runtimeio"
 	"github.com/mikeyphw/dustui/go/internal/scan"
 	"github.com/mikeyphw/dustui/go/internal/shell"
 	"github.com/mikeyphw/dustui/go/internal/state"
@@ -174,14 +174,7 @@ func main() {
 	fmt.Println(string(encoded))
 }
 
-type runtimeFrame struct {
-	Protocol   string          `json:"protocol"`
-	Type       string          `json:"type"`
-	RequestID  string          `json:"requestId"`
-	Sequence   int64           `json:"sequence"`
-	Generation int64           `json:"generation"`
-	Payload    json.RawMessage `json:"payload"`
-}
+type runtimeFrame = runtimeio.Frame
 
 func serveDatabasePath(args []string) (string, error) {
 	if len(args) != 2 || args[0] != "--db" || strings.TrimSpace(args[1]) == "" {
@@ -197,7 +190,6 @@ func serve(databasePath string) error {
 	}
 	defer store.Close()
 
-	writer := bufio.NewWriter(os.Stdout)
 	readyReport := readiness.Current()
 	readyReport.PersistenceAuthority = "go-sqlite"
 	readyReport.PersistenceSchema = state.SchemaVersion
@@ -205,66 +197,21 @@ func serve(databasePath string) error {
 	if err != nil {
 		return err
 	}
-	if _, err := writer.Write(append(ready, '\n')); err != nil {
-		return err
-	}
-	if err := writer.Flush(); err != nil {
+	if _, err := os.Stdout.Write(append(ready, '\n')); err != nil {
 		return err
 	}
 
-	scanner := bufio.NewScanner(os.Stdin)
-	buf := make([]byte, 64*1024)
-	scanner.Buffer(buf, runtimecontract.MaxFrameBytes)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-		var frame runtimeFrame
-		if err := json.Unmarshal([]byte(line), &frame); err != nil {
-			return fmt.Errorf("decode frame: %w", err)
-		}
-		if frame.Protocol != runtimecontract.SessionProtocolName {
-			return fmt.Errorf("unsupported session protocol %q", frame.Protocol)
-		}
-		if frame.RequestID == "" || frame.Type == "" || frame.Sequence <= 0 || frame.Generation <= 0 {
-			return fmt.Errorf("frame identity required")
-		}
-		payload, dispatchErr := domainPayload(context.Background(), store, frame)
-		if dispatchErr != nil {
-			payload = map[string]any{"ok": false, "error": dispatchErr.Error()}
-		}
-		frame.Payload, err = json.Marshal(payload)
-		if err != nil {
-			return err
-		}
-		encoded, err := json.Marshal(frame)
-		if err != nil {
-			return err
-		}
-		if len(encoded) > runtimecontract.MaxFrameBytes {
-			// Oversize is a request-level failure. Do not terminate the
-			// long-lived runtime and turn the cause into an opaque Android EOF.
-			frame.Payload, err = json.Marshal(map[string]any{
-				"ok":            false,
-				"error":         "response_exceeds_bounded_stream",
-				"responseBytes": len(encoded),
-				"maxFrameBytes": runtimecontract.MaxFrameBytes,
-			})
-			if err != nil {
-				return err
-			}
-			encoded, err = json.Marshal(frame)
-			if err != nil {
-				return err
-			}
-		}
-		if _, err := writer.Write(append(encoded, '\n')); err != nil {
-			return err
-		}
-		if err := writer.Flush(); err != nil {
-			return err
-		}
-	}
-	return scanner.Err()
+	return runtimeio.ServeFrames(
+		context.Background(),
+		os.Stdin,
+		os.Stdout,
+		os.Stderr,
+		runtimeio.Config{
+			Protocol:      runtimecontract.SessionProtocolName,
+			MaxFrameBytes: runtimecontract.MaxFrameBytes,
+		},
+		func(ctx context.Context, frame runtimeio.Frame) (any, error) {
+			return domainPayload(ctx, store, frame)
+		},
+	)
 }

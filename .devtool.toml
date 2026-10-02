@@ -768,7 +768,19 @@ command = ["python3", "scripts/audfix17_reuse.py", "reconcile"]
 inputs = ["scripts/audfix17_reuse.py", "scripts/audfix17_identity.py", "scripts/audfix17_gate_e.py", "scripts/audfix16_retirement.py", "scripts/audfix01_core.py", "scripts/validate_audfix17_contract.py", "scripts/validate_full_roadmap_conformance.py", "migration/qualification/v1", "migration/acceptance/v1", "migration/requirements/v2", "migration/ledger", "android/app/src", "android/app/build.gradle.kts", "android/build.gradle.kts", "android/settings.gradle.kts", "android/gradle", "go", ".devtool.toml"]
 outputs = ["migration/qualification/v1/gate_e_evidence.json", "migration/qualification/v1/gate_e_bundle.json", "migration/qualification/v1/current_state.json", "migration/acceptance/v1/current_state.json", "migration/qualification/v1/ov14_retirement.json", "go/internal/qualification/state_generated.go", "go/internal/qualification/acceptance_generated.go"]
 
+[targets.dustui_android.jobs.go_runtime_resilience_contract]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/validate_go_runtime_resilience.py"]
+inputs = ["scripts/validate_go_runtime_resilience.py", "android/app/src/main/kotlin/com/mikeyphw/dustui/go/GoRuntimeProcess.kt", "android/app/src/main/kotlin/com/mikeyphw/dustui/go/GoRuntimeFailure.kt", "android/app/src/main/kotlin/com/mikeyphw/dustui/data/GoDomainStore.kt", "android/app/src/test/kotlin/com/mikeyphw/dustui/go/GoRuntimeRecoveryPolicyTest.kt", "go/cmd/dustui-go/main.go", "go/internal/runtimeio/server.go", "go/internal/runtimeio/server_test.go"]
+[targets.dustui_android.jobs.go_runtime_resilience_contract.metadata]
+read_only = true
+
 [targets.dustui_android.workflows]
+go_runtime_resilience = [
+  { id = "contract", ref = "job:go_runtime_resilience_contract", depends_on = [] },
+  { id = "go-runtime", ref = "target:dustui_go#runtime_resilience", depends_on = ["contract"] },
+]
 aud_fix_regression = [
   { id = "a01", ref = "job:audfix01_truth", depends_on = [] },
   { id = "a02", ref = "job:audfix02_bounded", depends_on = [] },
@@ -1158,7 +1170,16 @@ outputs = [".devtool/tmp/go-gate-e"]
 [targets.dustui_go.jobs.gate_e_adversarial.metadata]
 read_only = true
 
+[targets.dustui_go.jobs.runtime_resilience]
+runner = "command"
+command = ["sh", "-lc", 'mkdir -p .devtool/tmp/runtime-resilience && export TMPDIR="$PWD/.devtool/tmp/runtime-resilience"; go test ./internal/runtimeio -count=1']
+inputs = ["internal/runtimeio", "go.mod", "go.sum"]
+outputs = [".devtool/tmp/runtime-resilience"]
+[targets.dustui_go.jobs.runtime_resilience.metadata]
+read_only = true
+
 [targets.dustui_go.workflows]
+runtime_resilience = ["job:runtime_resilience"]
 gate_e_core = [
   { id = "tests", ref = "job:go_test_all", depends_on = [] },
   { id = "product", ref = "job:product_contract", depends_on = [] },
@@ -1439,6 +1460,12 @@ description = "Run Go test, product contract, and schema evidence"
 workflow = "fast"
 target = "dustui_go"
 aliases = ["go"]
+
+[wrapper.commands.go-runtime-resilience]
+description = "Run the targeted Android-Go runtime death, recovery, and request-fault isolation contract"
+workflow = "go_runtime_resilience"
+target = "dustui_android"
+aliases = ["runtime-eof", "go-runtime-eof"]
 
 [wrapper.commands.build]
 description = "Build the Android debug target using Devtool"

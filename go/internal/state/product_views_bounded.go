@@ -650,33 +650,66 @@ func (s *SQLiteStore) boundedSnapshotDelta(ctx context.Context, scanID string, p
 }
 
 func (s *SQLiteStore) boundedDuplicateCandidates(ctx context.Context, scanID string) ([]map[string]any, error) {
+	type duplicateBucket struct {
+		size  int64
+		count int
+	}
+
+	// SQLiteStore intentionally owns a single database connection. Materialize
+	// the bounded size buckets and release their Rows before issuing path
+	// lookups; re-entering s.db.QueryContext while rows is open would wait for
+	// the same connection held by rows and can end in Go's unrecoverable
+	// "all goroutines are asleep" runtime deadlock.
 	rows, err := s.db.QueryContext(ctx, `SELECT logical_size_bytes,COUNT(*) FROM scan_entries WHERE scan_id=? AND is_directory=0 AND logical_size_bytes>=1048576 GROUP BY logical_size_bytes HAVING COUNT(*)>1 ORDER BY logical_size_bytes*(COUNT(*)-1) DESC LIMIT 50`, scanID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	out := []map[string]any{}
+	buckets := make([]duplicateBucket, 0, 50)
 	for rows.Next() {
-		var size int64
-		var count int
-		if err := rows.Scan(&size, &count); err != nil {
+		var bucket duplicateBucket
+		if err := rows.Scan(&bucket.size, &bucket.count); err != nil {
+			rows.Close()
 			return nil, err
 		}
-		p, err := s.db.QueryContext(ctx, `SELECT path FROM scan_entries WHERE scan_id=? AND is_directory=0 AND logical_size_bytes=? ORDER BY path COLLATE NOCASE LIMIT 16`, scanID, size)
+		buckets = append(buckets, bucket)
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return nil, err
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+
+	out := make([]map[string]any, 0, len(buckets))
+	for _, bucket := range buckets {
+		pathRows, err := s.db.QueryContext(ctx, `SELECT path FROM scan_entries WHERE scan_id=? AND is_directory=0 AND logical_size_bytes=? ORDER BY path COLLATE NOCASE LIMIT 16`, scanID, bucket.size)
 		if err != nil {
 			return nil, err
 		}
 		paths := []string{}
-		for p.Next() {
+		for pathRows.Next() {
 			var path string
-			if p.Scan(&path) == nil {
-				paths = append(paths, path)
+			if err := pathRows.Scan(&path); err != nil {
+				pathRows.Close()
+				return nil, err
 			}
+			paths = append(paths, path)
 		}
-		p.Close()
-		out = append(out, map[string]any{"sizeBytes": size, "paths": paths, "estimatedSavingsBytes": size * int64(count-1)})
+		if err := pathRows.Err(); err != nil {
+			pathRows.Close()
+			return nil, err
+		}
+		if err := pathRows.Close(); err != nil {
+			return nil, err
+		}
+		out = append(out, map[string]any{
+			"sizeBytes":             bucket.size,
+			"paths":                 paths,
+			"estimatedSavingsBytes": bucket.size * int64(bucket.count-1),
+		})
 	}
-	return out, rows.Err()
+	return out, nil
 }
 
 func (s *SQLiteStore) boundedRecommendationView(ctx context.Context, scanID string, generation int64, residue []map[string]any) (map[string]any, error) {

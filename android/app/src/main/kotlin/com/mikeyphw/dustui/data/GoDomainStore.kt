@@ -1,7 +1,12 @@
 package com.mikeyphw.dustui.data
 
 import android.content.Context
+import android.util.Log
 import com.mikeyphw.dustui.go.GoRuntimeProcess
+import com.mikeyphw.dustui.go.GoRuntimeRecoveryPolicy
+import com.mikeyphw.dustui.go.GoRuntimeRequestException
+import com.mikeyphw.dustui.go.GoRuntimeReconciliationRequiredException
+import com.mikeyphw.dustui.go.GoRuntimeTransportException
 import com.mikeyphw.dustui.go.GoRuntimeRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -329,22 +334,187 @@ class GoDomainStore(context: Context) : Closeable {
     }
 
     private fun runtime(): GoRuntimeProcess = synchronized(processLock) {
-        process?.takeIf { it.isAlive } ?: GoRuntimeProcess.start(appContext).also { process = it }
+        val current = process
+        if (current != null && current.isAlive) return@synchronized current
+        if (current != null) runCatching { current.close() }
+        GoRuntimeProcess.start(appContext).also { process = it }
+    }
+
+    private fun invalidateRuntime(failed: GoRuntimeProcess) = synchronized(processLock) {
+        if (process === failed) {
+            process = null
+            runCatching { failed.close() }
+        }
+    }
+
+    private fun runtimeRequest(
+        runtime: GoRuntimeProcess,
+        type: String,
+        requestId: String,
+        generation: Long,
+        payload: JSONObject,
+    ) = runtime.request(
+        GoRuntimeRequest(
+            requestId = requestId,
+            sequence = sequence.incrementAndGet(),
+            generation = max(1L, generation),
+            type = type,
+            payloadJson = payload.toString(),
+        ),
+    )
+
+    private fun decodeResponse(type: String, responsePayloadJson: String): JSONObject {
+        val decoded = JSONObject(responsePayloadJson)
+        if (!decoded.optBoolean("ok", false)) {
+            val code = decoded.optString("error", "go_domain_request_failed:$type")
+            throw GoRuntimeRequestException.from(type, code) ?: IllegalStateException(code)
+        }
+        return decoded
+    }
+
+    private fun decodeResponseWithIncident(
+        runtime: GoRuntimeProcess,
+        type: String,
+        requestId: String,
+        responsePayloadJson: String,
+    ): JSONObject = try {
+        decodeResponse(type, responsePayloadJson)
+    } catch (failure: GoRuntimeRequestException) {
+        recordRuntimeRequestFailureBestEffort(runtime, failure, type, requestId)
+        throw failure
+    }
+
+    private fun recordRuntimeRequestFailureBestEffort(
+        runtime: GoRuntimeProcess,
+        failure: GoRuntimeRequestException,
+        type: String,
+        requestId: String,
+    ) {
+        if (type == "domain.diagnostics.record") return
+        val event = JSONObject()
+            .put("sessionId", "android-go-runtime")
+            .put("area", "Runtime")
+            .put("severity", "error")
+            .put("action", "go_runtime_request_failure")
+            .put("result", "runtime_request_failed_without_process_death")
+            .put(
+                "values",
+                JSONObject()
+                    .put("failureCode", failure.code)
+                    .put("requestType", type)
+                    .put("requestId", requestId)
+                    .put("stderrTail", runtime.diagnosticStderrTail().takeLast(MAX_RUNTIME_DIAGNOSTIC_CHARS)),
+            )
+            .put("createdAtMs", System.currentTimeMillis())
+        try {
+            decodeResponse(
+                "domain.diagnostics.record",
+                runtimeRequest(
+                    runtime,
+                    "domain.diagnostics.record",
+                    UUID.randomUUID().toString(),
+                    1L,
+                    JSONObject().put("event", event),
+                ).payloadJson,
+            )
+        } catch (transport: GoRuntimeTransportException) {
+            invalidateRuntime(runtime)
+            Log.e(TAG, "Unable to persist Go runtime request-failure evidence: ${transport.diagnosticSummary}", transport)
+        } catch (error: Exception) {
+            Log.w(TAG, "Unable to persist Go runtime request-failure evidence", error)
+        }
+    }
+
+    private fun recordRuntimeIncidentBestEffort(
+        runtime: GoRuntimeProcess,
+        failure: GoRuntimeTransportException,
+        type: String,
+        requestId: String,
+        replaySafe: Boolean,
+    ) {
+        val values = JSONObject()
+            .put("failureCode", failure.code.wireCode)
+            .put("requestType", failure.requestType ?: type)
+            .put("requestId", failure.requestId ?: requestId)
+            .put("sequence", failure.sequence?.toString().orEmpty())
+            .put("generation", failure.generation?.toString().orEmpty())
+            .put("processAlive", failure.processAlive.toString())
+            .put("exitCode", failure.exitCode?.toString().orEmpty())
+            .put("replaySafe", replaySafe.toString())
+            .put("stderrTail", failure.stderrTail.takeLast(MAX_RUNTIME_DIAGNOSTIC_CHARS))
+        val event = JSONObject()
+            .put("sessionId", "android-go-runtime")
+            .put("area", "Runtime")
+            .put("severity", "error")
+            .put("action", "go_runtime_transport_failure")
+            .put(
+                "result",
+                if (replaySafe) "runtime_restarted_before_read_only_replay"
+                else "runtime_restarted_mutation_replay_blocked",
+            )
+            .put("values", values)
+            .put("createdAtMs", System.currentTimeMillis())
+        try {
+            decodeResponse(
+                "domain.diagnostics.record",
+                runtimeRequest(
+                    runtime,
+                    "domain.diagnostics.record",
+                    UUID.randomUUID().toString(),
+                    1L,
+                    JSONObject().put("event", event),
+                ).payloadJson,
+            )
+        } catch (transport: GoRuntimeTransportException) {
+            invalidateRuntime(runtime)
+            Log.e(TAG, "Unable to persist Go runtime failure evidence: ${transport.diagnosticSummary}", transport)
+        } catch (error: Exception) {
+            Log.w(TAG, "Unable to persist Go runtime failure evidence", error)
+        }
     }
 
     private fun call(type: String, generation: Long, payload: JSONObject): JSONObject {
-        val response = runtime().request(
-            GoRuntimeRequest(
-                requestId = UUID.randomUUID().toString(),
-                sequence = sequence.incrementAndGet(),
-                generation = max(1L, generation),
-                type = type,
-                payloadJson = payload.toString(),
-            ),
-        )
-        val decoded = JSONObject(response.payloadJson)
-        check(decoded.optBoolean("ok", false)) { decoded.optString("error", "go_domain_request_failed:$type") }
-        return decoded
+        val requestId = UUID.randomUUID().toString()
+        val firstRuntime = runtime()
+        try {
+            return decodeResponseWithIncident(
+                firstRuntime,
+                type,
+                requestId,
+                runtimeRequest(firstRuntime, type, requestId, generation, payload).payloadJson,
+            )
+        } catch (failure: GoRuntimeTransportException) {
+            invalidateRuntime(firstRuntime)
+            Log.e(TAG, "Go runtime transport failure during $type: ${failure.diagnosticSummary}", failure)
+            val replaySafe = GoRuntimeRecoveryPolicy.mayReplay(type)
+
+            val recoveredRuntime = runCatching { runtime() }
+                .onFailure { Log.e(TAG, "Go runtime restart failed while reconciling $type", it) }
+                .getOrNull()
+            if (recoveredRuntime != null) {
+                recordRuntimeIncidentBestEffort(recoveredRuntime, failure, type, requestId, replaySafe)
+            }
+
+            if (!replaySafe) {
+                throw GoRuntimeReconciliationRequiredException(failure)
+            }
+
+            val replayRuntime = recoveredRuntime?.takeIf { it.isAlive } ?: runtime()
+            return try {
+                val decoded = decodeResponseWithIncident(
+                    replayRuntime,
+                    type,
+                    requestId,
+                    runtimeRequest(replayRuntime, type, requestId, generation, payload).payloadJson,
+                )
+                Log.w(TAG, "Go runtime recovered and replayed read-only request type=$type requestId=$requestId")
+                decoded
+            } catch (retryFailure: GoRuntimeTransportException) {
+                invalidateRuntime(replayRuntime)
+                Log.e(TAG, "Go runtime recovery failed during $type: ${retryFailure.diagnosticSummary}", retryFailure)
+                throw retryFailure
+            }
+        }
     }
 
     private suspend inline fun <T> io(crossinline block: suspend () -> T): T = withContext(Dispatchers.IO) { block() }
@@ -358,6 +528,8 @@ class GoDomainStore(context: Context) : Closeable {
         const val DOMAIN_AUTHORITY_REQUEST_SCHEMA = "dustui.domain.authority.request.v1"
         const val DOMAIN_AUTHORITY_RESPONSE_SCHEMA = "dustui.domain.authority.response.v1"
 
+        private const val TAG = "DustUI.GoDomainStore"
+        private const val MAX_RUNTIME_DIAGNOSTIC_CHARS = 1_024
         private const val ENTRY_WRITE_BATCH = 128
         private val ARCHIVE_EXTENSIONS = setOf("zip", "7z", "rar", "tar", "gz", "zst")
         private val INSTALLER_EXTENSIONS = setOf("apk", "apex")

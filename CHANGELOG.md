@@ -1,3 +1,10 @@
+## 2026-10-02 — Go runtime EOF resilience and root-fault isolation
+
+- Hardened the production `serve` loop so malformed/protocol-invalid frames, handler panics, domain errors, response-encoding failures, and bounded-stream violations fail the affected request instead of terminating the long-lived Go runtime.
+- Replaced Android's raw `go_runtime_eof_requires_reconcile` sentinel path with structured transport failures, bounded stderr/exit evidence, automatic one-time replay for explicitly read-only requests, and fail-closed handling for ambiguous mutations.
+- Persist runtime transport/request-failure evidence through the Go diagnostics authority after reconnect, while keeping internal codes and stderr out of user-facing snackbars.
+- Added the targeted `go_runtime_resilience` Devtool workflow plus isolated Go fault-injection tests. The exact cause of the already-observed historical EOF cannot be reconstructed retroactively; future occurrences now retain evidence sufficient to distinguish runtime faults from external process termination.
+
 ## 2026-09-27 — Gate-E qualification identity/reuse v2
 
 - Gate-E validity now binds to `source_projection_sha256`; Git commit/tree IDs remain provenance.

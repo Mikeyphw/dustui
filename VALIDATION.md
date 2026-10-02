@@ -38,6 +38,7 @@ Use repository wrapper commands rather than raw permanent Gradle/ADB fallbacks:
 ./devtoolw lint
 ./devtoolw build
 ./devtoolw go-fast
+./devtoolw go-runtime-resilience
 ./devtoolw instrumentation
 ./devtoolw release-unit
 ./devtoolw release-lint
