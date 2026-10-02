@@ -243,7 +243,21 @@ func serve(databasePath string) error {
 			return err
 		}
 		if len(encoded) > runtimecontract.MaxFrameBytes {
-			return fmt.Errorf("response exceeds bounded stream")
+			// Oversize is a request-level failure. Do not terminate the
+			// long-lived runtime and turn the cause into an opaque Android EOF.
+			frame.Payload, err = json.Marshal(map[string]any{
+				"ok":            false,
+				"error":         "response_exceeds_bounded_stream",
+				"responseBytes": len(encoded),
+				"maxFrameBytes": runtimecontract.MaxFrameBytes,
+			})
+			if err != nil {
+				return err
+			}
+			encoded, err = json.Marshal(frame)
+			if err != nil {
+				return err
+			}
 		}
 		if _, err := writer.Write(append(encoded, '\n')); err != nil {
 			return err

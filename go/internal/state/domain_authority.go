@@ -62,7 +62,32 @@ func (s *SQLiteStore) DomainAuthority(ctx context.Context, req authority.Request
 	var data any
 	switch req.Domain {
 	case "package-storage":
-		data = map[string]any{"appSummaries": insights["appSummaries"], "packageProfiles": insights["packageProfiles"], "appStorage": insights["appStorage"]}
+		requested := map[string]bool{}
+		for _, field := range options.Fields {
+			switch field {
+			case "appSummaries", "packageProfiles", "appStorage":
+				requested[field] = true
+			default:
+				return DomainAuthorityEnvelope{}, fmt.Errorf(
+					"domain_authority_package_storage_projection_invalid:%s",
+					field,
+				)
+			}
+		}
+		if len(requested) == 0 {
+			// Preserve compatibility with callers predating field projection.
+			requested["appSummaries"] = true
+			requested["packageProfiles"] = true
+			requested["appStorage"] = true
+		}
+
+		projected := map[string]any{}
+		for _, field := range []string{"appSummaries", "packageProfiles", "appStorage"} {
+			if requested[field] {
+				projected[field] = insights[field]
+			}
+		}
+		data = projected
 	case "residue":
 		data = insights["residue"]
 	case "cleanup-intelligence":

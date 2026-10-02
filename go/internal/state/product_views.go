@@ -21,6 +21,7 @@ type ProductInsightsOptions struct {
 	ProtectedPaths  []string          `json:"protectedPaths"`
 	IgnoredPackages []string          `json:"ignoredPackages"`
 	AppLabels       map[string]string `json:"appLabels"`
+	Fields          []string          `json:"fields,omitempty"`
 }
 
 type productEntry struct {

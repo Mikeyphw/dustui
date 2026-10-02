@@ -137,16 +137,24 @@ android {
 val dustuiSigningStatus = tasks.register("dustuiSigningStatus") {
     group = "help"
     description = "Show whether DustUI permanent personal release signing is configured."
+
+    // Resolve build-script-backed values during configuration so the task
+    // action captures only configuration-cache-safe values.
+    val signingConfigured = dustuiPersonalSigningConfigured
+    val signingPropertiesPath = dustuiSigningPropertiesFile.absolutePath
+    val signingStorePath = dustuiPersonalSigningStoreFile?.absolutePath.orEmpty()
+    val signingAlias = if (signingConfigured) dustuiSigningValue("keyAlias") else ""
+
     doLast {
-        if (dustuiPersonalSigningConfigured) {
+        if (signingConfigured) {
             println("DustUI personal signing: configured")
-            println("Properties: ${dustuiSigningPropertiesFile.absolutePath}")
-            println("Keystore: ${dustuiPersonalSigningStoreFile?.absolutePath.orEmpty()}")
-            println("Alias: ${dustuiSigningValue("keyAlias")}")
+            println("Properties: $signingPropertiesPath")
+            println("Keystore: $signingStorePath")
+            println("Alias: $signingAlias")
             println("Release APKs use this permanent certificate.")
         } else {
             println("DustUI personal signing: NOT configured")
-            println("Expected properties: ${dustuiSigningPropertiesFile.absolutePath}")
+            println("Expected properties: $signingPropertiesPath")
             println("Run bash android/tools/setup-personal-signing.sh or set DUSTUI_ANDROID_SIGNING_PROPERTIES.")
         }
     }
@@ -155,11 +163,14 @@ val dustuiSigningStatus = tasks.register("dustuiSigningStatus") {
 val verifyDustuiPersonalSigningConfigured = tasks.register("verifyDustuiPersonalSigningConfigured") {
     group = "verification"
     description = "Fail unless DustUI permanent personal release signing is configured outside the repository."
+
+    // Do not dereference Kotlin build-script properties from the execution
+    // action: configuration cache cannot serialize the script object.
+    val signingConfigured = dustuiPersonalSigningConfigured
+    val signingStoreExists = dustuiPersonalSigningStoreFile?.isFile == true
+
     doLast {
-        check(
-            dustuiPersonalSigningConfigured &&
-                dustuiPersonalSigningStoreFile?.isFile == true
-        ) {
+        check(signingConfigured && signingStoreExists) {
             "DustUI permanent personal signing is not configured. " +
                 "Run bash android/tools/setup-personal-signing.sh or set DUSTUI_ANDROID_SIGNING_PROPERTIES."
         }

@@ -15,13 +15,14 @@ import (
 )
 
 const (
-	productLargestPathsPerPackage = 8
-	productPathsPerBucket         = 24
-	productResidueLimit           = 500
-	productOldFileLimit           = 100
-	productGrowthLimit            = 500
-	productRecommendationLimit    = 250
-	productModuleLimit            = 512
+	productLargestPathsPerPackage    = 8
+	productPathsPerBucket            = 24
+	productAppStoragePathDetailLimit = 256
+	productResidueLimit              = 500
+	productOldFileLimit              = 100
+	productGrowthLimit               = 500
+	productRecommendationLimit       = 250
+	productModuleLimit               = 512
 )
 
 type boundedBucketAccum struct {
@@ -430,31 +431,123 @@ func boundedPackageProfiles(apps map[string]*boundedPackageAccum, labels map[str
 }
 
 func boundedAppStorageView(scanID string, previous *AndroidScanSession, apps map[string]*boundedPackageAccum, previousTotals map[string]int64, labels map[string]string, ignored, protected map[string]bool) map[string]any {
-	pkgs := []map[string]any{}
+	ordered := make([]*boundedPackageAccum, 0, len(apps))
 	for _, a := range apps {
-		buckets := []map[string]any{}
-		for kind, b := range a.Buckets {
-			items := []map[string]any{}
-			for _, e := range b.Paths {
-				prot := protected[e.Path]
-				eligible, reason := appStorageEligibility(a.Installed, kind, prot)
-				items = append(items, map[string]any{"path": e.Path, "name": e.Name, "sizeBytes": e.SizeBytes, "modifiedAt": e.ModifiedAt, "bucket": kind, "protected": prot, "deletionEligible": eligible && b.Count <= productPathsPerBucket, "deletionReason": map[bool]string{true: reason, false: "Bucket is larger than the bounded review window; refine before deletion"}[b.Count <= productPathsPerBucket]})
-			}
-			buckets = append(buckets, map[string]any{"kind": kind, "bytes": b.Bytes, "fileCount": b.Count, "paths": items, "pathsTruncated": b.Count > len(b.Paths)})
+		ordered = append(ordered, a)
+	}
+	sort.Slice(ordered, func(i, j int) bool { return ordered[i].Total > ordered[j].Total })
+
+	remainingPathDetails := productAppStoragePathDetailLimit
+	pathDetailsTruncated := false
+	pkgs := make([]map[string]any, 0, len(ordered))
+
+	for _, a := range ordered {
+		type bucketPair struct {
+			kind string
+			data *boundedBucketAccum
 		}
-		sort.Slice(buckets, func(i, j int) bool { return buckets[i]["bytes"].(int64) > buckets[j]["bytes"].(int64) })
+
+		orderedBuckets := make([]bucketPair, 0, len(a.Buckets))
+		for kind, b := range a.Buckets {
+			orderedBuckets = append(
+				orderedBuckets,
+				bucketPair{kind: kind, data: b},
+			)
+		}
+		sort.Slice(
+			orderedBuckets,
+			func(i, j int) bool {
+				return orderedBuckets[i].data.Bytes > orderedBuckets[j].data.Bytes
+			},
+		)
+
+		buckets := make([]map[string]any, 0, len(orderedBuckets))
+		for _, pair := range orderedBuckets {
+			kind, b := pair.kind, pair.data
+			items := []map[string]any{}
+
+			for _, e := range b.Paths {
+				if remainingPathDetails == 0 {
+					pathDetailsTruncated = true
+					break
+				}
+
+				prot := protected[e.Path]
+				eligible, reason := appStorageEligibility(
+					a.Installed,
+					kind,
+					prot,
+				)
+
+				items = append(items, map[string]any{
+					"path":       e.Path,
+					"name":       e.Name,
+					"sizeBytes":  e.SizeBytes,
+					"modifiedAt": e.ModifiedAt,
+					"bucket":     kind,
+					"protected":  prot,
+					"deletionEligible": eligible &&
+						b.Count <= productPathsPerBucket,
+					"deletionReason": map[bool]string{
+						true:  reason,
+						false: "Bucket is larger than the bounded review window; refine before deletion",
+					}[b.Count <= productPathsPerBucket],
+				})
+
+				remainingPathDetails--
+			}
+
+			truncated := b.Count > len(items)
+			if truncated {
+				pathDetailsTruncated = true
+			}
+
+			buckets = append(buckets, map[string]any{
+				"kind":           kind,
+				"bytes":          b.Bytes,
+				"fileCount":      b.Count,
+				"paths":          items,
+				"pathsTruncated": truncated,
+			})
+		}
+
 		label := labels[a.Name]
 		if label == "" {
 			label = a.Name
 		}
-		pkgs = append(pkgs, map[string]any{"packageName": a.Name, "appLabel": label, "installed": a.Installed, "systemApp": a.System, "evidenceState": a.EvidenceState, "evidenceReasons": a.EvidenceReasons, "versionName": nil, "versionCode": nil, "totalBytes": a.Total, "recentGrowthBytes": a.Total - previousTotals[a.Name], "buckets": buckets, "duplicatePaths": []any{}, "residuePaths": []any{}, "recommendationsIgnored": ignored[a.Name]})
+
+		pkgs = append(pkgs, map[string]any{
+			"packageName":            a.Name,
+			"appLabel":               label,
+			"installed":              a.Installed,
+			"systemApp":              a.System,
+			"evidenceState":          a.EvidenceState,
+			"evidenceReasons":        a.EvidenceReasons,
+			"versionName":            nil,
+			"versionCode":            nil,
+			"totalBytes":             a.Total,
+			"recentGrowthBytes":      a.Total - previousTotals[a.Name],
+			"buckets":                buckets,
+			"duplicatePaths":         []any{},
+			"residuePaths":           []any{},
+			"recommendationsIgnored": ignored[a.Name],
+		})
 	}
-	sort.Slice(pkgs, func(i, j int) bool { return pkgs[i]["totalBytes"].(int64) > pkgs[j]["totalBytes"].(int64) })
-	var pid any = nil
+
+	var previousID any = nil
 	if previous != nil {
-		pid = previous.ID
+		previousID = previous.ID
 	}
-	return map[string]any{"scanId": scanID, "previousScanId": pid, "packages": pkgs, "generatedAt": time.Now().UnixMilli(), "boundedPathsPerBucket": productPathsPerBucket}
+
+	return map[string]any{
+		"scanId":                scanID,
+		"previousScanId":        previousID,
+		"packages":              pkgs,
+		"generatedAt":           time.Now().UnixMilli(),
+		"boundedPathsPerBucket": productPathsPerBucket,
+		"pathDetailLimit":       productAppStoragePathDetailLimit,
+		"pathDetailsTruncated":  pathDetailsTruncated,
+	}
 }
 
 func boundedResidueGroups(byPkg map[string][]map[string]any, complete bool, labels map[string]string) []map[string]any {

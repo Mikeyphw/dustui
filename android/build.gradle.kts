@@ -11,6 +11,15 @@ val verifyStableToolchainBaseline = tasks.register("verifyStableToolchainBaselin
     group = "verification"
     description = "Verifies DustUI's normalized stable Android toolchain baseline."
 
+    // Keep execution-time task actions configuration-cache safe by capturing
+    // only serializable values/files here instead of reaching back into the
+    // Kotlin build-script/Project/Gradle objects from doLast.
+    val runningGradleVersion = gradle.gradleVersion
+    val wrapperPropertiesFile = layout.projectDirectory.file("gradle/wrapper/gradle-wrapper.properties").asFile
+    val versionCatalogFile = layout.projectDirectory.file("gradle/libs.versions.toml").asFile
+    val appBuildFile = layout.projectDirectory.file("app/build.gradle.kts").asFile
+    inputs.files(wrapperPropertiesFile, versionCatalogFile, appBuildFile)
+
     doLast {
         val expectedGradle = "9.7.1"
         val expectedWrapperSha256 = "acd53f1edaf02f1a8ff99879f8a34b302661a057d9b063ae9e35b552f804d20a"
@@ -18,14 +27,14 @@ val verifyStableToolchainBaseline = tasks.register("verifyStableToolchainBaselin
         val expectedAgp = "9.3.1"
         val expectedKotlin = "2.4.10"
 
-        check(gradle.gradleVersion == expectedGradle) {
-            "DustUI requires Gradle $expectedGradle; found ${gradle.gradleVersion}."
+        check(runningGradleVersion == expectedGradle) {
+            "DustUI requires Gradle $expectedGradle; found $runningGradleVersion."
         }
         check(JavaVersion.current().majorVersion.toInt() == expectedJava) {
             "DustUI requires Java $expectedJava to run Gradle; found ${JavaVersion.current()}."
         }
 
-        val wrapper = file("gradle/wrapper/gradle-wrapper.properties").readText()
+        val wrapper = wrapperPropertiesFile.readText()
         check(wrapper.contains("gradle-$expectedGradle-bin.zip")) {
             "Gradle wrapper must pin Gradle $expectedGradle."
         }
@@ -33,7 +42,7 @@ val verifyStableToolchainBaseline = tasks.register("verifyStableToolchainBaselin
             "Gradle wrapper checksum does not match the normalized Gradle $expectedGradle distribution."
         }
 
-        val catalog = file("gradle/libs.versions.toml").readText()
+        val catalog = versionCatalogFile.readText()
         fun requireVersion(name: String, expected: String) {
             val pattern = Regex("(?m)^${Regex.escape(name)}\\s*=\\s*\"([^\"]+)\"$")
             val actual = pattern.find(catalog)?.groupValues?.get(1)
@@ -55,7 +64,7 @@ val verifyStableToolchainBaseline = tasks.register("verifyStableToolchainBaselin
             "Prerelease dependency/plugin versions are forbidden by the DustUI stable baseline."
         }
 
-        val appBuild = file("app/build.gradle.kts").readText()
+        val appBuild = appBuildFile.readText()
         check(appBuild.contains("compileSdk = 36")) { "DustUI compileSdk must remain 36." }
         check(appBuild.contains("targetSdk = 36")) { "DustUI targetSdk must remain 36." }
         check(appBuild.contains("buildToolsVersion = \"36.0.0\"")) { "DustUI Build Tools must be pinned to 36.0.0." }

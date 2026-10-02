@@ -179,21 +179,29 @@ class ScanRepository(
         )
     }
 
-    private fun authorityOptions(): JSONObject {
+    private fun authorityOptions(field: String? = null): JSONObject {
         val labels = installedPackageMetadata().mapValues { it.value.appLabel }
         return JSONObject()
             .put("protectedPaths", JSONArray(residueProtectionStore.paths().sorted()))
             .put("ignoredPackages", JSONArray(appStoragePreferenceStore.ignoredPackages().sorted()))
             .put("appLabels", JSONObject(labels))
+            .apply {
+                if (field != null) put("fields", JSONArray().put(field))
+            }
     }
 
-    private suspend fun authorityData(scanId: String, domain: String, packageEvidenceRequired: Boolean): JSONObject {
+    private suspend fun authorityData(
+        scanId: String,
+        domain: String,
+        packageEvidenceRequired: Boolean,
+        field: String? = null,
+    ): JSONObject {
         val session = requireNotNull(domainStore.session(scanId)) { "Authority scan no longer exists: $scanId" }
         if (packageEvidenceRequired && packageEvidenceAttemptedGeneration[scanId] != session.generation) {
             packageEvidenceAttemptedGeneration[scanId] = session.generation
             runCatching { refreshPackageEvidence(scanId, session.generation) }
         }
-        val response = domainStore.typedAuthority(domain, scanId, session.generation, authorityOptions())
+        val response = domainStore.typedAuthority(domain, scanId, session.generation, authorityOptions(field))
         authorityStatuses["$scanId|$domain"] = response.status()
         return response.dataObject()
     }
@@ -218,7 +226,7 @@ class ScanRepository(
         .map { SnapshotPoint(it.completedAt ?: it.startedAt, it.totalBytes) }
 
     suspend fun appSummaries(scanId: String): List<AppStorageSummary> =
-        GoProductAuthorityMapper.appSummaries(authorityData(scanId, "package-storage", true).getJSONArray("appSummaries"))
+        GoProductAuthorityMapper.appSummaries(authorityData(scanId, "package-storage", true, "appSummaries").getJSONArray("appSummaries"))
 
     suspend fun appSummaries(scanId: String, entries: List<ScanEntryEntity>): List<AppStorageSummary> = appSummaries(scanId)
 
@@ -429,13 +437,13 @@ class ScanRepository(
     suspend fun advancedAnalysis(scanId: String, entries: List<ScanEntryEntity>): AdvancedStorageReport = advancedAnalysis(scanId)
 
     suspend fun packageProfiles(scanId: String): List<PackageStorageProfile> =
-        GoProductAuthorityMapper.packageProfiles(authorityData(scanId, "package-storage", true).getJSONArray("packageProfiles"))
+        GoProductAuthorityMapper.packageProfiles(authorityData(scanId, "package-storage", true, "packageProfiles").getJSONArray("packageProfiles"))
 
     suspend fun appStorageInspector(
         scanId: String,
         providedResidueAnalysis: AppResidueAnalysis? = null,
     ): AppStorageInspectorAnalysis = trackedAnalysis(scanId, "app-storage") {
-        GoProductAuthorityMapper.appStorage(authorityData(scanId, "package-storage", true).getJSONObject("appStorage"))
+        GoProductAuthorityMapper.appStorage(authorityData(scanId, "package-storage", true, "appStorage").getJSONObject("appStorage"))
     }
 
     suspend fun appStorageInspector(

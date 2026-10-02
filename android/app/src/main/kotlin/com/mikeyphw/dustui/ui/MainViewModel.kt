@@ -95,6 +95,8 @@ import com.mikeyphw.dustui.ui.shell.DustRouteBinding
 import com.mikeyphw.dustui.ui.shell.DustRouteRequestRegistry
 import com.mikeyphw.dustui.ui.shell.DustScreenState
 import com.mikeyphw.dustui.ui.shell.DustWireScreenState
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -2447,7 +2449,38 @@ class MainViewModel(private val repository: ScanRepository) : ViewModel() {
         val binding = issueRouteRequest("insights", "$scanId:$requestedGeneration")
         insightsRefreshJob?.cancel()
         recordDebugEvent(DebugCategory.App, DebugSeverity.Trace, "insights_refresh_started", "Refreshing bounded storage intelligence off the UI thread", mapOf("scanId" to scanId, "generation" to requestedGeneration.toString(), "requestId" to binding.requestId))
-        insightsRefreshJob = viewModelScope.launch(Dispatchers.IO) {
+        val insightsFailureHandler = CoroutineExceptionHandler { _, error ->
+            if (error is CancellationException) {
+                return@CoroutineExceptionHandler
+            }
+
+            _residueLoading.value = false
+            _recommendationLoading.value = false
+            _appStorageLoading.value = false
+            _message.value =
+                error.message ?: "Unable to refresh storage intelligence"
+
+            recordDebugEvent(
+                DebugCategory.App,
+                DebugSeverity.Error,
+                "insights_refresh_failed",
+                error.message ?: error::class.java.simpleName,
+                mapOf(
+                    "scanId" to scanId,
+                    "generation" to requestedGeneration.toString(),
+                    "requestId" to binding.requestId,
+                    "exception" to error::class.java.name,
+                ),
+            )
+
+            if (acceptsRouteResponse("insights", binding)) {
+                insightsRefreshJob = null
+            }
+        }
+
+        insightsRefreshJob = viewModelScope.launch(
+            Dispatchers.IO + insightsFailureHandler,
+        ) {
             fun scanStillCurrent(): Boolean = latestSession.value?.let { it.id == scanId && it.generation == requestedGeneration } == true && acceptsRouteResponse("insights", binding)
             suspend fun checkpoint() {
                 coroutineContext.ensureActive()
