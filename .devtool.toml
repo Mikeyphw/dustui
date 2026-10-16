@@ -1256,7 +1256,14 @@ validate = [
   { id = "a11activity", ref = "job:audfix11_activity_diagnostics", depends_on = [] },
   { id = "build", ref = "job:go_build", depends_on = ["tests", "diagnostics", "product", "schema", "a08routes", "a09async", "a10truth", "a11activity"] },
 ]
-
+ci-preflight = [
+  { id = "source", ref = "job:ci-source", depends_on = [] },
+]
+ci-local = [
+  { id = "source", ref = "job:ci-source", depends_on = [] },
+  { id = "go", ref = "target:dustui_go#fast", depends_on = ["source"] },
+  { id = "android-static", ref = "target:dustui_android#fast", depends_on = ["source"] },
+]
 
 [targets.dustui_gate_a_history]
 type = "command"
@@ -1322,7 +1329,7 @@ requalify = [
 ]
 
 [wrapper]
-schema = 1
+schema = 2
 default_command = "aud-fix-14"
 
 
@@ -1543,3 +1550,22 @@ description = "Reconcile Gate-E qualification without rerunning unchanged expens
 workflow = "gate_e_reconcile"
 target = "dustui_android"
 aliases = ["aud-fix-17-reconcile", "gate-e-reuse"]
+
+[targets.dustui_go.jobs.ci-source]
+runner = "command"
+root = ".."
+command = ["python3", "scripts/devtool_actions_contract.py"]
+inputs = [".devtool.toml", "scripts/devtool_actions_contract.py", ".github/workflows/*.yml"]
+outputs = []
+[targets.dustui_go.jobs.ci-source.metadata]
+read_only = true
+
+[wrapper.commands.ci-preflight]
+description = "Read-only Go/Android source and CI contract"
+workflow = "ci-preflight"
+target = "dustui_go"
+
+[wrapper.commands.ci-local]
+description = "Run fast Go and Android contract DAG, not Gate E"
+workflow = "ci-local"
+target = "dustui_go"

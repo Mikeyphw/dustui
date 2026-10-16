@@ -1,0 +1,48 @@
+name: Devtool DustUI CI (unqualified candidates)
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      android_debug:
+        description: 'Build an unsigned-for-release debug APK on GitHub'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: go
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go/go.mod
+          cache-dependency-path: go/go.sum
+      - name: Source revision
+        run: git rev-parse HEAD
+      - name: Go tests
+        run: go test ./...
+      - name: Go build
+        run: go build ./...
+  android-debug:
+    if: github.event_name == 'workflow_dispatch' && inputs.android_debug
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Build debug APK (not release qualification)
+        working-directory: android
+        run: bash ./gradlew :app:assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dustui-android-debug
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
