@@ -1569,3 +1569,20 @@ target = "dustui_go"
 description = "Run fast Go and Android contract DAG, not Gate E"
 workflow = "ci-local"
 target = "dustui_go"
+
+
+# R36 hosted acceptance is intentionally separate from dustui_android.
+# Only this debug target is eligible for R36 hosted Gradle execution.
+[targets.dustui_hosted_r36]
+runner = "android"
+root = "android"
+execution_environment = "auto"
+
+[targets.dustui_hosted_r36.jobs.debug_apk]
+runner = "android"
+gradle_tasks = [":app:lintDebug", ":app:assembleDebug"]
+outputs = ["android/app/build/outputs/apk/debug/app-debug.apk"]
+metadata = { ci_toolchain = "android-gradle", ci_android_java_version = "21", ci_android_project_dir = "android", ci_android_debug_variant = "debug", ci_android_sdk_packages = ["platforms;android-36", "build-tools;36.0.0", "platform-tools"], ci_android_wrapper_jar_sha256 = "d3b261c2820e9e3d8d639ed084900f11f4a86050a8f83342ade7b6bc9b0d2bdd", ci_android_expected_output = "android/app/build/outputs/apk/debug/app-debug.apk" }
+
+[targets.dustui_hosted_r36.workflows]
+ci = ["job:debug_apk"]
