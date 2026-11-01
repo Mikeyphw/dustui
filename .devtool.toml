@@ -1047,7 +1047,7 @@ command = ["sh", "-lc", 'mkdir -p .devtool/tmp/go-test && export TMPDIR="$PWD/.d
 inputs = ["."]
 outputs = [".devtool/tmp/go-test"]
 [targets.dustui_go.jobs.go_test_all.metadata]
-read_only = true
+read_only = false
 
 [targets.dustui_go.jobs.go_build]
 runner = "command"
@@ -1168,7 +1168,7 @@ command = ["sh", "-lc", 'mkdir -p .devtool/tmp/go-gate-e && export TMPDIR="$PWD/
 inputs = ["internal", "cmd", "go.mod", "go.sum", "../migration/qualification/v1/current_state.json"]
 outputs = [".devtool/tmp/go-gate-e"]
 [targets.dustui_go.jobs.gate_e_adversarial.metadata]
-read_only = true
+read_only = false
 
 [targets.dustui_go.jobs.runtime_resilience]
 runner = "command"
@@ -1176,7 +1176,7 @@ command = ["sh", "-lc", 'mkdir -p .devtool/tmp/runtime-resilience && export TMPD
 inputs = ["internal/runtimeio", "go.mod", "go.sum"]
 outputs = [".devtool/tmp/runtime-resilience"]
 [targets.dustui_go.jobs.runtime_resilience.metadata]
-read_only = true
+read_only = false
 
 [targets.dustui_go.workflows]
 runtime_resilience = ["job:runtime_resilience"]
