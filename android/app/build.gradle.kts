@@ -96,6 +96,7 @@ android {
             isJniDebuggable = true
         }
         release {
+            testProguardFiles("proguard-androidTest-rules.pro")
             isMinifyEnabled = true
             isShrinkResources = true
             if (dustuiPersonalSigningConfigured) {
