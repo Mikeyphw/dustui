@@ -67,8 +67,8 @@ ci-local = [
   { id = "build", ref = "job:build", depends_on = ["test", "vet"] },
 ]
 
-# Reviewed native-Go candidate for the M03 GitHub exporter cutover.
-# Keep it separate from local Go: hosted execution/provenance is not qualified here.
+# M03 reviewed hosted-Go native DAG. GitHub-owned source-only verification.
+# No cross-run output reuse, signing, device or release authority.
 [targets.dustui_hosted_go]
 runner = "go"
 root = "."
@@ -79,27 +79,40 @@ runner = "go"
 command = ["go", "-C", "go", "test", "./..."]
 inputs = ["go/go.mod", "go/go.sum"]
 outputs = []
-metadata = { ci_toolchain = "go" }
+metadata = { ci_toolchain = "go", resource_class = "cpu-heavy" }
 
 [targets.dustui_hosted_go.jobs.vet]
 runner = "go"
 command = ["go", "-C", "go", "vet", "./..."]
 inputs = ["go/go.mod", "go/go.sum"]
 outputs = []
-metadata = { ci_toolchain = "go" }
+metadata = { ci_toolchain = "go", resource_class = "cpu-heavy" }
 
 [targets.dustui_hosted_go.jobs.build]
 runner = "go"
 command = ["go", "-C", "go", "build", "./..."]
 inputs = ["go/go.mod", "go/go.sum"]
 outputs = []
-metadata = { ci_toolchain = "go" }
+metadata = { ci_toolchain = "go", resource_class = "cpu-heavy" }
+
+[targets.dustui_hosted_go.jobs.race]
+runner = "go"
+command = ["go", "-C", "go", "test", "-race", "./..."]
+inputs = ["go/go.mod", "go/go.sum"]
+outputs = []
+metadata = { ci_toolchain = "go", resource_class = "cpu-heavy" }
+
+[targets.dustui_hosted_go.jobs.race.env]
+GOOS = "linux"
+GOARCH = "amd64"
+CGO_ENABLED = "1"
 
 [targets.dustui_hosted_go.workflows]
 ci = [
   { id = "test", ref = "job:test", depends_on = [] },
   { id = "vet", ref = "job:vet", depends_on = [] },
-  { id = "build", ref = "job:build", depends_on = ["test", "vet"] },
+  { id = "race", ref = "job:race", depends_on = [] },
+  { id = "build", ref = "job:build", depends_on = ["test", "vet", "race"] },
 ]
 
 # R36 GitHub debug APK compatibility island, byte-for-byte semantic identity.

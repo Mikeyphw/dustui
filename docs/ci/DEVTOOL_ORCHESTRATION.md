@@ -1,55 +1,43 @@
-# DustUI Devtool current-state orchestration (M02)
+# DustUI × Devtool: M03 native Go CI
 
-The repository wrapper is `./devtoolw` (`wrapper.schema = 2`). It resolves the
-Devtool CLI from the local environment; its default command is `ci-preflight`,
-which is source-only and non-mutating. **No Android Gradle task is permitted on
-Termux**. Android, signing and package validation belong to GitHub Actions.
+Canonical entry points: `./devtoolw ci-preflight`, `./devtoolw ci-local`, `./devtoolw go-test`, `./devtoolw go-vet`, `./devtoolw go-build`.
+The wrapper is local Go/source only. **Never execute Android Gradle on Termux.**
 
-## Local source and Go commands
+## Hosted Go (GitHub Actions)
 
-| Command | Purpose |
-|---|---|
-| `./devtoolw` or `./devtoolw ci-preflight` | Validate source-only Devtool contracts; no build |
-| `./devtoolw ci-local` | Run the Go CI DAG (preflight, tests, vet, build) |
-| `./devtoolw go-fast` | Go tests + Go vet |
-| `./devtoolw go-test` | Go package tests |
-| `./devtoolw go-vet` | Go vet |
-| `./devtoolw go-build` | Go package build (not an APK) |
+`.github/workflows/devtool-dustui.yml` uses Ubuntu 24.04, immutable Node24-compatible
+checkout/setup-python/setup-go/upload-artifact pins, a fixed 40-character Devtool source SHA,
+and the reviewed Devtool native DAG. `scripts/dustui_m03_hosted.py` acts only as
+an identity/graph guard and delegates actual execution to Devtool
+`devtool.actions_graph_export.run_node`. No substitute subprocess Go test command
+or second test scheduler exists in the workflow.
 
-The target `dustui_go` runs locally; the target `dustui_hosted_go` is a separate,
-reviewed native-Go declaration. **M03 must generate, verify and execute its
-GitHub Actions provider pipeline before that target can claim hosted acceptance.**
+The four native nodes are: `test`, `vet`, and `race` as independent roots,
+then `build` depending on all three. The Go race lane is **Linux/amd64 with CGO=1**;
+it does not run on Termux. All jobs read their toolchain version from `go/go.mod`.
+The first hosted acceptance uses `cache: false` to avoid misleading cache reuse;
+content caching is deferred to M07 after cold/warm baseline measurement.
 
-## GitHub Android debug: temporary R36 lane
+Every node rechecks GitHub SHA/run/attempt, immutable Devtool runtime, target-local
+reviewed DAG/argv, and graph digest. A passing node emits Devtool typed local
+evidence and uploads a best-effort 14-day review artifact. Such metadata **is not
+independently authenticated attestation** and proves neither signed release nor device success.
 
-`dustui_hosted_r36` remains exactly matched to the existing reviewed R36
-hosted workflow (`.github/workflows/devtool-dustui-r36-hosted-debug.yml`). Its
-only tasks are `:app:lintDebug` and `:app:assembleDebug`. This is a debug APK
-candidate, not an Android unit, device, signed release or attestation gate.
-The existing manual GitHub Actions workflows are left untouched in M02.
+Run on the committed GitHub branch (the overlay itself does NOT push):
 
-M04 will replace the R36 integration with a qualified hosted Android source
-lane that executes Android unit tests, lint and debug assemble, and will then
-retire the R36 target/bridge. M05 owns signed artifacts, real-device execution
-and independent release verification.
-
-## Removed migration infrastructure
-
-The former Gate A/B/C history targets, local Android Gradle/Gate D/E DAG,
-and AUD-FIX wrappers were removed from `.devtool.toml`. Their archived files
-remain in the tree until M06 can delete them without breaking active source,
-CI, release or product requirements. M02 does not erase prior releases' signed
-or independently verified release receipts.
-
-## Developer verification
-
-```sh
-python3 scripts/devtool_actions_contract.py
-python3 -m unittest discover -s tests -p test_devtool_m02_contract.py -v
-python3 scripts/devtool_m01_contract_check.py
-./devtoolw ci-preflight
-./devtoolw ci-local
+```
+git push origin HEAD
+gh workflow run devtool-dustui.yml -R Mikeyphw/dustui --ref YOUR_BRANCH
+gh run list -R Mikeyphw/dustui --workflow devtool-dustui.yml --limit 5
 ```
 
-The current source-contract checker tests configuration and declarations; a
-passing source check is **not** a release or device qualification.
+A workflow file created only on a non-default branch may not be dispatchable until
+the file is present on the default branch. Push/pull_request triggers can be used
+for independent acceptance without manual dispatch.
+
+## Android and release remain separate
+
+`.github/workflows/devtool-dustui-r36-hosted-debug.yml` still owns the
+reviewed Android debug APK path until M04; it is debug-only and not release-qualified.
+M05 will separately define signed release and device acceptance. No Gradle or
+release authority is introduced by this Go CI change.

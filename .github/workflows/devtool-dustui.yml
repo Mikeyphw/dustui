@@ -1,48 +1,261 @@
-name: Devtool DustUI CI (unqualified candidates)
+# M03: source-only native Devtool Go DAG. Signing, release, device and Android build are separate.
+name: DustUI native Devtool Go CI
 on:
   push:
   pull_request:
   workflow_dispatch:
-    inputs:
-      android_debug:
-        description: 'Build an unsigned-for-release debug APK on GitHub'
-        type: boolean
-        default: false
 permissions:
   contents: read
+concurrency:
+  group: dustui-m03-go-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
-  go:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: go
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      DEVTOOL_SOURCE_SHA: 7cb00a850dae07f7fe9ca7e17eb264cb132d8183
+      PYTHONDONTWRITEBYTECODE: '1'
+      GOTOOLCHAIN: local
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - name: Checkout exact DustUI commit
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Node 24-compatible Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Node 24-compatible Go toolchain
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
         with:
           go-version-file: go/go.mod
-          cache-dependency-path: go/go.sum
-      - name: Source revision
-        run: git rev-parse HEAD
-      - name: Go tests
-        run: go test ./...
-      - name: Go build
-        run: go build ./...
-  android-debug:
-    if: github.event_name == 'workflow_dispatch' && inputs.android_debug
-    runs-on: ubuntu-latest
+          cache: false
+      - name: Acquire immutable Devtool runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git clone --no-checkout https://github.com/Mikeyphw/devtool.git "$RUNNER_TEMP/devtool-source"
+          git -C "$RUNNER_TEMP/devtool-source" checkout --detach "$DEVTOOL_SOURCE_SHA"
+          test "$(git -C "$RUNNER_TEMP/devtool-source" rev-parse HEAD)" = "$DEVTOOL_SOURCE_SHA"
+          python3 -m venv "$RUNNER_TEMP/devtool-venv"
+          "$RUNNER_TEMP/devtool-venv/bin/python" -m pip install --disable-pip-version-check "$RUNNER_TEMP/devtool-source"
+      - name: Review native Devtool test node (no execution)
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/devtool-venv/bin/python" scripts/dustui_m03_hosted.py plan \
+            --root "$GITHUB_WORKSPACE" --node test --evidence "$RUNNER_TEMP/dustui-m03/plan-test.json"
+      - name: Execute native Devtool test node
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/devtool-venv/bin/python" scripts/dustui_m03_hosted.py run \
+            --root "$GITHUB_WORKSPACE" --node test \
+            --inputs "$RUNNER_TEMP/rm06-inputs" --outputs "$RUNNER_TEMP/rm06-output"
+      - name: Verify typed native evidence and record run identity
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s "$RUNNER_TEMP/rm06-evidence/node-01/node-evidence.json"
+          mkdir -p "$RUNNER_TEMP/dustui-m03"
+          printf '%s\n' "$GITHUB_SHA/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/test" > "$RUNNER_TEMP/dustui-m03/run-test.txt"
+      - name: Upload test source review evidence (not signed or release qualified)
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: dustui-m03-test-attempt${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/dustui-m03/
+            ${{ runner.temp }}/rm06-evidence/
+          if-no-files-found: warn
+          retention-days: 14
+  vet:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      DEVTOOL_SOURCE_SHA: 7cb00a850dae07f7fe9ca7e17eb264cb132d8183
+      PYTHONDONTWRITEBYTECODE: '1'
+      GOTOOLCHAIN: local
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - name: Checkout exact DustUI commit
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
-          distribution: temurin
-          java-version: '21'
-      - uses: android-actions/setup-android@v3
-      - name: Build debug APK (not release qualification)
-        working-directory: android
-        run: bash ./gradlew :app:assembleDebug --no-daemon
-      - uses: actions/upload-artifact@v4
+          persist-credentials: false
+      - name: Node 24-compatible Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
-          name: dustui-android-debug
-          path: android/app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
+          python-version: '3.12'
+      - name: Node 24-compatible Go toolchain
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version-file: go/go.mod
+          cache: false
+      - name: Acquire immutable Devtool runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git clone --no-checkout https://github.com/Mikeyphw/devtool.git "$RUNNER_TEMP/devtool-source"
+          git -C "$RUNNER_TEMP/devtool-source" checkout --detach "$DEVTOOL_SOURCE_SHA"
+          test "$(git -C "$RUNNER_TEMP/devtool-source" rev-parse HEAD)" = "$DEVTOOL_SOURCE_SHA"
+          python3 -m venv "$RUNNER_TEMP/devtool-venv"
+          "$RUNNER_TEMP/devtool-venv/bin/python" -m pip install --disable-pip-version-check "$RUNNER_TEMP/devtool-source"
+      - name: Review native Devtool vet node (no execution)
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/devtool-venv/bin/python" scripts/dustui_m03_hosted.py plan \
+            --root "$GITHUB_WORKSPACE" --node vet --evidence "$RUNNER_TEMP/dustui-m03/plan-vet.json"
+      - name: Execute native Devtool vet node
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/devtool-venv/bin/python" scripts/dustui_m03_hosted.py run \
+            --root "$GITHUB_WORKSPACE" --node vet \
+            --inputs "$RUNNER_TEMP/rm06-inputs" --outputs "$RUNNER_TEMP/rm06-output"
+      - name: Verify typed native evidence and record run identity
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s "$RUNNER_TEMP/rm06-evidence/node-02/node-evidence.json"
+          mkdir -p "$RUNNER_TEMP/dustui-m03"
+          printf '%s\n' "$GITHUB_SHA/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/vet" > "$RUNNER_TEMP/dustui-m03/run-vet.txt"
+      - name: Upload vet source review evidence (not signed or release qualified)
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: dustui-m03-vet-attempt${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/dustui-m03/
+            ${{ runner.temp }}/rm06-evidence/
+          if-no-files-found: warn
+          retention-days: 14
+  race:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      DEVTOOL_SOURCE_SHA: 7cb00a850dae07f7fe9ca7e17eb264cb132d8183
+      PYTHONDONTWRITEBYTECODE: '1'
+      GOTOOLCHAIN: local
+    steps:
+      - name: Checkout exact DustUI commit
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Node 24-compatible Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Node 24-compatible Go toolchain
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version-file: go/go.mod
+          cache: false
+      - name: Acquire immutable Devtool runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git clone --no-checkout https://github.com/Mikeyphw/devtool.git "$RUNNER_TEMP/devtool-source"
+          git -C "$RUNNER_TEMP/devtool-source" checkout --detach "$DEVTOOL_SOURCE_SHA"
+          test "$(git -C "$RUNNER_TEMP/devtool-source" rev-parse HEAD)" = "$DEVTOOL_SOURCE_SHA"
+          python3 -m venv "$RUNNER_TEMP/devtool-venv"
+          "$RUNNER_TEMP/devtool-venv/bin/python" -m pip install --disable-pip-version-check "$RUNNER_TEMP/devtool-source"
+      - name: Review native Devtool race node (no execution)
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/devtool-venv/bin/python" scripts/dustui_m03_hosted.py plan \
+            --root "$GITHUB_WORKSPACE" --node race --evidence "$RUNNER_TEMP/dustui-m03/plan-race.json"
+      - name: Execute native Devtool race node
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/devtool-venv/bin/python" scripts/dustui_m03_hosted.py run \
+            --root "$GITHUB_WORKSPACE" --node race \
+            --inputs "$RUNNER_TEMP/rm06-inputs" --outputs "$RUNNER_TEMP/rm06-output"
+      - name: Verify typed native evidence and record run identity
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s "$RUNNER_TEMP/rm06-evidence/node-03/node-evidence.json"
+          mkdir -p "$RUNNER_TEMP/dustui-m03"
+          printf '%s\n' "$GITHUB_SHA/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/race" > "$RUNNER_TEMP/dustui-m03/run-race.txt"
+      - name: Upload race source review evidence (not signed or release qualified)
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: dustui-m03-race-attempt${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/dustui-m03/
+            ${{ runner.temp }}/rm06-evidence/
+          if-no-files-found: warn
+          retention-days: 14
+  build:
+    needs: [test, vet, race]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      DEVTOOL_SOURCE_SHA: 7cb00a850dae07f7fe9ca7e17eb264cb132d8183
+      PYTHONDONTWRITEBYTECODE: '1'
+      GOTOOLCHAIN: local
+    steps:
+      - name: Checkout exact DustUI commit
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Node 24-compatible Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Node 24-compatible Go toolchain
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version-file: go/go.mod
+          cache: false
+      - name: Acquire immutable Devtool runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git clone --no-checkout https://github.com/Mikeyphw/devtool.git "$RUNNER_TEMP/devtool-source"
+          git -C "$RUNNER_TEMP/devtool-source" checkout --detach "$DEVTOOL_SOURCE_SHA"
+          test "$(git -C "$RUNNER_TEMP/devtool-source" rev-parse HEAD)" = "$DEVTOOL_SOURCE_SHA"
+          python3 -m venv "$RUNNER_TEMP/devtool-venv"
+          "$RUNNER_TEMP/devtool-venv/bin/python" -m pip install --disable-pip-version-check "$RUNNER_TEMP/devtool-source"
+      - name: Review native Devtool build node (no execution)
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/devtool-venv/bin/python" scripts/dustui_m03_hosted.py plan \
+            --root "$GITHUB_WORKSPACE" --node build --evidence "$RUNNER_TEMP/dustui-m03/plan-build.json"
+      - name: Execute native Devtool build node
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/devtool-venv/bin/python" scripts/dustui_m03_hosted.py run \
+            --root "$GITHUB_WORKSPACE" --node build \
+            --inputs "$RUNNER_TEMP/rm06-inputs" --outputs "$RUNNER_TEMP/rm06-output"
+      - name: Verify typed native evidence and record run identity
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s "$RUNNER_TEMP/rm06-evidence/node-04/node-evidence.json"
+          mkdir -p "$RUNNER_TEMP/dustui-m03"
+          printf '%s\n' "$GITHUB_SHA/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/build" > "$RUNNER_TEMP/dustui-m03/run-build.txt"
+      - name: Upload build source review evidence (not signed or release qualified)
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: dustui-m03-build-attempt${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/dustui-m03/
+            ${{ runner.temp }}/rm06-evidence/
+          if-no-files-found: warn
+          retention-days: 14

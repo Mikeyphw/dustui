@@ -75,14 +75,27 @@ def check_document(raw: dict, root: Path = ROOT) -> dict:
     hosted = targets["dustui_hosted_go"]
     require(hosted.get("runner") == "go" and hosted.get("root") == "." and hosted.get("execution_environment") == "auto",
             "hosted Go provider target changed")
-    require(set(hosted.get("jobs", {})) == {"test", "vet", "build"}, "hosted Go inventory changed")
+    require(set(hosted.get("jobs", {})) == {"test", "vet", "race", "build"}, "hosted Go inventory changed")
     for k, job in hosted["jobs"].items():
-        require(job.get("runner") == "go" and job.get("command") == ["go", "-C", "go", k, "./..."],
+        expected_command = ["go", "-C", "go", "test", "-race", "./..."] if k == "race" else ["go", "-C", "go", k, "./..."]
+        require(job.get("runner") == "go" and job.get("command") == expected_command,
                 f"hosted Go job {k} is not an approved direct provider command")
         require(job.get("metadata", {}).get("ci_toolchain") == "go" and job.get("outputs") == [],
                 f"hosted Go job {k} must not claim output authority")
         require(job.get("inputs") == ["go/go.mod", "go/go.sum"], f"hosted Go {k} must pin manifests")
-    require(len(hosted.get("workflows", {}).get("ci", [])) == 3, "hosted Go native DAG incomplete")
+        require(job.get("metadata", {}).get("resource_class") == "cpu-heavy", "hosted Go must reserve CPU resources")
+        if k == "race":
+            require(job.get("env") == {"GOOS": "linux", "GOARCH": "amd64", "CGO_ENABLED": "1"},
+                    "race must be restricted to hosted linux/amd64 with CGO")
+        else:
+            require("env" not in job, "non-race hosted job must not override toolchain env")
+    native = hosted.get("workflows", {}).get("ci", [])
+    require(len(native) == 4, "hosted Go native DAG must contain test, vet, race, build")
+    require([n.get("id") for n in native] == ["test", "vet", "race", "build"], "hosted DAG ordering changed")
+    require([n.get("ref") for n in native] == ["job:test", "job:vet", "job:race", "job:build"],
+            "hosted Go DAG must use native target-owned jobs")
+    require(all(n.get("depends_on") == [] for n in native[:3]) and native[3].get("depends_on") == ["test", "vet", "race"],
+            "hosted Go requires three independent gates before build")
     android = targets["dustui_hosted_r36"]
     require(android.get("runner") == "android" and android.get("root") == "android",
             "R36 target identity drift")
@@ -103,9 +116,19 @@ def check_document(raw: dict, root: Path = ROOT) -> dict:
     require((root / ".github/workflows/devtool-dustui-r36-hosted-debug.yml").is_file(),
             "R36 workflow must remain until M04 replacement")
     require((root / "scripts/dustui_r36_hosted.py").is_file(), "R36 runner bridge missing")
-    return {"status": "PASS", "stage": "M02", "target_count": len(targets),
+    workflow_path = root / ".github/workflows/devtool-dustui.yml"
+    require(workflow_path.is_file(), "hosted Go GitHub workflow missing")
+    wf = workflow_path.read_text(encoding="utf-8")
+    require("scripts/dustui_m03_hosted.py run" in wf and "DEVTOOL_SOURCE_SHA:" in wf,
+            "hosted CI must execute source-pinned Devtool native nodes")
+    require("gradlew" not in wf and "./gradle" not in wf,
+            "no direct Gradle in Go CI; R36 owns hosted Android")
+    require("go test ./..." not in wf and "go build ./..." not in wf,
+            "hosted Go CI must run through Devtool rather than direct shell")
+    require("permissions:\n  contents: read" in wf, "GitHub token must be read-only")
+    return {"status": "PASS", "stage": "M03", "target_count": len(targets), "hosted_nodes": 4,
             "targets": sorted(targets), "local_wrapper_commands": sorted(commands),
-            "hosted_go": "DECLARED_NOT_YET_QUALIFIED", "android_r36": "RETAINED_DEBUG_ONLY"}
+            "hosted_go": "NATIVE_DAG_CONFIGURED_REMOTE_UNVERIFIED", "android_r36": "RETAINED_DEBUG_ONLY"}
 
 
 def main() -> int:

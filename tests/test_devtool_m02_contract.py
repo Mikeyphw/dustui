@@ -45,6 +45,16 @@ class M02Contract(unittest.TestCase):
         with self.assertRaises(ContractError):
             check_document(raw, ROOT)
 
+    def test_race_requires_native_linux_cgo(self):
+        raw = copy.deepcopy(self.raw)
+        raw['targets']['dustui_hosted_go']['jobs']['race']['env']['CGO_ENABLED'] = '0'
+        with self.assertRaises(ContractError):
+            check_document(raw, ROOT)
+        raw = copy.deepcopy(self.raw)
+        raw['targets']['dustui_hosted_go']['workflows']['ci'][3]['depends_on'] = ['test', 'vet']
+        with self.assertRaises(ContractError):
+            check_document(raw, ROOT)
+
     def test_r36_stays_debug_only(self):
         raw = copy.deepcopy(self.raw)
         raw['targets']['dustui_hosted_r36']['jobs']['debug_apk']['gradle_tasks'] = [':app:assembleRelease']

@@ -53,3 +53,13 @@ aliases, and generated migration qualification workflows are no longer Devtool
 configuration entries. Archived migration files still exist until M06; the
 existing GitHub Actions Android R36 runner is preserved until M04 cutover.
 M02 does not qualify hosted Go, Android release, signing or devices.
+
+
+## M03 native hosted Go provider
+
+GitHub Actions now executes native Devtool Go DAG nodes for test/vet/Linux-x64 CGO
+race/build; no independent Go test shell commands in the workflow. Each job has
+its own pristine checkout, exact Devtool source pin, deterministic graph plan,
+source/host identity checks and typed Devtool evidence. Go CI is **source-only**;
+it does not attest Android APK contents, signing identity or a device session.
+The R36 Android debug workflow is unchanged pending M04.
