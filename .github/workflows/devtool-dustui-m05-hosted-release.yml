@@ -17,7 +17,6 @@ jobs:
       DEVTOOL_SOURCE_SHA: b164463db51e2cffd12f753043b9e55a08cc43ae
       PYTHONDONTWRITEBYTECODE: '1'
       GOTOOLCHAIN: local
-      DUSTUI_ANDROID_SIGNING_PROPERTIES: ${{ runner.temp }}/dustui-m05-private/android-signing.properties
     steps:
       - name: Checkout exact approved branch and source
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
@@ -82,6 +81,8 @@ jobs:
           python3 scripts/dustui_m05_release.py prepare --root "$GITHUB_WORKSPACE"
       - name: Execute Devtool-owned guarded native release job
         shell: bash
+        env:
+          DUSTUI_ANDROID_SIGNING_PROPERTIES: ${{ runner.temp }}/dustui-m05-private/android-signing.properties
         run: |
           set -euo pipefail
           "$RUNNER_TEMP/devtool-venv/bin/python" -m devtool \
