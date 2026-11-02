@@ -53,6 +53,12 @@ android {
         disable += "ChromeOsAbiSupport"
     }
 
+    // Release-only instrumentation explicitly tests the signed production variant.
+    // M04/default debug tasks remain unchanged and never select this test build type.
+    if (providers.environmentVariable("DUSTUI_M05_INSTRUMENTATION_BUILD").orNull == "true") {
+        testBuildType = "release"
+    }
+
     namespace = "com.mikeyphw.dustui"
     compileSdk = 36
     buildToolsVersion = "36.0.0"
@@ -65,6 +71,7 @@ android {
         versionCode = 1400
         versionName = "1.4.0-rc1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testApplicationId = "com.mikeyphw.dustui.test"
 
         ndk {
             abiFilters += listOf("arm64-v8a")
