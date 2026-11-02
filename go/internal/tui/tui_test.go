@@ -11,8 +11,8 @@ import (
 
 func TestGoTUISmokePreservesRoutesAndResponsiveLayout(t *testing.T) {
 	smoke := Smoke()
-	if smoke.Phase != "OV13" || !smoke.SharedEngineSemantics || !smoke.RunLoop {
-		t.Fatalf("bad smoke: %+v", smoke)
+	if smoke.ProductProtocol != "dustui.product.v2" || !smoke.SharedEngineSemantics || !smoke.RunLoop {
+		t.Fatalf("invalid current product smoke: %+v", smoke)
 	}
 	if len(smoke.Routes) != 6 || len(smoke.InteractiveWorkflows) < 7 || len(smoke.ForwardedCommands) < 9 {
 		t.Fatalf("incomplete smoke: %+v", smoke)
@@ -30,7 +30,7 @@ func TestGoTUISmokePreservesRoutesAndResponsiveLayout(t *testing.T) {
 	}
 }
 
-func TestAUD_FIX07InteractiveRunLoopRoutesAndDelegatesHostActions(t *testing.T) {
+func TestInteractiveRunLoopRoutesAndDelegatesHostActions(t *testing.T) {
 	var calls [][]string
 	exec := func(_ context.Context, args []string) (string, error) {
 		calls = append(calls, append([]string{}, args...))
@@ -56,7 +56,7 @@ func TestAUD_FIX07InteractiveRunLoopRoutesAndDelegatesHostActions(t *testing.T) 
 	}
 }
 
-func TestAUD_FIX07DefaultScanUsesInitialRoot(t *testing.T) {
+func TestDefaultScanUsesInitialRoot(t *testing.T) {
 	var got []string
 	exec := func(_ context.Context, args []string) (string, error) {
 		got = append([]string{}, args...)

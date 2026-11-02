@@ -1,22 +1,16 @@
 package com.mikeyphw.dustui.go
 
 /**
- * Gate-D target contract.
- *
- * This object intentionally does not claim that Gate D is qualified or that
- * legacy authorities are already absent. Runtime qualification truth lives in
- * migration/qualification/v1/current_state.json and is produced only from the
- * executed-evidence registry.
+ * Supported Android-to-Go product interface. These values describe the
+ * source contract, not the state of a specific APK, signing identity or device.
+ * Host verification is performed in GitHub Actions and device acceptance.
  */
-object ProductCutoverContract {
-    const val Phase: String = "OV13"
-    const val Gate: String = "Gate D"
+object ProductRuntimeContract {
+    const val Protocol: String = "dustui.product.v2"
     const val AndroidBuildability: String = "mandatory"
     const val TargetGoRuntimeAuthority: String = "go-sqlite-runtime"
-    const val QualificationStateSource: String = "migration/qualification/v1/current_state.json"
-    const val QualificationEvidenceSource: String = "migration/qualification/v1/gate_d_evidence.json"
-    const val TargetLegacyPythonRetired: Boolean = true
-    const val TargetLegacyKotlinDomainRetired: Boolean = true
+    const val RuntimeProtocol: String = "dustui.android.runtime.session.v1"
+    const val SQLiteSchemaProtocol: String = "dustui.sqlite.schema.v1"
     val Routes: List<String> = listOf("overview", "files", "clean", "apps", "activity", "system")
     val RequiredStates: Set<String> = setOf("loading", "empty", "blocked", "error", "content")
     val RequiredActionGateFields: Set<String> = setOf("allowed", "reasonCode", "message", "remediationActions")
@@ -28,18 +22,18 @@ data class ProductRouteContract(
     val semanticIdentity: String = route,
     val state: String,
     val actionGateReasonCode: String,
-    val targetSourceOfTruth: String = ProductCutoverContract.TargetGoRuntimeAuthority,
+    val targetSourceOfTruth: String = ProductRuntimeContract.TargetGoRuntimeAuthority,
 ) {
     init {
-        require(route in ProductCutoverContract.Routes) { "unknown route: $route" }
-        require(state in ProductCutoverContract.RequiredStates) { "unknown state: $state" }
+        require(route in ProductRuntimeContract.Routes) { "unknown route: $route" }
+        require(state in ProductRuntimeContract.RequiredStates) { "unknown state: $state" }
         require(actionGateReasonCode.isNotBlank()) { "action gate reason code is required" }
         require(semanticIdentity == route) { "layout must not change semantic route identity" }
     }
 }
 
 object ProductRouteFixtures {
-    fun phoneAndTabletFixtures(): List<ProductRouteContract> = ProductCutoverContract.Routes.flatMap { route ->
+    fun phoneAndTabletFixtures(): List<ProductRouteContract> = ProductRuntimeContract.Routes.flatMap { route ->
         listOf(
             ProductRouteContract(route = route, layoutClass = "phone", state = "content", actionGateReasonCode = "allowed"),
             ProductRouteContract(route = route, layoutClass = "tablet", state = "content", actionGateReasonCode = "allowed"),

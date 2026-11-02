@@ -27,7 +27,7 @@ type Screen struct {
 }
 
 type SmokeResult struct {
-	Phase                 string             `json:"phase"`
+	ProductProtocol       string             `json:"productProtocol"`
 	Surface               product.Surface    `json:"surface"`
 	Layouts               []LayoutMode       `json:"layouts"`
 	Routes                []shell.RouteID    `json:"routes"`
@@ -88,7 +88,7 @@ func Smoke() SmokeResult {
 		}
 	}
 	return SmokeResult{
-		Phase: product.Phase, Surface: product.SurfaceTUI,
+		ProductProtocol: product.Protocol, Surface: product.SurfaceTUI,
 		Layouts: []LayoutMode{LayoutCompact, LayoutWide}, Routes: routes,
 		SharedEngineSemantics: true, InteractiveWorkflows: workflows, RunLoop: true,
 		ForwardedCommands: []string{"scan", "query", "search", "activity", "cleanup-review", "cleanup-execute", "diagnostics", "support-export", "inspect"},
@@ -152,9 +152,7 @@ func printHelp(out io.Writer) {
 	fmt.Fprintln(out, "Use `route <name>` to change semantic route, `run <host-command ...>` for explicit dispatch, and `quit` to exit.")
 }
 
-// Run is the production Go TUI interaction loop. It deliberately delegates all
-// data-bearing actions to the supplied Go host executor; the TUI owns navigation
-// and presentation only, so it cannot grow a second domain implementation.
+// Run delegates all data actions to the Go host; the TUI only owns navigation.
 func Run(ctx context.Context, in io.Reader, out io.Writer, options Options) (RunResult, error) {
 	if in == nil || out == nil {
 		return RunResult{}, fmt.Errorf("tui streams required")

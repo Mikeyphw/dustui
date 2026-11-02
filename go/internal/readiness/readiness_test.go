@@ -1,26 +1,31 @@
 package readiness
 
 import (
+	"encoding/json"
+	"strings"
 	"testing"
 
-	"github.com/mikeyphw/dustui/go/internal/qualification"
+	"github.com/mikeyphw/dustui/go/internal/product"
 )
 
-func TestAUD_FIX07CurrentSeparatesGoHostReadinessFromAndroidReconnectGate(t *testing.T) {
+func TestCurrentReadinessDoesNotClaimReleaseOrDeviceQualification(t *testing.T) {
 	report := Current()
-	if report.AndroidBuildability != "mandatory" || report.AndroidReconnectGate != "Gate D" {
-		t.Fatalf("unexpected reconnect contract: %+v", report)
+	if report.ProductProtocol != product.Protocol || report.AndroidRuntimeProtocol != product.AndroidRuntimeProtocol {
+		t.Fatalf("runtime protocols diverged: %+v", report)
 	}
-	if report.GateDQualified != qualification.GateDQualified {
-		t.Fatalf("Gate D must consume canonical qualification state: %+v", report)
+	if !report.ProductionEngine || !report.GoCLIDefault || !report.GoTUIDefault || !report.SQLiteAuthorityModel {
+		t.Fatalf("Go/SQLite authority must remain present: %+v", report)
 	}
-	if !report.ProductionEngine || !report.GoCLIDefault || !report.GoTUIDefault {
-		t.Fatalf("Go CLI/TUI host cutover is not active: %+v", report)
+	if report.AndroidBuildability != "mandatory" {
+		t.Fatalf("Android build requirement missing: %+v", report)
 	}
-	if report.AndroidRuntimeBound != (qualification.AndroidGoProcessBindingPresent && qualification.AndroidGoPackagingPresent) {
-		t.Fatalf("runtime binding observation is stale: %+v", report)
+	payload, err := json.Marshal(report)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if report.GoSQLiteImplemented != qualification.GoSQLiteImplementationPresent {
-		t.Fatalf("SQLite observation is stale: %+v", report)
+	for _, obsolete := range []string{"migrationPhase", "androidReconnectGate", "gateDQualified", "gateEQualified", "legacyAndroidAuthority", "androidRuntimeBound"} {
+		if strings.Contains(string(payload), obsolete) {
+			t.Fatalf("stale readiness field %s: %s", obsolete, payload)
+		}
 	}
 }

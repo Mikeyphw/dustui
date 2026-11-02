@@ -9,17 +9,18 @@ import (
 	"github.com/mikeyphw/dustui/go/internal/diagnostics"
 	"github.com/mikeyphw/dustui/go/internal/intelligence"
 	"github.com/mikeyphw/dustui/go/internal/packageevidence"
-	"github.com/mikeyphw/dustui/go/internal/qualification"
 	"github.com/mikeyphw/dustui/go/internal/query"
 	"github.com/mikeyphw/dustui/go/internal/scan"
 	"github.com/mikeyphw/dustui/go/internal/shell"
 )
 
+// Product identity describes supported runtime semantics, not a past migration
+// gate, a hosted build result, a signed release, or device qualification.
 const (
-	Phase             = "OV13"
-	Protocol          = "dustui.product.cutover.v1"
-	Gate              = "Gate D"
-	AndroidBuildState = "mandatory"
+	Protocol               = "dustui.product.v2"
+	AndroidBuildState      = "mandatory"
+	AndroidRuntimeProtocol = "dustui.android.runtime.session.v1"
+	SQLiteSchemaProtocol   = "dustui.sqlite.schema.v1"
 )
 
 type Surface string
@@ -60,36 +61,27 @@ type SurfaceContract struct {
 	UsesSameEngineSemantics bool       `json:"usesSameEngineSemantics"`
 }
 
+// Contract is a versioned description of implemented Go/Android interfaces.
+// The deliberately absent release/device-qualified fields prevent a source
+// build from reporting acceptance that only external execution can prove.
+// Neither schema availability nor a supported surface proves runtime health.
 type Contract struct {
-	Phase                         string               `json:"phase"`
-	Protocol                      string               `json:"protocol"`
-	Gate                          string               `json:"gate"`
-	AndroidBuildability           string               `json:"androidBuildability"`
-	AndroidBuildabilityMandatory  bool                 `json:"androidBuildabilityMandatory"`
-	ProductionEngine              bool                 `json:"productionEngine"`
-	GoSQLiteProductDefault        bool                 `json:"goSQLiteProductDefault"`
-	HostAuthorityDefault          bool                 `json:"hostAuthorityDefault"`
-	LegacyDomainEnginesRequired   bool                 `json:"legacyDomainEnginesRequired"`
-	LegacyPythonTextualProduction bool                 `json:"legacyPythonTextualProduction"`
-	PythonParityOraclePresent     bool                 `json:"pythonParityOraclePresent"`
-	SourceOfTruth                 string               `json:"sourceOfTruth"`
-	Routes                        []shell.RouteID      `json:"routes"`
-	States                        []shell.ContentState `json:"states"`
-	ActionGates                   []shell.ActionGate   `json:"actionGates"`
-	Surfaces                      []SurfaceContract    `json:"surfaces"`
-	AndroidTaskFlows              []AndroidTaskFlow    `json:"androidTaskFlows"`
-	RequiredEvidence              []string             `json:"requiredEvidence"`
-	BoundProtocols                []string             `json:"boundProtocols"`
-	FrozenPythonParityOracle      bool                 `json:"frozenPythonParityOracle"`
-	DustTuiAliasImplementation    string               `json:"dustTuiAliasImplementation"`
-	DeclarationScope              string               `json:"declarationScope"`
-	GateDQualified                bool                 `json:"gateDQualified"`
-	AcceptanceStateSource         string               `json:"acceptanceStateSource"`
-	CandidateAcceptanceConverged  bool                 `json:"candidateAcceptanceConverged"`
-	CandidateAcceptanceStatus     string               `json:"candidateAcceptanceStatus"`
-	AndroidRuntimeBound           bool                 `json:"androidRuntimeBound"`
-	GoSQLiteImplemented           bool                 `json:"goSQLiteImplemented"`
-	ObservedAndroidAuthority      string               `json:"observedAndroidAuthority"`
+	Protocol                     string               `json:"protocol"`
+	AndroidBuildability          string               `json:"androidBuildability"`
+	AndroidBuildabilityMandatory bool                 `json:"androidBuildabilityMandatory"`
+	ProductionEngine             bool                 `json:"productionEngine"`
+	GoSQLiteProductDefault       bool                 `json:"goSQLiteProductDefault"`
+	HostAuthorityDefault         bool                 `json:"hostAuthorityDefault"`
+	SourceOfTruth                string               `json:"sourceOfTruth"`
+	AndroidRuntimeProtocol       string               `json:"androidRuntimeProtocol"`
+	SQLiteSchemaProtocol         string               `json:"sqliteSchemaProtocol"`
+	Routes                       []shell.RouteID      `json:"routes"`
+	States                       []shell.ContentState `json:"states"`
+	ActionGates                  []shell.ActionGate   `json:"actionGates"`
+	Surfaces                     []SurfaceContract    `json:"surfaces"`
+	AndroidTaskFlows             []AndroidTaskFlow    `json:"androidTaskFlows"`
+	BoundProtocols               []string             `json:"boundProtocols"`
+	DustTuiAliasImplementation   string               `json:"dustTuiAliasImplementation"`
 }
 
 func CurrentContract() Contract {
@@ -108,39 +100,26 @@ func CurrentContract() Contract {
 		})
 	}
 	return Contract{
-		Phase:                         Phase,
-		Protocol:                      Protocol,
-		Gate:                          Gate,
-		AndroidBuildability:           AndroidBuildState,
-		AndroidBuildabilityMandatory:  true,
-		ProductionEngine:              true,
-		GoSQLiteProductDefault:        true,
-		HostAuthorityDefault:          true,
-		LegacyDomainEnginesRequired:   qualification.RoomArtifactsPresent,
-		LegacyPythonTextualProduction: false,
-		PythonParityOraclePresent:     qualification.PythonTextualOraclePresent,
-		SourceOfTruth:                 "go-sqlite + go runtime protocols",
-		Routes:                        routes,
-		States:                        append([]shell.ContentState{}, shellContract.States...),
-		ActionGates:                   append([]shell.ActionGate{}, shellContract.Gates...),
+		Protocol:                     Protocol,
+		AndroidBuildability:          AndroidBuildState,
+		AndroidBuildabilityMandatory: true,
+		ProductionEngine:             true,
+		GoSQLiteProductDefault:       true,
+		HostAuthorityDefault:         true,
+		SourceOfTruth:                "go-sqlite + go runtime protocols",
+		AndroidRuntimeProtocol:       AndroidRuntimeProtocol,
+		SQLiteSchemaProtocol:         SQLiteSchemaProtocol,
+		Routes:                       routes,
+		States:                       append([]shell.ContentState{}, shellContract.States...),
+		ActionGates:                  append([]shell.ActionGate{}, shellContract.Gates...),
 		Surfaces: []SurfaceContract{
 			{Name: SurfaceCLI, ProductDefault: true, MachineReadable: true, Interactive: false, PreservesDustTuiAlias: true, SupportedWorkflows: workflows, UsesSameEngineSemantics: true},
 			{Name: SurfaceTUI, ProductDefault: true, MachineReadable: false, Interactive: true, PreservesDustTuiAlias: true, SupportedWorkflows: workflows, UsesSameEngineSemantics: true},
-			{Name: SurfaceAndroid, ProductDefault: qualification.GateDQualified, MachineReadable: false, Interactive: true, PreservesDustTuiAlias: false, SupportedWorkflows: workflows, UsesSameEngineSemantics: true},
+			{Name: SurfaceAndroid, ProductDefault: true, MachineReadable: false, Interactive: true, PreservesDustTuiAlias: false, SupportedWorkflows: workflows, UsesSameEngineSemantics: true},
 		},
-		AndroidTaskFlows:             flows,
-		RequiredEvidence:             append([]string{}, qualification.RequiredEvidenceNodes...),
-		BoundProtocols:               boundProtocols(),
-		FrozenPythonParityOracle:     true,
-		DustTuiAliasImplementation:   "go-host-wrapper",
-		DeclarationScope:             "canonical-evidence-derived:" + qualification.StateSource,
-		GateDQualified:               qualification.GateDQualified,
-		AcceptanceStateSource:        qualification.AcceptanceStateSource,
-		CandidateAcceptanceConverged: qualification.CandidateAcceptanceConverged,
-		CandidateAcceptanceStatus:    qualification.CandidateAcceptanceStatus,
-		AndroidRuntimeBound:          qualification.AndroidGoProcessBindingPresent && qualification.AndroidGoPackagingPresent,
-		GoSQLiteImplemented:          qualification.GoSQLiteImplementationPresent,
-		ObservedAndroidAuthority:     observedAndroidAuthority(),
+		AndroidTaskFlows:           flows,
+		BoundProtocols:             boundProtocols(),
+		DustTuiAliasImplementation: "go-host-wrapper",
 	}
 }
 
@@ -167,22 +146,12 @@ func authoritiesFor(route shell.RouteID) (string, string) {
 	}
 }
 
-func observedAndroidAuthority() string {
-	if qualification.GateDQualified {
-		return "go-product-qualified"
-	}
-	if qualification.AndroidGoProcessBindingPresent && qualification.AndroidGoPackagingPresent && qualification.GoSQLiteImplementationPresent {
-		return "go-runtime-and-sqlite-source-present-gate-d-unqualified"
-	}
-	return "successor-runtime-not-yet-qualified"
-}
-
 func boundProtocols() []string {
 	protocols := []string{
 		Protocol,
 		"dustui.kernel.v1",
-		"dustui.sqlite.schema.v1",
-		"dustui.android.runtime.session.v1",
+		SQLiteSchemaProtocol,
+		AndroidRuntimeProtocol,
 		cleanup.Protocol,
 		intelligence.Protocol,
 		packageevidence.Protocol,
@@ -194,79 +163,58 @@ func boundProtocols() []string {
 }
 
 func ValidateContract(c Contract) error {
-	if c.Phase != Phase || c.Protocol != Protocol || c.Gate != Gate {
-		return fmt.Errorf("wrong product contract identity: %+v", c)
+	if c.Protocol != Protocol || c.AndroidRuntimeProtocol != AndroidRuntimeProtocol || c.SQLiteSchemaProtocol != SQLiteSchemaProtocol {
+		return fmt.Errorf("wrong product/runtime contract identity: protocol=%q runtime=%q sqlite=%q", c.Protocol, c.AndroidRuntimeProtocol, c.SQLiteSchemaProtocol)
 	}
 	if !c.AndroidBuildabilityMandatory || c.AndroidBuildability != AndroidBuildState {
-		return errors.New("android buildability must be mandatory at OV13")
-	}
-	if c.GateDQualified != qualification.GateDQualified {
-		return errors.New("Gate D qualification must come from canonical evidence")
-	}
-	if c.AcceptanceStateSource != qualification.AcceptanceStateSource || c.CandidateAcceptanceConverged != qualification.CandidateAcceptanceConverged || c.CandidateAcceptanceStatus != qualification.CandidateAcceptanceStatus {
-		return errors.New("candidate acceptance metadata must come from generated acceptance evidence")
-	}
-	if c.CandidateAcceptanceConverged && c.GateDQualified {
-		// Both may eventually be true at Gate D, but AUD-FIX-13 itself must never infer qualification from candidate acceptance.
-		if qualification.AcceptanceGateDQualified != qualification.GateDQualified {
-			return errors.New("acceptance and qualification generated views disagree")
-		}
+		return errors.New("Android build/test remains mandatory for hosted qualification")
 	}
 	if !c.ProductionEngine || !c.GoSQLiteProductDefault || !c.HostAuthorityDefault {
-		return errors.New("AUD-FIX-07 requires the Go host and Go SQLite authority to be production-default")
+		return errors.New("Go host and SQLite must remain the default product authority")
 	}
-	if c.LegacyDomainEnginesRequired != qualification.RoomArtifactsPresent || c.LegacyPythonTextualProduction {
-		return errors.New("Python/Textual cannot remain a production host after AUD-FIX-07")
-	}
-	if c.PythonParityOraclePresent != qualification.PythonTextualOraclePresent {
-		return errors.New("Python/Textual oracle observation must come from canonical generated state")
-	}
-	if c.AndroidRuntimeBound != (qualification.AndroidGoProcessBindingPresent && qualification.AndroidGoPackagingPresent) || c.GoSQLiteImplemented != qualification.GoSQLiteImplementationPresent {
-		return errors.New("runtime/persistence observations must come from canonical generated state")
-	}
-	if c.DeclarationScope != "canonical-evidence-derived:"+qualification.StateSource || c.ObservedAndroidAuthority == "" {
-		return errors.New("product contract must identify canonical evidence-derived state")
+	if c.SourceOfTruth != "go-sqlite + go runtime protocols" || c.DustTuiAliasImplementation != "go-host-wrapper" {
+		return errors.New("unexpected authority or host aliases")
 	}
 	if len(c.Routes) != 27 {
-		return fmt.Errorf("expected 27 authoritative semantic routes, got %d", len(c.Routes))
+		return fmt.Errorf("expected 27 semantic routes; found %d", len(c.Routes))
 	}
-	requiredSurfaces := map[Surface]bool{SurfaceCLI: false, SurfaceTUI: false, SurfaceAndroid: false}
+	if len(c.Surfaces) != 3 {
+		return fmt.Errorf("expected 3 supported product surfaces; found %d", len(c.Surfaces))
+	}
+	required := map[Surface]bool{SurfaceCLI: false, SurfaceTUI: false, SurfaceAndroid: false}
 	for _, surface := range c.Surfaces {
-		if _, ok := requiredSurfaces[surface.Name]; !ok {
-			return fmt.Errorf("unexpected surface %q", surface.Name)
+		if _, ok := required[surface.Name]; !ok || required[surface.Name] {
+			return fmt.Errorf("unknown or duplicated product surface %q", surface.Name)
 		}
-		expectedDefault := true
-		if surface.Name == SurfaceAndroid {
-			expectedDefault = qualification.GateDQualified
+		if !surface.ProductDefault || !surface.UsesSameEngineSemantics || len(surface.SupportedWorkflows) != 7 {
+			return fmt.Errorf("surface %s lost supported Go semantics", surface.Name)
 		}
-		if surface.ProductDefault != expectedDefault || !surface.UsesSameEngineSemantics {
-			return fmt.Errorf("surface %s default/shared-engine truth is invalid", surface.Name)
-		}
-		if len(surface.SupportedWorkflows) < 7 {
-			return fmt.Errorf("surface %s lacks supported workflows", surface.Name)
-		}
-		requiredSurfaces[surface.Name] = true
+		required[surface.Name] = true
 	}
-	for surface, seen := range requiredSurfaces {
+	for surface, seen := range required {
 		if !seen {
 			return fmt.Errorf("missing surface %s", surface)
 		}
 	}
 	if len(c.AndroidTaskFlows) != len(c.Routes) {
-		return errors.New("each route must have an Android task flow")
+		return errors.New("each semantic route requires an Android task flow")
 	}
+	routes := make(map[shell.RouteID]bool, len(c.Routes))
+	for _, route := range c.Routes {
+		if routes[route] {
+			return fmt.Errorf("duplicate route %q", route)
+		}
+		routes[route] = true
+	}
+	seenFlows := make(map[shell.RouteID]bool, len(c.AndroidTaskFlows))
 	for _, flow := range c.AndroidTaskFlows {
-		if flow.ContentAuthority == "unknown" || flow.ActionAuthority == "blocked" || !flow.SharedStateModel || !flow.AccessibilityTarget {
-			return fmt.Errorf("invalid Android task flow: %+v", flow)
+		if !routes[flow.Route] || seenFlows[flow.Route] || flow.ContentAuthority == "unknown" || flow.ActionAuthority == "blocked" || !flow.SharedStateModel || !flow.AccessibilityTarget {
+			return fmt.Errorf("invalid or duplicate Android task flow %+v", flow)
 		}
+		seenFlows[flow.Route] = true
 	}
-	if len(c.RequiredEvidence) != len(qualification.RequiredEvidenceNodes) {
-		return errors.New("Gate D evidence set must come from canonical qualification registry")
-	}
-	for _, required := range qualification.RequiredEvidenceNodes {
-		if !contains(c.RequiredEvidence, required) {
-			return fmt.Errorf("Gate D evidence set missing %s", required)
-		}
+	if len(c.BoundProtocols) < 8 || !contains(c.BoundProtocols, Protocol) || !contains(c.BoundProtocols, SQLiteSchemaProtocol) || !contains(c.BoundProtocols, AndroidRuntimeProtocol) {
+		return errors.New("required runtime/protocol binding missing")
 	}
 	_ = query.MaxPageLimit
 	_ = scan.IntegrityComplete
