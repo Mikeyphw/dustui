@@ -198,7 +198,7 @@ execution_environment = "auto"
 
 [targets.dustui_hosted_release.jobs.release_build]
 runner = "command"
-root = "android"
+root = "."
 command = ["python3", "../scripts/dustui_m05_release_job.py"]
 inputs = ["android/app/build.gradle.kts", "android/gradle/wrapper/gradle-wrapper.properties", "scripts/dustui_m05_release_job.py"]
 outputs = ["android/app/build/outputs/apk/release/app-release.apk"]

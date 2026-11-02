@@ -70,7 +70,7 @@ def validate_native_config(root: Path) -> dict:
     if (target.get("runner") != "command" or target.get("root") != "android" or
         target.get("execution_environment") != "auto" or set(jobs) != {JOB} or
         target.get("workflows", {}).get("ci") != ["job:" + JOB] or
-        job.get("runner") != "command" or job.get("root") != "android" or
+        job.get("runner") != "command" or job.get("root") != "." or
         job.get("command") != ["python3", "../scripts/dustui_m05_release_job.py"] or
         job.get("outputs") != [APK] or
         job.get("metadata", {}).get("resource_class") != "gradle" or

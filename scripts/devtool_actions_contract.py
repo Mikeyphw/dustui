@@ -157,7 +157,7 @@ def check_document(raw: dict, root: Path = ROOT) -> dict:
     require(set(release.get("jobs", {})) == {"release_build"} and
             release.get("workflows", {}).get("ci") == ["job:release_build"],
             "M05 release job inventory changed")
-    require(rjob.get("runner") == "command" and rjob.get("root") == "android" and
+    require(rjob.get("runner") == "command" and rjob.get("root") == "." and
             rjob.get("command") == ["python3", "../scripts/dustui_m05_release_job.py"] and
             rjob.get("outputs") == ["android/app/build/outputs/apk/release/app-release.apk"] and
             rjob.get("metadata", {}).get("resource_class") == "gradle" and
