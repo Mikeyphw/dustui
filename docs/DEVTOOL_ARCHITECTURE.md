@@ -63,3 +63,13 @@ its own pristine checkout, exact Devtool source pin, deterministic graph plan,
 source/host identity checks and typed Devtool evidence. Go CI is **source-only**;
 it does not attest Android APK contents, signing identity or a device session.
 The R36 Android debug workflow is unchanged pending M04.
+
+## M04 hosted Android debug source qualification
+
+A new `dustui_hosted_android` native Devtool target owns a single grouped
+`testDebugUnitTest` + `lintDebug` + `assembleDebug` hosted semantic Gradle job.
+Android SDK/NDK/JDK and signing binaries are provisioned only inside GitHub
+Actions. The independent APK inspection step captures application ID, version,
+arm64 Go ELF, passing Android JUnit XML case counts, APK digest and the **debug** signer digest. Passing M04 is not
+release signing, authenticated supply-chain provenance, root/device testing,
+or release acceptance. M03 hosted Go and the R36 fallback are unchanged.

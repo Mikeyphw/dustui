@@ -132,6 +132,25 @@ metadata = { ci_toolchain = "android-gradle", ci_android_java_version = "21", ci
 ci = ["job:debug_apk"]
 
 # Wrapper v2: only safe local source/Go workflows. No local Android Gradle entry.
+
+
+# M04 hosted Android debug qualification. Native Devtool is sole Gradle executor.
+# One bounded semantic job avoids redundant hosted SDK/NDK/Gradle setup.
+# R36 target remains untouched as rollback until the M04 GitHub run passes.
+[targets.dustui_hosted_android]
+runner = "android"
+root = "android"
+execution_environment = "auto"
+
+[targets.dustui_hosted_android.jobs.debug_qualified]
+runner = "android"
+gradle_tasks = [":app:testDebugUnitTest", ":app:lintDebug", ":app:assembleDebug"]
+outputs = ["android/app/build/outputs/apk/debug/app-debug.apk"]
+metadata = { ci_toolchain = "android-gradle", resource_class = "gradle", ci_android_java_version = "21", ci_android_project_dir = "android", ci_android_debug_variant = "debug", ci_android_sdk_packages = ["platforms;android-36", "build-tools;36.0.0", "platform-tools"], ci_android_wrapper_jar_sha256 = "d3b261c2820e9e3d8d639ed084900f11f4a86050a8f83342ade7b6bc9b0d2bdd", ci_android_expected_output = "android/app/build/outputs/apk/debug/app-debug.apk" }
+
+[targets.dustui_hosted_android.workflows]
+ci = ["job:debug_qualified"]
+
 [wrapper]
 schema = 2
 default_command = "ci-preflight"

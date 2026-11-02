@@ -1,4 +1,4 @@
-# DustUI × Devtool: M03 native Go CI
+# DustUI × Devtool: M03 Go / M04 Android hosted CI
 
 Canonical entry points: `./devtoolw ci-preflight`, `./devtoolw ci-local`, `./devtoolw go-test`, `./devtoolw go-vet`, `./devtoolw go-build`.
 The wrapper is local Go/source only. **Never execute Android Gradle on Termux.**
@@ -37,7 +37,24 @@ for independent acceptance without manual dispatch.
 
 ## Android and release remain separate
 
-`.github/workflows/devtool-dustui-r36-hosted-debug.yml` still owns the
-reviewed Android debug APK path until M04; it is debug-only and not release-qualified.
-M05 will separately define signed release and device acceptance. No Gradle or
-release authority is introduced by this Go CI change.
+M04 `.github/workflows/devtool-dustui-m04-hosted-debug.yml` uses pinned GitHub Actions,
+a reviewed Devtool runtime and a single native hosted Android job for all three tasks:
+`:app:testDebugUnitTest`, `:app:lintDebug`, `:app:assembleDebug`. The JDK 21,
+SDK 36, Build Tools 36, NDK 28.2 and Go SDK are provisioned only on GitHub.
+A separate stdlib Python inspector validates the generated APK package ID,
+versionCode, v2 debug signer, JUnit testcases/results, ZIP CRC, arm64 PIE Go runtime ELF, and absence
+of other native ABIs. Source, graph, APK and runtime hashes are captured as
+**local hosted-run evidence**; this is NOT authenticated attestation.
+
+The older R36 workflow and target are retained solely as a debug fallback
+until M04 receives an actual passing hosted run. They must NOT be regarded as
+unit-test qualified. No Android Gradle tasks are exposed by the local wrapper.
+M05 separately establishes signed release and device acceptance gates.
+
+After M04 auto-commit, push the commit and check:
+
+```
+git push origin HEAD
+gh run list -R Mikeyphw/dustui --workflow devtool-dustui-m04-hosted-debug.yml --limit 5
+```
+

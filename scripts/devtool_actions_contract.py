@@ -7,7 +7,7 @@ import sys
 import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_TARGETS = {"dustui_go", "dustui_hosted_go", "dustui_hosted_r36"}
+EXPECTED_TARGETS = {"dustui_go", "dustui_hosted_go", "dustui_hosted_r36", "dustui_hosted_android"}
 LOCAL_COMMANDS = {"ci-preflight", "ci-local", "go-fast", "go-test", "go-vet", "go-build"}
 HOSTED_TASKS = [":app:lintDebug", ":app:assembleDebug"]
 HOSTED_OUTPUT = "android/app/build/outputs/apk/debug/app-debug.apk"
@@ -113,6 +113,29 @@ def check_document(raw: dict, root: Path = ROOT) -> dict:
     require(meta.get("ci_android_sdk_packages") == ["platforms;android-36", "build-tools;36.0.0", "platform-tools"],
             "R36 SDK pins drift")
     require(android.get("workflows", {}).get("ci") == ["job:debug_apk"], "R36 workflow contract drift")
+    new_android = targets["dustui_hosted_android"]
+    require(new_android.get("root") == "android" and new_android.get("runner") == "android" and
+            new_android.get("execution_environment") == "auto", "M04 must remain hosted Android only")
+    require(set(new_android.get("jobs", {})) == {"debug_qualified"}, "M04 Android job inventory changed")
+    qualified = new_android["jobs"]["debug_qualified"]
+    require(qualified.get("runner") == "android" and qualified.get("gradle_tasks") ==
+            [":app:testDebugUnitTest", ":app:lintDebug", ":app:assembleDebug"],
+            "M04 requires reviewed debug unit, lint, assemble tasks without release/device tasks")
+    require(qualified.get("outputs") == [HOSTED_OUTPUT], "M04 debug APK output drift")
+    qm = qualified.get("metadata", {})
+    require(qm.get("resource_class") == "gradle" and qm.get("ci_toolchain") == "android-gradle" and
+            qm.get("ci_android_project_dir") == "android" and qm.get("ci_android_java_version") == "21" and
+            qm.get("ci_android_debug_variant") == "debug" and
+            qm.get("ci_android_wrapper_jar_sha256") == HOSTED_WRAPPER_JAR and
+            qm.get("ci_android_expected_output") == HOSTED_OUTPUT and
+            qm.get("ci_android_sdk_packages") == ["platforms;android-36", "build-tools;36.0.0", "platform-tools"],
+            "M04 hosted Android provider identity drift")
+    require(new_android.get("workflows", {}).get("ci") == ["job:debug_qualified"],
+            "M04 must use one reviewed native Devtool node")
+    require((root / ".github/workflows/devtool-dustui-m04-hosted-debug.yml").is_file(),
+            "M04 GitHub hosted workflow missing")
+    require((root / "scripts/dustui_m04_hosted.py").is_file(), "M04 reviewed native executor missing")
+    require((root / "scripts/dustui_m04_verify_apk.py").is_file(), "M04 package verifier missing")
     require((root / ".github/workflows/devtool-dustui-r36-hosted-debug.yml").is_file(),
             "R36 workflow must remain until M04 replacement")
     require((root / "scripts/dustui_r36_hosted.py").is_file(), "R36 runner bridge missing")

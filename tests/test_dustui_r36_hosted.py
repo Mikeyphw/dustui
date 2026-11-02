@@ -17,7 +17,7 @@ import dustui_r36_hosted as gate
 class R36ConsumerTests(unittest.TestCase):
     def test_r36_debug_isolated_from_current_local_go(self):
         raw = tomllib.loads((ROOT / '.devtool.toml').read_text())
-        self.assertEqual(set(raw['targets']), {'dustui_go', 'dustui_hosted_go', 'dustui_hosted_r36'})
+        self.assertEqual(set(raw['targets']), {'dustui_go', 'dustui_hosted_go', 'dustui_hosted_r36', 'dustui_hosted_android'})
         self.assertEqual(raw['workspace']['default_target'], 'dustui_go')
         self.assertEqual(raw['wrapper']['default_command'], 'ci-preflight')
         self.assertEqual(raw['targets']['dustui_go']['root'], 'go')
