@@ -1,0 +1,113 @@
+name: DustUI M05 restricted signed release candidate (device pending)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: dustui-m05-release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  signed-release:
+    if: github.repository == 'Mikeyphw/dustui' && github.actor == 'Mikeyphw' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    environment:
+      name: dustui-release
+    env:
+      DEVTOOL_SOURCE_SHA: b164463db51e2cffd12f753043b9e55a08cc43ae
+      PYTHONDONTWRITEBYTECODE: '1'
+      GOTOOLCHAIN: local
+      DUSTUI_ANDROID_SIGNING_PROPERTIES: ${{ runner.temp }}/dustui-m05-private/android-signing.properties
+    steps:
+      - name: Checkout exact approved branch and source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Reviewed Python runtime
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Go compiler for arm64 Android runtime packaging
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version-file: go/go.mod
+          cache: false
+      - name: Java 21
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Reviewed Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd
+        with:
+          cmdline-tools-version: 15859902
+          packages: 'platforms;android-36 build-tools;36.0.0 platform-tools'
+          log-accepted-android-sdk-licenses: 'false'
+      - name: Reviewed NDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdkmanager --install 'ndk;28.2.13676358'
+          test -d "$ANDROID_HOME/ndk/28.2.13676358"
+      - name: Gradle with cache disabled
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c
+        with:
+          cache-disabled: true
+      - name: Fetch and install reviewed Devtool source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git clone --no-checkout https://github.com/Mikeyphw/devtool.git "$RUNNER_TEMP/devtool-source"
+          git -C "$RUNNER_TEMP/devtool-source" checkout --detach "$DEVTOOL_SOURCE_SHA"
+          test "$(git -C "$RUNNER_TEMP/devtool-source" rev-parse HEAD)" = "$DEVTOOL_SOURCE_SHA"
+          python3 -m venv "$RUNNER_TEMP/devtool-venv"
+          "$RUNNER_TEMP/devtool-venv/bin/python" -m pip install --disable-pip-version-check "$RUNNER_TEMP/devtool-source"
+      - name: Review immutable Devtool release job (no signing)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/dustui_m05_release.py plan --root "$GITHUB_WORKSPACE"
+      - name: Provision EXISTING keystore and enforce certificate continuity
+        shell: bash
+        env:
+          DUSTUI_KEYSTORE_BASE64: ${{ secrets.DUSTUI_KEYSTORE_BASE64 }}
+          DUSTUI_STORE_PASSWORD: ${{ secrets.DUSTUI_STORE_PASSWORD }}
+          DUSTUI_KEY_PASSWORD: ${{ secrets.DUSTUI_KEY_PASSWORD }}
+          DUSTUI_KEY_ALIAS: ${{ secrets.DUSTUI_KEY_ALIAS }}
+          DUSTUI_EXPECTED_SIGNER_SHA256: ${{ secrets.DUSTUI_EXPECTED_SIGNER_SHA256 }}
+        run: |
+          set -euo pipefail
+          umask 077
+          python3 scripts/dustui_m05_release.py prepare --root "$GITHUB_WORKSPACE"
+      - name: Execute Devtool-owned guarded native release job
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/devtool-venv/bin/python" -m devtool \
+            --repo "$GITHUB_WORKSPACE" --target dustui_hosted_release invoke ci
+      - name: Independently verify APK, runtime, signer and release JUnit evidence
+        shell: bash
+        env:
+          DUSTUI_EXPECTED_SIGNER_SHA256: ${{ secrets.DUSTUI_EXPECTED_SIGNER_SHA256 }}
+        run: |
+          set -euo pipefail
+          python3 scripts/dustui_m05_release.py verify --root "$GITHUB_WORKSPACE" \
+            --output "$RUNNER_TEMP/dustui-m05-public/release-receipt.json"
+      - name: Upload signed candidate (not yet device qualified)
+        if: success()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: dustui-m05-signed-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            android/app/build/outputs/apk/release/app-release.apk
+            ${{ runner.temp }}/dustui-m05-public/release-receipt.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Remove temporary private signing material
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f "$RUNNER_TEMP/dustui-m05-private/android-signing.properties" "$RUNNER_TEMP/dustui-m05-private/signing.p12"
+          rmdir "$RUNNER_TEMP/dustui-m05-private" 2>/dev/null || true

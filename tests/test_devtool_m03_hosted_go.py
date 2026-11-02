@@ -28,7 +28,7 @@ def fake_graph():
 class M03Contract(unittest.TestCase):
     def test_expected_go_jobs(self):
         config = tomllib.loads((ROOT / ".devtool.toml").read_text())
-        self.assertEqual(check_document(config, ROOT)["stage"], "M03")
+        self.assertEqual(check_document(config, ROOT)["status"], "PASS")
 
     def test_expected_native_graph(self):
         self.assertEqual(gate.assert_graph(fake_graph()),

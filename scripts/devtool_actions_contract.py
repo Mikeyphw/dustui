@@ -7,7 +7,7 @@ import sys
 import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_TARGETS = {"dustui_go", "dustui_hosted_go", "dustui_hosted_r36", "dustui_hosted_android"}
+EXPECTED_TARGETS = {"dustui_go", "dustui_hosted_go", "dustui_hosted_r36", "dustui_hosted_android", "dustui_hosted_release"}
 LOCAL_COMMANDS = {"ci-preflight", "ci-local", "go-fast", "go-test", "go-vet", "go-build"}
 HOSTED_TASKS = [":app:lintDebug", ":app:assembleDebug"]
 HOSTED_OUTPUT = "android/app/build/outputs/apk/debug/app-debug.apk"
@@ -149,7 +149,35 @@ def check_document(raw: dict, root: Path = ROOT) -> dict:
     require("go test ./..." not in wf and "go build ./..." not in wf,
             "hosted Go CI must run through Devtool rather than direct shell")
     require("permissions:\n  contents: read" in wf, "GitHub token must be read-only")
-    return {"status": "PASS", "stage": "M03", "target_count": len(targets), "hosted_nodes": 4,
+    # M05 release is deliberately separate from the debug-only native hosted provider.
+    release = targets["dustui_hosted_release"]
+    rjob = release.get("jobs", {}).get("release_build", {})
+    require(release.get("runner") == "command" and release.get("root") == "android"
+            and release.get("execution_environment") == "auto", "M05 release is hosted command target")
+    require(set(release.get("jobs", {})) == {"release_build"} and
+            release.get("workflows", {}).get("ci") == ["job:release_build"],
+            "M05 release job inventory changed")
+    require(rjob.get("runner") == "command" and rjob.get("root") == "android" and
+            rjob.get("command") == ["python3", "../scripts/dustui_m05_release_job.py"] and
+            rjob.get("outputs") == ["android/app/build/outputs/apk/release/app-release.apk"] and
+            rjob.get("metadata", {}).get("resource_class") == "gradle" and
+            rjob.get("metadata", {}).get("global_reservations") == ["android-gradle"],
+            "M05 release must use guarded native Devtool job, never local Gradle")
+    require(all(c.get("target") != "dustui_hosted_release" for c in commands.values()),
+            "M05 release must not be exposed through local wrapper")
+    release_wf = root / ".github/workflows/devtool-dustui-m05-hosted-release.yml"
+    require(release_wf.is_file() and (root / "scripts/dustui_m05_release.py").is_file() and
+            (root / "scripts/dustui_m05_release_job.py").is_file() and
+            (root / "scripts/dustui_m05_device.py").is_file(),
+            "M05 release/device surfaces missing")
+    wf_text = release_wf.read_text()
+    require("workflow_dispatch:" in wf_text and "pull_request:" not in wf_text and
+            "  push:" not in wf_text and "dustui-release" in wf_text and
+            "scripts/dustui_m05_release.py verify" in wf_text and
+            "--target dustui_hosted_release invoke ci" in wf_text and
+            "DUSTUI_KEYSTORE_BASE64" in wf_text and "DUSTUI_EXPECTED_SIGNER_SHA256" in wf_text,
+            "M05 release secrets/dispatch/invoke/verification contract drift")
+    return {"status": "PASS", "stage": "M05", "target_count": len(targets), "hosted_nodes": 4,
             "targets": sorted(targets), "local_wrapper_commands": sorted(commands),
             "hosted_go": "NATIVE_DAG_CONFIGURED_REMOTE_UNVERIFIED", "android_r36": "RETAINED_DEBUG_ONLY"}
 

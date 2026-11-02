@@ -187,3 +187,22 @@ target = "dustui_go"
 description = "Build Go packages (no APK)"
 workflow = "go-build"
 target = "dustui_go"
+
+# M05: GitHub-only signing lane. Deliberately NOT Devtool's debug-only hosted
+# Android provider; a guarded command runner refuses non-GitHub execution.
+# NOT exposed by devtoolw. User must explicitly dispatch restricted workflow.
+[targets.dustui_hosted_release]
+runner = "command"
+root = "android"
+execution_environment = "auto"
+
+[targets.dustui_hosted_release.jobs.release_build]
+runner = "command"
+root = "android"
+command = ["python3", "../scripts/dustui_m05_release_job.py"]
+inputs = ["android/app/build.gradle.kts", "android/gradle/wrapper/gradle-wrapper.properties", "scripts/dustui_m05_release_job.py"]
+outputs = ["android/app/build/outputs/apk/release/app-release.apk"]
+metadata = { resource_class = "gradle", global_reservations = ["android-gradle"] }
+
+[targets.dustui_hosted_release.workflows]
+ci = ["job:release_build"]
