@@ -1,4 +1,5 @@
 [versions]
+errorProneAnnotations = "2.36.0"
 androidxTestExt = "1.2.1"
 androidxTestRunner = "1.6.2"
 agp = "9.3.1"
@@ -15,6 +16,7 @@ junit = "4.13.2"
 work = "2.10.1"
 
 [libraries]
+errorprone-annotations = { module = "com.google.errorprone:error_prone_annotations", version.ref = "errorProneAnnotations" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity" }
 androidx-compose-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "compose" }
