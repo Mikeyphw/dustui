@@ -40,3 +40,16 @@ No Gradle, release, signing, device, or GitHub Actions configuration is changed 
 ## Next stages
 
 M2 replace the migration-heavy `.devtool.toml` and wrapper; M3 source-bound hosted Go provider; M4 hosted Android with unit+lint+assemble; M5 current APK/device/signing verification; M6 remove dead generators, historical receipts, archive scaffolding and obsolete documentation. **Do not preserve historical gate workflows as a long-term compatibility layer.**
+
+## M02 installed: simplified Devtool configuration
+
+`.devtool.toml` now has exactly three targets: local `dustui_go`, a separate
+M03-ready hosted `dustui_hosted_go` declaration, and the frozen reviewed
+`dustui_hosted_r36` debug-only candidate. Wrapper v2 exposes only read-only
+source checks and local Go development; default is `ci-preflight`.
+
+The historical gate targets, local Android Gradle execution graph, AUD-FIX
+aliases, and generated migration qualification workflows are no longer Devtool
+configuration entries. Archived migration files still exist until M06; the
+existing GitHub Actions Android R36 runner is preserved until M04 cutover.
+M02 does not qualify hosted Go, Android release, signing or devices.
