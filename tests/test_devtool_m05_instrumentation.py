@@ -226,6 +226,7 @@ class M05SignedInstrumentation(unittest.TestCase):
         self.assertEqual(REQUIRED_BOOTSTRAP_CLASSES['kotlin.LazyKt'], b'Lkotlin/LazyKt;')
         self.assertIn('kotlin.jvm.internal.Intrinsics', REQUIRED_BOOTSTRAP_CLASSES)
         required=set(REQUIRED_BOOTSTRAP_CLASSES.values())
+        abi_required=set(dex.REQUIRED_RELEASE_APP_ABI_CLASSES.values())
         # A reference to a class is NOT a DEX class definition.
         import struct
         descr=b'Lkotlin/LazyKt;'
@@ -250,11 +251,42 @@ class M05SignedInstrumentation(unittest.TestCase):
             with self.assertRaisesRegex(DexContractError,'kotlin.LazyKt'):
                 verify_pair(Path('release.apk'),Path('test.apk'))
         with patch.object(dex,'apk_defined_descriptors',side_effect=[
-                {dex.TRACE_DESCRIPTOR},required-{dex.TRACE_DESCRIPTOR}]):
+                {dex.TRACE_DESCRIPTOR} | abi_required,required-{dex.TRACE_DESCRIPTOR}]):
             report=verify_pair(Path('release.apk'),Path('test.apk'))
-            self.assertEqual(report['status'],'HOSTED_RUNNER_BOOTSTRAP_CLASSES_PRESENT_NOT_DEVICE_QUALIFIED')
+            self.assertEqual(report['status'],'HOSTED_RUNNER_AND_APP_ABI_CLASSES_PRESENT_NOT_DEVICE_QUALIFIED')
             self.assertEqual(report['required_class_locations']['kotlin.LazyKt'],
                              {'release':False,'instrumentation':True})
+            self.assertTrue(all(report['release_app_abi_defined'].values()))
+        with patch.object(dex,'apk_defined_descriptors',side_effect=[
+                required | (abi_required-{dex.REQUIRED_RELEASE_APP_ABI_CLASSES['com.mikeyphw.dustui.go.GoRuntimeProcess$Companion']}),
+                set()]):
+            with self.assertRaisesRegex(DexContractError, 'GoRuntimeProcess\\$Companion'):
+                verify_pair(Path('release.apk'),Path('test.apk'))
+
+    def test_m05_cross_apk_r8_abi_kept_in_both_apks(self):
+        app = (ROOT/'android/app/build.gradle.kts').read_text()
+        release_rules = (ROOT/'android/app/proguard-m05-release-test-rules.pro').read_text()
+        test_rules = (ROOT/'android/app/proguard-androidTest-rules.pro').read_text()
+        self.assertIn('if (providers.environmentVariable("DUSTUI_M05_INSTRUMENTATION_BUILD").orNull == "true") {\n                proguardFiles("proguard-m05-release-test-rules.pro")', app)
+        self.assertIn('testProguardFiles("proguard-androidTest-rules.pro")', app)
+        import dustui_m05_dex_contract as contract
+        for pattern in (
+            'com.mikeyphw.dustui.go.GoRuntime*',
+            'com.mikeyphw.dustui.go.GoChildProcessPolicy',
+            'com.mikeyphw.dustui.ui.DustRoute*',
+            'com.mikeyphw.dustui.ui.DustSemantic*',
+            'com.mikeyphw.dustui.ui.DustAdaptive*',
+        ):
+            rule = '-keep class '+pattern+' { *; }'
+            with self.subTest(pattern=pattern):
+                self.assertIn(rule, release_rules)
+                self.assertIn(rule, test_rules)
+        self.assertEqual(len(contract.REQUIRED_RELEASE_APP_ABI_CLASSES), 9)
+        for name, descriptor in contract.REQUIRED_RELEASE_APP_ABI_CLASSES.items():
+            self.assertEqual(descriptor, ('L' + name.replace('.', '/') + ';').encode())
+        self.assertNotIn('-dontobfuscate', release_rules)
+        self.assertNotIn('-dontshrink', release_rules)
+        self.assertNotIn('-dontoptimize', release_rules)
 
     def test_unsigned_or_unqualified_rejections(self):
         a='Signer #1 certificate SHA-256 digest: '+device.EXPECTED_CERT+'\nVerified using v2 scheme (APK Signature Scheme v2): true\n'

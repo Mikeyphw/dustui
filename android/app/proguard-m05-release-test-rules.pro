@@ -10,3 +10,16 @@
 # any standard-library class relied on reflectively/cross-APK by the runner.
 # This file is ONLY attached when DUSTUI_M05_INSTRUMENTATION_BUILD=true.
 -keep class kotlin.** { *; }
+
+# M05 signed APK pair: androidTest is compiled against main classes, then R8
+# optimizes the release app independently. The test APK calls these main-app
+# classes across the APK boundary, including Kotlin Companion/INSTANCE fields,
+# default-argument constructors and Kotlin object singleton methods.
+# Retain names and *all* members of the small families used by four approved
+# tests; do not disable application R8 or affect ordinary release builds.
+# Gradle includes this file ONLY for DUSTUI_M05_INSTRUMENTATION_BUILD=true.
+-keep class com.mikeyphw.dustui.go.GoRuntime* { *; }
+-keep class com.mikeyphw.dustui.go.GoChildProcessPolicy { *; }
+-keep class com.mikeyphw.dustui.ui.DustRoute* { *; }
+-keep class com.mikeyphw.dustui.ui.DustSemantic* { *; }
+-keep class com.mikeyphw.dustui.ui.DustAdaptive* { *; }

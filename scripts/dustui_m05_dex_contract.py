@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed signed M05 runner startup class-definition verification.
+"""Fail-closed signed M05 runner and cross-APK class-definition verification.
 
 AndroidX Test initializes Tracing and Kotlin stdlib before any test method.
 DEX class *definitions*, not references, must exist in at least one signed APK.
@@ -24,6 +24,22 @@ REQUIRED_BOOTSTRAP_CLASSES = {
     "kotlin.jvm.internal.Intrinsics": b"Lkotlin/jvm/internal/Intrinsics;",
     "kotlin.jvm.functions.Function0": b"Lkotlin/jvm/functions/Function0;",
 }
+# These are concrete public class names used by the four approved M05 tests.
+# Test-only R8 rules keep *all* members, including Companion, INSTANCE and
+# Kotlin default-argument constructors; the signed APK gate confirms that
+# the corresponding classes have not been removed or renamed.
+REQUIRED_RELEASE_APP_ABI_CLASSES = {
+    "com.mikeyphw.dustui.go.GoRuntimeProcess": b"Lcom/mikeyphw/dustui/go/GoRuntimeProcess;",
+    "com.mikeyphw.dustui.go.GoRuntimeProcess$Companion": b"Lcom/mikeyphw/dustui/go/GoRuntimeProcess$Companion;",
+    "com.mikeyphw.dustui.go.GoRuntimePathContract": b"Lcom/mikeyphw/dustui/go/GoRuntimePathContract;",
+    "com.mikeyphw.dustui.go.GoChildProcessPolicy": b"Lcom/mikeyphw/dustui/go/GoChildProcessPolicy;",
+    "com.mikeyphw.dustui.go.GoRuntimeRequest": b"Lcom/mikeyphw/dustui/go/GoRuntimeRequest;",
+    "com.mikeyphw.dustui.ui.DustRouteSelection": b"Lcom/mikeyphw/dustui/ui/DustRouteSelection;",
+    "com.mikeyphw.dustui.ui.DustSemanticRoute": b"Lcom/mikeyphw/dustui/ui/DustSemanticRoute;",
+    "com.mikeyphw.dustui.ui.DustSemanticNavigation": b"Lcom/mikeyphw/dustui/ui/DustSemanticNavigation;",
+    "com.mikeyphw.dustui.ui.DustAdaptiveLayoutPolicy": b"Lcom/mikeyphw/dustui/ui/DustAdaptiveLayoutPolicy;",
+}
+
 DEX_MEMBER = re.compile(r"classes(?:[2-9][0-9]*)?\.dex\Z")
 MAX_DEX = 128 * 1024 * 1024
 
@@ -111,23 +127,35 @@ def apk_defines_trace(apk: Path) -> bool:
 
 
 def verify_pair(app: Path, test: Path) -> dict:
-    required = set(REQUIRED_BOOTSTRAP_CLASSES.values())
-    release = apk_defined_descriptors(app, required)
-    instrumentation = apk_defined_descriptors(test, required)
-    missing = [name for name, descriptor in REQUIRED_BOOTSTRAP_CLASSES.items()
-               if descriptor not in release | instrumentation]
-    if missing:
+    bootstrap_required = set(REQUIRED_BOOTSTRAP_CLASSES.values())
+    abi_required = set(REQUIRED_RELEASE_APP_ABI_CLASSES.values())
+    release = apk_defined_descriptors(app, bootstrap_required | abi_required)
+    instrumentation = apk_defined_descriptors(test, bootstrap_required)
+    missing_bootstrap = [name for name, descriptor in REQUIRED_BOOTSTRAP_CLASSES.items()
+                         if descriptor not in release | instrumentation]
+    if missing_bootstrap:
         raise DexContractError('runner bootstrap class definitions missing from signed APK pair: '
-                               + ', '.join(missing))
+                               + ', '.join(missing_bootstrap))
+    # The test APK references the production application's classes by name.
+    # They must be defined by the signed release, not merely available in the
+    # separately signed test APK (nor present as DEX string/type references).
+    missing_abi = [name for name, descriptor in REQUIRED_RELEASE_APP_ABI_CLASSES.items()
+                   if descriptor not in release]
+    if missing_abi:
+        raise DexContractError('M05 test-accessed release app ABI class definitions missing: '
+                               + ', '.join(missing_abi))
     return {
-        "schema": "dustui.m05.runner-bootstrap-dex-check.v2",
+        "schema": "dustui.m05.runner-and-app-abi-dex-check.v3",
         "release_defines_trace": TRACE_DESCRIPTOR in release,
         "instrumentation_defines_trace": TRACE_DESCRIPTOR in instrumentation,
         "required_class_locations": {
             name: {"release": desc in release, "instrumentation": desc in instrumentation}
             for name, desc in REQUIRED_BOOTSTRAP_CLASSES.items()
         },
-        "status": "HOSTED_RUNNER_BOOTSTRAP_CLASSES_PRESENT_NOT_DEVICE_QUALIFIED",
+        "release_app_abi_defined": {
+            name: desc in release for name, desc in REQUIRED_RELEASE_APP_ABI_CLASSES.items()
+        },
+        "status": "HOSTED_RUNNER_AND_APP_ABI_CLASSES_PRESENT_NOT_DEVICE_QUALIFIED",
     }
 
 

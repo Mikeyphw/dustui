@@ -13,3 +13,12 @@
 # These rules apply only to AndroidTest, never ordinary application release.
 -keep class kotlin.** { *; }
 -keep class androidx.test.** { *; }
+
+# The test APK undergoes a separate R8 pass. Preserve references to the
+# M05 cross-APK app ABI alongside the release-app rules (above), so both
+# passes agree on the test-accessed names and Kotlin member signatures.
+-keep class com.mikeyphw.dustui.go.GoRuntime* { *; }
+-keep class com.mikeyphw.dustui.go.GoChildProcessPolicy { *; }
+-keep class com.mikeyphw.dustui.ui.DustRoute* { *; }
+-keep class com.mikeyphw.dustui.ui.DustSemantic* { *; }
+-keep class com.mikeyphw.dustui.ui.DustAdaptive* { *; }
