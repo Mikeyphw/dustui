@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import sys
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -84,6 +85,81 @@ class M05SignedInstrumentation(unittest.TestCase):
             good + "instrumentation: name='one' name='two' targetPackage='a'\n")
         self.assertEqual(parse_badging(good + 'instrumentation: label=\'oops\'\n'),
                          ((ci.TARGET, '1400'), (None, None)))
+
+    def test_aapt2_compiled_manifest_instrumentation_identity(self):
+        from dustui_m05_badging import parse_instrumentation_xmltree
+        tree = (
+            'N: android=http://schemas.android.com/apk/res/android\n'
+            'E: manifest (line=2)\n'
+            '  A: package="com.mikeyphw.dustui.test" (Raw: "com.mikeyphw.dustui.test")\n'
+            '  E: application (line=4)\n'
+            '    A: android:name(0x01010003)="SomeApplication" (Raw: "SomeApplication")\n'
+            '  E: instrumentation (line=9)\n'
+            '    A: android:label(0x01010001)="Tests for DustUI" (Raw: "Tests for DustUI")\n'
+            '    A: android:targetPackage(0x01010021)="com.mikeyphw.dustui" (Raw: "com.mikeyphw.dustui")\n'
+            '    A: android:name(0x01010003)="androidx.test.runner.AndroidJUnitRunner" (Raw: "androidx.test.runner.AndroidJUnitRunner")\n'
+            '    A: android:handleProfiling(0x01010022)=(type 0x12)0x0\n'
+        )
+        self.assertEqual(parse_instrumentation_xmltree(tree), (ci.TEST_RUNNER, ci.TARGET))
+        self.assertIs(ci.parse_instrumentation_xmltree, device.parse_instrumentation_xmltree)
+        # The real aapt2 badging output may omit instrumentation, even when the
+        # signed compiled manifest contains the runner and target declaration.
+        badging = "package: name='com.mikeyphw.dustui.test' versionCode='1400'\n"
+        self.assertIsNone(ci.parse_badging(badging)[1])
+        self.assertEqual(parse_instrumentation_xmltree(tree), (ci.TEST_RUNNER, ci.TARGET))
+        # Full Android namespace rather than shorthand android: is also valid.
+        self.assertEqual(parse_instrumentation_xmltree(tree.replace(
+            'android:targetPackage(0x01010021)',
+            'http://schemas.android.com/apk/res/android:targetPackage(0x01010021)')),
+            (ci.TEST_RUNNER, ci.TARGET))
+
+    def test_device_verifier_reads_signed_apk_compiled_manifest(self):
+        badge = "package: name='com.mikeyphw.dustui.test' versionCode='1400'\n"
+        tree = ('E: manifest (line=1)\n'
+                '  E: instrumentation (line=4)\n'
+                '    A: android:name(0x01010003)="androidx.test.runner.AndroidJUnitRunner"\n'
+                '    A: android:targetPackage(0x01010021)="com.mikeyphw.dustui"\n')
+        with patch.object(device, 'sdktool', return_value='/fake/aapt2'):
+            with patch.object(device, 'call', side_effect=[
+                SimpleNamespace(stdout=badge), SimpleNamespace(stdout=tree),
+            ]) as invoke:
+                pkg, inst = device.package_info(Path('test.apk'))
+                self.assertEqual(pkg[0], ci.TEST_PKG)
+                self.assertEqual(inst, (ci.TEST_RUNNER, ci.TARGET))
+                self.assertEqual(invoke.call_args_list[1].args[0], [
+                    '/fake/aapt2', 'dump', 'xmltree', 'test.apk', '--file', 'AndroidManifest.xml',
+                ])
+        conflicting = badge + (
+            "instrumentation: name='bad.runner' targetPackage='com.mikeyphw.dustui'\n"
+        )
+        with patch.object(device, 'sdktool', return_value='/fake/aapt2'):
+            with patch.object(device, 'call', side_effect=[
+                SimpleNamespace(stdout=conflicting), SimpleNamespace(stdout=tree),
+            ]):
+                with self.assertRaises(device.DeviceError):
+                    device.package_info(Path('test.apk'))
+
+    def test_xmltree_missing_invalid_and_duplicate_instrumentation_refused(self):
+        from dustui_m05_badging import parse_instrumentation_xmltree, BadgingError
+        empty='E: manifest (line=1)\n  A: package="com.mikeyphw.dustui.test"\n'
+        self.assertIsNone(parse_instrumentation_xmltree(empty))
+        inst="  E: instrumentation (line=4)\n"
+        with self.assertRaises(BadgingError): parse_instrumentation_xmltree(empty + inst)
+        valid=inst + (
+            '    A: android:name(0x01010003)="androidx.test.runner.AndroidJUnitRunner"\n'
+            '    A: android:targetPackage(0x01010021)="com.mikeyphw.dustui"\n'
+        )
+        self.assertEqual(parse_instrumentation_xmltree(empty + valid), (ci.TEST_RUNNER, ci.TARGET))
+        for variant in (
+            empty + valid + valid,
+            empty + valid + '    A: android:name(0x01010003)="another.runner"\n',
+            empty + valid.replace('0x01010021', '0x01010022'),
+            empty + valid.replace('"com.mikeyphw.dustui"', '(type 0x03)0x12345678'),
+            empty + valid.replace('    A: android:targetPackage(0x01010021)="com.mikeyphw.dustui"\n', ''),
+            empty + valid + '    E: unexpected_child (line=8)\n',
+        ):
+            with self.subTest(variant=variant):
+                with self.assertRaises(BadgingError): parse_instrumentation_xmltree(variant)
 
     def test_unsigned_or_unqualified_rejections(self):
         a='Signer #1 certificate SHA-256 digest: '+device.EXPECTED_CERT+'\nVerified using v2 scheme (APK Signature Scheme v2): true\n'

@@ -15,7 +15,7 @@ import shutil
 import subprocess
 import sys
 
-from dustui_m05_badging import parse_badging
+from dustui_m05_badging import parse_badging, parse_instrumentation_xmltree
 
 EXPECTED_CERT = '5601d49884487a5d8f378b7665e37fff8b6808e7a1a038a465de1d07c9a5ef8b'
 RELEASE_PKG = 'com.mikeyphw.dustui'
@@ -65,8 +65,14 @@ def signer(apk: Path) -> str:
     return EXPECTED_CERT
 
 def package_info(apk: Path):
-    out=call([sdktool('aapt2'),'dump','badging',str(apk)]).stdout
-    return parse_badging(out)
+    aapt2 = sdktool('aapt2')
+    out=call([aapt2,'dump','badging',str(apk)]).stdout
+    package, badge_instrumentation = parse_badging(out)
+    tree=call([aapt2,'dump','xmltree',str(apk),'--file','AndroidManifest.xml']).stdout
+    compiled_instrumentation = parse_instrumentation_xmltree(tree)
+    if badge_instrumentation is not None and badge_instrumentation != compiled_instrumentation:
+        raise DeviceError('signed APK badging and compiled manifest instrumentation disagree')
+    return package, compiled_instrumentation
 
 def validate(folder: Path):
     app=find_one(folder,'app-release.apk')
