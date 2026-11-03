@@ -97,6 +97,11 @@ android {
         }
         release {
             testProguardFiles("proguard-androidTest-rules.pro")
+            // The separate AndroidX test runner shares the release app classloader.
+            // Only M05's explicit release-instrumentation build needs these classes.
+            if (providers.environmentVariable("DUSTUI_M05_INSTRUMENTATION_BUILD").orNull == "true") {
+                proguardFiles("proguard-m05-release-test-rules.pro")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             if (dustuiPersonalSigningConfigured) {
@@ -240,4 +245,10 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.errorprone.annotations)
+    if (providers.environmentVariable("DUSTUI_M05_INSTRUMENTATION_BUILD").orNull == "true") {
+        // AndroidJUnitRunner 1.6.2 references androidx.tracing.Trace at startup.
+        // M05's minified app and test APK are separate classloader participants.
+        implementation("androidx.tracing:tracing:1.3.0")
+        androidTestImplementation("androidx.tracing:tracing:1.3.0")
+    }
 }

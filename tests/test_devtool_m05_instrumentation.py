@@ -161,6 +161,45 @@ class M05SignedInstrumentation(unittest.TestCase):
             with self.subTest(variant=variant):
                 with self.assertRaises(BadgingError): parse_instrumentation_xmltree(variant)
 
+    def test_m05_tracing_dependency_is_scoped_to_release_instrumentation(self):
+        build = (ROOT/'android/app/build.gradle.kts').read_text()
+        rule = (ROOT/'android/app/proguard-m05-release-test-rules.pro').read_text()
+        test_rule = (ROOT/'android/app/proguard-androidTest-rules.pro').read_text()
+        self.assertIn('proguardFiles("proguard-m05-release-test-rules.pro")', build)
+        self.assertEqual(build.count('implementation("androidx.tracing:tracing:1.3.0")'), 1)
+        self.assertEqual(build.count('androidTestImplementation("androidx.tracing:tracing:1.3.0")'), 1)
+        self.assertIn('DUSTUI_M05_INSTRUMENTATION_BUILD', build)
+        self.assertIn('-keep class androidx.tracing.Trace { *; }', rule)
+        self.assertIn('-keep class androidx.tracing.Trace { *; }', test_rule)
+        workflow = (ROOT/'.github/workflows/devtool-dustui-m05-signed-instrumentation.yml').read_text()
+        self.assertIn('scripts/dustui_m05_dex_contract.py', workflow)
+        self.assertLess(workflow.index('scripts/dustui_m05_dex_contract.py'), workflow.index('name: Upload source-matched'))
+
+    def test_m05_dex_contract_checks_class_definitions_not_strings(self):
+        from dustui_m05_dex_contract import defines_trace, DexContractError
+        import struct
+        descriptor = b'Landroidx/tracing/Trace;'
+        def fake_dex(type_name: bytes, class_count: int):
+            data = bytearray(0x70 + 4 + 4 + 32 + 4 + len(type_name) + 1)
+            data[0:8] = b'dex\n035\0'
+            struct.pack_into('<I', data, 0x20, len(data))
+            struct.pack_into('<I', data, 0x24, 0x70)
+            struct.pack_into('<I', data, 0x28, 0x12345678)
+            struct.pack_into('<II', data, 0x38, 1, 0x70)   # string identifiers
+            struct.pack_into('<II', data, 0x40, 1, 0x74)   # type identifiers
+            struct.pack_into('<II', data, 0x60, class_count, 0x78)  # class definitions
+            struct.pack_into('<I', data, 0x70, 0x98)
+            struct.pack_into('<I', data, 0x74, 0)
+            struct.pack_into('<I', data, 0x78, 0)
+            data[0x98] = len(type_name)
+            data[0x99:0x99 + len(type_name)] = type_name
+            return bytes(data)
+        self.assertTrue(defines_trace(fake_dex(descriptor, 1)))
+        self.assertFalse(defines_trace(fake_dex(descriptor, 0)))
+        self.assertFalse(defines_trace(fake_dex(b'Landroidx/tracing/Other;', 1)))
+        with self.assertRaises(DexContractError):
+            defines_trace(b'not dex')
+
     def test_unsigned_or_unqualified_rejections(self):
         a='Signer #1 certificate SHA-256 digest: '+device.EXPECTED_CERT+'\nVerified using v2 scheme (APK Signature Scheme v2): true\n'
         self.assertEqual(ci.signing_sha(a),device.EXPECTED_CERT)

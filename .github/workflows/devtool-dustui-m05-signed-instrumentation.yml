@@ -106,6 +106,13 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/dustui_m05_instrumentation.py sign --root "$GITHUB_WORKSPACE"
+      - name: Verify AndroidX runner tracing class is defined in the signed APK pair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/dustui_m05_dex_contract.py \
+            --app android/app/build/outputs/apk/release/app-release.apk \
+            --test "$RUNNER_TEMP/dustui-m05-public/app-release-androidTest-signed.apk"
       - name: Upload source-matched release and instrumentation APK pair with receipts
         if: success()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
