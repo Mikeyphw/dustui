@@ -252,7 +252,8 @@ class M05SignedInstrumentation(unittest.TestCase):
                 verify_pair(Path('release.apk'),Path('test.apk'))
         with patch.object(dex,'apk_defined_descriptors',side_effect=[
                 {dex.TRACE_DESCRIPTOR} | abi_required,required-{dex.TRACE_DESCRIPTOR}]):
-            report=verify_pair(Path('release.apk'),Path('test.apk'))
+            with patch.object(dex,'apk_defines_json_optstring',return_value=True):
+                report=verify_pair(Path('release.apk'),Path('test.apk'))
             self.assertEqual(report['status'],'HOSTED_RUNNER_AND_APP_ABI_CLASSES_PRESENT_NOT_DEVICE_QUALIFIED')
             self.assertEqual(report['required_class_locations']['kotlin.LazyKt'],
                              {'release':False,'instrumentation':True})
@@ -281,12 +282,78 @@ class M05SignedInstrumentation(unittest.TestCase):
             with self.subTest(pattern=pattern):
                 self.assertIn(rule, release_rules)
                 self.assertIn(rule, test_rules)
-        self.assertEqual(len(contract.REQUIRED_RELEASE_APP_ABI_CLASSES), 9)
+        self.assertEqual(len(contract.REQUIRED_RELEASE_APP_ABI_CLASSES), 10)
         for name, descriptor in contract.REQUIRED_RELEASE_APP_ABI_CLASSES.items():
             self.assertEqual(descriptor, ('L' + name.replace('.', '/') + ';').encode())
         self.assertNotIn('-dontobfuscate', release_rules)
         self.assertNotIn('-dontshrink', release_rules)
         self.assertNotIn('-dontoptimize', release_rules)
+
+    def test_m05_json_abi_and_bounded_stderr_close_race(self):
+        from dustui_m05_dex_contract import REQUIRED_RELEASE_APP_ABI_CLASSES
+        self.assertEqual(REQUIRED_RELEASE_APP_ABI_CLASSES['org.json.JSONObject'],
+                         b'Lorg/json/JSONObject;')
+        app_rule = (ROOT/'android/app/proguard-m05-release-test-rules.pro').read_text()
+        test_rule = (ROOT/'android/app/proguard-androidTest-rules.pro').read_text()
+        for rule in (app_rule, test_rule):
+            self.assertIn('-keep class org.json.** { *; }', rule)
+        self.assertNotIn('-keep class org.json.** { *; }',
+                         (ROOT/'android/app/proguard-rules.pro').read_text())
+        go = (ROOT/'android/app/src/main/kotlin/com/mikeyphw/dustui/go/GoRuntimeProcess.kt').read_text()
+        self.assertIn('import java.io.IOException', go)
+        self.assertIn('@Volatile private var closing = false', go)
+        self.assertIn('catch (error: IOException)', go)
+        self.assertIn('if (!closing) append("stderr_read_error="', go)
+        self.assertIn('closing = true\n        runCatching { reader.close() }', go)
+        self.assertIn('drained.countDown()', go)
+        self.assertIn('runCatching { drained.await(50, TimeUnit.MILLISECONDS) }', go)
+        self.assertNotIn('System.exit(', go)
+        from dustui_m05_dex_contract import dex_defines_json_optstring
+        import struct
+        # A compact synthetic DEX with real class_data and one public
+        # virtual optString(String):String definition, not a mere method_id.
+        names = [b'Lorg/json/JSONObject;', b'Ljava/lang/String;', b'optString']
+        strings_off, types_off, protos_off = 0x70, 0x7c, 0x84
+        methods_off, classes_off, params_off = 0x90, 0x98, 0xb8
+        strings_data = bytearray()
+        offsets = []
+        for name in names:
+            offsets.append(0xc0 + len(strings_data))
+            strings_data += bytes([len(name)]) + name + b'\0'
+        class_data_off = 0xc0 + len(strings_data)
+        data = bytearray(class_data_off + 7)
+        data[:8] = b'dex\n035\0'
+        struct.pack_into('<I', data, 0x20, len(data))
+        struct.pack_into('<I', data, 0x24, 0x70)
+        struct.pack_into('<I', data, 0x28, 0x12345678)
+        for header, val in ((0x38, (3, strings_off)),
+                            (0x40, (2, types_off)),
+                            (0x48, (1, protos_off)),
+                            (0x58, (1, methods_off)),
+                            (0x60, (1, classes_off))):
+            struct.pack_into('<II', data, header, *val)
+        for index, offset in enumerate(offsets):
+            struct.pack_into('<I', data, strings_off + index * 4, offset)
+        struct.pack_into('<II', data, types_off, 0, 1)
+        struct.pack_into('<III', data, protos_off, 0, 1, params_off)
+        struct.pack_into('<HHI', data, methods_off, 0, 0, 2)
+        struct.pack_into('<I', data, classes_off + 24, class_data_off)
+        struct.pack_into('<I', data, params_off, 1)
+        struct.pack_into('<H', data, params_off + 4, 1)
+        data[0xc0:0xc0 + len(strings_data)] = strings_data
+        data[class_data_off:] = b'\x00\x00\x00\x01\x00\x01\x01'
+        self.assertTrue(dex_defines_json_optstring(bytes(data)))
+        # A class and method reference without an actual encoded method
+        # definition must not pass the hosted gate.
+        missing = bytearray(data)
+        missing[class_data_off + 3] = 0  # virtual_methods_size
+        self.assertFalse(dex_defines_json_optstring(bytes(missing)))
+        non_public = bytearray(data)
+        non_public[-2] = 0  # clear ACC_PUBLIC
+        self.assertFalse(dex_defines_json_optstring(bytes(non_public)))
+        self.assertIn('release_json_optstring_defined',
+                      (ROOT/'scripts/dustui_m05_dex_contract.py').read_text())
+
 
     def test_unsigned_or_unqualified_rejections(self):
         a='Signer #1 certificate SHA-256 digest: '+device.EXPECTED_CERT+'\nVerified using v2 scheme (APK Signature Scheme v2): true\n'

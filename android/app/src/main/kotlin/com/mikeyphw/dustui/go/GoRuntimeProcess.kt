@@ -7,6 +7,7 @@ import java.io.BufferedWriter
 import java.io.Closeable
 import java.io.File
 import java.io.InputStreamReader
+import java.io.IOException
 import java.io.OutputStreamWriter
 import java.util.ArrayDeque
 import java.util.concurrent.CountDownLatch
@@ -206,6 +207,7 @@ private class BoundedStderrCapture(
     private val drained = CountDownLatch(1)
     private var chars = 0
     @Volatile private var started = false
+    @Volatile private var closing = false
 
     fun start() {
         if (started) return
@@ -214,6 +216,13 @@ private class BoundedStderrCapture(
             {
                 try {
                     reader.forEachLine { line -> append(line) }
+                } catch (error: IOException) {
+                    // Closing the reader while forEachLine blocks is a normal
+                    // shutdown race on Android (InterruptedIOException).
+                    // Avoid an uncaught daemon-thread exception that aborts
+                    // AndroidJUnitRunner, but keep unexpected I/O errors in
+                    // the existing bounded diagnostic buffer.
+                    if (!closing) append("stderr_read_error=" + error.javaClass.simpleName)
                 } finally {
                     drained.countDown()
                 }
@@ -240,6 +249,7 @@ private class BoundedStderrCapture(
     }
 
     override fun close() {
+        closing = true
         runCatching { reader.close() }
         runCatching { drained.await(50, TimeUnit.MILLISECONDS) }
     }

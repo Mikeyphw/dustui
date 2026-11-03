@@ -22,3 +22,10 @@
 -keep class com.mikeyphw.dustui.ui.DustRoute* { *; }
 -keep class com.mikeyphw.dustui.ui.DustSemantic* { *; }
 -keep class com.mikeyphw.dustui.ui.DustAdaptive* { *; }
+
+# M05 AndroidTest and release APK are minified independently. Tests call the
+# org.json.JSONObject APIs exported by the signed tested application.
+# Keep the class names and all members (including optString(String)) stable.
+# App-side rules are included only when DUSTUI_M05_INSTRUMENTATION_BUILD=true;
+# these AndroidTest rules do not affect normal release builds.
+-keep class org.json.** { *; }
