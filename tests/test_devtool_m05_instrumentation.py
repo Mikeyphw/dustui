@@ -200,6 +200,62 @@ class M05SignedInstrumentation(unittest.TestCase):
         with self.assertRaises(DexContractError):
             defines_trace(b'not dex')
 
+    def test_m05_runner_kotlin_dependencies_are_instrumentation_only(self):
+        build=(ROOT/'android/app/build.gradle.kts').read_text()
+        rule=(ROOT/'android/app/proguard-m05-release-test-rules.pro').read_text()
+        test_rule=(ROOT/'android/app/proguard-androidTest-rules.pro').read_text()
+        section=build.split('    androidTestImplementation(libs.androidx.test.runner)', 1)[1]
+        self.assertIn('if (providers.environmentVariable("DUSTUI_M05_INSTRUMENTATION_BUILD").orNull == "true")', section)
+        self.assertIn('implementation("org.jetbrains.kotlin:kotlin-stdlib:2.4.10")', section)
+        self.assertIn('androidTestImplementation("org.jetbrains.kotlin:kotlin-stdlib:2.4.10")', section)
+        self.assertEqual(build.count('org.jetbrains.kotlin:kotlin-stdlib:2.4.10'),2)
+        self.assertIn('-keep class kotlin.** { *; }', rule)
+        self.assertIn('-keep class kotlin.** { *; }', test_rule)
+        self.assertIn('-keep class androidx.test.** { *; }', test_rule)
+        self.assertNotIn('kotlin.**', (ROOT/'android/app/proguard-rules.pro').read_text())
+        workflow=(ROOT/'.github/workflows/devtool-dustui-m05-signed-instrumentation.yml').read_text()
+        self.assertIn('scripts/dustui_m05_dex_contract.py', workflow)
+        self.assertLess(workflow.index('scripts/dustui_m05_dex_contract.py'),workflow.index('name: Upload source-matched'))
+
+    def test_m05_runner_bootstrap_definitions_gate_and_missing_fail_closed(self):
+        from dustui_m05_dex_contract import (REQUIRED_BOOTSTRAP_CLASSES,
+            defined_descriptors, verify_pair, DexContractError)
+        from pathlib import Path
+        from unittest.mock import patch
+        import dustui_m05_dex_contract as dex
+        self.assertEqual(REQUIRED_BOOTSTRAP_CLASSES['kotlin.LazyKt'], b'Lkotlin/LazyKt;')
+        self.assertIn('kotlin.jvm.internal.Intrinsics', REQUIRED_BOOTSTRAP_CLASSES)
+        required=set(REQUIRED_BOOTSTRAP_CLASSES.values())
+        # A reference to a class is NOT a DEX class definition.
+        import struct
+        descr=b'Lkotlin/LazyKt;'
+        data=bytearray(0x70+4+4+32+4+len(descr)+1)
+        data[:8]=b'dex\n035\0'
+        struct.pack_into('<I',data,0x20,len(data))
+        struct.pack_into('<I',data,0x24,0x70)
+        struct.pack_into('<I',data,0x28,0x12345678)
+        struct.pack_into('<II',data,0x38,1,0x70)
+        struct.pack_into('<II',data,0x40,1,0x74)
+        struct.pack_into('<II',data,0x60,0,0x78)
+        struct.pack_into('<I',data,0x70,0x98)
+        struct.pack_into('<I',data,0x74,0)
+        struct.pack_into('<I',data,0x78,0)
+        data[0x98]=len(descr)
+        data[0x99:0x99+len(descr)]=descr
+        self.assertEqual(defined_descriptors(bytes(data),required),set())
+        struct.pack_into('<I',data,0x60,1)
+        self.assertEqual(defined_descriptors(bytes(data),required),{descr})
+        with patch.object(dex,'apk_defined_descriptors',side_effect=[
+                {dex.TRACE_DESCRIPTOR},set()]):
+            with self.assertRaisesRegex(DexContractError,'kotlin.LazyKt'):
+                verify_pair(Path('release.apk'),Path('test.apk'))
+        with patch.object(dex,'apk_defined_descriptors',side_effect=[
+                {dex.TRACE_DESCRIPTOR},required-{dex.TRACE_DESCRIPTOR}]):
+            report=verify_pair(Path('release.apk'),Path('test.apk'))
+            self.assertEqual(report['status'],'HOSTED_RUNNER_BOOTSTRAP_CLASSES_PRESENT_NOT_DEVICE_QUALIFIED')
+            self.assertEqual(report['required_class_locations']['kotlin.LazyKt'],
+                             {'release':False,'instrumentation':True})
+
     def test_unsigned_or_unqualified_rejections(self):
         a='Signer #1 certificate SHA-256 digest: '+device.EXPECTED_CERT+'\nVerified using v2 scheme (APK Signature Scheme v2): true\n'
         self.assertEqual(ci.signing_sha(a),device.EXPECTED_CERT)

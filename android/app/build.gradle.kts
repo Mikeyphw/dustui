@@ -250,5 +250,11 @@ dependencies {
         // M05's minified app and test APK are separate classloader participants.
         implementation("androidx.tracing:tracing:1.3.0")
         androidTestImplementation("androidx.tracing:tracing:1.3.0")
+        // AndroidX Test 1.6.2 FileTestStorage initializes Kotlin LazyKt
+        // before the first test method. R8 processes the tested app and the
+        // instrumentation APK separately; preserve stdlib on BOTH sides.
+        // The dependency and app-side keep are restricted to M05.
+        implementation("org.jetbrains.kotlin:kotlin-stdlib:2.4.10")
+        androidTestImplementation("org.jetbrains.kotlin:kotlin-stdlib:2.4.10")
     }
 }

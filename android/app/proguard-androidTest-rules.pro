@@ -6,3 +6,10 @@
 # The app-side M05-only keep is in proguard-m05-release-test-rules.pro.
 -keep class androidx.tracing.Trace { *; }
 -keep class androidx.tracing.Trace$* { *; }
+
+# The instrumented test APK is separately minified. Prevent the runner's
+# early-init Kotlin runtime and AndroidX test components from disappearing
+# merely because the release app and test APK are optimized separately.
+# These rules apply only to AndroidTest, never ordinary application release.
+-keep class kotlin.** { *; }
+-keep class androidx.test.** { *; }

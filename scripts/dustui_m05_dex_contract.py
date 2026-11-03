@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Fail-closed check that the signed M05 APK pair defines AndroidX Trace.
+"""Fail-closed signed M05 runner startup class-definition verification.
 
-Checks DEX *class definitions*, not potentially misleading string references.
+AndroidX Test initializes Tracing and Kotlin stdlib before any test method.
+DEX class *definitions*, not references, must exist in at least one signed APK.
 Does not build, install, resign, mutate or qualify a release/device.
 """
 from __future__ import annotations
@@ -15,6 +16,14 @@ import sys
 import zipfile
 
 TRACE_DESCRIPTOR = b"Landroidx/tracing/Trace;"
+# Stable minimal bootstrap checks, not a claim of complete runtime linkage.
+REQUIRED_BOOTSTRAP_CLASSES = {
+    "androidx.tracing.Trace": TRACE_DESCRIPTOR,
+    "kotlin.LazyKt": b"Lkotlin/LazyKt;",
+    "kotlin.Lazy": b"Lkotlin/Lazy;",
+    "kotlin.jvm.internal.Intrinsics": b"Lkotlin/jvm/internal/Intrinsics;",
+    "kotlin.jvm.functions.Function0": b"Lkotlin/jvm/functions/Function0;",
+}
 DEX_MEMBER = re.compile(r"classes(?:[2-9][0-9]*)?\.dex\Z")
 MAX_DEX = 128 * 1024 * 1024
 
@@ -49,14 +58,16 @@ def _uleb(data: bytes, pos: int) -> tuple[int, int]:
     raise DexContractError("invalid DEX string length")
 
 
-def defines_trace(dex: bytes) -> bool:
-    if (len(dex) < 0x70 or dex[:4] != b"dex\n" or dex[4:7].isdigit() is False
+def defined_descriptors(dex: bytes, required: set[bytes]) -> set[bytes]:
+    """Find exact DEX class_def entries, not type_id/string-only references."""
+    if (len(dex) < 0x70 or dex[:4] != b"dex\n" or not dex[4:7].isdigit()
             or dex[7] != 0 or _u32(dex, 0x20) != len(dex)
             or _u32(dex, 0x24) != 0x70 or _u32(dex, 0x28) != 0x12345678):
         raise DexContractError("unexpected or malformed DEX header")
     string_count, strings = _table(dex, 0x38, 0x3c, 4)
     type_count, types = _table(dex, 0x40, 0x44, 4)
     class_count, classes = _table(dex, 0x60, 0x64, 32)
+    found: set[bytes] = set()
     for i in range(class_count):
         cls_type = _u32(dex, classes + i * 32)
         if cls_type >= type_count:
@@ -65,28 +76,59 @@ def defines_trace(dex: bytes) -> bool:
         if str_idx >= string_count:
             raise DexContractError("invalid DEX descriptor index")
         off = _u32(dex, strings + 4 * str_idx)
-        _utf16_len, start = _uleb(dex, off)
-        end = start + len(TRACE_DESCRIPTOR)
-        if end < len(dex) and dex[start:end] == TRACE_DESCRIPTOR and dex[end] == 0:
-            return True
-    return False
+        _utf16_len, at = _uleb(dex, off)
+        for descriptor in required - found:
+            end = at + len(descriptor)
+            if end < len(dex) and dex[at:end] == descriptor and dex[end] == 0:
+                found.add(descriptor)
+                break
+    return found
 
 
-def apk_defines_trace(apk: Path) -> bool:
+def defines_trace(dex: bytes) -> bool:
+    """Retain historical public helper used by the previous M05 contract."""
+    return TRACE_DESCRIPTOR in defined_descriptors(dex, {TRACE_DESCRIPTOR})
+
+
+def apk_defined_descriptors(apk: Path, required: set[bytes]) -> set[bytes]:
     try:
         with zipfile.ZipFile(apk) as archive:
             members = [i for i in archive.infolist() if DEX_MEMBER.fullmatch(i.filename)]
             if not members or len({i.filename for i in members}) != len(members):
                 raise DexContractError("APK has missing or duplicate DEX members")
-            found = False
+            found: set[bytes] = set()
             for member in members:
                 if member.file_size > MAX_DEX:
                     raise DexContractError("DEX exceeds permitted bounded inspection size")
-                if defines_trace(archive.read(member)):
-                    found = True
+                found |= defined_descriptors(archive.read(member), required)
             return found
     except (zipfile.BadZipFile, RuntimeError) as exc:
         raise DexContractError("could not inspect signed APK ZIP/DEX") from exc
+
+
+def apk_defines_trace(apk: Path) -> bool:
+    return TRACE_DESCRIPTOR in apk_defined_descriptors(apk, {TRACE_DESCRIPTOR})
+
+
+def verify_pair(app: Path, test: Path) -> dict:
+    required = set(REQUIRED_BOOTSTRAP_CLASSES.values())
+    release = apk_defined_descriptors(app, required)
+    instrumentation = apk_defined_descriptors(test, required)
+    missing = [name for name, descriptor in REQUIRED_BOOTSTRAP_CLASSES.items()
+               if descriptor not in release | instrumentation]
+    if missing:
+        raise DexContractError('runner bootstrap class definitions missing from signed APK pair: '
+                               + ', '.join(missing))
+    return {
+        "schema": "dustui.m05.runner-bootstrap-dex-check.v2",
+        "release_defines_trace": TRACE_DESCRIPTOR in release,
+        "instrumentation_defines_trace": TRACE_DESCRIPTOR in instrumentation,
+        "required_class_locations": {
+            name: {"release": desc in release, "instrumentation": desc in instrumentation}
+            for name, desc in REQUIRED_BOOTSTRAP_CLASSES.items()
+        },
+        "status": "HOSTED_RUNNER_BOOTSTRAP_CLASSES_PRESENT_NOT_DEVICE_QUALIFIED",
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -95,16 +137,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--test", type=Path, required=True)
     args = parser.parse_args(argv)
     try:
-        result = {"schema": "dustui.m05.tracing-dex-check.v1",
-                  "release_defines_trace": apk_defines_trace(args.app),
-                  "instrumentation_defines_trace": apk_defines_trace(args.test)}
-        if not (result["release_defines_trace"] or result["instrumentation_defines_trace"]):
-            raise DexContractError("androidx.tracing.Trace is absent from both signed APK class definitions")
-        result["status"] = "HOSTED_TRACING_CLASS_PRESENT_NOT_DEVICE_QUALIFIED"
+        result = verify_pair(args.app, args.test)
         print(json.dumps(result, sort_keys=True))
         return 0
     except (OSError, ValueError) as exc:
-        print("DUSTUI_M05_TRACING_DEX_REFUSED: " + str(exc)[:240], file=sys.stderr)
+        print("DUSTUI_M05_RUNNER_BOOTSTRAP_DEX_REFUSED: " + str(exc)[:240], file=sys.stderr)
         return 2
 
 
