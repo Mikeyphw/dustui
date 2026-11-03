@@ -15,6 +15,7 @@ import subprocess
 import sys
 
 from dustui_m05_release import root_identity, fingerprint, ReleaseError, DEVTOOL_SHA
+from dustui_m05_badging import parse_badging
 
 TARGET = "com.mikeyphw.dustui"
 TEST_PKG = TARGET + ".test"
@@ -112,10 +113,18 @@ def sign(root: Path) -> dict:
     if app_cert != expected or test_cert != expected:
         raise ReleaseError("test and release certificates differ")
     badging = call([str(aapt2), "dump", "badging", str(test_out)], capture=True)
-    pkg_match = re.search(r"(?m)^package: name='([^']+)'", badging)
-    inst_match = re.search(r"(?m)^instrumentation: name='([^']+)' targetPackage='([^']+)'", badging)
-    if not pkg_match or pkg_match.group(1) != TEST_PKG or not inst_match or inst_match.groups() != (TEST_RUNNER, TARGET):
-        raise ReleaseError("instrumentation identity, runner or tested application mismatch")
+    (actual_package, _), actual_instrumentation = parse_badging(badging)
+    actual_runner, actual_target = actual_instrumentation if actual_instrumentation else (None, None)
+    if (actual_package, actual_runner, actual_target) != (TEST_PKG, TEST_RUNNER, TARGET):
+        # All values here are public manifest metadata, never signing credentials.
+        # Bound output in case an unexpected APK embeds unusually long fields.
+        public = lambda v: repr(v[:128]) if isinstance(v, str) else repr(v)
+        raise ReleaseError(
+            'instrumentation identity mismatch: '
+            f'actual package={public(actual_package)}, runner={public(actual_runner)}, '
+            f'target={public(actual_target)}; expected package={TEST_PKG!r}, '
+            f'runner={TEST_RUNNER!r}, target={TARGET!r}'
+        )
     app_hash = hashlib.sha256(app.read_bytes()).hexdigest()
     test_hash = hashlib.sha256(test_out.read_bytes()).hexdigest()
     if app_hash != doc.get("apk_sha256"):

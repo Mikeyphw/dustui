@@ -51,6 +51,40 @@ class M05SignedInstrumentation(unittest.TestCase):
         self.assertIn('DUSTUI_M05_INSTRUMENTATION_BUILD:',wf)
         self.assertIn('rm -f "$RUNNER_TEMP/dustui-m05-private/',wf)
 
+    def test_aapt2_badging_with_label_and_reordered_fields(self):
+        # Real-world aapt2 layouts may contain label between identity fields.
+        from dustui_m05_badging import parse_badging
+        a = (
+            "package: versionCode='1400' name='com.mikeyphw.dustui.test' versionName='1.4.0'\n"
+            "instrumentation: name='androidx.test.runner.AndroidJUnitRunner' "
+            "label='' targetPackage='com.mikeyphw.dustui'\n"
+        )
+        b = (
+            "package: name='com.mikeyphw.dustui.test' versionCode='1400'\n"
+            "instrumentation: targetPackage='com.mikeyphw.dustui' "
+            "functionalTest='false' name='androidx.test.runner.AndroidJUnitRunner'\n"
+        )
+        expected = ((ci.TEST_PKG, '1400'), (ci.TEST_RUNNER, ci.TARGET))
+        self.assertEqual(parse_badging(a), expected)
+        self.assertEqual(parse_badging(b), expected)
+        self.assertIs(ci.parse_badging, device.parse_badging)
+
+    def test_badging_missing_and_ambiguous_metadata_fail_closed(self):
+        from dustui_m05_badging import parse_badging, BadgingError
+        good = "package: name='com.mikeyphw.dustui' versionCode='1400'\n"
+        self.assertEqual(parse_badging(good), ((ci.TARGET, '1400'), None))
+        with self.assertRaises(BadgingError): parse_badging('')
+        with self.assertRaises(BadgingError): parse_badging(good + good)
+        with self.assertRaises(BadgingError): parse_badging(
+            "package: name='one' name='two' versionCode='1400'\n")
+        with self.assertRaises(BadgingError): parse_badging(
+            good + "instrumentation: name='one' targetPackage='a'\n" +
+            "instrumentation: name='two' targetPackage='b'\n")
+        with self.assertRaises(BadgingError): parse_badging(
+            good + "instrumentation: name='one' name='two' targetPackage='a'\n")
+        self.assertEqual(parse_badging(good + 'instrumentation: label=\'oops\'\n'),
+                         ((ci.TARGET, '1400'), (None, None)))
+
     def test_unsigned_or_unqualified_rejections(self):
         a='Signer #1 certificate SHA-256 digest: '+device.EXPECTED_CERT+'\nVerified using v2 scheme (APK Signature Scheme v2): true\n'
         self.assertEqual(ci.signing_sha(a),device.EXPECTED_CERT)

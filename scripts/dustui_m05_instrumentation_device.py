@@ -15,6 +15,8 @@ import shutil
 import subprocess
 import sys
 
+from dustui_m05_badging import parse_badging
+
 EXPECTED_CERT = '5601d49884487a5d8f378b7665e37fff8b6808e7a1a038a465de1d07c9a5ef8b'
 RELEASE_PKG = 'com.mikeyphw.dustui'
 TEST_PKG = RELEASE_PKG + '.test'
@@ -64,10 +66,7 @@ def signer(apk: Path) -> str:
 
 def package_info(apk: Path):
     out=call([sdktool('aapt2'),'dump','badging',str(apk)]).stdout
-    p=re.search(r"(?m)^package: name='([^']+)' versionCode='([0-9]+)'",out)
-    i=re.search(r"(?m)^instrumentation: name='([^']+)' targetPackage='([^']+)'",out)
-    if not p: raise DeviceError('APK badging lacks package/version')
-    return p.groups(), i.groups() if i else None
+    return parse_badging(out)
 
 def validate(folder: Path):
     app=find_one(folder,'app-release.apk')
